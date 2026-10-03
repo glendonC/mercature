@@ -40,8 +40,16 @@ export type Understanding = {
   readonly elapsedMs?: number;
 };
 
+type Store = {
+  readonly read: (key: string, count: number) => Promise<ArrayLike<number>[] | null>;
+  readonly write: (key: string, vectors: readonly ArrayLike<number>[]) => Promise<void>;
+};
+
 type Loaded = {
   readonly embed: (text: string) => Promise<number[]>;
+  /** Model set and revision, the prefix of every stored passage embedding. */
+  readonly scope: string;
+  readonly store: Store;
   readonly heads: PreparedHeads;
   readonly model: ModelInfo;
 };
@@ -54,6 +62,8 @@ type SiteIndex = {
   promise: Promise<FeatureIndex>;
   done: number;
   settled: boolean;
+  /** Read from vectors stored in an earlier session rather than embedded now. */
+  stored: boolean;
   readonly total: number;
   readonly listeners: Set<(done: number, total: number) => void>;
 };
@@ -85,11 +95,20 @@ function load(): Promise<Loaded> {
     const [encoder, heads] = await Promise.all([import('./encoder'), import('./heads.json')]);
     const { embed, set } = await encoder.loadEncoder();
     const weights = heads.default as unknown as Heads;
-    const prepared = await prepareHeads(weights, embed);
+    const scope = `${set.name}:${ENCODER.revision}`;
+    const store: Store = {
+      read: (key, count) => encoder.readVectors(`${scope}:${key}`, count).catch(() => null),
+      write: (key, vectors) => encoder.writeVectors(`${scope}:${key}`, vectors).catch(() => undefined),
+    };
+    const labelTexts = [...weights.kind.prototypes, ...weights.category.prototypes].flat();
+    const labelKey = `labels:${hash(JSON.stringify(labelTexts))}`;
+    const stored = await store.read(labelKey, labelTexts.length);
+    const prepared = await prepareHeads(weights, stored ? storedEmbed(labelTexts, stored) : embed);
+    if (!stored) await store.write(labelKey, [...prepared.kindVectors.flat(), ...prepared.categoryVectors.flat()]);
     const vocabulary = set.name === 'latin-hangul' ? '+latin-hangul' : '';
     const model: ModelInfo = { id: ENCODER.id, revision: `${ENCODER.revision}${vocabulary}+heads.${weights.version}`, bytes: set.modelBytes };
     publish({ status: 'ready', model });
-    return { embed, heads: prepared, model };
+    return { embed, scope, store, heads: prepared, model };
   })().catch(error => {
     loading = null;
     throw error;
@@ -138,16 +157,38 @@ function hash(text: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
-/** The site index is keyed by model revision, site id and the exact feature passages. */
+/** Serves passage embeddings computed in an earlier session, in the order they were stored. */
+function storedEmbed(texts: readonly string[], vectors: readonly ArrayLike<number>[]) {
+  const byText = new Map(texts.map((text, i) => [text, vectors[i]]));
+  return async (text: string) => {
+    const vector = byText.get(text);
+    if (!vector) throw new Error('A stored passage embedding is missing.');
+    return vector;
+  };
+}
+
+/** The site index is keyed by model set and revision, site id and the exact feature passages. */
 function siteIndex(site: Place, loaded: Loaded): SiteIndex {
-  const key = `${ENCODER.revision}:${site.id}:${hash(JSON.stringify(site.features.map(feature => [feature.id, passageTexts(feature)])))}`;
+  const passages = site.features.map(feature => [feature.id, passageTexts(feature)] as const);
+  const key = `${loaded.scope}:${site.id}:${hash(JSON.stringify(passages))}`;
   const existing = indexCache.get(key);
   if (existing) return existing;
-  const entry: SiteIndex = { promise: Promise.resolve([]), done: 0, settled: false, total: site.features.length, listeners: new Set() };
-  entry.promise = buildIndex(site.features, loaded.embed, () => {
-    entry.done++;
-    for (const listener of entry.listeners) listener(entry.done, entry.total);
-  }).then(index => {
+  const texts = passages.flatMap(([, texts]) => [texts.full, ...texts.lists]);
+  const storeKey = `place:${site.id}:${hash(JSON.stringify(passages))}`;
+  const entry: SiteIndex = { promise: Promise.resolve([]), done: 0, settled: false, stored: false, total: site.features.length, listeners: new Set() };
+  entry.promise = (async () => {
+    const stored = await loaded.store.read(storeKey, texts.length);
+    if (stored) {
+      entry.stored = true;
+      return buildIndex(site.features, storedEmbed(texts, stored));
+    }
+    const index = await buildIndex(site.features, loaded.embed, () => {
+      entry.done++;
+      for (const listener of entry.listeners) listener(entry.done, entry.total);
+    });
+    await loaded.store.write(storeKey, index.flatMap(feature => [feature.full, ...feature.lists]));
+    return index;
+  })().then(index => {
     entry.settled = true;
     return index;
   });
@@ -171,7 +212,7 @@ export async function prepareSite(site: Place, onProgress?: (done: number, total
     } finally {
       if (onProgress) entry.listeners.delete(onProgress);
     }
-    return 'embedded';
+    return entry.stored ? 'cached' : 'embedded';
   } catch {
     return 'unavailable';
   }

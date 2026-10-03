@@ -127,6 +127,28 @@ export async function provision(onProgress: (loadedBytes: number, totalBytes: nu
   await navigator.storage?.persist?.().catch(() => false);
 }
 
+const vectorUrl = (key: string) => new URL(`/language-vectors/${encodeURIComponent(key)}`, location.origin).href;
+
+/**
+ * Embeddings of fixed passages (label descriptions, a place's spots) kept on the device so later
+ * sessions skip recomputing them. Message embeddings and answers are never stored.
+ */
+export async function readVectors(key: string, count: number): Promise<Float64Array[] | null> {
+  const response = await (await openCache()).match(vectorUrl(key));
+  if (!response) return null;
+  const data = new Float64Array(await response.arrayBuffer());
+  const size = ENCODER.dimensions;
+  if (data.length !== count * size) return null;
+  return Array.from({ length: count }, (_, i) => data.subarray(i * size, (i + 1) * size));
+}
+
+export async function writeVectors(key: string, vectors: readonly ArrayLike<number>[]): Promise<void> {
+  const size = ENCODER.dimensions;
+  const data = new Float64Array(vectors.length * size);
+  vectors.forEach((vector, i) => data.set(vector, i * size));
+  await (await openCache()).put(vectorUrl(key), new Response(data, { headers: { 'content-type': 'application/octet-stream' } }));
+}
+
 export type Encoder = { readonly embed: (text: string) => Promise<number[]>; readonly set: Pick<ModelSet, 'name' | 'modelBytes'> };
 
 let loading: Promise<Encoder> | null = null;

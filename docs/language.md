@@ -31,7 +31,7 @@ The app shell gains about 125 KB, precached by the service worker: the language 
 
 The kind and issue-type heads do not read the embedding directly. Each reads the message's similarity to short passages describing every label, three per label in English, Spanish and Korean (`scripts/language/labels.mjs`). These passages paraphrase the label definitions written for the data before any message existed. The place head reads the full 384-dimensional embedding.
 
-**Reuse.** None of the heads refers to the farm's feature names: a new place needs its spot list with aliases, and its layout for the path check. Tested on the Qorikancha walk without retraining (below), the spot ranking and the message kind carried over, but the issue type did not, so a new place also needs a few labeled messages to check or retrain the issue-type head.
+**Reuse.** None of the heads refers to the farm's feature names: a new place needs its spot list with aliases, and its layout for the path check. Tested on the Qorikancha walk without retraining (below), the spot ranking and the message kind carried over. The issue type did not: it was right for 8 of 28 problems, and 3 of its confident answers were wrong. A new place therefore also needs a few labeled messages to check or retrain the issue-type head.
 
 ## Data
 
@@ -147,17 +147,22 @@ On the development Mac (Apple M5 Max, one inference thread):
 | Step | Node | Chromium 145 | Chromium, CPU slowed 6× |
 | --- | ---: | ---: | ---: |
 | Read, check and create the inference session | 0.5 s | | |
-| Embed the farm's 17 features (`prepareSite`) | | 1.8 to 2.1 s | 13.6 s |
+| Embed the farm's 17 features, first time (`prepareSite`) | | 1.8 to 2.2 s | 13.1 to 13.6 s |
+| Embed the Qorikancha walk's 14 spots, first time (`prepareSite`) | | 1.9 s | 11.5 s |
+| `prepareSite` again, vectors already stored | | 0 ms | 1 ms |
 | Embed the 27 label passages and the 17 features | 2.3 s | | |
-| One message, median | 26 ms | 29 ms | 185 ms |
+| One message, median | 26 ms | 25 to 38 ms | 156 to 221 ms |
 | One message, 95th percentile | 38 ms | | 255 ms |
-| First message after a cold restart, model stored (load, embed, answer) | | 2.7 to 2.9 s | 18.2 s |
+| First message after a cold restart, model and vectors stored | | 0.3 to 0.5 s | 1.9 s |
+| The same before spot and label vectors were stored | | 2.7 to 2.9 s | 18.2 s |
 
-No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. Feature embedding happens once per place and session, and `prepareSite` can do it before the first message.
+No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. A place's spots are embedded once, with one progress tick per spot, and `prepareSite` can do it before the first message; later sessions read the stored vectors.
 
 ## Offline
 
 `prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device.
+
+The embeddings of the label passages and of each place's spots are stored too, keyed by model files, revision, place and a hash of the exact passages, so any change to a spot's names, description or aliases means they are computed again. Message embeddings and answers are never stored: every message runs through the model. With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
 
 Checked with `scripts/language/browser.mjs` on a production build that uses the app's own service worker: after provisioning, Chromium was closed and reopened on the same profile with networking disabled. The page came from the service worker, the model state started `absent`, and a new message was understood with no network request. On iPhone, Safari deletes a site's stored data after seven days of browsing without a visit unless the site was added to the home screen, so the model would need downloading again.
 

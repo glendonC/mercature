@@ -58,7 +58,10 @@ async function open(offline) {
   return page;
 }
 
-const { messages } = await loadMessages();
+const placeName = split === 'route' ? 'route' : 'farm';
+const { messages } = split === 'route'
+  ? JSON.parse(await readFile(new URL('./route-messages.json', import.meta.url), 'utf8'))
+  : await loadMessages();
 const chosen = messages.filter(message => message.split === split);
 const result = { split, throttle, source: fromHub ? 'huggingface.co' : 'local files via redirect', userAgent: '' };
 try {
@@ -81,12 +84,12 @@ try {
   });
   result.provision = prepared;
   result.prepareSite = [
-    await page.evaluate(() => window.languageCheck.prepareSite()),
-    await page.evaluate(() => window.languageCheck.prepareSite()),
+    await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
+    await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
   ];
   const answers = [];
   for (const message of chosen) {
-    answers.push({ id: message.id, ...(await page.evaluate(text => window.languageCheck.understand(text), message.text)) });
+    answers.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });
   }
   result.answers = answers;
   const elapsed = answers.map(answer => answer.elapsedMs).sort((a, b) => a - b);
@@ -97,13 +100,15 @@ try {
   page = await open(true);
   const response = await page.goto(origin);
   await page.waitForFunction(() => 'languageCheck' in window);
-  const text = `The cart was blocking the path by the drying beds again (${crypto.randomUUID().slice(0, 8)}).`;
+  const text = placeName === 'route'
+    ? `The stone steps on Loreto near Maruri still have no handrail (${crypto.randomUUID().slice(0, 8)}).`
+    : `The cart was blocking the path by the drying beds again (${crypto.randomUUID().slice(0, 8)}).`;
   result.offline = {
     pageFromServiceWorker: response.fromServiceWorker(),
     stateBefore: await page.evaluate(() => window.languageCheck.modelState()),
     storedBefore: await page.evaluate(() => window.languageCheck.modelStored()),
     message: text,
-    answer: await page.evaluate(message => window.languageCheck.understand(message), text),
+    answer: await page.evaluate(([message, place]) => window.languageCheck.understand(message, place), [text, placeName]),
     stateAfter: await page.evaluate(() => window.languageCheck.modelState()),
   };
 } finally {
