@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react';
 import Companion from './Companion';
+import { useLanguage } from '../i18n';
 
 /** Follows the rendered feature, including projection, rotation, resize and scroll. */
 export default function ContextualGuide({stageRef, dockRef, selectedId, revision, tone}: {
@@ -9,6 +10,7 @@ export default function ContextualGuide({stageRef, dockRef, selectedId, revision
   revision: string;
   tone: 'guide' | 'evidence' | 'review';
 }) {
+  const { t } = useLanguage();
   const [anchor, setAnchor] = useState({left: 0, top: 0, contextual: false, ready: false, animate: false});
   useEffect(() => {
     const stage = stageRef.current, dock = dockRef.current;
@@ -39,6 +41,6 @@ export default function ContextualGuide({stageRef, dockRef, selectedId, revision
   return <div className={`contextual-guide${anchor.contextual ? ' at-feature' : ''}`} data-role={tone}
     data-feature={anchor.contextual ? selectedId : undefined}
     style={{transition: anchor.animate ? undefined : 'none', left: anchor.left, top: anchor.top, visibility: anchor.ready ? 'visible' : 'hidden'}}>
-    <Companion tone={tone}><span className="sr-only">{tone === 'evidence' ? 'Inspection guide' : tone === 'review' ? 'Review guide' : 'Place guide'}</span></Companion>
+    <Companion tone={tone}><span className="sr-only">{t(tone === 'evidence' ? 'guide.inspection' : tone === 'review' ? 'guide.review' : 'guide.place')}</span></Companion>
   </div>;
 }

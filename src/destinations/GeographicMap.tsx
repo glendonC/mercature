@@ -1,5 +1,6 @@
 import { useMemo, type Dispatch, type ReactNode, type Ref, type SetStateAction } from 'react';
 import { metres, type Coordinate, type Destination, type Photo } from './data';
+import { useLanguage } from '../i18n';
 
 /** Photos in the order they were captured; undated photos come last. */
 export function captureOrder(photos: readonly Photo[]): Photo[] {
@@ -37,29 +38,30 @@ type Props = {
   underlay?: ReactNode;
   /** A different framing of the same 800 by 500 map coordinates. */
   viewBox?: string;
-  /** The map's own words, for an interface in another language. */
+  /** The map's own words; the interface language's by default. */
   words?: MapWords;
 };
 export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: string };
-const ENGLISH: MapWords = { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Fit route', credit: '© OpenStreetMap contributors' };
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
-export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words = ENGLISH }: Props) {
+export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given }: Props) {
+  const { t } = useLanguage();
+  const words = given ?? { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const selectedView = data.views.find(v => v.id === selected), selectedPhoto = data.photos.find(p => p.id === selectedView?.photoId);
   const focus = zoom > 1 ? selectedPhoto?.position : undefined;
   const { project, scale } = useMemo(() => routeFrame(data, zoom, focus), [data, zoom, focus]);
   const line = (points: Coordinate[]) => points.map(p => project(p).join(',')).join(' ');
   const base = useMemo(() => <g className="map-base">
-    {data.buildings.map(feature => <path key={feature.id} d={[feature.points, ...feature.holes].map(ring => `M${ring.map(p => project(p).join(',')).join(' ')}Z`).join(' ')} fillRule="evenodd" className="map-building"><title>{feature.name || 'OpenStreetMap building'}</title></path>)}
+    {data.buildings.map(feature => <path key={feature.id} d={[feature.points, ...feature.holes].map(ring => `M${ring.map(p => project(p).join(',')).join(' ')}Z`).join(' ')} fillRule="evenodd" className="map-building"><title>{feature.name || t('map.building')}</title></path>)}
     {data.ways.map(feature => <polyline key={feature.id} points={feature.points.map(p => project(p).join(',')).join(' ')} className={feature.kind === 'steps' ? 'map-way map-steps' : feature.kind === 'residential' ? 'map-way map-street' : 'map-way'}><title>{feature.name || feature.kind}</title></polyline>)}
-  </g>, [data, project]);
+  </g>, [data, project, t]);
   const ordered = useMemo(() => captureOrder(data.photos), [data.photos]);
   const firstView = useMemo(() => new Map(data.views.map(view => [view.photoId, view.id] as const).reverse()), [data.views]);
   const visible = shown == null ? ordered : ordered.slice(0, shown);
   const selectedPosition = selectedPhoto && project(selectedPhoto.position), selectedHeading = selectedView?.heading ?? selectedPhoto?.heading;
   const scaleMetres = zoom > 1 ? 20 : 50;
   const target = project(data.target.position);
-  return <section className={`destination-map ${className}`} hidden={hidden} aria-label="Geographic source map"><svg ref={svgRef} viewBox={viewBox} role="group" aria-label="Recorded geographic route and source cameras">
+  return <section className={`destination-map ${className}`} hidden={hidden} aria-label={t('map.label')}><svg ref={svgRef} viewBox={viewBox} role="group" aria-label={t('map.svg')}>
     <rect width="800" height="500" className="map-ground"/>
     {base}
     {underlay}
@@ -68,7 +70,7 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
       const point = project(photo.position), viewId = firstView.get(photo.id);
       if (!viewId) return <circle key={photo.id} cx={point[0]} cy={point[1]} r="1.7" className="map-camera"/>;
       const chosen = selectedPhoto?.id === photo.id;
-      return <g key={photo.id} role="button" tabIndex={0} aria-label={`Inspect source photograph by ${photo.creator} on ${photo.capturedAt?.slice(0, 10) ?? 'unknown date'}`} aria-pressed={chosen} onClick={() => onSelect(viewId)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(viewId); } }}><circle cx={point[0]} cy={point[1]} r="12" fill="transparent"/><circle cx={point[0]} cy={point[1]} r={chosen ? 6 : 3.2} className={chosen ? 'map-camera-view is-selected' : 'map-camera-view'}/></g>;
+      return <g key={photo.id} role="button" tabIndex={0} aria-label={t('map.inspect', { creator: photo.creator, date: photo.capturedAt?.slice(0, 10) ?? t('map.unknownDate') })} aria-pressed={chosen} onClick={() => onSelect(viewId)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(viewId); } }}><circle cx={point[0]} cy={point[1]} r="12" fill="transparent"/><circle cx={point[0]} cy={point[1]} r={chosen ? 6 : 3.2} className={chosen ? 'map-camera-view is-selected' : 'map-camera-view'}/></g>;
     })}</g>
     {selectedPosition && selectedHeading != null && <path d="M0 0L-14 -31L14 -31Z" transform={`translate(${selectedPosition.join(' ')}) rotate(${selectedHeading})`} className="map-heading" pointerEvents="none"/>}
     <g transform={`translate(${target.join(' ')})`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>

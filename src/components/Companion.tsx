@@ -1,5 +1,6 @@
 import { BotAvatar } from "bot-avatars";
 import type { ReactNode } from "react";
+import { useLanguage } from "../i18n";
 export default function Companion({
   children,
   working = false,
@@ -9,8 +10,9 @@ export default function Companion({
   working?: boolean;
   tone?: "guide" | "evidence" | "review";
 }) {
+  const { t } = useLanguage();
   return (
-    <aside className="companion" aria-label="Place guide">
+    <aside className="companion" aria-label={t("guide.place")}>
       <span aria-hidden="true">
         <BotAvatar
           type={tone === "evidence" ? "clover" : "blob"}

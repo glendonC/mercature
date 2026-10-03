@@ -1,10 +1,12 @@
 import {useLayoutEffect, useState, type RefObject} from 'react';
+import { useLanguage } from '../i18n';
 
 /** Anchors message annotations to the renderer's actual projected spots. */
 export default function ScenePins({stageRef, spots, selectedId, onSelect, revision}: {
   stageRef: RefObject<HTMLDivElement | null>; spots: readonly {id: string; label: string}[];
   selectedId: string | null; onSelect: (id: string) => void; revision: string;
 }) {
+  const { t } = useLanguage();
   const [positions, setPositions] = useState<{id: string; label: string; x: number; y: number}[]>([]);
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -23,5 +25,5 @@ export default function ScenePins({stageRef, spots, selectedId, onSelect, revisi
     window.addEventListener('resize', update);
     return () => {observer.disconnect(); window.removeEventListener('resize', update);};
   }, [stageRef, spots, revision]);
-  return <div className="scene-pins" aria-label="Message spots">{positions.map((spot, index) => <button className="scene-pin" key={spot.id} style={{left: spot.x, top: spot.y}} onClick={() => onSelect(spot.id)} aria-label={`Message spot ${index + 1}: ${spot.label}`} aria-pressed={selectedId === spot.id}>{index + 1}</button>)}</div>;
+  return <div className="scene-pins" aria-label={t('pins.label')}>{positions.map((spot, index) => <button className="scene-pin" key={spot.id} style={{left: spot.x, top: spot.y}} onClick={() => onSelect(spot.id)} aria-label={t('pins.pin', {n: index + 1, label: spot.label})} aria-pressed={selectedId === spot.id}>{index + 1}</button>)}</div>;
 }

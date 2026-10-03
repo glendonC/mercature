@@ -27,6 +27,7 @@ import {
   type ImprovementPlan,
   type Origin,
 } from "../plans";
+import { useLanguage } from "../i18n";
 import "./workspace.css";
 export type WorkspaceProps = {
   initialPlan?: ImprovementPlan;
@@ -37,12 +38,6 @@ export type WorkspaceProps = {
   onSave: (plan: ImprovementPlan) => void;
 };
 type Step = "start" | "message" | "confirm" | "edit" | "compare" | "done";
-const outcome = (status: string) =>
-  status === "reachable"
-    ? "Connected"
-    : status === "blocked"
-      ? "Blocked"
-      : "Unknown";
 export default function Workspace({
   initialPlan,
   analysisResult,
@@ -51,6 +46,8 @@ export default function Workspace({
   onHome,
   onSave,
 }: WorkspaceProps) {
+  const { t, lang } = useLanguage();
+  const outcome = (status: string) => t(status === "reachable" ? "common.connected" : status === "blocked" ? "common.blocked" : "common.unknown");
   const initial = initialPlan?.project ?? initialProject;
   const [scene] = useState(() =>
     structuredClone(initial?.scene ?? NOOR_FARM.scene),
@@ -116,7 +113,7 @@ export default function Workspace({
       : null,
   );
   const [title, setTitle] = useState(
-    initialPlan?.title ?? "Review the visitor approach",
+    initialPlan?.title ?? t("ws.defaultTitle"),
   );
   const [decision, setDecision] = useState<ImprovementPlan["decision"]>(
     initialPlan?.decision ?? "planned",
@@ -152,7 +149,7 @@ export default function Workspace({
     id: scene.id, name: {en: scene.title, es: scene.title}, place: '', provenance: 'synthetic', scene, profile,
     features: inventory.map(item => ({id: item.id, name: {en: item.label, es: item.label}, description: '', aliases: {}})), placements: [],
   }, [scene, profile, inventory]);
-  const nameOf = (id: string) => site.features.find(item => item.id === id)?.name.en ?? inventory.find(item => item.id === id)?.label ?? id;
+  const nameOf = (id: string) => site.features.find(item => item.id === id)?.name[lang] ?? inventory.find(item => item.id === id)?.label ?? id;
   const target = confirmation?.targets[0]?.id ?? selected;
   const feature = scene.obstacles.find((o) => o.id === target);
   const selectedFeature = inventory.find((o) => o.id === selected);
@@ -181,9 +178,9 @@ export default function Workspace({
   }
   function confirm() {
     try {
-      if (!selectedFeature) throw new Error("Select a feature in the scene.");
+      if (!selectedFeature) throw new Error(t("ws.error.selectFeature"));
       if (mode === "concern" && !message.trim())
-        throw new Error("Add the visitor message first.");
+        throw new Error(t("ws.error.messageFirst"));
       const id = crypto.randomUUID();
       const next: Origin =
         mode === "concern"
@@ -229,7 +226,7 @@ export default function Workspace({
       setOrigin(next);
       setConfirmation(checked);
       setScenario(createScenario(scene, profile));
-      setTitle(`Review ${selectedFeature.label.toLocaleLowerCase()}`);
+      setTitle(t("ws.title.review", { feature: nameOf(selectedFeature.id).toLocaleLowerCase() }));
       setStep("edit");
       setSection("changes");
       setError("");
@@ -240,12 +237,10 @@ export default function Workspace({
   }
   function edit(operation: Operation) {
     try {
-      if (!editable) throw new Error("Confirm a movable feature first.");
+      if (!editable) throw new Error(t("ws.error.confirmMovable"));
       setScenario(appendOperation(scene, profile, scenario, operation));
       setComparison("proposed");
-      setTitle(
-        `${operation.kind === "move" ? "Move" : "Remove"} ${feature!.label.toLocaleLowerCase()}`,
-      );
+      setTitle(t(operation.kind === "move" ? "ws.title.move" : "ws.title.remove", { feature: nameOf(feature!.id).toLocaleLowerCase() }));
       if (placing) setView(viewBeforePlacement.current);
       setPlacing(false);
       setStep("compare");
@@ -254,7 +249,7 @@ export default function Workspace({
       placementDialog.current?.close();
     } catch (e) {
       const raw = (e as Error).message;
-      setError(/support|ground|unknown/i.test(raw) ? "The ground there isn’t mapped. Try another position." : /intersect|collision|overlap/i.test(raw) ? "Something is already there. Try another position." : /bounds|outside|edge/i.test(raw) ? "Too close to the edge. Try another position." : "That position can’t be checked. Try another position.");
+      setError(t(/support|ground|unknown/i.test(raw) ? "ws.error.unmapped" : /intersect|collision|overlap/i.test(raw) ? "ws.error.occupied" : /bounds|outside|edge/i.test(raw) ? "ws.error.edge" : "ws.error.position"));
     }
   }
   function changeProfile(next: Profile) {
@@ -272,7 +267,7 @@ export default function Workspace({
   }
   function save() {
     try {
-      if (!origin || !confirmation) throw new Error("Confirm a feature first.");
+      if (!origin || !confirmation) throw new Error(t("ws.error.confirmFirst"));
       const same = savedIdentity?.originHash === contentHash(origin);
       const next = createPlan({
         id: same ? savedIdentity!.id : crypto.randomUUID(),
@@ -293,7 +288,7 @@ export default function Workspace({
       setPlan(next);
       setStep("done");
       setError("");
-      setNotice("Saved on this device.");
+      setNotice(t("ws.saved"));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -309,7 +304,7 @@ export default function Workspace({
       a.download = `mercature-plan-${plan.id}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setNotice("Local backup downloaded.");
+      setNotice(t("ws.backupDone"));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -327,28 +322,27 @@ export default function Workspace({
   const selectedRecord = selectedFeature && 'evidence' in selectedFeature ? selectedFeature.evidence : [];
   const selectedBounds = selectedFeature && 'bounds' in selectedFeature ? selectedFeature.bounds : null;
   const candidateSpots = useMemo(() => (understanding?.candidates ?? analysisResult?.spots.map(item => item.id) ?? [])
-    .filter(id => inventory.some(item => item.id === id)).slice(0, 3).map(id => ({id, label: site.features.find(item => item.id === id)?.name.en ?? id})), [understanding, analysisResult, inventory, site]);
-  const categoryNames: Record<string, string> = {'path-blocked':'Blocked path','steps-or-slope':'Steps or slope','seating-or-shade':'Seating or shade','signs-or-language':'Signs or language',facilities:'Facilities',other:'Other'};
+    .filter(id => inventory.some(item => item.id === id)).slice(0, 3).map(id => ({id, label: site.features.find(item => item.id === id)?.name[lang] ?? id})), [understanding, analysisResult, inventory, site, lang]);
   const resultCard: AIResult | undefined = understanding && (understanding.status === 'ready' || understanding.status === 'unsure') ? {
-    messageType: understanding.kind ? understanding.kind[0].toUpperCase() + understanding.kind.slice(1) : 'Not sure',
-    issueType: understanding.category ? categoryNames[understanding.category] : '',
+    messageType: understanding.kind ? t(`kind.${understanding.kind}`) : t('common.notSure'),
+    issueType: understanding.category ? t(`issue.${understanding.category}`) : '',
     state: understanding.status === 'ready' ? 'matched' : 'not-sure', spots: candidateSpots,
   } : analysisResult;
-  const pins = useMemo(() => section === 'messages' ? candidateSpots : confirmation ? confirmation.targets.map(item => ({id: item.id, label: site.features.find(spot => spot.id === item.id)?.name.en ?? item.id})) : [], [section, candidateSpots, confirmation, site]);
-  const cue = thinking ? "Reading the visitor’s message."
-    : section === 'place' ? selected ? "This spot can be linked to a message or a plan." : "Select a spot to look closer, or bring in a visitor’s message."
-    : section === 'messages' ? step === 'confirm' ? understanding?.status === 'unavailable' ? "Choose the spot yourself. AI isn’t available on this device yet." : "Check the suggested spot before planning a fix." : "Start with the visitor’s own words."
-    : placing ? "Tap a new position to check it."
-    : plan ? "Your plan is saved on this device."
-    : reviewed ? newProblems.length ? "This fix creates another blocked path. Check it before saving." : improved.length ? "The path check improved. Review the result before saving." : "No path improved. Try another position or keep it for review."
-    : confirmation ? "Preview a fix. Nothing here changes the real place." : "Choose a spot to start a plan.";
+  const pins = useMemo(() => section === 'messages' ? candidateSpots : confirmation ? confirmation.targets.map(item => ({id: item.id, label: site.features.find(spot => spot.id === item.id)?.name[lang] ?? item.id})) : [], [section, candidateSpots, confirmation, site, lang]);
+  const cue = t(thinking ? "ws.cue.reading"
+    : section === 'place' ? selected ? "ws.cue.linkable" : "ws.cue.select"
+    : section === 'messages' ? step === 'confirm' ? understanding?.status === 'unavailable' ? "ws.cue.yourself" : "ws.cue.checkSuggested" : "ws.cue.ownWords"
+    : placing ? "ws.cue.tap"
+    : plan ? "ws.cue.saved"
+    : reviewed ? newProblems.length ? "ws.cue.newBlocked" : improved.length ? "ws.cue.improved" : "ws.cue.unchanged"
+    : confirmation ? "ws.cue.preview" : "ws.cue.choose");
   async function readMessage() {
     const ticket = ++request.current;
     setThinking(true); setError(''); setUnderstanding(null); setSelected(null);
     try {
       const result = await understand(message, site);
       if (ticket !== request.current) return;
-      if (result.status === 'invalid') {setError('Add a shorter message with some words.'); return;}
+      if (result.status === 'invalid') {setError(t('ws.error.shorter')); return;}
       setUnderstanding(result); setMode('concern'); setConfirmation(null); setOrigin(null);
       setScenario(createScenario(scene, profile)); setComparison('proposed'); materialDirty();
       setSelected(result.status === 'ready' && result.candidates[0] && inventory.some(item => item.id === result.candidates[0]) ? result.candidates[0] : null);
@@ -358,7 +352,7 @@ export default function Workspace({
   }
   async function loadModel() {
     setPreparingModel(true); setError('');
-    try {setModel(await prepareModel(setModel));} catch {setError('AI could not be prepared. You can choose the spot yourself.');}
+    try {setModel(await prepareModel(setModel));} catch {setError(t('ws.error.aiPrepare'));}
     finally {setPreparingModel(false);}
   }
   function switchSection(next: PlaceView) {setSection(next); setPlacing(false); setError('');}
@@ -366,67 +360,67 @@ export default function Workspace({
   function retryChange() {
     setScenario(createScenario(scene, profile)); setStep("edit"); setPlacing(false); setSelected(target); setComparison("proposed"); materialDirty();
   }
-  const spotPicker = <><label className="canvas-label" htmlFor="feature-choice">Choose a spot</label><select id="feature-choice" value={selected ?? ''} onChange={event => selectSpot(event.target.value)}><option value="" disabled>Select on the map or here</option>{inventory.map(item => <option key={item.id} value={item.id}>{nameOf(item.id)}</option>)}</select></>;
-  const selectedDetails = selectedFeature && <details className="feature-facts"><summary>Spot details</summary>
-    {selectedBounds && <p>{(selectedBounds.maxX-selectedBounds.minX).toFixed(1)} × {(selectedBounds.maxY-selectedBounds.minY).toFixed(1)} m footprint</p>}
+  const spotPicker = <><label className="canvas-label" htmlFor="feature-choice">{t('ws.chooseSpot')}</label><select id="feature-choice" value={selected ?? ''} onChange={event => selectSpot(event.target.value)}><option value="" disabled>{t('ws.selectHere')}</option>{inventory.map(item => <option key={item.id} value={item.id}>{nameOf(item.id)}</option>)}</select></>;
+  const selectedDetails = selectedFeature && <details className="feature-facts"><summary>{t('ws.spotDetails')}</summary>
+    {selectedBounds && <p>{t('ws.footprint', { width: (selectedBounds.maxX-selectedBounds.minX).toFixed(1), depth: (selectedBounds.maxY-selectedBounds.minY).toFixed(1) })}</p>}
     {selectedRecord.map((text,index) => <p key={index}>{text}</p>)}
     {'reason' in selectedFeature && <p>{selectedFeature.reason}</p>}
   </details>;
   const messagesOverview = <>
-    <span className="place-kicker">Visitor message</span><h1>What did they say?</h1>
-    <label className="sr-only" htmlFor="visitor-message">Original visitor message</label>
-    <textarea id="visitor-message" value={message} maxLength={4000} placeholder="Paste or type their message…" onChange={event => {
+    <span className="place-kicker">{t('ws.kicker.message')}</span><h1>{t('ws.messageTitle')}</h1>
+    <label className="sr-only" htmlFor="visitor-message">{t('ws.originalMessage')}</label>
+    <textarea id="visitor-message" value={message} maxLength={4000} placeholder={t('ws.messagePlaceholder')} onChange={event => {
       request.current++; setThinking(false); setMessage(event.target.value); setUnderstanding(null); setStep('message');
       if (/[\uac00-\ud7af]/.test(event.target.value)) setLanguage('ko');
     }} />
-    <label className="canvas-label" htmlFor="message-language">Message language</label>
-    <select id="message-language" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">Other</option></select>
-    <div className="canvas-actions"><button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{thinking ? 'Reading message…' : 'Find the spot'}</button></div>
-    <p className="canvas-note">Kept on this device.</p>
-    {model.status !== 'ready' && <details className="feature-facts"><summary>Use AI on this device</summary><p>Prepare it once while connected. You can also choose a spot yourself.</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? `${Math.round(model.loadedBytes / 1_000_000)} / ${Math.round(model.totalBytes / 1_000_000)} MB` : 'Preparing AI…' : 'Download AI (about 147 MB)'}</button></div></details>}
+    <label className="canvas-label" htmlFor="message-language">{t('ws.messageLanguage')}</label>
+    <select id="message-language" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">{t('common.otherLanguage')}</option></select>
+    <div className="canvas-actions"><button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{t(thinking ? 'ws.readingMessage' : 'ws.find')}</button></div>
+    <p className="canvas-note">{t('ws.kept')}</p>
+    {model.status !== 'ready' && <details className="feature-facts"><summary>{t('ws.useAi')}</summary><p>{t('ws.prepareOnce')}</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? t('ws.progress', { loaded: Math.round(model.loadedBytes / 1_000_000), total: Math.round(model.totalBytes / 1_000_000) }) : t('ws.preparingAi') : t('ws.downloadAi', { mb: 147 })}</button></div></details>}
   </>;
   const placeOverview = <>
-    <span className="place-kicker">Look around</span><h1>{site.name.en}</h1>
-    <p className="place-copy">{site.place || 'An editable example'}</p>
-    <ul className="spot-list" aria-label="Paths to destinations">{proposed.destinations.map(item => <li key={item.id}><button aria-pressed={selected === item.id} onClick={() => selectSpot(item.id)}><span className="spot-symbol" aria-hidden="true">◇</span><span>{nameOf(item.id)}</span><span className={`spot-state result-${item.status}`}>{outcome(item.status)}</span></button></li>)}</ul>
-    <div className="canvas-actions"><button className="primary" onClick={() => {setSection('messages'); if (step === 'start') setStep('message');}}>Add a visitor message</button></div>
-    {spotPicker}<p className="canvas-note">Path check on an example. Select a spot for details.</p>
+    <span className="place-kicker">{t('ws.kicker.look')}</span><h1>{site.name[lang]}</h1>
+    <p className="place-copy">{site.id === NOOR_FARM.id ? t('farm.place') : site.place || t('ws.editableExample')}</p>
+    <ul className="spot-list" aria-label={t('ws.paths')}>{proposed.destinations.map(item => <li key={item.id}><button aria-pressed={selected === item.id} onClick={() => selectSpot(item.id)}><span className="spot-symbol" aria-hidden="true">◇</span><span>{nameOf(item.id)}</span><span className={`spot-state result-${item.status}`}>{outcome(item.status)}</span></button></li>)}</ul>
+    <div className="canvas-actions"><button className="primary" onClick={() => {setSection('messages'); if (step === 'start') setStep('message');}}>{t('ws.addMessage')}</button></div>
+    {spotPicker}<p className="canvas-note">{t('ws.pathCheckNote')}</p>
   </>;
   const changesOverview = <>
-    <span className="place-kicker">Plan a fix</span><h1>{confirmation ? nameOf(target!) : 'No fixes yet'}</h1>
-    {!confirmation ? <><p className="place-copy">Start with a message or select a spot on the map.</p><div className="canvas-actions"><button className="primary" onClick={() => switchSection('place')}>Explore the place</button></div></> : <>
+    <span className="place-kicker">{t('ws.kicker.plan')}</span><h1>{confirmation ? nameOf(target!) : t('ws.noFixes')}</h1>
+    {!confirmation ? <><p className="place-copy">{t('ws.startWith')}</p><div className="canvas-actions"><button className="primary" onClick={() => switchSection('place')}>{t('ws.explore')}</button></div></> : <>
       {origin?.kind === 'concern' && <blockquote>{origin.originalText}</blockquote>}
-      {scenario.operations.length > 0 && <p className="place-copy">{scenario.operations.at(-1)?.kind === 'remove' ? 'Remove from this position' : 'Move to a new position'}</p>}
-      <table className="canvas-comparison" aria-label="All path results"><thead><tr><th>Path to</th><th>Before</th><th>After</th></tr></thead><tbody>{pathChanges.map(({before, after}) => <tr key={after.id} className={before.status === 'reachable' && after.status !== 'reachable' ? 'new-problem' : ''}><td>{nameOf(after.id)}</td><td className={`result-${before.status}`}>{outcome(before.status)}</td><td className={`result-${after.status}`}>{outcome(after.status)}</td></tr>)}</tbody></table>
-      {newProblems.length > 0 && <p className="guide-error" role="status">New problem: {newProblems.map(({after}) => nameOf(after.id)).join(', ')}</p>}
-      <div className="canvas-comparison-switch" aria-label="Compare scene"><button aria-pressed={comparison === 'original'} onClick={() => setComparison('original')}>Before</button><button aria-pressed={comparison === 'proposed'} onClick={() => setComparison('proposed')}>After</button></div>
-      <p className="canvas-note">Checks the proposed layout, not work done on site.</p>
+      {scenario.operations.length > 0 && <p className="place-copy">{t(scenario.operations.at(-1)?.kind === 'remove' ? 'ws.removeHere' : 'ws.moveNew')}</p>}
+      <table className="canvas-comparison" aria-label={t('ws.allResults')}><thead><tr><th>{t('ws.pathTo')}</th><th>{t('ws.before')}</th><th>{t('ws.after')}</th></tr></thead><tbody>{pathChanges.map(({before, after}) => <tr key={after.id} className={before.status === 'reachable' && after.status !== 'reachable' ? 'new-problem' : ''}><td>{nameOf(after.id)}</td><td className={`result-${before.status}`}>{outcome(before.status)}</td><td className={`result-${after.status}`}>{outcome(after.status)}</td></tr>)}</tbody></table>
+      {newProblems.length > 0 && <p className="guide-error" role="status">{t('ws.newProblem', { spots: newProblems.map(({after}) => nameOf(after.id)).join(', ') })}</p>}
+      <div className="canvas-comparison-switch" aria-label={t('ws.compare')}><button aria-pressed={comparison === 'original'} onClick={() => setComparison('original')}>{t('ws.before')}</button><button aria-pressed={comparison === 'proposed'} onClick={() => setComparison('proposed')}>{t('ws.after')}</button></div>
+      <p className="canvas-note">{t('ws.layoutOnly')}</p>
     </>}
   </>;
   const inspector = section === 'place' ? selectedFeature && <>
-    <div className="place-inspector-head"><span className="place-kicker">Selected spot</span><button className="place-dismiss" onClick={() => setSelected(null)} aria-label="Close spot details">×</button></div>
+    <div className="place-inspector-head"><span className="place-kicker">{t('canvas.selected')}</span><button className="place-dismiss" onClick={() => setSelected(null)} aria-label={t('ws.closeSpot')}>×</button></div>
     <h2>{nameOf(selectedFeature.id)}</h2><p className="place-copy">{site.features.find(item => item.id === selected)?.description}</p>
-    <div className="canvas-actions"><button className="primary" onClick={() => {setMode('proactive'); begin('proactive');}}>Plan a fix</button><button onClick={() => {setSection('messages'); setStep('message');}}>Link a visitor message</button></div>{selectedDetails}
+    <div className="canvas-actions"><button className="primary" onClick={() => {setMode('proactive'); begin('proactive');}}>{t('ws.planFix')}</button><button onClick={() => {setSection('messages'); setStep('message');}}>{t('ws.linkMessage')}</button></div>{selectedDetails}
   </> : section === 'messages' ? (step === 'confirm' || thinking) && <>
-    <span className="place-kicker">{thinking ? 'Reading message' : 'Check the spot'}</span><h2>{thinking ? 'Finding the right spot…' : 'Which spot is it about?'}</h2>
+    <span className="place-kicker">{t(thinking ? 'ws.kicker.reading' : 'ws.kicker.check')}</span><h2>{t(thinking ? 'ws.finding' : 'ws.which')}</h2>
     {resultCard && !thinking && <AIResultCard result={resultCard} selectedId={selected} onSpot={selectSpot} onNotSure={() => setSelected(null)} />}
-    {!thinking && <>{understanding?.status === 'unavailable' && <p className="place-copy">AI isn’t available. Choose a spot to continue.</p>}{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>Yes, this spot</button></div>{selectedDetails}</>}
+    {!thinking && <>{understanding?.status === 'unavailable' && <p className="place-copy">{t('ws.aiUnavailable')}</p>}{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>{t('ws.yesThis')}</button></div>{selectedDetails}</>}
   </> : confirmation || step === 'confirm' ? <>
-    <span className="place-kicker">{plan ? 'Saved plan' : reviewed ? 'Review the fix' : 'Try a position'}</span>
-    {step === 'confirm' ? <><h2>{selected ? nameOf(selected) : 'Choose a spot'}</h2>{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>Plan this fix</button></div></>
-    : plan ? <><h2>Plan saved.</h2><p className="place-copy">{title}</p><label className="canvas-label" htmlFor="visitor-reply">Reply to the visitor</label><select id="visitor-reply" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">Other</option></select><blockquote>{language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.'}</blockquote><p className="canvas-note">Pre-written reply{language === 'ko' ? ' · Korean wording needs review' : language !== 'en' && language !== 'es' ? ' · English fallback' : ''}</p><div className="canvas-actions"><button className="primary" onClick={() => void navigator.clipboard.writeText(language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.').then(() => setNotice('Reply copied.')).catch(() => setError('Copy the reply text above. Clipboard access is unavailable.'))}>Copy reply</button><button onClick={retryChange}>Try another fix</button><button onClick={backup}>Download backup</button></div></>
-    : reviewed ? <><h2>{newProblems.length ? 'A new path is blocked.' : improved.length ? 'Review your fix.' : 'The path check is unchanged.'}</h2><div className="canvas-actions"><button className={newProblems.length ? '' : 'primary'} onClick={save}>Save plan</button><button className={newProblems.length ? 'primary' : ''} onClick={retryChange}>Try another position</button></div><label className="canvas-label" htmlFor="plan-notes">Note for this plan</label><textarea id="plan-notes" value={notes} onChange={event => {setNotes(event.target.value); dirty();}} maxLength={4000} placeholder="What needs checking on site?" /></>
-    : <><h2>{placing ? 'Choose a position on the map.' : editable ? `Move ${nameOf(target!).toLowerCase()}` : 'Keep this for review.'}</h2><div className="canvas-actions">
-      {editable ? <>{!placing && site.placements.filter(item => item.featureId === target).map((item,index) => <button key={index} className={index === 0 ? 'primary' : ''} onClick={() => edit({kind:'move',objectId:target!,to:item.to})}>{item.name.en}</button>)}
-        <button onClick={() => {setSelected(target); viewBeforePlacement.current = view; setPlacing(true); setView('map'); setComparison('proposed');}}>Choose on map</button>
-        {placing && <><button onClick={() => placementDialog.current?.showModal()}>Enter a position</button><button onClick={() => {setPlacing(false); setView(viewBeforePlacement.current);}}>Cancel move</button></>}
-        <button onClick={() => edit({kind:'remove',objectId:target!})}>Remove from this position</button>
-      </> : <button className="primary" onClick={() => setStep('compare')}>Review plan</button>}
+    <span className="place-kicker">{t(plan ? 'ws.kicker.saved' : reviewed ? 'ws.kicker.review' : 'ws.kicker.try')}</span>
+    {step === 'confirm' ? <><h2>{selected ? nameOf(selected) : t('ws.chooseSpot')}</h2>{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>{t('ws.planThis')}</button></div></>
+    : plan ? <><h2>{t('ws.planSaved')}</h2><p className="place-copy">{title}</p><label className="canvas-label" htmlFor="visitor-reply">{t('ws.replyTo')}</label><select id="visitor-reply" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">{t('common.otherLanguage')}</option></select><blockquote>{language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.'}</blockquote><p className="canvas-note">{t('ws.prewritten')}{language === 'ko' ? t('ws.koReview') : language !== 'en' && language !== 'es' ? t('ws.fallback') : ''}</p><div className="canvas-actions"><button className="primary" onClick={() => void navigator.clipboard.writeText(language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.').then(() => setNotice(t('ws.copied'))).catch(() => setError(t('ws.error.clipboard')))}>{t('ws.copyReply')}</button><button onClick={retryChange}>{t('ws.tryFix')}</button><button onClick={backup}>{t('ws.downloadBackup')}</button></div></>
+    : reviewed ? <><h2>{t(newProblems.length ? 'ws.result.blocked' : improved.length ? 'ws.result.improved' : 'ws.result.unchanged')}</h2><div className="canvas-actions"><button className={newProblems.length ? '' : 'primary'} onClick={save}>{t('ws.savePlan')}</button><button className={newProblems.length ? 'primary' : ''} onClick={retryChange}>{t('ws.tryPosition')}</button></div><label className="canvas-label" htmlFor="plan-notes">{t('ws.planNote')}</label><textarea id="plan-notes" value={notes} onChange={event => {setNotes(event.target.value); dirty();}} maxLength={4000} placeholder={t('ws.planNotePlaceholder')} /></>
+    : <><h2>{placing ? t('ws.choosePosition') : editable ? t('ws.title.move', { feature: nameOf(target!).toLocaleLowerCase() }) : t('ws.keep')}</h2><div className="canvas-actions">
+      {editable ? <>{!placing && site.placements.filter(item => item.featureId === target).map((item,index) => <button key={index} className={index === 0 ? 'primary' : ''} onClick={() => edit({kind:'move',objectId:target!,to:item.to})}>{item.name[lang]}</button>)}
+        <button onClick={() => {setSelected(target); viewBeforePlacement.current = view; setPlacing(true); setView('map'); setComparison('proposed');}}>{t('ws.chooseOnMap')}</button>
+        {placing && <><button onClick={() => placementDialog.current?.showModal()}>{t('ws.enterPosition')}</button><button onClick={() => {setPlacing(false); setView(viewBeforePlacement.current);}}>{t('ws.cancelMove')}</button></>}
+        <button onClick={() => edit({kind:'remove',objectId:target!})}>{t('ws.removeHere')}</button>
+      </> : <button className="primary" onClick={() => setStep('compare')}>{t('ws.reviewPlan')}</button>}
     </div></>}
   </> : null;
   return (
-    <PlaceCanvas title={site.name.en} view={section} onView={switchSection} onHome={onHome} sceneRef={stageRef} dialogueRef={dockRef}
-      tools={<><button className="view-mode" aria-pressed={view === 'map'} onClick={() => setView(view === 'map' ? '3d' : 'map')}>{view === 'map' ? 'Map' : '3D'}</button><button ref={optionsButton} popoverTarget={optionsId} aria-label="Scene options">Options</button></>}
+    <PlaceCanvas title={site.name[lang]} view={section} onView={switchSection} onHome={onHome} sceneRef={stageRef} dialogueRef={dockRef}
+      tools={<><button className="view-mode" aria-pressed={view === 'map'} onClick={() => setView(view === 'map' ? '3d' : 'map')}>{t(view === 'map' ? 'common.map' : 'common.3d')}</button><button ref={optionsButton} popoverTarget={optionsId} aria-label={t('ws.sceneOptions')}>{t('common.options')}</button></>}
       scene={<><SpatialView controlsTarget={controlsTarget} returnFocus={() => optionsButton.current?.focus()} rotation={rotation} onRotationChange={setRotation}
         scene={comparison === 'original' ? scene : applied} result={comparison === 'original' ? baseline : proposed} selectedId={selected} onSelect={selectSpot} view={view} compact evidenceScene={scene}
         onPlace={placing ? point => edit({kind:'move',objectId:target!,to:point}) : undefined} />
@@ -440,8 +434,8 @@ export default function Workspace({
       <div popover="auto" id={optionsId} ref={options} className="scene-options" onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) options.current?.hidePopover();
       }}>
-        <p>{site.name.en} <span>Example</span></p>
-        <div className="segmented" aria-label="Workspace view">
+        <p>{site.name[lang]} <span>{t('common.example')}</span></p>
+        <div className="segmented" aria-label={t('ws.viewMode')}>
           {(["map", "3d", "split"] as const).map((v) => (
             <button
               key={v}
@@ -451,37 +445,34 @@ export default function Workspace({
                 if (v !== "map") setPlacing(false);
               }}
             >
-              {v === "map" ? "Map" : v === "3d" ? "3D" : "Split"}
+              {t(v === "map" ? "common.map" : v === "3d" ? "common.3d" : "common.split")}
             </button>
           ))}
         </div>
         {scenario.operations.length > 0 && (
           <div className="scenario-tools">
             <button className="quiet-button" onClick={undo}>
-              Undo fix
+              {t("ws.undo")}
             </button>
           </div>
         )}
 
         <div ref={setControlsTarget} />
-        <div className="scene-options-links"><button onClick={() => details.current?.showModal()}>Details</button><button onClick={onHome} aria-label="Home">Return home</button></div>
+        <div className="scene-options-links"><button onClick={() => details.current?.showModal()}>{t('common.details')}</button><button onClick={onHome} aria-label={t('common.home')}>{t('common.returnHome')}</button></div>
       </div>
-      <dialog onClose={() => optionsButton.current?.focus()} ref={details} className="guide-dialog" aria-label="Plan details">
+      <dialog onClose={() => optionsButton.current?.focus()} ref={details} className="guide-dialog" aria-label={t("ws.planDetails")}>
         <header>
-          <h2>Plan details</h2>
+          <h2>{t("ws.planDetails")}</h2>
           <button
             onClick={() => details.current?.close()}
-            aria-label="Close details"
+            aria-label={t("ws.closeDetails")}
           >
             ×
           </button>
         </header>
-        <p className="subtle-line">
-          All geometry in this example is authored. No real site has been
-          measured.
-        </p>
+        <p className="subtle-line">{t("ws.authored")}</p>
         <label>
-          Plan title
+          {t("ws.planTitle")}
           <input
             value={title}
             maxLength={160}
@@ -492,22 +483,22 @@ export default function Workspace({
           />
         </label>
         <label>
-          Decision
+          {t("ws.decision")}
           <select
-            aria-label="Decision"
+            aria-label={t("ws.decision")}
             value={decision}
             onChange={(e) => {
               setDecision(e.target.value as ImprovementPlan["decision"]);
               dirty();
             }}
           >
-            <option value="planned">Proposed</option>
-            <option value="approved">Approved for action</option>
-            <option value="rejected">Rejected</option>
+            <option value="planned">{t("ws.decision.planned")}</option>
+            <option value="approved">{t("ws.decision.approved")}</option>
+            <option value="rejected">{t("ws.decision.rejected")}</option>
           </select>
         </label>
         <label>
-          Next actions and unresolved questions
+          {t("ws.nextActions")}
           <textarea
             rows={3}
             value={notes}
@@ -520,22 +511,19 @@ export default function Workspace({
         </label>
         {origin?.kind === "concern" && (
           <details>
-            <summary>Original visitor message</summary>
+            <summary>{t("ws.originalMessage")}</summary>
             <p>{origin.originalText}</p>
-            <p>Private report · kept on this device.</p>
+            <p>{t("ws.private")}</p>
           </details>
         )}
         <details>
-          <summary>Movement requirements</summary>
-          <p>
-            Illustrative square envelope; not a wheelchair prescription or
-            regulatory standard.
-          </p>
+          <summary>{t("ws.movement")}</summary>
+          <p>{t("ws.envelope")}</p>
           <div className="field-row">
             <label>
-              Width (m)
+              {t("ws.width")}
               <input
-                aria-label="Square width in metres"
+                aria-label={t("ws.widthLabel")}
                 type="number"
                 step="0.1"
                 value={profile.width}
@@ -545,9 +533,9 @@ export default function Workspace({
               />
             </label>
             <label>
-              Headroom (m)
+              {t("ws.headroom")}
               <input
-                aria-label="Headroom in metres"
+                aria-label={t("ws.headroomLabel")}
                 type="number"
                 step="0.1"
                 value={profile.height}
@@ -579,34 +567,19 @@ export default function Workspace({
                   })
                 }
               />
-              {
-                {
-                  turning: "Turning",
-                  longitudinalSlope: "Slope",
-                  crossSlope: "Cross-slope",
-                  multilevel: "Movement between levels",
-                }[k]
-              }{" "}
-              required (unsupported)
+              {t("ws.required", { requirement: t(`ws.req.${k}`) })}
             </label>
           ))}
         </details>
         <details>
-          <summary>What this check includes</summary>
-          <p>
-            {baseline.reachableArea.toFixed(2)} m² connected originally;{" "}
-            {proposed.reachableArea.toFixed(2)} m² proposed. These are
-            envelope-centre assessment areas, not usable floor area. Unknown:{" "}
-            {proposed.unknownArea.toFixed(2)} m².
-          </p>
+          <summary>{t("ws.includes")}</summary>
+          <p>{t("ws.areas", { before: baseline.reachableArea.toFixed(2), after: proposed.reachableArea.toFixed(2), unknown: proposed.unknownArea.toFixed(2) })}</p>
           <ul>
             {[...proposed.unsupported, ...proposed.assumptions].map((x) => (
               <li key={x}>{x}</li>
             ))}
           </ul>
-          <p>
-            Approving a plan does not mean physical work has been completed.
-          </p>
+          <p>{t("ws.notCompleted")}</p>
         </details>
         {confirmation && (
           <button
@@ -616,27 +589,25 @@ export default function Workspace({
               details.current?.close();
             }}
           >
-            Save plan
+            {t("ws.savePlan")}
           </button>
         )}
       </dialog>
       <dialog
         ref={placementDialog}
         className="guide-dialog"
-        aria-label="Exact placement"
+        aria-label={t("ws.placement")}
       >
         <header>
-          <h2>Place the object</h2>
+          <h2>{t("ws.placeObject")}</h2>
           <button
             onClick={() => placementDialog.current?.close()}
-            aria-label="Close placement"
+            aria-label={t("ws.closePlacement")}
           >
             ×
           </button>
         </header>
-        <p>
-          Minimum X/Y corner in metres. The position must fit known support.
-        </p>
+        <p>{t("ws.corner")}</p>
         <div className="field-row">
           <label>
             X (m)
@@ -666,7 +637,7 @@ export default function Workspace({
           className="primary"
           onClick={() => {
             if (!move.x.trim() || !move.y.trim()) {
-              setError("Enter both coordinates.");
+              setError(t("ws.error.coordinates"));
               return;
             }
             edit({
@@ -676,7 +647,7 @@ export default function Workspace({
             });
           }}
         >
-          Preview move
+          {t("ws.previewMove")}
         </button>
       </dialog>
     </PlaceCanvas>
