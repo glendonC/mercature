@@ -1,0 +1,5080 @@
+{
+  "report": {
+    "split": "test",
+    "variant": "quantized",
+    "heads": "b6a40a3cfcfa",
+    "thresholds": {
+      "kind": 0.76,
+      "category": 0.55,
+      "place": 0.58,
+      "margin": 0.005
+    },
+    "overall": {
+      "messages": 88,
+      "top1": "51/64 (80%)",
+      "top3": "57/64 (89%)",
+      "kind": "67/88 (76%)",
+      "category": "25/48 (52%)",
+      "placeOrNot": "77/80 (96%)",
+      "ready": "26/88 (30%)",
+      "readyCorrect": "19/26 (73%)",
+      "expected": "80/88 (91%)",
+      "aliasHit": "48/64 (75%)",
+      "aliasExactlyRight": "44/64 (69%)"
+    },
+    "byLanguage": {
+      "en": {
+        "messages": 22,
+        "top1": "15/16 (94%)",
+        "top3": "16/16 (100%)",
+        "kind": "19/22 (86%)",
+        "category": "7/12 (58%)",
+        "placeOrNot": "19/20 (95%)",
+        "ready": "10/22 (45%)",
+        "readyCorrect": "7/10 (70%)",
+        "expected": "20/22 (91%)",
+        "aliasHit": "15/16 (94%)",
+        "aliasExactlyRight": "15/16 (94%)"
+      },
+      "es": {
+        "messages": 22,
+        "top1": "16/16 (100%)",
+        "top3": "16/16 (100%)",
+        "kind": "19/22 (86%)",
+        "category": "8/12 (67%)",
+        "placeOrNot": "20/20 (100%)",
+        "ready": "6/22 (27%)",
+        "readyCorrect": "5/6 (83%)",
+        "expected": "21/22 (95%)",
+        "aliasHit": "15/16 (94%)",
+        "aliasExactlyRight": "14/16 (88%)"
+      },
+      "ko": {
+        "messages": 22,
+        "top1": "15/16 (94%)",
+        "top3": "15/16 (94%)",
+        "kind": "18/22 (82%)",
+        "category": "8/12 (67%)",
+        "placeOrNot": "19/20 (95%)",
+        "ready": "10/22 (45%)",
+        "readyCorrect": "7/10 (70%)",
+        "expected": "18/22 (82%)",
+        "aliasHit": "16/16 (100%)",
+        "aliasExactlyRight": "14/16 (88%)"
+      },
+      "qu": {
+        "messages": 22,
+        "top1": "5/16 (31%)",
+        "top3": "10/16 (63%)",
+        "kind": "11/22 (50%)",
+        "category": "2/12 (17%)",
+        "placeOrNot": "19/20 (95%)",
+        "ready": "0/22 (0%)",
+        "readyCorrect": "n/a",
+        "expected": "21/22 (95%)",
+        "aliasHit": "2/16 (13%)",
+        "aliasExactlyRight": "1/16 (6%)"
+      }
+    },
+    "byCase": {
+      "direct": {
+        "messages": 24,
+        "asExpected": "21/24 (88%)"
+      },
+      "indirect": {
+        "messages": 8,
+        "asExpected": "7/8 (88%)"
+      },
+      "vague": {
+        "messages": 8,
+        "asExpected": "7/8 (88%)"
+      },
+      "question-place": {
+        "messages": 8,
+        "asExpected": "7/8 (88%)"
+      },
+      "praise-place": {
+        "messages": 8,
+        "asExpected": "8/8 (100%)"
+      },
+      "negation": {
+        "messages": 8,
+        "asExpected": "8/8 (100%)"
+      },
+      "question-general": {
+        "messages": 8,
+        "asExpected": "6/8 (75%)"
+      },
+      "off-topic": {
+        "messages": 4,
+        "asExpected": "4/4 (100%)"
+      },
+      "two-concerns": {
+        "messages": 4,
+        "asExpected": "4/4 (100%)"
+      },
+      "resolved": {
+        "messages": 4,
+        "asExpected": "4/4 (100%)"
+      },
+      "praise-general": {
+        "messages": 4,
+        "asExpected": "4/4 (100%)"
+      }
+    },
+    "twoConcernsBothInTop3": "4/4 (100%)",
+    "noPlaceLeftEmpty": {
+      "model": "14/16 (88%)",
+      "alias": "16/16 (100%)"
+    },
+    "aliasSuggestsPlaceOnPraiseNegationResolved": "16/20 (80%)",
+    "reasons": {
+      "ready": 26,
+      "unclear-kind": 49,
+      "no-place": 11,
+      "unclear-place": 2
+    },
+    "speed": {
+      "readAndVerifyMs": 61,
+      "sessionMs": 455,
+      "siteIndexMs": 2474,
+      "perMessageP50Ms": 26.3,
+      "perMessageP95Ms": 42.8,
+      "perMessageMaxMs": 51.3
+    },
+    "bytes": {
+      "modelFiles": 135391358,
+      "runtimeWasm": 11133407,
+      "heads": 16689
+    },
+    "host": {
+      "node": "v24.15.0",
+      "cpu": "Apple M5 Max",
+      "threads": 1,
+      "runtime": "onnxruntime-web 1.22.0-dev.20250409-89f8206ba4 wasm (CPU)"
+    }
+  },
+  "failures": [
+    {
+      "id": "f001-en",
+      "case": "direct",
+      "text": "Hi Noor, the wheelbarrow was parked right across the path and I had to lift my son's stroller around it. Could it be kept off to the side?",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "path-blocked"
+        ],
+        "places": [
+          "wheelbarrow"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "bench",
+          "muddy-patch"
+        ]
+      },
+      "top3": [
+        "wheelbarrow",
+        "bench",
+        "muddy-patch"
+      ]
+    },
+    {
+      "id": "f001-es",
+      "case": "direct",
+      "text": "Hola Noor, la carretilla estaba atravesada en pleno camino y tuve que cargar el coche de mi hijo para pasar. ¿La podrían dejar a un costado?",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "path-blocked"
+        ],
+        "places": [
+          "wheelbarrow"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "tasting-hut",
+          "steps-to-rows"
+        ]
+      },
+      "top3": [
+        "wheelbarrow",
+        "tasting-hut",
+        "steps-to-rows"
+      ]
+    },
+    {
+      "id": "f005-ko",
+      "case": "indirect",
+      "text": "가운데 있는 큰 나무 뿌리가 땅 위로 불룩 튀어나와 있어서 엄마가 걸려 넘어지실 뻔했어요.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "shade-tree"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "bench"
+        ]
+      },
+      "top3": [
+        "shade-tree",
+        "muddy-patch",
+        "bench"
+      ]
+    },
+    {
+      "id": "f005-qu",
+      "case": "indirect",
+      "text": "Chawpipi kaq hatun sach'aq saphinkunaqa allpa hawapim kashan. Mamay mitk'aspa yaqa urmarqan.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "shade-tree"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "shade-tree"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "drying-beds",
+        "muddy-patch",
+        "shade-tree"
+      ]
+    },
+    {
+      "id": "f008-en",
+      "case": "vague",
+      "text": "Some parts of the walk were slippery and steep, hard going for my mother.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": []
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "steps-or-slope",
+        "candidates": [
+          "muddy-patch",
+          "entrance-gate",
+          "steps-to-rows"
+        ]
+      },
+      "top3": [
+        "muddy-patch",
+        "entrance-gate",
+        "steps-to-rows"
+      ]
+    },
+    {
+      "id": "f013-ko",
+      "case": "direct",
+      "text": "환영 간판이 스페인어로만 되어 있어서 한 글자도 못 읽었어요. 영어도 같이 있으면 좋겠어요.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "signs-or-language"
+        ],
+        "places": [
+          "welcome-sign"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "tasting-table",
+          "bench"
+        ]
+      },
+      "top3": [
+        "welcome-sign",
+        "tasting-table",
+        "bench"
+      ]
+    },
+    {
+      "id": "f017-ko",
+      "case": "question-place",
+      "text": "혹시 화장실 입구에 턱이 있나요? 어머니가 지팡이를 짚으셔서요.",
+      "expected": {
+        "kind": "question",
+        "category": [],
+        "places": [
+          "restroom"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [
+          "restroom",
+          "viewpoint",
+          "bench"
+        ]
+      },
+      "top3": [
+        "restroom",
+        "viewpoint",
+        "bench"
+      ]
+    },
+    {
+      "id": "f017-qu",
+      "case": "question-place",
+      "text": "Huk tapuy: bañoq punkunpi grada kanchu? Mamay k'aspiwan purin.",
+      "expected": {
+        "kind": "question",
+        "category": [],
+        "places": [
+          "restroom"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "drying-beds",
+        "muddy-patch",
+        "coffee-sacks"
+      ]
+    },
+    {
+      "id": "f022-qu",
+      "case": "negation",
+      "text": "Café sach'akunaman uraykuna rumi gradakunaqa manam llusk'achu karqan. Taytay k'aspinwan allinta uraykurqan.",
+      "expected": {
+        "kind": "praise",
+        "category": [],
+        "places": [
+          "steps-to-rows"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ]
+    },
+    {
+      "id": "f031-qu",
+      "case": "direct",
+      "text": "Bañopi mana papel karqanchu.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "facilities"
+        ],
+        "places": [
+          "restroom"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "bench",
+          "muddy-patch",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "bench",
+        "muddy-patch",
+        "restroom"
+      ]
+    },
+    {
+      "id": "f037-qu",
+      "case": "direct",
+      "text": "Café sach'akunaman uraykuna rumi gradakunaqa ancha qhatam, mana hap'ikunapaq imapas kanchu. Hatun mamay mana uraykuyta atirqanchu.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-to-rows"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ]
+    },
+    {
+      "id": "f047-en",
+      "case": "resolved",
+      "text": "The gate used to stick, but now it opens easily. Thanks for fixing it!",
+      "expected": {
+        "kind": "praise",
+        "category": [],
+        "places": [
+          "entrance-gate"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "entrance-gate",
+          "terrace"
+        ]
+      },
+      "top3": [
+        "welcome-sign",
+        "entrance-gate",
+        "terrace"
+      ]
+    },
+    {
+      "id": "f047-qu",
+      "case": "resolved",
+      "text": "Ñawpaqqa punku sasatam kicharikurqan, kunanqa mana sasachu kicharikun. Sulpayki allichasqaykimanta!",
+      "expected": {
+        "kind": "praise",
+        "category": [],
+        "places": [
+          "entrance-gate"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "drying-beds",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "muddy-patch",
+        "drying-beds",
+        "roasting-shed"
+      ]
+    },
+    {
+      "id": "f050-ko",
+      "case": "indirect",
+      "text": "원두 말리는 곳은 틀 사이 간격이 너무 좁아서 한 줄로 지나가야 했고 유모차는 아예 안 들어갔어요.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "path-blocked"
+        ],
+        "places": [
+          "drying-beds"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "muddy-patch",
+          "viewpoint"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "steps-to-rows",
+        "muddy-patch",
+        "viewpoint"
+      ]
+    },
+    {
+      "id": "f050-qu",
+      "case": "indirect",
+      "text": "Café ch'akichinankupiqa ñan ancha k'ullkum, wawa carritoqa mana yaykurqanchu.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "path-blocked"
+        ],
+        "places": [
+          "drying-beds"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "coffee-sacks",
+        "tasting-table",
+        "tasting-hut"
+      ]
+    },
+    {
+      "id": "f051-qu",
+      "case": "praise-place",
+      "text": "Café malliy mesaqa ancha sumaqmi karqan. Tawa cafékunata mallirqayku, llapanmi misk'i karqan.",
+      "expected": {
+        "kind": "praise",
+        "category": [],
+        "places": [
+          "tasting-table"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ]
+    },
+    {
+      "id": "f056-qu",
+      "case": "direct",
+      "text": "Bancaqa p'akisqam, huk k'ullun kuyushan. Mamay mana tiyaspa samarikuyta atirqanchu.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "seating-or-shade"
+        ],
+        "places": [
+          "bench"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "tasting-hut",
+          "bench"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "drying-beds",
+        "tasting-hut",
+        "bench"
+      ]
+    },
+    {
+      "id": "f062-qu",
+      "case": "direct",
+      "text": "Café hank'ana wasimanta q'usñi uyaykuman chayamusharqan, uhuspalla uyarirqayku.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "other"
+        ],
+        "places": [
+          "roasting-shed"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "coffee-sacks",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "tasting-table",
+        "coffee-sacks",
+        "roasting-shed"
+      ]
+    },
+    {
+      "id": "f065-qu",
+      "case": "question-place",
+      "text": "Café sach'akunaman uraykunapaq hayk'a gradataq kan? Hap'ikunapaq imapas kanchu?",
+      "expected": {
+        "kind": "question",
+        "category": [],
+        "places": [
+          "steps-to-rows"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ]
+    },
+    {
+      "id": "f072-ko",
+      "case": "question-general",
+      "text": "투어 끝나고 집에 가져갈 원두 좀 살수 있을까요?",
+      "expected": {
+        "kind": "question",
+        "category": [],
+        "places": []
+      },
+      "got": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "roasting-shed",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-place"
+      },
+      "top3": [
+        "steps-to-rows",
+        "roasting-shed",
+        "coffee-sacks"
+      ]
+    },
+    {
+      "id": "f072-qu",
+      "case": "question-general",
+      "text": "Tour tukuptin, wasiyman apanaypaq cafeta rantiyta atiymanchu?",
+      "expected": {
+        "kind": "question",
+        "category": [],
+        "places": []
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "drying-beds",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "tasting-table",
+        "drying-beds",
+        "coffee-sacks"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "f001-en",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "bench",
+          "muddy-patch"
+        ]
+      },
+      "ranked": [
+        "wheelbarrow",
+        "bench",
+        "muddy-patch",
+        "steps-to-rows",
+        "roasting-shed",
+        "welcome-sign",
+        "terrace",
+        "viewpoint",
+        "restroom",
+        "shade-tree",
+        "drying-beds",
+        "entrance-gate",
+        "water-tank",
+        "tasting-hut",
+        "coffee-sacks",
+        "tasting-table",
+        "flower-pots"
+      ],
+      "kind": [
+        0.04527067955168134,
+        0.04874023150167959,
+        0.905989088946639
+      ],
+      "category": [
+        0.249183479084366,
+        0.17825255802939682,
+        0.45560869195502196,
+        0.006459842411958281,
+        0.0012790798728302,
+        0.10921634864642679
+      ],
+      "place": 0.999992003184965,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 38.45933399999967
+    },
+    {
+      "id": "f001-es",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "tasting-hut",
+          "steps-to-rows"
+        ]
+      },
+      "ranked": [
+        "wheelbarrow",
+        "tasting-hut",
+        "steps-to-rows",
+        "welcome-sign",
+        "muddy-patch",
+        "drying-beds",
+        "shade-tree",
+        "coffee-sacks",
+        "water-tank",
+        "entrance-gate",
+        "restroom",
+        "roasting-shed",
+        "bench",
+        "terrace",
+        "viewpoint",
+        "tasting-table",
+        "flower-pots"
+      ],
+      "kind": [
+        0.06341734178193002,
+        0.021031499218579566,
+        0.9155511589994905
+      ],
+      "category": [
+        0.45641035485051545,
+        0.04728518167471943,
+        0.18071437610749252,
+        0.14966940396332237,
+        0.006711843822240057,
+        0.15920883958171006
+      ],
+      "place": 0.999541564228447,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 37.047250000000076
+    },
+    {
+      "id": "f001-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "entrance-gate",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "wheelbarrow",
+        "entrance-gate",
+        "restroom",
+        "viewpoint",
+        "roasting-shed",
+        "muddy-patch",
+        "steps-to-rows",
+        "terrace",
+        "shade-tree",
+        "water-tank",
+        "welcome-sign",
+        "tasting-hut",
+        "bench",
+        "tasting-table",
+        "flower-pots",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.1808598170250223,
+        0.6807867418902395,
+        0.13835344108473818
+      ],
+      "category": [
+        0.581458766542523,
+        0.15876599821187662,
+        0.15045947697113782,
+        0.006020717302457605,
+        0.006141451478815417,
+        0.09715358949318967
+      ],
+      "place": 0.9998794170730263,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 42.820500000000266
+    },
+    {
+      "id": "f001-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "tasting-hut",
+          "welcome-sign"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "wheelbarrow",
+        "tasting-hut",
+        "welcome-sign",
+        "drying-beds",
+        "restroom",
+        "steps-to-rows",
+        "roasting-shed",
+        "muddy-patch",
+        "coffee-sacks",
+        "shade-tree",
+        "entrance-gate",
+        "water-tank",
+        "bench",
+        "flower-pots",
+        "tasting-table",
+        "viewpoint",
+        "terrace"
+      ],
+      "kind": [
+        0.0391651760553682,
+        0.8519680478767928,
+        0.10886677606783901
+      ],
+      "category": [
+        0.0018096120206258846,
+        0.0034954378359187336,
+        0.9482956536062973,
+        0.018394670392307005,
+        0.008718084088025449,
+        0.01928654205682552
+      ],
+      "place": 0.9988916829695355,
+      "baseline": [],
+      "ms": 45.82154199999968
+    },
+    {
+      "id": "f005-en",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "shade-tree",
+        "muddy-patch",
+        "steps-to-rows",
+        "flower-pots",
+        "roasting-shed",
+        "water-tank",
+        "entrance-gate",
+        "viewpoint",
+        "bench",
+        "coffee-sacks",
+        "drying-beds",
+        "terrace",
+        "tasting-hut",
+        "wheelbarrow",
+        "welcome-sign",
+        "tasting-table",
+        "restroom"
+      ],
+      "kind": [
+        0.7101465818787558,
+        0.2761992095305181,
+        0.013654208590726058
+      ],
+      "category": [
+        0.1855691968778893,
+        0.105028350344505,
+        0.1350460984405401,
+        0.0066136762569963285,
+        0.00009580655049304293,
+        0.5676468715295762
+      ],
+      "place": 0.9992167359291192,
+      "baseline": [
+        "shade-tree"
+      ],
+      "ms": 27.146666000000096
+    },
+    {
+      "id": "f005-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "shade-tree",
+        "muddy-patch",
+        "steps-to-rows",
+        "roasting-shed",
+        "tasting-hut",
+        "flower-pots",
+        "terrace",
+        "drying-beds",
+        "bench",
+        "viewpoint",
+        "tasting-table",
+        "entrance-gate",
+        "wheelbarrow",
+        "coffee-sacks",
+        "water-tank",
+        "restroom",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.7559019181663404,
+        0.13509774439607022,
+        0.1090003374375894
+      ],
+      "category": [
+        0.09362755498395527,
+        0.4530882390269547,
+        0.2462859606019766,
+        0.00412662240359011,
+        0.0009024334461611237,
+        0.20196918953736206
+      ],
+      "place": 0.9981164466485504,
+      "baseline": [
+        "shade-tree"
+      ],
+      "ms": 25.6479589999999
+    },
+    {
+      "id": "f005-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "bench"
+        ]
+      },
+      "ranked": [
+        "shade-tree",
+        "muddy-patch",
+        "bench",
+        "terrace",
+        "wheelbarrow",
+        "entrance-gate",
+        "tasting-hut",
+        "flower-pots",
+        "viewpoint",
+        "steps-to-rows",
+        "welcome-sign",
+        "tasting-table",
+        "restroom",
+        "roasting-shed",
+        "water-tank",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.7927872939024041,
+        0.20713322834540998,
+        0.00007947775218596881
+      ],
+      "category": [
+        0.7033090587163232,
+        0.10960278760089942,
+        0.10434145718590272,
+        0.03531720789130768,
+        0.003049814090515825,
+        0.044379674515051114
+      ],
+      "place": 0.9999863340178768,
+      "baseline": [
+        "shade-tree"
+      ],
+      "ms": 30.599500000000262
+    },
+    {
+      "id": "f005-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "shade-tree"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "muddy-patch",
+        "shade-tree",
+        "flower-pots",
+        "tasting-hut",
+        "coffee-sacks",
+        "roasting-shed",
+        "steps-to-rows",
+        "viewpoint",
+        "restroom",
+        "terrace",
+        "bench",
+        "tasting-table",
+        "wheelbarrow",
+        "entrance-gate",
+        "water-tank",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.08618423453825151,
+        0.8642789481851512,
+        0.04953681727659739
+      ],
+      "category": [
+        0.0003771825193577861,
+        0.016169714115665243,
+        0.9564941750510269,
+        0.00013480553397446203,
+        0.0007692219712908744,
+        0.026054900808684826
+      ],
+      "place": 0.9999947957313391,
+      "baseline": [],
+      "ms": 35.37433400000009
+    },
+    {
+      "id": "f008-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "steps-or-slope",
+        "candidates": [
+          "muddy-patch",
+          "entrance-gate",
+          "steps-to-rows"
+        ]
+      },
+      "ranked": [
+        "muddy-patch",
+        "entrance-gate",
+        "steps-to-rows",
+        "terrace",
+        "viewpoint",
+        "bench",
+        "tasting-hut",
+        "wheelbarrow",
+        "restroom",
+        "shade-tree",
+        "drying-beds",
+        "roasting-shed",
+        "flower-pots",
+        "coffee-sacks",
+        "tasting-table",
+        "welcome-sign",
+        "water-tank"
+      ],
+      "kind": [
+        0.9868527255652512,
+        0.013124013262116955,
+        0.000023261172631901514
+      ],
+      "category": [
+        0.18621542451779602,
+        0.8130682803091407,
+        0.00023201048527490305,
+        0.0000026203097779239723,
+        0.00003193725242427532,
+        0.0004497271255860653
+      ],
+      "place": 0.9175685905006985,
+      "baseline": [],
+      "ms": 21.62395800000013
+    },
+    {
+      "id": "f008-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "restroom",
+        "tasting-hut",
+        "steps-to-rows",
+        "roasting-shed",
+        "bench",
+        "shade-tree",
+        "entrance-gate",
+        "terrace",
+        "wheelbarrow",
+        "tasting-table",
+        "coffee-sacks",
+        "viewpoint",
+        "flower-pots",
+        "welcome-sign",
+        "water-tank",
+        "drying-beds",
+        "muddy-patch"
+      ],
+      "kind": [
+        0.7431088444280927,
+        0.25661804726569976,
+        0.0002731083062073753
+      ],
+      "category": [
+        0.3828130186290364,
+        0.48148706620383663,
+        0.03549426506854552,
+        0.007107358706402543,
+        0.002070588657203213,
+        0.09102770273497576
+      ],
+      "place": 0.05331105337612352,
+      "baseline": [],
+      "ms": 26.363166000000092
+    },
+    {
+      "id": "f008-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "wheelbarrow",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "muddy-patch",
+        "wheelbarrow",
+        "entrance-gate",
+        "terrace",
+        "viewpoint",
+        "bench",
+        "tasting-hut",
+        "steps-to-rows",
+        "shade-tree",
+        "restroom",
+        "welcome-sign",
+        "flower-pots",
+        "roasting-shed",
+        "water-tank",
+        "drying-beds",
+        "tasting-table",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.9811202374873322,
+        0.01879900649678257,
+        0.00008075601588529645
+      ],
+      "category": [
+        0.4726244818636059,
+        0.46155204863253674,
+        0.0020329590922678496,
+        0.003259501382622286,
+        0.0005539204950639197,
+        0.059977088533903385
+      ],
+      "place": 0.834027464924706,
+      "baseline": [],
+      "ms": 26.223124999999982
+    },
+    {
+      "id": "f008-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "shade-tree",
+          "flower-pots",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "shade-tree",
+        "flower-pots",
+        "roasting-shed",
+        "muddy-patch",
+        "tasting-hut",
+        "restroom",
+        "drying-beds",
+        "coffee-sacks",
+        "wheelbarrow",
+        "steps-to-rows",
+        "tasting-table",
+        "water-tank",
+        "entrance-gate",
+        "viewpoint",
+        "bench",
+        "terrace",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.005890824570255422,
+        0.993355067169842,
+        0.0007541082599026936
+      ],
+      "category": [
+        0.006920464766221599,
+        0.03065991529815943,
+        0.9107540024370877,
+        0.00020829800963990914,
+        0.0019713749758531176,
+        0.049485944513038185
+      ],
+      "place": 0.9995204249241455,
+      "baseline": [],
+      "ms": 29.64804200000026
+    },
+    {
+      "id": "f013-en",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "bench",
+          "viewpoint"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "welcome-sign",
+        "bench",
+        "viewpoint",
+        "restroom",
+        "tasting-hut",
+        "entrance-gate",
+        "water-tank",
+        "wheelbarrow",
+        "steps-to-rows",
+        "muddy-patch",
+        "shade-tree",
+        "roasting-shed",
+        "tasting-table",
+        "drying-beds",
+        "terrace",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.5201001457210689,
+        0.44632362034468526,
+        0.033576233934245754
+      ],
+      "category": [
+        0.000054803178973684055,
+        0.0000011309609119975554,
+        0.0006251737577243144,
+        0.9982048194706731,
+        0.000022365844196155394,
+        0.001091706787520796
+      ],
+      "place": 0.999818718838754,
+      "baseline": [
+        "welcome-sign"
+      ],
+      "ms": 27.781459000000268
+    },
+    {
+      "id": "f013-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "entrance-gate",
+          "wheelbarrow"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "welcome-sign",
+        "entrance-gate",
+        "wheelbarrow",
+        "bench",
+        "tasting-table",
+        "restroom",
+        "flower-pots",
+        "steps-to-rows",
+        "muddy-patch",
+        "shade-tree",
+        "roasting-shed",
+        "tasting-hut",
+        "terrace",
+        "viewpoint",
+        "drying-beds",
+        "water-tank",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.710931877875149,
+        0.24253711844439982,
+        0.04653100368045134
+      ],
+      "category": [
+        0.001003816810657792,
+        0.00007693807222319536,
+        0.004699288876544646,
+        0.7988453654526457,
+        0.0002933949262841002,
+        0.19508119586164457
+      ],
+      "place": 0.8123440551965303,
+      "baseline": [
+        "welcome-sign"
+      ],
+      "ms": 31.480332999999973
+    },
+    {
+      "id": "f013-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "tasting-table",
+          "bench"
+        ]
+      },
+      "ranked": [
+        "welcome-sign",
+        "tasting-table",
+        "bench",
+        "terrace",
+        "entrance-gate",
+        "restroom",
+        "viewpoint",
+        "shade-tree",
+        "wheelbarrow",
+        "water-tank",
+        "tasting-hut",
+        "steps-to-rows",
+        "flower-pots",
+        "roasting-shed",
+        "drying-beds",
+        "muddy-patch",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.12907072951783288,
+        0.868909463157547,
+        0.0020198073246202107
+      ],
+      "category": [
+        0.0021714745697492786,
+        0.0000990013210477748,
+        0.006098168130399134,
+        0.9835084906601144,
+        0.0019651251144104276,
+        0.006157740204279043
+      ],
+      "place": 0.9900715250386878,
+      "baseline": [
+        "welcome-sign"
+      ],
+      "ms": 26.854291999999987
+    },
+    {
+      "id": "f013-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "restroom",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "welcome-sign",
+        "restroom",
+        "drying-beds",
+        "tasting-table",
+        "coffee-sacks",
+        "flower-pots",
+        "wheelbarrow",
+        "tasting-hut",
+        "shade-tree",
+        "muddy-patch",
+        "entrance-gate",
+        "steps-to-rows",
+        "water-tank",
+        "roasting-shed",
+        "bench",
+        "terrace",
+        "viewpoint"
+      ],
+      "kind": [
+        0.0047545896792395605,
+        0.960676803182804,
+        0.03456860713795638
+      ],
+      "category": [
+        0.0007628128138351273,
+        0.006462768533481556,
+        0.8666585431046182,
+        0.026311934421328974,
+        0.01376243010742357,
+        0.08604151101931247
+      ],
+      "place": 0.9996312416813299,
+      "baseline": [],
+      "ms": 51.274875000000065
+    },
+    {
+      "id": "f017-en",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "restroom",
+          "steps-to-rows",
+          "entrance-gate"
+        ]
+      },
+      "ranked": [
+        "restroom",
+        "steps-to-rows",
+        "entrance-gate",
+        "terrace",
+        "muddy-patch",
+        "roasting-shed",
+        "drying-beds",
+        "coffee-sacks",
+        "bench",
+        "welcome-sign",
+        "tasting-table",
+        "tasting-hut",
+        "viewpoint",
+        "water-tank",
+        "flower-pots",
+        "wheelbarrow",
+        "shade-tree"
+      ],
+      "kind": [
+        0.006592879617053459,
+        0.0014889984804805905,
+        0.9919181219024661
+      ],
+      "category": [
+        0.013280695068827227,
+        0.8715609999685112,
+        0.02905403532247404,
+        0.0012435855330816014,
+        0.04483309895197341,
+        0.04002758515513282
+      ],
+      "place": 0.9999896427864913,
+      "baseline": [
+        "restroom"
+      ],
+      "ms": 25.751208000000133
+    },
+    {
+      "id": "f017-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "steps-to-rows",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "restroom",
+        "steps-to-rows",
+        "entrance-gate",
+        "bench",
+        "tasting-hut",
+        "drying-beds",
+        "welcome-sign",
+        "muddy-patch",
+        "viewpoint",
+        "flower-pots",
+        "wheelbarrow",
+        "water-tank",
+        "tasting-table",
+        "terrace",
+        "roasting-shed",
+        "coffee-sacks",
+        "shade-tree"
+      ],
+      "kind": [
+        0.5023044652100218,
+        0.01524998595090494,
+        0.48244554883907337
+      ],
+      "category": [
+        0.046507889586195596,
+        0.3654410586615303,
+        0.07025906518967143,
+        0.045048430705428986,
+        0.20539873695114683,
+        0.26734481890602685
+      ],
+      "place": 0.9991518656614791,
+      "baseline": [
+        "entrance-gate",
+        "restroom"
+      ],
+      "ms": 24.9760839999999
+    },
+    {
+      "id": "f017-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [
+          "restroom",
+          "viewpoint",
+          "bench"
+        ]
+      },
+      "ranked": [
+        "restroom",
+        "viewpoint",
+        "bench",
+        "entrance-gate",
+        "welcome-sign",
+        "muddy-patch",
+        "water-tank",
+        "steps-to-rows",
+        "roasting-shed",
+        "terrace",
+        "wheelbarrow",
+        "tasting-hut",
+        "tasting-table",
+        "drying-beds",
+        "flower-pots",
+        "shade-tree",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.7668620709331085,
+        0.004775324190855207,
+        0.22836260487603607
+      ],
+      "category": [
+        0.009302374721408548,
+        0.12984855581825933,
+        0.05844509314535612,
+        0.014635994034778154,
+        0.07473996707945364,
+        0.7130280152007441
+      ],
+      "place": 0.9999989563454673,
+      "baseline": [
+        "entrance-gate",
+        "restroom"
+      ],
+      "ms": 25.39345800000001
+    },
+    {
+      "id": "f017-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "muddy-patch",
+        "coffee-sacks",
+        "restroom",
+        "flower-pots",
+        "tasting-hut",
+        "roasting-shed",
+        "steps-to-rows",
+        "shade-tree",
+        "tasting-table",
+        "bench",
+        "water-tank",
+        "wheelbarrow",
+        "terrace",
+        "entrance-gate",
+        "welcome-sign",
+        "viewpoint"
+      ],
+      "kind": [
+        0.005322047201571823,
+        0.0002095608213243224,
+        0.9944683919771038
+      ],
+      "category": [
+        0.0007556207661376193,
+        0.06880526401845029,
+        0.5895330566499378,
+        0.09696761869372975,
+        0.024465956344871833,
+        0.21947248352687282
+      ],
+      "place": 0.9994153275753389,
+      "baseline": [],
+      "ms": 27.129417000000103
+    },
+    {
+      "id": "f020-en",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "shade-tree",
+          "welcome-sign"
+        ]
+      },
+      "ranked": [
+        "viewpoint",
+        "shade-tree",
+        "welcome-sign",
+        "steps-to-rows",
+        "terrace",
+        "flower-pots",
+        "entrance-gate",
+        "tasting-hut",
+        "roasting-shed",
+        "muddy-patch",
+        "water-tank",
+        "wheelbarrow",
+        "tasting-table",
+        "drying-beds",
+        "bench",
+        "restroom",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.004846952513933138,
+        0.9290728870197739,
+        0.06608016046629282
+      ],
+      "category": [
+        0.03885916173703371,
+        0.01512928947865825,
+        0.14383165964655895,
+        0.000012384371772441608,
+        0.000003111699123438974,
+        0.8021643930668533
+      ],
+      "place": 0.919655520070799,
+      "baseline": [
+        "viewpoint"
+      ],
+      "ms": 24.039958999999726
+    },
+    {
+      "id": "f020-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "welcome-sign",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "viewpoint",
+        "welcome-sign",
+        "steps-to-rows",
+        "muddy-patch",
+        "shade-tree",
+        "tasting-hut",
+        "terrace",
+        "entrance-gate",
+        "roasting-shed",
+        "water-tank",
+        "restroom",
+        "drying-beds",
+        "wheelbarrow",
+        "flower-pots",
+        "tasting-table",
+        "bench",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.019690553471817102,
+        0.6958254185383457,
+        0.2844840279898372
+      ],
+      "category": [
+        0.022375823875976975,
+        0.04343061218973936,
+        0.16989059075617402,
+        0.00004726352052448064,
+        0.00003598184423376227,
+        0.7642197278133513
+      ],
+      "place": 0.9934143514061465,
+      "baseline": [
+        "viewpoint"
+      ],
+      "ms": 22.706166000000394
+    },
+    {
+      "id": "f020-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "steps-to-rows",
+          "muddy-patch"
+        ]
+      },
+      "ranked": [
+        "viewpoint",
+        "steps-to-rows",
+        "muddy-patch",
+        "terrace",
+        "bench",
+        "shade-tree",
+        "restroom",
+        "entrance-gate",
+        "water-tank",
+        "welcome-sign",
+        "wheelbarrow",
+        "flower-pots",
+        "drying-beds",
+        "roasting-shed",
+        "tasting-table",
+        "tasting-hut",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.00584204117614545,
+        0.9938343310990531,
+        0.00032362772480166416
+      ],
+      "category": [
+        0.0432395007735627,
+        0.049407729436709125,
+        0.16801076865360037,
+        0.000039407114030339123,
+        0.0003146068500291149,
+        0.7389879871720684
+      ],
+      "place": 0.9896378056794595,
+      "baseline": [
+        "viewpoint"
+      ],
+      "ms": 20.730792000000292
+    },
+    {
+      "id": "f020-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "welcome-sign",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "viewpoint",
+        "welcome-sign",
+        "muddy-patch",
+        "shade-tree",
+        "drying-beds",
+        "tasting-hut",
+        "terrace",
+        "flower-pots",
+        "roasting-shed",
+        "wheelbarrow",
+        "restroom",
+        "water-tank",
+        "steps-to-rows",
+        "coffee-sacks",
+        "entrance-gate",
+        "tasting-table",
+        "bench"
+      ],
+      "kind": [
+        0.001638769117557881,
+        0.9983360767044256,
+        0.000025154178016512857
+      ],
+      "category": [
+        0.0030913950996186634,
+        0.026140616378935472,
+        0.8950177034956822,
+        0.00005748357540372795,
+        0.0007470321699130365,
+        0.07494576928044702
+      ],
+      "place": 0.9997687239352349,
+      "baseline": [],
+      "ms": 30.584791999999652
+    },
+    {
+      "id": "f022-en",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "tasting-table"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "tasting-table",
+        "tasting-hut",
+        "roasting-shed",
+        "viewpoint",
+        "drying-beds",
+        "muddy-patch",
+        "bench",
+        "welcome-sign",
+        "restroom",
+        "entrance-gate",
+        "flower-pots",
+        "terrace",
+        "water-tank",
+        "shade-tree",
+        "wheelbarrow"
+      ],
+      "kind": [
+        0.018911450569918994,
+        0.9810858269563021,
+        0.00000272247377878944
+      ],
+      "category": [
+        0.4824529646338855,
+        0.31439522529683167,
+        0.15824893332479412,
+        0.00022112103280733054,
+        0.009321876992717486,
+        0.03535987871896402
+      ],
+      "place": 0.9999813525782278,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 30.653334000000086
+    },
+    {
+      "id": "f022-es",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "tasting-table",
+          "coffee-sacks"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "tasting-table",
+        "coffee-sacks",
+        "tasting-hut",
+        "viewpoint",
+        "welcome-sign",
+        "roasting-shed",
+        "restroom",
+        "bench",
+        "drying-beds",
+        "terrace",
+        "flower-pots",
+        "muddy-patch",
+        "shade-tree",
+        "entrance-gate",
+        "wheelbarrow",
+        "water-tank"
+      ],
+      "kind": [
+        0.0139568860101871,
+        0.986027076472565,
+        0.000016037517247716354
+      ],
+      "category": [
+        0.18599975441367914,
+        0.21276665678982468,
+        0.5112551771206922,
+        0.0008511486520557421,
+        0.08299482494348225,
+        0.00613243808026606
+      ],
+      "place": 0.9999983580859291,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 29.70254100000011
+    },
+    {
+      "id": "f022-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "viewpoint",
+          "muddy-patch"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "viewpoint",
+        "muddy-patch",
+        "coffee-sacks",
+        "welcome-sign",
+        "tasting-table",
+        "bench",
+        "shade-tree",
+        "wheelbarrow",
+        "water-tank",
+        "drying-beds",
+        "entrance-gate",
+        "flower-pots",
+        "terrace",
+        "roasting-shed",
+        "restroom",
+        "tasting-hut"
+      ],
+      "kind": [
+        0.11378887461665137,
+        0.8861344298877712,
+        0.00007669549557755031
+      ],
+      "category": [
+        0.6111596961140352,
+        0.17224375958669882,
+        0.15817690455936154,
+        0.005492354511213319,
+        0.009403702303804787,
+        0.04352358292488635
+      ],
+      "place": 0.9998867437518616,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 32.41012499999988
+    },
+    {
+      "id": "f022-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds",
+        "tasting-hut",
+        "steps-to-rows",
+        "roasting-shed",
+        "flower-pots",
+        "muddy-patch",
+        "shade-tree",
+        "terrace",
+        "restroom",
+        "viewpoint",
+        "water-tank",
+        "wheelbarrow",
+        "bench",
+        "entrance-gate",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.042297314720540685,
+        0.9564664053114001,
+        0.001236279968059165
+      ],
+      "category": [
+        0.0005688839179466567,
+        0.007913564001930952,
+        0.9674489491499295,
+        0.0003593320675267644,
+        0.015260787874565843,
+        0.00844848298810022
+      ],
+      "place": 0.9999984329079044,
+      "baseline": [],
+      "ms": 39.424625000000106
+    },
+    {
+      "id": "f024-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "terrace",
+        "tasting-hut",
+        "restroom",
+        "viewpoint",
+        "wheelbarrow",
+        "drying-beds",
+        "tasting-table",
+        "roasting-shed",
+        "entrance-gate",
+        "shade-tree",
+        "water-tank",
+        "bench",
+        "muddy-patch",
+        "flower-pots",
+        "coffee-sacks",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.00003162010611115632,
+        0.000017843314481292636,
+        0.9999505365794075
+      ],
+      "category": [
+        0.0001980744868741288,
+        0.014821484100570041,
+        0.007041041729845353,
+        0.00043417406740420077,
+        0.0001344700142628992,
+        0.9773707556010434
+      ],
+      "place": 2.181655798305076e-7,
+      "baseline": [],
+      "ms": 18.973291000000245
+    },
+    {
+      "id": "f024-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "restroom",
+        "tasting-hut",
+        "terrace",
+        "steps-to-rows",
+        "shade-tree",
+        "water-tank",
+        "tasting-table",
+        "entrance-gate",
+        "roasting-shed",
+        "welcome-sign",
+        "viewpoint",
+        "flower-pots",
+        "wheelbarrow",
+        "drying-beds",
+        "muddy-patch",
+        "bench",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.000046200229632472635,
+        0.000015961332949961718,
+        0.9999378384374177
+      ],
+      "category": [
+        0.00010228603586755047,
+        0.00037275367476511436,
+        0.0006717382257346182,
+        0.00006842480016597588,
+        0.0000037459152377633682,
+        0.9987810513482289
+      ],
+      "place": 1.8717706116780426e-7,
+      "baseline": [],
+      "ms": 21.765499999999975
+    },
+    {
+      "id": "f024-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "terrace",
+        "tasting-table",
+        "restroom",
+        "entrance-gate",
+        "wheelbarrow",
+        "viewpoint",
+        "roasting-shed",
+        "tasting-hut",
+        "bench",
+        "welcome-sign",
+        "flower-pots",
+        "water-tank",
+        "steps-to-rows",
+        "shade-tree",
+        "muddy-patch",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.0034254275497122458,
+        0.00039425922904457334,
+        0.9961803132212431
+      ],
+      "category": [
+        0.00007109459104731902,
+        0.00006737391452459781,
+        0.0008149773110734745,
+        0.00011726521667728497,
+        0.0000028825118884023198,
+        0.998926406454789
+      ],
+      "place": 4.086254301855028e-7,
+      "baseline": [],
+      "ms": 19.129625000000487
+    },
+    {
+      "id": "f024-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "muddy-patch",
+        "shade-tree",
+        "restroom",
+        "water-tank",
+        "steps-to-rows",
+        "drying-beds",
+        "coffee-sacks",
+        "flower-pots",
+        "roasting-shed",
+        "wheelbarrow",
+        "tasting-hut",
+        "tasting-table",
+        "entrance-gate",
+        "terrace",
+        "viewpoint",
+        "welcome-sign",
+        "bench"
+      ],
+      "kind": [
+        0.0004503480080691603,
+        0.00011990949943668462,
+        0.9994297424924942
+      ],
+      "category": [
+        0.0021954004805167385,
+        0.19495190508323298,
+        0.12388956707109207,
+        0.03942575990738144,
+        0.019831329496203302,
+        0.6197060379615735
+      ],
+      "place": 0.3495180108808359,
+      "baseline": [],
+      "ms": 28.89483300000029
+    },
+    {
+      "id": "f029-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "viewpoint",
+        "entrance-gate",
+        "tasting-hut",
+        "restroom",
+        "terrace",
+        "bench",
+        "welcome-sign",
+        "drying-beds",
+        "tasting-table",
+        "shade-tree",
+        "water-tank",
+        "steps-to-rows",
+        "roasting-shed",
+        "wheelbarrow",
+        "muddy-patch",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.9439485398692626,
+        0.04879545416157134,
+        0.007256005969166164
+      ],
+      "category": [
+        0.007103018419391769,
+        0.003070287895648642,
+        0.04788451611997187,
+        0.00040366125749722367,
+        0.00001701975754310143,
+        0.9415214965499473
+      ],
+      "place": 0.0032451404550055286,
+      "baseline": [],
+      "ms": 19.703459000000294
+    },
+    {
+      "id": "f029-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "shade-tree",
+        "welcome-sign",
+        "tasting-hut",
+        "entrance-gate",
+        "restroom",
+        "terrace",
+        "tasting-table",
+        "bench",
+        "drying-beds",
+        "steps-to-rows",
+        "viewpoint",
+        "water-tank",
+        "roasting-shed",
+        "wheelbarrow",
+        "muddy-patch",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.7950417868761437,
+        0.17954287375573785,
+        0.025415339368118475
+      ],
+      "category": [
+        0.06214639720818992,
+        0.024326441193947067,
+        0.2117510995700423,
+        0.004374214496899552,
+        0.0004448685362801498,
+        0.696956978994641
+      ],
+      "place": 0.00027277921728095745,
+      "baseline": [],
+      "ms": 18.216959000000315
+    },
+    {
+      "id": "f029-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "terrace",
+        "viewpoint",
+        "entrance-gate",
+        "roasting-shed",
+        "tasting-hut",
+        "tasting-table",
+        "wheelbarrow",
+        "restroom",
+        "steps-to-rows",
+        "bench",
+        "shade-tree",
+        "welcome-sign",
+        "muddy-patch",
+        "drying-beds",
+        "coffee-sacks",
+        "flower-pots",
+        "water-tank"
+      ],
+      "kind": [
+        0.35063670469511377,
+        0.6475146530472932,
+        0.0018486422575931477
+      ],
+      "category": [
+        0.09378295530248336,
+        0.03784443317148186,
+        0.2708449660661135,
+        0.007411098813016983,
+        0.0008037281142892258,
+        0.589312818532615
+      ],
+      "place": 0.00004247182804096822,
+      "baseline": [],
+      "ms": 22.15887500000008
+    },
+    {
+      "id": "f029-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "shade-tree",
+        "drying-beds",
+        "welcome-sign",
+        "viewpoint",
+        "muddy-patch",
+        "roasting-shed",
+        "entrance-gate",
+        "bench",
+        "restroom",
+        "terrace",
+        "tasting-hut",
+        "wheelbarrow",
+        "tasting-table",
+        "water-tank",
+        "steps-to-rows",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.0036474812341253304,
+        0.9956101997629719,
+        0.0007423190029028614
+      ],
+      "category": [
+        0.0024996543792936278,
+        0.0030367806865188455,
+        0.9249500148852786,
+        0.0001419160537420302,
+        0.00012272545855688147,
+        0.06924890853661003
+      ],
+      "place": 0.4073544962099497,
+      "baseline": [],
+      "ms": 26.28520800000024
+    },
+    {
+      "id": "f031-en",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "welcome-sign",
+          "water-tank"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "restroom",
+        "welcome-sign",
+        "water-tank",
+        "roasting-shed",
+        "muddy-patch",
+        "bench",
+        "drying-beds",
+        "terrace",
+        "tasting-hut",
+        "tasting-table",
+        "steps-to-rows",
+        "wheelbarrow",
+        "entrance-gate",
+        "flower-pots",
+        "coffee-sacks",
+        "viewpoint",
+        "shade-tree"
+      ],
+      "kind": [
+        0.31021650881877416,
+        0.11154291957871756,
+        0.5782405716025083
+      ],
+      "category": [
+        0.000014890771959180532,
+        0.0004313261773631106,
+        0.0070788641992480875,
+        0.00035417634688525706,
+        0.9902767060483925,
+        0.0018440364561518707
+      ],
+      "place": 0.9999006220419737,
+      "baseline": [
+        "restroom"
+      ],
+      "ms": 12.636457999999948
+    },
+    {
+      "id": "f031-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "welcome-sign",
+          "water-tank"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "restroom",
+        "welcome-sign",
+        "water-tank",
+        "drying-beds",
+        "muddy-patch",
+        "tasting-hut",
+        "bench",
+        "roasting-shed",
+        "wheelbarrow",
+        "flower-pots",
+        "coffee-sacks",
+        "entrance-gate",
+        "viewpoint",
+        "tasting-table",
+        "steps-to-rows",
+        "terrace",
+        "shade-tree"
+      ],
+      "kind": [
+        0.36423238839315963,
+        0.4913650388031384,
+        0.14440257280370192
+      ],
+      "category": [
+        0.000012583437801206818,
+        0.00016126899726549122,
+        0.0016652065028238256,
+        0.0001497243311202309,
+        0.9978513846482617,
+        0.00015983208272752968
+      ],
+      "place": 0.9999402738656079,
+      "baseline": [
+        "restroom"
+      ],
+      "ms": 14.876207999999679
+    },
+    {
+      "id": "f031-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "facilities",
+        "candidates": [
+          "restroom",
+          "drying-beds",
+          "welcome-sign"
+        ]
+      },
+      "ranked": [
+        "restroom",
+        "drying-beds",
+        "welcome-sign",
+        "bench",
+        "water-tank",
+        "roasting-shed",
+        "muddy-patch",
+        "tasting-hut",
+        "tasting-table",
+        "terrace",
+        "wheelbarrow",
+        "entrance-gate",
+        "steps-to-rows",
+        "viewpoint",
+        "flower-pots",
+        "coffee-sacks",
+        "shade-tree"
+      ],
+      "kind": [
+        0.8746192281987832,
+        0.09103537546019197,
+        0.03434539634102484
+      ],
+      "category": [
+        0.0011608623769144863,
+        0.0032444228268780316,
+        0.025013980311408696,
+        0.03922962133592553,
+        0.9130573268692801,
+        0.01829378627959328
+      ],
+      "place": 0.9998270600158634,
+      "baseline": [
+        "restroom"
+      ],
+      "ms": 11.558874999999716
+    },
+    {
+      "id": "f031-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "bench",
+          "muddy-patch",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "muddy-patch",
+        "restroom",
+        "tasting-hut",
+        "welcome-sign",
+        "roasting-shed",
+        "drying-beds",
+        "water-tank",
+        "steps-to-rows",
+        "wheelbarrow",
+        "shade-tree",
+        "flower-pots",
+        "entrance-gate",
+        "terrace",
+        "viewpoint",
+        "tasting-table",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.9071371307087839,
+        0.09285966516925903,
+        0.0000032041219570858814
+      ],
+      "category": [
+        0.011109927463526278,
+        0.00007644326125842298,
+        0.27850997563889746,
+        0.39183006651107155,
+        0.3172831915006911,
+        0.0011903956245551846
+      ],
+      "place": 0.9991029357638332,
+      "baseline": [],
+      "ms": 14.08599999999933
+    },
+    {
+      "id": "f037-en",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "roasting-shed",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "roasting-shed",
+        "muddy-patch",
+        "tasting-table",
+        "coffee-sacks",
+        "flower-pots",
+        "viewpoint",
+        "shade-tree",
+        "drying-beds",
+        "bench",
+        "tasting-hut",
+        "terrace",
+        "water-tank",
+        "entrance-gate",
+        "restroom",
+        "wheelbarrow",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.7566246217090156,
+        0.23770577964338752,
+        0.005669598647596805
+      ],
+      "category": [
+        0.5493160788386093,
+        0.34117630376557134,
+        0.06606120043416971,
+        0.011825864395260557,
+        0.00915769413426431,
+        0.02246285843212472
+      ],
+      "place": 0.9994790079744333,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 33.62299999999959
+    },
+    {
+      "id": "f037-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "tasting-table"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "tasting-table",
+        "tasting-hut",
+        "muddy-patch",
+        "drying-beds",
+        "roasting-shed",
+        "viewpoint",
+        "terrace",
+        "welcome-sign",
+        "flower-pots",
+        "wheelbarrow",
+        "restroom",
+        "bench",
+        "entrance-gate",
+        "shade-tree",
+        "water-tank"
+      ],
+      "kind": [
+        0.8897624704807044,
+        0.10696485147858867,
+        0.0032726780407068595
+      ],
+      "category": [
+        0.2896379178730296,
+        0.25669521531025463,
+        0.29133743940179113,
+        0.055596503274416516,
+        0.0072247487808313315,
+        0.09950817535967667
+      ],
+      "place": 0.9999716176909824,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 38.97212499999932
+    },
+    {
+      "id": "f037-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "terrace",
+          "shade-tree"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "terrace",
+        "shade-tree",
+        "viewpoint",
+        "muddy-patch",
+        "drying-beds",
+        "bench",
+        "coffee-sacks",
+        "wheelbarrow",
+        "tasting-table",
+        "roasting-shed",
+        "restroom",
+        "tasting-hut",
+        "entrance-gate",
+        "water-tank",
+        "welcome-sign",
+        "flower-pots"
+      ],
+      "kind": [
+        0.9145941936234965,
+        0.08506879946389752,
+        0.0003370069126061081
+      ],
+      "category": [
+        0.5472630451943421,
+        0.23638925601716695,
+        0.05271783485668379,
+        0.09907112369682802,
+        0.025815874507629087,
+        0.038742865727349966
+      ],
+      "place": 0.9996905797170825,
+      "baseline": [
+        "shade-tree",
+        "steps-to-rows"
+      ],
+      "ms": 35.391083000000435
+    },
+    {
+      "id": "f037-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds",
+        "tasting-hut",
+        "roasting-shed",
+        "steps-to-rows",
+        "flower-pots",
+        "muddy-patch",
+        "terrace",
+        "shade-tree",
+        "restroom",
+        "wheelbarrow",
+        "water-tank",
+        "viewpoint",
+        "bench",
+        "welcome-sign",
+        "entrance-gate"
+      ],
+      "kind": [
+        0.007954485370726301,
+        0.9826448123769587,
+        0.009400702252315225
+      ],
+      "category": [
+        0.00041112986974190744,
+        0.06797470269365595,
+        0.8760052396651833,
+        0.0005702151175591634,
+        0.013138201347051204,
+        0.041900511306808434
+      ],
+      "place": 0.9986958629716801,
+      "baseline": [],
+      "ms": 44.473917000000256
+    },
+    {
+      "id": "f041-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "signs-or-language",
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "entrance-gate"
+        ]
+      },
+      "ranked": [
+        "welcome-sign",
+        "wheelbarrow",
+        "entrance-gate",
+        "muddy-patch",
+        "bench",
+        "viewpoint",
+        "steps-to-rows",
+        "shade-tree",
+        "restroom",
+        "tasting-hut",
+        "roasting-shed",
+        "terrace",
+        "tasting-table",
+        "water-tank",
+        "flower-pots",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.9506538674282138,
+        0.04926204812041697,
+        0.0000840844513693593
+      ],
+      "category": [
+        0.0009126133693695371,
+        0.000005220309859528491,
+        0.00017529291430788536,
+        0.9974954428897965,
+        0.000007589817722171498,
+        0.0014038406989443494
+      ],
+      "place": 0.9991061425360077,
+      "baseline": [
+        "welcome-sign",
+        "wheelbarrow"
+      ],
+      "ms": 29.498499999999694
+    },
+    {
+      "id": "f041-es",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "signs-or-language",
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "restroom"
+        ]
+      },
+      "ranked": [
+        "welcome-sign",
+        "wheelbarrow",
+        "restroom",
+        "entrance-gate",
+        "shade-tree",
+        "steps-to-rows",
+        "bench",
+        "muddy-patch",
+        "terrace",
+        "tasting-hut",
+        "flower-pots",
+        "tasting-table",
+        "viewpoint",
+        "roasting-shed",
+        "water-tank",
+        "coffee-sacks",
+        "drying-beds"
+      ],
+      "kind": [
+        0.8906720759129064,
+        0.10824263755426693,
+        0.0010852865328265765
+      ],
+      "category": [
+        0.02926381075991556,
+        0.00007621204589874163,
+        0.0037394113887888763,
+        0.951556667421729,
+        0.00034933965642026704,
+        0.015014558727247745
+      ],
+      "place": 0.9990316825530425,
+      "baseline": [
+        "welcome-sign",
+        "wheelbarrow"
+      ],
+      "ms": 38.261375000000044
+    },
+    {
+      "id": "f041-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "welcome-sign",
+        "wheelbarrow",
+        "entrance-gate",
+        "terrace",
+        "viewpoint",
+        "tasting-table",
+        "shade-tree",
+        "bench",
+        "tasting-hut",
+        "steps-to-rows",
+        "muddy-patch",
+        "roasting-shed",
+        "restroom",
+        "flower-pots",
+        "drying-beds",
+        "water-tank",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.7107278341990584,
+        0.2891594985977127,
+        0.00011266720322876442
+      ],
+      "category": [
+        0.16716042692531807,
+        0.0006978578894049747,
+        0.007356734772528885,
+        0.8090388055935007,
+        0.0032740647743214764,
+        0.012472110044926005
+      ],
+      "place": 0.9992316994092656,
+      "baseline": [
+        "welcome-sign",
+        "wheelbarrow"
+      ],
+      "ms": 30.443874999999935
+    },
+    {
+      "id": "f041-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "wheelbarrow",
+        "welcome-sign",
+        "entrance-gate",
+        "drying-beds",
+        "tasting-hut",
+        "restroom",
+        "coffee-sacks",
+        "flower-pots",
+        "bench",
+        "steps-to-rows",
+        "shade-tree",
+        "muddy-patch",
+        "roasting-shed",
+        "tasting-table",
+        "terrace",
+        "water-tank",
+        "viewpoint"
+      ],
+      "kind": [
+        0.003660702532633208,
+        0.996201194914963,
+        0.00013810255240397738
+      ],
+      "category": [
+        0.01639611767523581,
+        0.008332950741784362,
+        0.9559476173635918,
+        0.0034192708665181405,
+        0.011665142824409969,
+        0.004238900528460071
+      ],
+      "place": 0.9999849342890488,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 46.873999999999796
+    },
+    {
+      "id": "f047-en",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "entrance-gate",
+          "terrace"
+        ]
+      },
+      "ranked": [
+        "welcome-sign",
+        "entrance-gate",
+        "terrace",
+        "steps-to-rows",
+        "viewpoint",
+        "muddy-patch",
+        "restroom",
+        "bench",
+        "tasting-hut",
+        "tasting-table",
+        "water-tank",
+        "roasting-shed",
+        "drying-beds",
+        "wheelbarrow",
+        "coffee-sacks",
+        "flower-pots",
+        "shade-tree"
+      ],
+      "kind": [
+        0.004222040815742417,
+        0.9956466528022726,
+        0.00013130638198507243
+      ],
+      "category": [
+        0.08688514724368857,
+        0.588835353237926,
+        0.1097425163976671,
+        0.014085628757518004,
+        0.005167746861260959,
+        0.19528360750193935
+      ],
+      "place": 0.9960755261395612,
+      "baseline": [
+        "entrance-gate"
+      ],
+      "ms": 22.7164159999993
+    },
+    {
+      "id": "f047-es",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "entrance-gate",
+          "welcome-sign",
+          "steps-to-rows"
+        ]
+      },
+      "ranked": [
+        "entrance-gate",
+        "welcome-sign",
+        "steps-to-rows",
+        "shade-tree",
+        "viewpoint",
+        "wheelbarrow",
+        "muddy-patch",
+        "drying-beds",
+        "tasting-table",
+        "roasting-shed",
+        "terrace",
+        "restroom",
+        "tasting-hut",
+        "water-tank",
+        "bench",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.07008024853669519,
+        0.9251528997519561,
+        0.004766851711348702
+      ],
+      "category": [
+        0.10895951141579978,
+        0.33277081227182853,
+        0.29036422124562494,
+        0.04662154811514823,
+        0.02420882697978395,
+        0.19707507997181478
+      ],
+      "place": 0.9945027189535415,
+      "baseline": [
+        "entrance-gate"
+      ],
+      "ms": 25.58416699999998
+    },
+    {
+      "id": "f047-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "entrance-gate",
+          "welcome-sign",
+          "restroom"
+        ]
+      },
+      "ranked": [
+        "entrance-gate",
+        "welcome-sign",
+        "restroom",
+        "terrace",
+        "water-tank",
+        "drying-beds",
+        "wheelbarrow",
+        "shade-tree",
+        "muddy-patch",
+        "steps-to-rows",
+        "viewpoint",
+        "bench",
+        "roasting-shed",
+        "tasting-table",
+        "tasting-hut",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.04715006640930155,
+        0.9527584511529723,
+        0.00009148243772607293
+      ],
+      "category": [
+        0.05414853462706171,
+        0.7407571829052227,
+        0.08695256250294203,
+        0.009494666739309378,
+        0.03101115841872002,
+        0.07763589480674414
+      ],
+      "place": 0.9991058948041198,
+      "baseline": [
+        "entrance-gate"
+      ],
+      "ms": 26.699874999999338
+    },
+    {
+      "id": "f047-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "drying-beds",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "muddy-patch",
+        "drying-beds",
+        "roasting-shed",
+        "shade-tree",
+        "coffee-sacks",
+        "steps-to-rows",
+        "welcome-sign",
+        "restroom",
+        "water-tank",
+        "wheelbarrow",
+        "tasting-table",
+        "flower-pots",
+        "tasting-hut",
+        "viewpoint",
+        "terrace",
+        "bench",
+        "entrance-gate"
+      ],
+      "kind": [
+        0.03493851180109365,
+        0.9519479502411153,
+        0.013113537957790987
+      ],
+      "category": [
+        0.0004913208673701388,
+        0.007634925061613007,
+        0.9495511532849097,
+        0.010791202259718679,
+        0.011668518216993653,
+        0.019862880309394843
+      ],
+      "place": 0.9349393997398172,
+      "baseline": [
+        "entrance-gate"
+      ],
+      "ms": 37.01104200000009
+    },
+    {
+      "id": "f050-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "muddy-patch",
+        "entrance-gate",
+        "coffee-sacks",
+        "bench",
+        "roasting-shed",
+        "terrace",
+        "steps-to-rows",
+        "restroom",
+        "tasting-hut",
+        "flower-pots",
+        "wheelbarrow",
+        "viewpoint",
+        "tasting-table",
+        "welcome-sign",
+        "water-tank",
+        "shade-tree"
+      ],
+      "kind": [
+        0.9923730560166093,
+        0.007597440349727371,
+        0.000029503633663505085
+      ],
+      "category": [
+        0.34328508424581883,
+        0.3789991102121128,
+        0.09623633022242675,
+        0.10847534887051485,
+        0.022703998000835644,
+        0.050300128448291244
+      ],
+      "place": 0.9979377007438466,
+      "baseline": [],
+      "ms": 40.348417000000154
+    },
+    {
+      "id": "f050-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "terrace",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "terrace",
+        "tasting-hut",
+        "steps-to-rows",
+        "entrance-gate",
+        "muddy-patch",
+        "tasting-table",
+        "bench",
+        "coffee-sacks",
+        "roasting-shed",
+        "water-tank",
+        "wheelbarrow",
+        "shade-tree",
+        "restroom",
+        "flower-pots",
+        "viewpoint",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.8973835356814904,
+        0.07450405457442326,
+        0.028112409744086287
+      ],
+      "category": [
+        0.1293176115674169,
+        0.4115706642636349,
+        0.22098490611201083,
+        0.1548889326442041,
+        0.013925306442087653,
+        0.0693125789706458
+      ],
+      "place": 0.9942060929183841,
+      "baseline": [],
+      "ms": 39.699665999999525
+    },
+    {
+      "id": "f050-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "muddy-patch",
+          "viewpoint"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "muddy-patch",
+        "viewpoint",
+        "tasting-table",
+        "wheelbarrow",
+        "drying-beds",
+        "tasting-hut",
+        "coffee-sacks",
+        "entrance-gate",
+        "terrace",
+        "bench",
+        "flower-pots",
+        "restroom",
+        "roasting-shed",
+        "shade-tree",
+        "welcome-sign",
+        "water-tank"
+      ],
+      "kind": [
+        0.6984078353729296,
+        0.3006598578632633,
+        0.0009323067638069747
+      ],
+      "category": [
+        0.36914392206928703,
+        0.09647371628615173,
+        0.17010824396448865,
+        0.14888044086097837,
+        0.005873086128057558,
+        0.20952059069103654
+      ],
+      "place": 0.999514517637116,
+      "baseline": [
+        "drying-beds"
+      ],
+      "ms": 37.51024999999936
+    },
+    {
+      "id": "f050-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "coffee-sacks",
+        "tasting-table",
+        "tasting-hut",
+        "drying-beds",
+        "steps-to-rows",
+        "roasting-shed",
+        "wheelbarrow",
+        "muddy-patch",
+        "flower-pots",
+        "terrace",
+        "restroom",
+        "viewpoint",
+        "shade-tree",
+        "water-tank",
+        "entrance-gate",
+        "welcome-sign",
+        "bench"
+      ],
+      "kind": [
+        0.09327715760182495,
+        0.9053892620108558,
+        0.0013335803873191266
+      ],
+      "category": [
+        0.0027320035479410005,
+        0.005750352512937291,
+        0.9495541832864849,
+        0.006829316978092199,
+        0.022306939709040817,
+        0.012827203965503721
+      ],
+      "place": 0.9998882873800181,
+      "baseline": [],
+      "ms": 30.010583999999653
+    },
+    {
+      "id": "f051-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "tasting-table",
+        "coffee-sacks",
+        "roasting-shed",
+        "tasting-hut",
+        "steps-to-rows",
+        "viewpoint",
+        "drying-beds",
+        "flower-pots",
+        "terrace",
+        "restroom",
+        "entrance-gate",
+        "welcome-sign",
+        "water-tank",
+        "shade-tree",
+        "bench",
+        "wheelbarrow",
+        "muddy-patch"
+      ],
+      "kind": [
+        0.0014661354703235626,
+        0.9981329035596288,
+        0.00040096097004758215
+      ],
+      "category": [
+        0.014176885526890056,
+        0.04222823087236408,
+        0.08914628415921023,
+        0.00005008127911923887,
+        0.0003700268797846236,
+        0.8540284912826318
+      ],
+      "place": 0.49968969933456475,
+      "baseline": [
+        "tasting-table"
+      ],
+      "ms": 25.892541000000165
+    },
+    {
+      "id": "f051-es",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "tasting-hut",
+          "coffee-sacks"
+        ]
+      },
+      "ranked": [
+        "tasting-table",
+        "tasting-hut",
+        "coffee-sacks",
+        "roasting-shed",
+        "steps-to-rows",
+        "drying-beds",
+        "flower-pots",
+        "viewpoint",
+        "welcome-sign",
+        "bench",
+        "terrace",
+        "restroom",
+        "wheelbarrow",
+        "water-tank",
+        "shade-tree",
+        "entrance-gate",
+        "muddy-patch"
+      ],
+      "kind": [
+        0.022563716406704546,
+        0.9771379996721934,
+        0.00029828392110190134
+      ],
+      "category": [
+        0.054958701096406555,
+        0.06862502940998227,
+        0.5455897766591186,
+        0.0013887793607655996,
+        0.018040129882005318,
+        0.3113975835917217
+      ],
+      "place": 0.8347928955781846,
+      "baseline": [
+        "tasting-table"
+      ],
+      "ms": 25.247875000000022
+    },
+    {
+      "id": "f051-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "coffee-sacks",
+          "steps-to-rows"
+        ]
+      },
+      "ranked": [
+        "tasting-table",
+        "coffee-sacks",
+        "steps-to-rows",
+        "roasting-shed",
+        "tasting-hut",
+        "drying-beds",
+        "viewpoint",
+        "flower-pots",
+        "bench",
+        "wheelbarrow",
+        "restroom",
+        "welcome-sign",
+        "terrace",
+        "entrance-gate",
+        "shade-tree",
+        "muddy-patch",
+        "water-tank"
+      ],
+      "kind": [
+        0.0023913289624850863,
+        0.9975926905208461,
+        0.00001598051666884218
+      ],
+      "category": [
+        0.02085103146799062,
+        0.05449750714063855,
+        0.5551583495811339,
+        0.002304038271671116,
+        0.00989975010445143,
+        0.3572893234341145
+      ],
+      "place": 0.9743366137401196,
+      "baseline": [
+        "tasting-table"
+      ],
+      "ms": 28.735208000000057
+    },
+    {
+      "id": "f051-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds",
+        "steps-to-rows",
+        "roasting-shed",
+        "tasting-hut",
+        "flower-pots",
+        "restroom",
+        "viewpoint",
+        "welcome-sign",
+        "terrace",
+        "shade-tree",
+        "wheelbarrow",
+        "muddy-patch",
+        "bench",
+        "water-tank",
+        "entrance-gate"
+      ],
+      "kind": [
+        0.0004938867145370978,
+        0.9993405631037309,
+        0.0001655501817320456
+      ],
+      "category": [
+        0.001131980896014692,
+        0.033402681140802935,
+        0.9014936455905841,
+        0.0001370203365279649,
+        0.005042023954927778,
+        0.05879264808114268
+      ],
+      "place": 0.9996334489321692,
+      "baseline": [],
+      "ms": 33.63541600000008
+    },
+    {
+      "id": "f056-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "restroom",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "restroom",
+        "muddy-patch",
+        "drying-beds",
+        "roasting-shed",
+        "steps-to-rows",
+        "wheelbarrow",
+        "welcome-sign",
+        "tasting-hut",
+        "water-tank",
+        "tasting-table",
+        "terrace",
+        "viewpoint",
+        "coffee-sacks",
+        "entrance-gate",
+        "shade-tree",
+        "flower-pots"
+      ],
+      "kind": [
+        0.984177715519762,
+        0.014451317679190993,
+        0.0013709668010472027
+      ],
+      "category": [
+        0.04855293736760236,
+        0.36590769860915406,
+        0.13901083410619275,
+        0.22513546447161611,
+        0.05138241586936192,
+        0.17001064957607273
+      ],
+      "place": 0.9939765650298706,
+      "baseline": [
+        "bench"
+      ],
+      "ms": 31.76641699999982
+    },
+    {
+      "id": "f056-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "restroom",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "restroom",
+        "tasting-hut",
+        "welcome-sign",
+        "steps-to-rows",
+        "muddy-patch",
+        "tasting-table",
+        "drying-beds",
+        "roasting-shed",
+        "shade-tree",
+        "water-tank",
+        "coffee-sacks",
+        "viewpoint",
+        "wheelbarrow",
+        "flower-pots",
+        "entrance-gate",
+        "terrace"
+      ],
+      "kind": [
+        0.8377721864373161,
+        0.13506855312660718,
+        0.027159260436076624
+      ],
+      "category": [
+        0.054317890561226975,
+        0.06828148754364476,
+        0.30602263366523197,
+        0.2804884312366848,
+        0.02274877317927581,
+        0.2681407838139357
+      ],
+      "place": 0.9925365846274892,
+      "baseline": [
+        "bench"
+      ],
+      "ms": 31.384791000000405
+    },
+    {
+      "id": "f056-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "viewpoint",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "viewpoint",
+        "restroom",
+        "welcome-sign",
+        "tasting-hut",
+        "muddy-patch",
+        "roasting-shed",
+        "drying-beds",
+        "entrance-gate",
+        "water-tank",
+        "tasting-table",
+        "steps-to-rows",
+        "terrace",
+        "wheelbarrow",
+        "shade-tree",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.8279468325689783,
+        0.1718134281567499,
+        0.00023973927427178114
+      ],
+      "category": [
+        0.1356152676739146,
+        0.15831680997018066,
+        0.22067609212634007,
+        0.31724059265823024,
+        0.11974711610560096,
+        0.04840412146573341
+      ],
+      "place": 0.9989485755806411,
+      "baseline": [
+        "bench"
+      ],
+      "ms": 35.24870800000008
+    },
+    {
+      "id": "f056-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "tasting-hut",
+          "bench"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "tasting-hut",
+        "bench",
+        "coffee-sacks",
+        "restroom",
+        "roasting-shed",
+        "tasting-table",
+        "wheelbarrow",
+        "welcome-sign",
+        "flower-pots",
+        "muddy-patch",
+        "shade-tree",
+        "water-tank",
+        "steps-to-rows",
+        "terrace",
+        "entrance-gate",
+        "viewpoint"
+      ],
+      "kind": [
+        0.00445200932087506,
+        0.9946295397680468,
+        0.0009184509110781927
+      ],
+      "category": [
+        0.0005702905225846069,
+        0.019248483966677415,
+        0.8557892592907866,
+        0.00716794362622369,
+        0.10003121961644415,
+        0.017192802977283452
+      ],
+      "place": 0.985374230945346,
+      "baseline": [],
+      "ms": 33.797209000000294
+    },
+    {
+      "id": "f060-en",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "bench",
+          "terrace",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "terrace",
+        "tasting-hut",
+        "restroom",
+        "viewpoint",
+        "drying-beds",
+        "entrance-gate",
+        "tasting-table",
+        "steps-to-rows",
+        "muddy-patch",
+        "roasting-shed",
+        "wheelbarrow",
+        "welcome-sign",
+        "shade-tree",
+        "water-tank",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.25829810440841483,
+        0.7248333026226961,
+        0.016868592968889134
+      ],
+      "category": [
+        0.011993307242824863,
+        0.032550804163982844,
+        0.8935566848754278,
+        0.000010592817743239152,
+        0.00033775335529994045,
+        0.0615508575447212
+      ],
+      "place": 0.7727752561267043,
+      "baseline": [],
+      "ms": 20.40783399999964
+    },
+    {
+      "id": "f060-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "bench",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "restroom",
+        "bench",
+        "drying-beds",
+        "entrance-gate",
+        "steps-to-rows",
+        "tasting-hut",
+        "roasting-shed",
+        "terrace",
+        "wheelbarrow",
+        "welcome-sign",
+        "shade-tree",
+        "viewpoint",
+        "water-tank",
+        "muddy-patch",
+        "tasting-table",
+        "coffee-sacks",
+        "flower-pots"
+      ],
+      "kind": [
+        0.5453606091300691,
+        0.45414704138817064,
+        0.0004923494817602412
+      ],
+      "category": [
+        0.4732723616773794,
+        0.032471573371462996,
+        0.4353280034083363,
+        0.019684947414392823,
+        0.020889481457610513,
+        0.01835363267081811
+      ],
+      "place": 0.996304913862646,
+      "baseline": [],
+      "ms": 17.05158400000073
+    },
+    {
+      "id": "f060-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "bench",
+        "terrace",
+        "restroom",
+        "viewpoint",
+        "steps-to-rows",
+        "tasting-table",
+        "wheelbarrow",
+        "roasting-shed",
+        "muddy-patch",
+        "drying-beds",
+        "entrance-gate",
+        "tasting-hut",
+        "shade-tree",
+        "flower-pots",
+        "welcome-sign",
+        "water-tank",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.8512331852205526,
+        0.1487304334113807,
+        0.0000363813680667276
+      ],
+      "category": [
+        0.2869852789569503,
+        0.17761297739947016,
+        0.4726258762063481,
+        0.0049497394430907775,
+        0.035463628274322985,
+        0.02236249971981763
+      ],
+      "place": 0.4647272693668247,
+      "baseline": [],
+      "ms": 17.79033299999992
+    },
+    {
+      "id": "f060-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "tasting-hut",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "drying-beds",
+        "tasting-hut",
+        "roasting-shed",
+        "restroom",
+        "steps-to-rows",
+        "muddy-patch",
+        "flower-pots",
+        "water-tank",
+        "welcome-sign",
+        "shade-tree",
+        "entrance-gate",
+        "wheelbarrow",
+        "bench",
+        "coffee-sacks",
+        "terrace",
+        "tasting-table",
+        "viewpoint"
+      ],
+      "kind": [
+        0.03671475176034944,
+        0.9629035165996606,
+        0.0003817316399899017
+      ],
+      "category": [
+        0.0168805366477301,
+        0.002247376524579263,
+        0.9375254059298834,
+        0.016497307399890394,
+        0.020977362937994164,
+        0.005872010559922619
+      ],
+      "place": 0.9921457312983369,
+      "baseline": [],
+      "ms": 21.839249999999993
+    },
+    {
+      "id": "f062-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [
+          "roasting-shed",
+          "muddy-patch",
+          "drying-beds"
+        ]
+      },
+      "ranked": [
+        "roasting-shed",
+        "muddy-patch",
+        "drying-beds",
+        "viewpoint",
+        "tasting-hut",
+        "shade-tree",
+        "coffee-sacks",
+        "terrace",
+        "entrance-gate",
+        "restroom",
+        "tasting-table",
+        "flower-pots",
+        "welcome-sign",
+        "water-tank",
+        "bench",
+        "steps-to-rows",
+        "wheelbarrow"
+      ],
+      "kind": [
+        0.8904405568717076,
+        0.10950159757512813,
+        0.000057845553164255727
+      ],
+      "category": [
+        0.03813569761468581,
+        0.07223889304342596,
+        0.10022825178669494,
+        0.02103371732818404,
+        0.0019342626460665036,
+        0.7664291775809426
+      ],
+      "place": 0.999478788513659,
+      "baseline": [
+        "roasting-shed"
+      ],
+      "ms": 32.80695800000012
+    },
+    {
+      "id": "f062-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "roasting-shed",
+          "restroom",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "roasting-shed",
+        "restroom",
+        "tasting-hut",
+        "viewpoint",
+        "terrace",
+        "tasting-table",
+        "entrance-gate",
+        "steps-to-rows",
+        "welcome-sign",
+        "water-tank",
+        "drying-beds",
+        "muddy-patch",
+        "bench",
+        "flower-pots",
+        "shade-tree",
+        "coffee-sacks",
+        "wheelbarrow"
+      ],
+      "kind": [
+        0.739667288314079,
+        0.2597885717173733,
+        0.0005441399685477638
+      ],
+      "category": [
+        0.06302968302105336,
+        0.05924434405385518,
+        0.5488936287640672,
+        0.09320406308581773,
+        0.04383247546222896,
+        0.1917958056129776
+      ],
+      "place": 0.997108985035326,
+      "baseline": [
+        "roasting-shed"
+      ],
+      "ms": 29.4935830000004
+    },
+    {
+      "id": "f062-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "roasting-shed",
+          "restroom",
+          "bench"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "roasting-shed",
+        "restroom",
+        "bench",
+        "viewpoint",
+        "entrance-gate",
+        "muddy-patch",
+        "welcome-sign",
+        "terrace",
+        "tasting-hut",
+        "drying-beds",
+        "tasting-table",
+        "steps-to-rows",
+        "flower-pots",
+        "water-tank",
+        "wheelbarrow",
+        "shade-tree",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.9014435325315276,
+        0.09830290839277663,
+        0.0002535590756955859
+      ],
+      "category": [
+        0.09356295039750573,
+        0.038282850433576335,
+        0.16941712783435164,
+        0.14210767429286555,
+        0.0073167298770421465,
+        0.5493126671646585
+      ],
+      "place": 0.9744172232039187,
+      "baseline": [
+        "roasting-shed"
+      ],
+      "ms": 26.081499999999323
+    },
+    {
+      "id": "f062-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "coffee-sacks",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "tasting-table",
+        "coffee-sacks",
+        "roasting-shed",
+        "drying-beds",
+        "viewpoint",
+        "steps-to-rows",
+        "tasting-hut",
+        "flower-pots",
+        "welcome-sign",
+        "restroom",
+        "muddy-patch",
+        "shade-tree",
+        "bench",
+        "water-tank",
+        "terrace",
+        "entrance-gate",
+        "wheelbarrow"
+      ],
+      "kind": [
+        0.09016617791469525,
+        0.9081211027422258,
+        0.0017127193430789113
+      ],
+      "category": [
+        0.004132178302587503,
+        0.016676724028457286,
+        0.8981346837114106,
+        0.00783569439333121,
+        0.007369925282798213,
+        0.06585079428141528
+      ],
+      "place": 0.9990690707977272,
+      "baseline": [],
+      "ms": 34.92470899999989
+    },
+    {
+      "id": "f065-en",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "tasting-table",
+          "coffee-sacks"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "tasting-table",
+        "coffee-sacks",
+        "wheelbarrow",
+        "drying-beds",
+        "roasting-shed",
+        "viewpoint",
+        "tasting-hut",
+        "entrance-gate",
+        "terrace",
+        "flower-pots",
+        "bench",
+        "restroom",
+        "muddy-patch",
+        "welcome-sign",
+        "water-tank",
+        "shade-tree"
+      ],
+      "kind": [
+        0.0006142926547814316,
+        0.00011221349410656937,
+        0.999273493851112
+      ],
+      "category": [
+        0.10227623795056907,
+        0.16497697034588435,
+        0.15695326456324338,
+        0.004264614111273897,
+        0.0006017540902655045,
+        0.5709271589387638
+      ],
+      "place": 0.8842773946242767,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 23.714750000000095
+    },
+    {
+      "id": "f065-es",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "drying-beds"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "drying-beds",
+        "tasting-hut",
+        "tasting-table",
+        "viewpoint",
+        "roasting-shed",
+        "muddy-patch",
+        "terrace",
+        "restroom",
+        "welcome-sign",
+        "bench",
+        "flower-pots",
+        "entrance-gate",
+        "water-tank",
+        "wheelbarrow",
+        "shade-tree"
+      ],
+      "kind": [
+        0.00039755682505350926,
+        0.000019230996352722675,
+        0.9995832121785938
+      ],
+      "category": [
+        0.00344837320472285,
+        0.006192273611221686,
+        0.011009257847073234,
+        0.000187410472104772,
+        0.000009860209506919624,
+        0.9791528246553706
+      ],
+      "place": 0.9572804783886841,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 23.717415999999503
+    },
+    {
+      "id": "f065-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "viewpoint"
+        ]
+      },
+      "ranked": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "viewpoint",
+        "drying-beds",
+        "water-tank",
+        "roasting-shed",
+        "muddy-patch",
+        "shade-tree",
+        "tasting-table",
+        "wheelbarrow",
+        "terrace",
+        "bench",
+        "flower-pots",
+        "restroom",
+        "tasting-hut",
+        "entrance-gate",
+        "welcome-sign"
+      ],
+      "kind": [
+        0.0016717305392672855,
+        0.00003293662081574513,
+        0.998295332839917
+      ],
+      "category": [
+        0.0011637909702035694,
+        0.01030676797551624,
+        0.0010445886598245057,
+        0.00005983679120873769,
+        0.000013698351634134321,
+        0.9874113172516128
+      ],
+      "place": 0.9981155620235821,
+      "baseline": [
+        "steps-to-rows"
+      ],
+      "ms": 23.17870800000037
+    },
+    {
+      "id": "f065-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds",
+        "steps-to-rows",
+        "roasting-shed",
+        "flower-pots",
+        "tasting-hut",
+        "water-tank",
+        "viewpoint",
+        "shade-tree",
+        "restroom",
+        "muddy-patch",
+        "welcome-sign",
+        "terrace",
+        "wheelbarrow",
+        "entrance-gate",
+        "bench"
+      ],
+      "kind": [
+        0.001035896598848226,
+        0.00009231781306117109,
+        0.9988717855880905
+      ],
+      "category": [
+        0.0002479659917827858,
+        0.016080923649878863,
+        0.10340139567935698,
+        0.23866456415310786,
+        0.008196034656712673,
+        0.6334091158691609
+      ],
+      "place": 0.9676817882538417,
+      "baseline": [],
+      "ms": 33.289458000000195
+    },
+    {
+      "id": "f067-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "welcome-sign",
+        "shade-tree",
+        "terrace",
+        "viewpoint",
+        "entrance-gate",
+        "restroom",
+        "water-tank",
+        "muddy-patch",
+        "tasting-hut",
+        "roasting-shed",
+        "wheelbarrow",
+        "steps-to-rows",
+        "bench",
+        "tasting-table",
+        "flower-pots",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.0002947214920598864,
+        0.9996782999033037,
+        0.000026978604636476234
+      ],
+      "category": [
+        0.04747022606219657,
+        0.03232979032632664,
+        0.23156133274831642,
+        0.0004128693089199677,
+        0.00031133280030332046,
+        0.687914448753937
+      ],
+      "place": 0.01837980536252194,
+      "baseline": [],
+      "ms": 18.462125000000015
+    },
+    {
+      "id": "f067-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "welcome-sign",
+        "restroom",
+        "muddy-patch",
+        "tasting-hut",
+        "shade-tree",
+        "steps-to-rows",
+        "viewpoint",
+        "wheelbarrow",
+        "entrance-gate",
+        "water-tank",
+        "terrace",
+        "roasting-shed",
+        "bench",
+        "drying-beds",
+        "tasting-table",
+        "flower-pots",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.0011645228199127936,
+        0.9987755757096987,
+        0.00005990147038859937
+      ],
+      "category": [
+        0.11413222136979895,
+        0.017743509428797405,
+        0.5490253177197433,
+        0.002321159934086765,
+        0.0037113388416031945,
+        0.31306645270597033
+      ],
+      "place": 0.10705836391539587,
+      "baseline": [],
+      "ms": 18.518957999999657
+    },
+    {
+      "id": "f067-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "welcome-sign",
+        "viewpoint",
+        "restroom",
+        "terrace",
+        "entrance-gate",
+        "bench",
+        "muddy-patch",
+        "shade-tree",
+        "wheelbarrow",
+        "tasting-table",
+        "steps-to-rows",
+        "drying-beds",
+        "water-tank",
+        "tasting-hut",
+        "roasting-shed",
+        "coffee-sacks",
+        "flower-pots"
+      ],
+      "kind": [
+        0.005455297387259034,
+        0.9943640263710869,
+        0.00018067624165426827
+      ],
+      "category": [
+        0.06090992692646547,
+        0.04274355877973906,
+        0.6281422171108313,
+        0.006766972884131783,
+        0.022749004650853943,
+        0.2386883196479784
+      ],
+      "place": 0.08889699929029841,
+      "baseline": [],
+      "ms": 19.14220800000021
+    },
+    {
+      "id": "f067-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "muddy-patch",
+        "shade-tree",
+        "wheelbarrow",
+        "restroom",
+        "welcome-sign",
+        "drying-beds",
+        "roasting-shed",
+        "entrance-gate",
+        "water-tank",
+        "viewpoint",
+        "bench",
+        "terrace",
+        "steps-to-rows",
+        "tasting-hut",
+        "coffee-sacks",
+        "flower-pots",
+        "tasting-table"
+      ],
+      "kind": [
+        0.00013456752886860333,
+        0.9996133016130566,
+        0.00025213085807467147
+      ],
+      "category": [
+        0.0011676996955179923,
+        0.005963172857601596,
+        0.8499460386280738,
+        0.00017359901754774635,
+        0.0005516449692994227,
+        0.1421978448319593
+      ],
+      "place": 0.20557139392003765,
+      "baseline": [],
+      "ms": 26.187832999999955
+    },
+    {
+      "id": "f069-en",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "muddy-patch",
+          "viewpoint"
+        ]
+      },
+      "ranked": [
+        "wheelbarrow",
+        "muddy-patch",
+        "viewpoint",
+        "welcome-sign",
+        "entrance-gate",
+        "shade-tree",
+        "steps-to-rows",
+        "roasting-shed",
+        "bench",
+        "tasting-hut",
+        "terrace",
+        "restroom",
+        "water-tank",
+        "drying-beds",
+        "flower-pots",
+        "tasting-table",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.010064856180577897,
+        0.9899347434407525,
+        4.0037866980346605e-7
+      ],
+      "category": [
+        0.9290607384174613,
+        0.005093958448542463,
+        0.029701106822142408,
+        0.0053792298050032335,
+        0.00009749705170703646,
+        0.030667469455143637
+      ],
+      "place": 0.967167925575806,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 19.95458299999973
+    },
+    {
+      "id": "f069-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "muddy-patch"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "wheelbarrow",
+        "welcome-sign",
+        "muddy-patch",
+        "drying-beds",
+        "steps-to-rows",
+        "entrance-gate",
+        "restroom",
+        "water-tank",
+        "tasting-hut",
+        "roasting-shed",
+        "terrace",
+        "viewpoint",
+        "flower-pots",
+        "tasting-table",
+        "bench",
+        "shade-tree",
+        "coffee-sacks"
+      ],
+      "kind": [
+        0.008316905740733465,
+        0.9916754554139852,
+        0.000007638845281373895
+      ],
+      "category": [
+        0.25790459535478605,
+        0.017162014378827334,
+        0.34581694517895273,
+        0.18541695678000858,
+        0.042849030515546664,
+        0.1508504577918785
+      ],
+      "place": 0.9999561255054069,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 18.464249999999993
+    },
+    {
+      "id": "f069-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "viewpoint"
+        ]
+      },
+      "ranked": [
+        "wheelbarrow",
+        "welcome-sign",
+        "viewpoint",
+        "steps-to-rows",
+        "entrance-gate",
+        "muddy-patch",
+        "terrace",
+        "shade-tree",
+        "bench",
+        "restroom",
+        "roasting-shed",
+        "water-tank",
+        "drying-beds",
+        "coffee-sacks",
+        "tasting-hut",
+        "tasting-table",
+        "flower-pots"
+      ],
+      "kind": [
+        0.013276661333026431,
+        0.9867204468260693,
+        0.0000028918409044337187
+      ],
+      "category": [
+        0.732247907731756,
+        0.06308536857816023,
+        0.13046316523753554,
+        0.030365987318610704,
+        0.024809648810360404,
+        0.019027922323577084
+      ],
+      "place": 0.9998585663464647,
+      "baseline": [
+        "wheelbarrow"
+      ],
+      "ms": 22.636624999999185
+    },
+    {
+      "id": "f069-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "wheelbarrow",
+        "welcome-sign",
+        "roasting-shed",
+        "entrance-gate",
+        "steps-to-rows",
+        "muddy-patch",
+        "drying-beds",
+        "restroom",
+        "tasting-hut",
+        "shade-tree",
+        "bench",
+        "coffee-sacks",
+        "flower-pots",
+        "viewpoint",
+        "water-tank",
+        "tasting-table",
+        "terrace"
+      ],
+      "kind": [
+        0.009659215830802821,
+        0.99033979193752,
+        9.922316773047288e-7
+      ],
+      "category": [
+        0.22777143061209043,
+        0.0009147319698351164,
+        0.5502056165318364,
+        0.17379562530260564,
+        0.03660153774497881,
+        0.010711057838653629
+      ],
+      "place": 0.9519946419489215,
+      "baseline": [],
+      "ms": 24.99499999999989
+    },
+    {
+      "id": "f072-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "tasting-table",
+        "coffee-sacks",
+        "steps-to-rows",
+        "roasting-shed",
+        "drying-beds",
+        "tasting-hut",
+        "viewpoint",
+        "flower-pots",
+        "welcome-sign",
+        "terrace",
+        "wheelbarrow",
+        "restroom",
+        "bench",
+        "entrance-gate",
+        "muddy-patch",
+        "water-tank",
+        "shade-tree"
+      ],
+      "kind": [
+        0.0002155612393469825,
+        0.000009203620548320127,
+        0.9997752351401046
+      ],
+      "category": [
+        0.0002618956854709639,
+        0.005915391901799804,
+        0.007586603656794796,
+        0.0017268368281830365,
+        0.0005279153628984219,
+        0.9839813565648529
+      ],
+      "place": 0.016329042792413057,
+      "baseline": [],
+      "ms": 19.110209000000395
+    },
+    {
+      "id": "f072-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "tasting-table",
+        "coffee-sacks",
+        "roasting-shed",
+        "tasting-hut",
+        "steps-to-rows",
+        "drying-beds",
+        "welcome-sign",
+        "viewpoint",
+        "terrace",
+        "restroom",
+        "muddy-patch",
+        "bench",
+        "entrance-gate",
+        "wheelbarrow",
+        "flower-pots",
+        "water-tank",
+        "shade-tree"
+      ],
+      "kind": [
+        0.0008771383279551838,
+        0.00006691487447961772,
+        0.9990559467975653
+      ],
+      "category": [
+        0.0012963885225679395,
+        0.002574795371672072,
+        0.005994264132753348,
+        0.0003889589155070609,
+        0.00022850855527839522,
+        0.9895170845022213
+      ],
+      "place": 0.07724521343380876,
+      "baseline": [],
+      "ms": 17.805916000000252
+    },
+    {
+      "id": "f072-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "roasting-shed",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "steps-to-rows",
+        "roasting-shed",
+        "coffee-sacks",
+        "wheelbarrow",
+        "tasting-table",
+        "tasting-hut",
+        "muddy-patch",
+        "welcome-sign",
+        "restroom",
+        "drying-beds",
+        "terrace",
+        "viewpoint",
+        "bench",
+        "shade-tree",
+        "entrance-gate",
+        "flower-pots",
+        "water-tank"
+      ],
+      "kind": [
+        0.03760876142565521,
+        0.008526650029945291,
+        0.9538645885443995
+      ],
+      "category": [
+        0.0009030574949442665,
+        0.006295578605050849,
+        0.01593203777782554,
+        0.004608602492505439,
+        0.0006266021703017314,
+        0.9716341214593722
+      ],
+      "place": 0.6506807680959424,
+      "baseline": [],
+      "ms": 19.70808399999987
+    },
+    {
+      "id": "f072-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "drying-beds",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "tasting-table",
+        "drying-beds",
+        "coffee-sacks",
+        "steps-to-rows",
+        "roasting-shed",
+        "tasting-hut",
+        "viewpoint",
+        "restroom",
+        "terrace",
+        "bench",
+        "welcome-sign",
+        "muddy-patch",
+        "entrance-gate",
+        "flower-pots",
+        "water-tank",
+        "shade-tree",
+        "wheelbarrow"
+      ],
+      "kind": [
+        0.0026735188116588098,
+        0.0004358981943111172,
+        0.9968905829940301
+      ],
+      "category": [
+        0.001155615063926296,
+        0.02014674802357103,
+        0.39188611491003905,
+        0.07484877804396131,
+        0.017389842914664853,
+        0.4945729010438374
+      ],
+      "place": 0.9691626651770832,
+      "baseline": [],
+      "ms": 25.39404100000047
+    }
+  ]
+}

@@ -1,0 +1,1605 @@
+{
+  "split": "test",
+  "throttle": 1,
+  "source": "trimmed files served by this origin",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "downloadBytesBefore": 83782751,
+  "provision": {
+    "final": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    },
+    "ms": 2642.7000000476837,
+    "progressEvents": 86,
+    "first": {
+      "status": "downloading",
+      "loadedBytes": 443,
+      "totalBytes": 83783194
+    },
+    "last": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    }
+  },
+  "downloadBytesAfter": 0,
+  "prepareSite": [
+    {
+      "result": "embedded",
+      "ticks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "ms": 1813
+    },
+    {
+      "result": "cached",
+      "ticks": [],
+      "ms": 0
+    }
+  ],
+  "answers": [
+    {
+      "id": "f001-en",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "bench",
+        "muddy-patch"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "f001-es",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "tasting-hut",
+        "steps-to-rows"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "f001-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "entrance-gate",
+        "restroom"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "f001-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "tasting-hut",
+        "welcome-sign"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 45
+    },
+    {
+      "id": "f005-en",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "shade-tree",
+        "muddy-patch",
+        "steps-to-rows"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 27
+    },
+    {
+      "id": "f005-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "shade-tree",
+        "muddy-patch",
+        "steps-to-rows"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f005-ko",
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "shade-tree",
+        "muddy-patch",
+        "bench"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "f005-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "muddy-patch",
+        "shade-tree"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "f008-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "steps-or-slope",
+      "candidates": [
+        "muddy-patch",
+        "entrance-gate",
+        "steps-to-rows"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 21
+    },
+    {
+      "id": "f008-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f008-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "muddy-patch",
+        "wheelbarrow",
+        "entrance-gate"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f008-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "shade-tree",
+        "flower-pots",
+        "roasting-shed"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "f013-en",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "bench",
+        "viewpoint"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 28
+    },
+    {
+      "id": "f013-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "entrance-gate",
+        "wheelbarrow"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 31
+    },
+    {
+      "id": "f013-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "tasting-table",
+        "bench"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f013-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "restroom",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 49
+    },
+    {
+      "id": "f017-en",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "restroom",
+        "steps-to-rows",
+        "entrance-gate"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f017-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "restroom",
+        "steps-to-rows",
+        "entrance-gate"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 24
+    },
+    {
+      "id": "f017-ko",
+      "status": "ready",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [
+        "restroom",
+        "viewpoint",
+        "bench"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f017-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "muddy-patch",
+        "coffee-sacks"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 27
+    },
+    {
+      "id": "f020-en",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "viewpoint",
+        "shade-tree",
+        "welcome-sign"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 23
+    },
+    {
+      "id": "f020-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "viewpoint",
+        "welcome-sign",
+        "steps-to-rows"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 22
+    },
+    {
+      "id": "f020-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "viewpoint",
+        "steps-to-rows",
+        "muddy-patch"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 20
+    },
+    {
+      "id": "f020-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "viewpoint",
+        "welcome-sign",
+        "muddy-patch"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "f022-en",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "tasting-table"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "f022-es",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "tasting-table",
+        "coffee-sacks"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "f022-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "viewpoint",
+        "muddy-patch"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 31
+    },
+    {
+      "id": "f022-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 38
+    },
+    {
+      "id": "f024-en",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f024-es",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 21
+    },
+    {
+      "id": "f024-ko",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f024-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 28
+    },
+    {
+      "id": "f029-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 19
+    },
+    {
+      "id": "f029-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f029-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 22
+    },
+    {
+      "id": "f029-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f031-en",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "restroom",
+        "welcome-sign",
+        "water-tank"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 12
+    },
+    {
+      "id": "f031-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "restroom",
+        "welcome-sign",
+        "water-tank"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 15
+    },
+    {
+      "id": "f031-ko",
+      "status": "ready",
+      "kind": "problem",
+      "category": "facilities",
+      "candidates": [
+        "restroom",
+        "drying-beds",
+        "welcome-sign"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 11
+    },
+    {
+      "id": "f031-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "bench",
+        "muddy-patch",
+        "restroom"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 14
+    },
+    {
+      "id": "f037-en",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "roasting-shed",
+        "muddy-patch"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "f037-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "tasting-table"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "f037-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "terrace",
+        "shade-tree"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 34
+    },
+    {
+      "id": "f037-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 43
+    },
+    {
+      "id": "f041-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "signs-or-language",
+      "candidates": [
+        "welcome-sign",
+        "wheelbarrow",
+        "entrance-gate"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 28
+    },
+    {
+      "id": "f041-es",
+      "status": "ready",
+      "kind": "problem",
+      "category": "signs-or-language",
+      "candidates": [
+        "welcome-sign",
+        "wheelbarrow",
+        "restroom"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "f041-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "wheelbarrow",
+        "entrance-gate"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "f041-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "welcome-sign",
+        "entrance-gate"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 45
+    },
+    {
+      "id": "f047-en",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "welcome-sign",
+        "entrance-gate",
+        "terrace"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 22
+    },
+    {
+      "id": "f047-es",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "entrance-gate",
+        "welcome-sign",
+        "steps-to-rows"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 24
+    },
+    {
+      "id": "f047-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "entrance-gate",
+        "welcome-sign",
+        "restroom"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f047-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "muddy-patch",
+        "drying-beds",
+        "roasting-shed"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "f050-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "muddy-patch",
+        "entrance-gate"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "f050-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "terrace",
+        "tasting-hut"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "f050-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "muddy-patch",
+        "viewpoint"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "f050-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "coffee-sacks",
+        "tasting-table",
+        "tasting-hut"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "f051-en",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f051-es",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "tasting-table",
+        "tasting-hut",
+        "coffee-sacks"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 24
+    },
+    {
+      "id": "f051-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "tasting-table",
+        "coffee-sacks",
+        "steps-to-rows"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "f051-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 32
+    },
+    {
+      "id": "f056-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "bench",
+        "restroom",
+        "muddy-patch"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "f056-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "bench",
+        "restroom",
+        "tasting-hut"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "f056-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "bench",
+        "viewpoint",
+        "restroom"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 34
+    },
+    {
+      "id": "f056-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "tasting-hut",
+        "bench"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 32
+    },
+    {
+      "id": "f060-en",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "bench",
+        "terrace",
+        "tasting-hut"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 19
+    },
+    {
+      "id": "f060-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "restroom",
+        "bench",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 16
+    },
+    {
+      "id": "f060-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 17
+    },
+    {
+      "id": "f060-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "tasting-hut",
+        "roasting-shed"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 21
+    },
+    {
+      "id": "f062-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [
+        "roasting-shed",
+        "muddy-patch",
+        "drying-beds"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "f062-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "roasting-shed",
+        "restroom",
+        "tasting-hut"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 27
+    },
+    {
+      "id": "f062-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "roasting-shed",
+        "restroom",
+        "bench"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f062-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "tasting-table",
+        "coffee-sacks",
+        "roasting-shed"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "f065-en",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "tasting-table",
+        "coffee-sacks"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 23
+    },
+    {
+      "id": "f065-es",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "drying-beds"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 23
+    },
+    {
+      "id": "f065-ko",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "coffee-sacks",
+        "viewpoint"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 22
+    },
+    {
+      "id": "f065-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "coffee-sacks",
+        "tasting-table",
+        "drying-beds"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 32
+    },
+    {
+      "id": "f067-en",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f067-es",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f067-ko",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f067-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 25
+    },
+    {
+      "id": "f069-en",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "muddy-patch",
+        "viewpoint"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 19
+    },
+    {
+      "id": "f069-es",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "welcome-sign",
+        "muddy-patch"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 17
+    },
+    {
+      "id": "f069-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "welcome-sign",
+        "viewpoint"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 20
+    },
+    {
+      "id": "f069-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "wheelbarrow",
+        "welcome-sign",
+        "roasting-shed"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 24
+    },
+    {
+      "id": "f072-en",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 18
+    },
+    {
+      "id": "f072-es",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 17
+    },
+    {
+      "id": "f072-ko",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "steps-to-rows",
+        "roasting-shed",
+        "coffee-sacks"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 19
+    },
+    {
+      "id": "f072-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "tasting-table",
+        "drying-beds",
+        "coffee-sacks"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 24
+    }
+  ],
+  "firstUnderstandMs": 37,
+  "laterUnderstandMedianMs": 26,
+  "offline": {
+    "pageFromServiceWorker": true,
+    "stateBefore": {
+      "status": "absent"
+    },
+    "storedBefore": true,
+    "message": "The cart was blocking the path by the drying beds again (129d8fa9).",
+    "answer": {
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "drying-beds",
+        "wheelbarrow",
+        "muddy-patch"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 302
+    },
+    "stateAfter": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    }
+  },
+  "requests": {
+    "online": [],
+    "offline": [
+      "http://127.0.0.1:4181/",
+      "http://127.0.0.1:4181/assets/index-CSTQrq_t.js",
+      "http://127.0.0.1:4181/assets/index-CSTQrq_t.js",
+      "http://127.0.0.1:4181/assets/encoder-Dpuz2NwF.js",
+      "http://127.0.0.1:4181/assets/encoder-Dpuz2NwF.js",
+      "http://127.0.0.1:4181/assets/heads-By5QHNgV.js",
+      "http://127.0.0.1:4181/assets/heads-By5QHNgV.js",
+      "http://127.0.0.1:4181/assets/ort-wasm-simd-threaded-BQa_0C5h.mjs",
+      "http://127.0.0.1:4181/assets/ort-wasm-simd-threaded-BQa_0C5h.mjs"
+    ]
+  },
+  "matchesNode": "88/88"
+}

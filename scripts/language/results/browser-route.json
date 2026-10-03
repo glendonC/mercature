@@ -1,0 +1,849 @@
+{
+  "split": "route",
+  "throttle": 1,
+  "source": "trimmed files served by this origin",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
+  "downloadBytesBefore": 83782751,
+  "provision": {
+    "final": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    },
+    "ms": 2788.5,
+    "progressEvents": 86,
+    "first": {
+      "status": "downloading",
+      "loadedBytes": 443,
+      "totalBytes": 83783194
+    },
+    "last": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    }
+  },
+  "downloadBytesAfter": 0,
+  "prepareSite": [
+    {
+      "result": "embedded",
+      "ticks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "ms": 1710
+    },
+    {
+      "result": "cached",
+      "ticks": [],
+      "ms": 0
+    }
+  ],
+  "answers": [
+    {
+      "id": "r000-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "qorikancha-ticket-booth"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "r001-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r001-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r001-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "kerb-80-100"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "r001-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-0-10"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "r002-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "steps-340-350"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "r002-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "steps-340-350"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 43
+    },
+    {
+      "id": "r002-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "kerb-80-100",
+        "steps-0-10",
+        "portal-de-carrizos"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "r003-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 29
+    },
+    {
+      "id": "r003-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "r003-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 37
+    },
+    {
+      "id": "r003-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 39
+    },
+    {
+      "id": "r004-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 31
+    },
+    {
+      "id": "r004-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "steps-340-350"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r004-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "steps-340-350"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 34
+    },
+    {
+      "id": "r005-en",
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "calle-loreto",
+        "steps-130-140",
+        "steps-340-350"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "r005-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "calle-loreto",
+        "steps-130-140",
+        "steps-340-350"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 39
+    },
+    {
+      "id": "r005-ko",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 40
+    },
+    {
+      "id": "r006-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-0-10",
+        "portal-de-carrizos",
+        "kerb-80-100"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 42
+    },
+    {
+      "id": "r006-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "kerb-80-100"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 44
+    },
+    {
+      "id": "r006-ko",
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "kerb-80-100",
+        "steps-0-10",
+        "plaza-de-armas"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 44
+    },
+    {
+      "id": "r007-en",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 27
+    },
+    {
+      "id": "r007-es",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo",
+        "steps-340-350"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "r007-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "monasterio-de-santa-catalina-de-sena",
+        "no-photos-150-170"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "r007-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "kerb-80-100",
+        "steps-130-140"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 38
+    },
+    {
+      "id": "r008-en",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 31
+    },
+    {
+      "id": "r008-es",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r008-ko",
+      "status": "ready",
+      "kind": "question",
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "no-photos-150-170",
+        "steps-340-350"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "r009-en",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "r009-es",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "steps-340-350",
+        "steps-130-140"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 32
+    },
+    {
+      "id": "r009-ko",
+      "status": "ready",
+      "kind": "praise",
+      "category": null,
+      "candidates": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "steps-590-594"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r010-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "steps-or-slope",
+      "candidates": [
+        "steps-0-10",
+        "steps-340-350",
+        "steps-130-140"
+      ],
+      "reason": "unclear-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "r010-es",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 34
+    },
+    {
+      "id": "r010-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 35
+    },
+    {
+      "id": "r011-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "r011-es",
+      "status": "unsure",
+      "kind": "praise",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "r011-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": "other",
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 26
+    },
+    {
+      "id": "r011-qu",
+      "status": "unsure",
+      "kind": null,
+      "category": null,
+      "candidates": [
+        "qorikancha-ticket-booth",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 33
+    },
+    {
+      "id": "r012-en",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "kerb-80-100",
+        "no-photos-150-170"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 36
+    },
+    {
+      "id": "r012-es",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "kerb-80-100",
+        "no-photos-150-170"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 39
+    },
+    {
+      "id": "r012-ko",
+      "status": "unsure",
+      "kind": "problem",
+      "category": null,
+      "candidates": [
+        "steps-340-350",
+        "steps-130-140",
+        "no-photos-150-170"
+      ],
+      "reason": "unclear-kind",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 43
+    },
+    {
+      "id": "r013-en",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 28
+    },
+    {
+      "id": "r013-es",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    },
+    {
+      "id": "r013-ko",
+      "status": "unsure",
+      "kind": "question",
+      "category": null,
+      "candidates": [],
+      "reason": "no-place",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 30
+    }
+  ],
+  "firstUnderstandMs": 37,
+  "laterUnderstandMedianMs": 34,
+  "offline": {
+    "pageFromServiceWorker": true,
+    "stateBefore": {
+      "status": "absent"
+    },
+    "storedBefore": true,
+    "message": "The stone steps on Loreto near Maruri still have no handrail (3c3e0c66).",
+    "answer": {
+      "status": "ready",
+      "kind": "problem",
+      "category": "path-blocked",
+      "candidates": [
+        "steps-340-350",
+        "no-photos-150-170",
+        "steps-130-140"
+      ],
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      },
+      "elapsedMs": 292
+    },
+    "stateAfter": {
+      "status": "ready",
+      "model": {
+        "id": "Xenova/multilingual-e5-small",
+        "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
+        "bytes": 72649787
+      }
+    }
+  },
+  "requests": {
+    "online": [],
+    "offline": [
+      "http://127.0.0.1:4181/",
+      "http://127.0.0.1:4181/assets/index-CSTQrq_t.js",
+      "http://127.0.0.1:4181/assets/index-CSTQrq_t.js",
+      "http://127.0.0.1:4181/assets/encoder-Dpuz2NwF.js",
+      "http://127.0.0.1:4181/assets/encoder-Dpuz2NwF.js",
+      "http://127.0.0.1:4181/assets/heads-By5QHNgV.js",
+      "http://127.0.0.1:4181/assets/heads-By5QHNgV.js",
+      "http://127.0.0.1:4181/assets/ort-wasm-simd-threaded-BQa_0C5h.mjs",
+      "http://127.0.0.1:4181/assets/ort-wasm-simd-threaded-BQa_0C5h.mjs"
+    ]
+  },
+  "matchesNode": "44/44"
+}

@@ -1,0 +1,2580 @@
+{
+  "report": {
+    "split": "route",
+    "variant": "quantized",
+    "heads": "b6a40a3cfcfa",
+    "thresholds": {
+      "kind": 0.76,
+      "category": 0.55,
+      "place": 0.58,
+      "margin": 0.005
+    },
+    "overall": {
+      "messages": 44,
+      "top1": "29/34 (85%)",
+      "top3": "33/34 (97%)",
+      "kind": "39/44 (89%)",
+      "category": "8/31 (26%)",
+      "placeOrNot": "36/41 (88%)",
+      "ready": "10/44 (23%)",
+      "readyCorrect": "7/10 (70%)",
+      "expected": "39/44 (89%)",
+      "aliasHit": "29/34 (85%)",
+      "aliasExactlyRight": "3/34 (9%)"
+    },
+    "byLanguage": {
+      "ko": {
+        "messages": 14,
+        "top1": "10/11 (91%)",
+        "top3": "11/11 (100%)",
+        "kind": "14/14 (100%)",
+        "category": "2/10 (20%)",
+        "placeOrNot": "13/13 (100%)",
+        "ready": "4/14 (29%)",
+        "readyCorrect": "3/4 (75%)",
+        "expected": "13/14 (93%)",
+        "aliasHit": "10/11 (91%)",
+        "aliasExactlyRight": "1/11 (9%)"
+      },
+      "en": {
+        "messages": 13,
+        "top1": "9/10 (90%)",
+        "top3": "10/10 (100%)",
+        "kind": "13/13 (100%)",
+        "category": "4/9 (44%)",
+        "placeOrNot": "9/12 (75%)",
+        "ready": "4/13 (31%)",
+        "readyCorrect": "2/4 (50%)",
+        "expected": "11/13 (85%)",
+        "aliasHit": "10/10 (100%)",
+        "aliasExactlyRight": "1/10 (10%)"
+      },
+      "es": {
+        "messages": 13,
+        "top1": "9/10 (90%)",
+        "top3": "10/10 (100%)",
+        "kind": "11/13 (85%)",
+        "category": "2/9 (22%)",
+        "placeOrNot": "11/12 (92%)",
+        "ready": "2/13 (15%)",
+        "readyCorrect": "2/2 (100%)",
+        "expected": "12/13 (92%)",
+        "aliasHit": "9/10 (90%)",
+        "aliasExactlyRight": "1/10 (10%)"
+      },
+      "qu": {
+        "messages": 4,
+        "top1": "1/3 (33%)",
+        "top3": "2/3 (67%)",
+        "kind": "1/4 (25%)",
+        "category": "0/3 (0%)",
+        "placeOrNot": "3/4 (75%)",
+        "ready": "0/4 (0%)",
+        "readyCorrect": "n/a",
+        "expected": "3/4 (75%)",
+        "aliasHit": "0/3 (0%)",
+        "aliasExactlyRight": "0/3 (0%)"
+      }
+    },
+    "byCase": {
+      "direct": {
+        "messages": 18,
+        "asExpected": "16/18 (89%)"
+      },
+      "indirect": {
+        "messages": 3,
+        "asExpected": "2/3 (67%)"
+      },
+      "praise-place": {
+        "messages": 4,
+        "asExpected": "4/4 (100%)"
+      },
+      "question-place": {
+        "messages": 3,
+        "asExpected": "3/3 (100%)"
+      },
+      "negation": {
+        "messages": 3,
+        "asExpected": "3/3 (100%)"
+      },
+      "vague": {
+        "messages": 3,
+        "asExpected": "3/3 (100%)"
+      },
+      "off-topic": {
+        "messages": 4,
+        "asExpected": "2/4 (50%)"
+      },
+      "two-concerns": {
+        "messages": 3,
+        "asExpected": "3/3 (100%)"
+      },
+      "question-general": {
+        "messages": 3,
+        "asExpected": "3/3 (100%)"
+      }
+    },
+    "twoConcernsBothInTop3": "2/3 (67%)",
+    "noPlaceLeftEmpty": {
+      "model": "6/7 (86%)",
+      "alias": "7/7 (100%)"
+    },
+    "aliasSuggestsPlaceOnPraiseNegationResolved": "6/7 (86%)",
+    "reasons": {
+      "unclear-kind": 21,
+      "ready": 10,
+      "unclear-place": 4,
+      "no-place": 9
+    },
+    "speed": {
+      "readAndVerifyMs": 67,
+      "sessionMs": 493,
+      "siteIndexMs": 2318,
+      "perMessageP50Ms": 35.1,
+      "perMessageP95Ms": 45.6,
+      "perMessageMaxMs": 47.3
+    },
+    "bytes": {
+      "modelFiles": 135391358,
+      "runtimeWasm": 11133407,
+      "heads": 16689
+    },
+    "host": {
+      "node": "v24.15.0",
+      "cpu": "Apple M5 Max",
+      "threads": 1,
+      "runtime": "onnxruntime-web 1.22.0-dev.20250409-89f8206ba4 wasm (CPU)"
+    }
+  },
+  "failures": [
+    {
+      "id": "r001-en",
+      "case": "direct",
+      "text": "The steps right at the start, where you leave the Plaza de Armas by the cathedral, were a real struggle with my mum's walker.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-0-10"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ]
+      },
+      "top3": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ]
+    },
+    {
+      "id": "r001-qu",
+      "case": "direct",
+      "text": "Qallariypi, Catedralpa qayllanpi Plaza de Armasmanta lluqsispa, chay patakunaqa andadorninwan mamaypaq ancha sasam karqan.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-0-10"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus",
+          "steps-0-10"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-0-10"
+      ]
+    },
+    {
+      "id": "r003-en",
+      "case": "direct",
+      "text": "The stone steps on Loreto at the corner with Maruri have no handrail at all. My dad almost fell going down.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-340-350"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ]
+      },
+      "top3": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto"
+      ]
+    },
+    {
+      "id": "r003-qu",
+      "case": "direct",
+      "text": "Loreto k'iqllupi, Maruriwan tupasqanpi, rumi patakunapi manam hap'ina kanchu. Taytay urayaspa yaqa urmarqan.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-340-350"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170"
+      ]
+    },
+    {
+      "id": "r004-ko",
+      "case": "direct",
+      "text": "맨 마지막에 코리칸차 매표소 앞 계단은 그렇게 걷고 난 뒤라 너무 힘들었어요. 무릎이 완전 나갔어요.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "steps-590-594"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "steps-590-594",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "steps-340-350"
+      ]
+    },
+    {
+      "id": "r006-en",
+      "case": "indirect",
+      "text": "On the Plaza de Armas, right where the covered walkway with the columns ends, there's a big drop down to the street and no ramp. Scary with Dad's wheelchair.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "kerb-80-100"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "portal-de-carrizos",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-place"
+      },
+      "top3": [
+        "steps-0-10",
+        "portal-de-carrizos",
+        "kerb-80-100"
+      ]
+    },
+    {
+      "id": "r006-es",
+      "case": "indirect",
+      "text": "En la Plaza de Armas, justo donde termina el pasillo techado con columnas, hay un desnivel fuerte para bajar a la calle y ninguna rampa. Con la silla de mi papá, un susto.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "kerb-80-100"
+        ]
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "kerb-80-100"
+      ]
+    },
+    {
+      "id": "r006-ko",
+      "case": "indirect",
+      "text": "아르마스 광장에서 기둥 늘어선 지붕 있는 통로가 끝나는 지점에 차도로 내려가는 단차가 엄청 크고 경사로가 없어요. 아빠 휠체어 때문에 아찔했어요.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "steps-or-slope"
+        ],
+        "places": [
+          "kerb-80-100"
+        ]
+      },
+      "got": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "kerb-80-100",
+          "steps-0-10",
+          "plaza-de-armas"
+        ]
+      },
+      "top3": [
+        "kerb-80-100",
+        "steps-0-10",
+        "plaza-de-armas"
+      ]
+    },
+    {
+      "id": "r011-es",
+      "case": "off-topic",
+      "text": "El guía llegó casi media hora tarde y, sinceramente, el tour nos pareció carísimo para lo que fue.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "other"
+        ],
+        "places": []
+      },
+      "got": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "top3": [
+        "qorikancha-ticket-booth",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-590-594"
+      ]
+    },
+    {
+      "id": "r011-qu",
+      "case": "off-topic",
+      "text": "Pusaqniykuqa yaqa kuskan hora qhipata chayamurqan, hinallataq puriyqa nisyu chaniyuqmi karqan.",
+      "expected": {
+        "kind": "problem",
+        "category": [
+          "other"
+        ],
+        "places": []
+      },
+      "got": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus"
+        ],
+        "reason": "unclear-kind"
+      },
+      "top3": [
+        "qorikancha-ticket-booth",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "r000-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "qorikancha-ticket-booth"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "qorikancha-ticket-booth",
+        "calle-loreto",
+        "steps-590-594",
+        "no-photos-150-170",
+        "steps-0-10",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "kerb-80-100",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "kind": [
+        0.969763426685933,
+        0.027632023971564598,
+        0.0026045493425024217
+      ],
+      "category": [
+        0.4737573159650492,
+        0.1266042357116962,
+        0.028384723280673825,
+        0.06349867168130087,
+        0.007072686879702214,
+        0.3006823664815776
+      ],
+      "place": 0.994317512034499,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "iglesia-de-la-compania-de-jesus",
+        "calle-loreto",
+        "iglesia-de-santo-domingo"
+      ],
+      "ms": 37.83216700000003
+    },
+    {
+      "id": "r001-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ]
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "monasterio-de-santa-catalina-de-sena",
+        "portal-de-carrizos",
+        "steps-130-140",
+        "steps-590-594",
+        "calle-loreto",
+        "kerb-80-100",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-340-350",
+        "no-photos-150-170",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9572642525505156,
+        0.04182860498612692,
+        0.0009071424633573862
+      ],
+      "category": [
+        0.6807425120095811,
+        0.27238230362781984,
+        0.00833786634979638,
+        0.0009638272545881396,
+        0.00017662957943592291,
+        0.037396861178778724
+      ],
+      "place": 0.9998215576169129,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "ms": 33.73787500000026
+    },
+    {
+      "id": "r001-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "steps-130-140",
+        "steps-340-350",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-590-594",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "no-photos-150-170",
+        "kerb-80-100",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9670197182608993,
+        0.03240372031312856,
+        0.0005765614259722241
+      ],
+      "category": [
+        0.5119687068411158,
+        0.13074325259648625,
+        0.10783340484159118,
+        0.053659271414392626,
+        0.0023186470694344496,
+        0.19347671723697957
+      ],
+      "place": 0.9986671902619961,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "ms": 33.41683400000011
+    },
+    {
+      "id": "r001-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "kerb-80-100",
+        "steps-590-594",
+        "steps-340-350",
+        "steps-130-140",
+        "qorikancha-ticket-booth",
+        "catedral-del-cusco",
+        "no-photos-150-170",
+        "monasterio-de-santa-catalina-de-sena",
+        "calle-loreto",
+        "iglesia-de-la-compania-de-jesus",
+        "portal-de-carrizos",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9741161304453655,
+        0.025448780487765093,
+        0.000435089066869347
+      ],
+      "category": [
+        0.45634430428055944,
+        0.1046361388057897,
+        0.051782971521600905,
+        0.2087337273860977,
+        0.006420002824435745,
+        0.17208285518151642
+      ],
+      "place": 0.9985437024665111,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo"
+      ],
+      "ms": 35.540959000000385
+    },
+    {
+      "id": "r001-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus",
+          "steps-0-10"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-0-10",
+        "catedral-del-cusco",
+        "portal-de-carrizos",
+        "qorikancha-ticket-booth",
+        "steps-130-140",
+        "calle-loreto",
+        "steps-590-594",
+        "monasterio-de-santa-catalina-de-sena",
+        "kerb-80-100",
+        "iglesia-de-santo-domingo",
+        "no-photos-150-170",
+        "steps-340-350"
+      ],
+      "kind": [
+        0.0029920017176918337,
+        0.9826537844851131,
+        0.014354213797195202
+      ],
+      "category": [
+        0.006687447318831753,
+        0.07707039773804918,
+        0.8464724926384486,
+        0.000007447617650415153,
+        0.00034781131336148374,
+        0.06941440337365871
+      ],
+      "place": 0.9999995273579765,
+      "baseline": [
+        "plaza-de-armas"
+      ],
+      "ms": 37.19583399999965
+    },
+    {
+      "id": "r002-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "portal-de-carrizos",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "steps-340-350",
+        "steps-0-10",
+        "steps-590-594",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "no-photos-150-170",
+        "steps-130-140",
+        "qorikancha-ticket-booth",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo",
+        "calle-loreto",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.7619294262655301,
+        0.2254981724934835,
+        0.012572401240986374
+      ],
+      "category": [
+        0.38886228745247475,
+        0.26129680055276056,
+        0.17241408880946316,
+        0.048463918825224134,
+        0.004410163641041343,
+        0.12455274071903585
+      ],
+      "place": 0.9970460953360367,
+      "baseline": [
+        "kerb-80-100",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "ms": 36.90879099999984
+    },
+    {
+      "id": "r002-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "portal-de-carrizos",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "steps-340-350",
+        "steps-0-10",
+        "no-photos-150-170",
+        "plaza-de-armas",
+        "steps-130-140",
+        "qorikancha-ticket-booth",
+        "catedral-del-cusco",
+        "steps-590-594",
+        "calle-loreto",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.7571476833741833,
+        0.24035673583462447,
+        0.0024955807911921824
+      ],
+      "category": [
+        0.45257516925381797,
+        0.061332708365587685,
+        0.2636740139798032,
+        0.15778820079392192,
+        0.023480467265805164,
+        0.04114944034106418
+      ],
+      "place": 0.9998910310956601,
+      "baseline": [
+        "kerb-80-100",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "ms": 43.161625000000186
+    },
+    {
+      "id": "r002-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "steps-0-10",
+          "portal-de-carrizos"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "kerb-80-100",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "plaza-de-armas",
+        "steps-340-350",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.5568962712810162,
+        0.43903113985678593,
+        0.0040725888621978516
+      ],
+      "category": [
+        0.5781592067181714,
+        0.16713139226740492,
+        0.11771784790371671,
+        0.035497901190182514,
+        0.0021775212843595715,
+        0.09931613063616507
+      ],
+      "place": 0.9993526634807016,
+      "baseline": [
+        "kerb-80-100",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "ms": 36.17887500000006
+    },
+    {
+      "id": "r003-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ]
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "no-photos-150-170",
+        "steps-0-10",
+        "steps-590-594",
+        "kerb-80-100",
+        "qorikancha-ticket-booth",
+        "portal-de-carrizos",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.9495882641072749,
+        0.049541628246552165,
+        0.0008701076461730042
+      ],
+      "category": [
+        0.7098878894508196,
+        0.14565200235159653,
+        0.08049669049276298,
+        0.011754700595525082,
+        0.0011768695138037126,
+        0.05103184759549199
+      ],
+      "place": 0.9998473006695725,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594"
+      ],
+      "ms": 29.12216699999999
+    },
+    {
+      "id": "r003-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "no-photos-150-170",
+        "steps-0-10",
+        "kerb-80-100",
+        "plaza-de-armas",
+        "portal-de-carrizos",
+        "steps-590-594",
+        "iglesia-de-la-compania-de-jesus",
+        "catedral-del-cusco",
+        "qorikancha-ticket-booth",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.8883602999658097,
+        0.09308826503104359,
+        0.018551435003146686
+      ],
+      "category": [
+        0.3053928550590272,
+        0.13785319731287213,
+        0.4086611494314981,
+        0.032358179509780295,
+        0.008745976424111913,
+        0.10698864226271039
+      ],
+      "place": 0.9999775565110585,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594"
+      ],
+      "ms": 35.492917000000034
+    },
+    {
+      "id": "r003-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "no-photos-150-170",
+        "kerb-80-100",
+        "steps-590-594",
+        "steps-0-10",
+        "qorikancha-ticket-booth",
+        "portal-de-carrizos",
+        "plaza-de-armas",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco"
+      ],
+      "kind": [
+        0.8799589484689846,
+        0.11486420539754652,
+        0.005176846133468926
+      ],
+      "category": [
+        0.7985521841670888,
+        0.0765079181650691,
+        0.03185412811327305,
+        0.02669029763333638,
+        0.003381666705148533,
+        0.06301380521608387
+      ],
+      "place": 0.9999909414988785,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "steps-590-594",
+        "calle-loreto"
+      ],
+      "ms": 37.40108400000008
+    },
+    {
+      "id": "r003-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "qorikancha-ticket-booth",
+        "steps-0-10",
+        "iglesia-de-la-compania-de-jesus",
+        "kerb-80-100",
+        "plaza-de-armas",
+        "steps-590-594",
+        "portal-de-carrizos",
+        "monasterio-de-santa-catalina-de-sena",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.03211615541065647,
+        0.931360174507537,
+        0.0365236700818065
+      ],
+      "category": [
+        0.0007567029236194837,
+        0.0019861260653944003,
+        0.9854666042421216,
+        0.0009343259658837557,
+        0.002645409281611913,
+        0.008210831521368676
+      ],
+      "place": 0.9999994339436631,
+      "baseline": [],
+      "ms": 39.70154099999991
+    },
+    {
+      "id": "r004-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "no-photos-150-170",
+        "monasterio-de-santa-catalina-de-sena",
+        "plaza-de-armas",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.9875754661921825,
+        0.012073659120916388,
+        0.0003508746869010118
+      ],
+      "category": [
+        0.43191089657525683,
+        0.5447785246714208,
+        0.009322450323060382,
+        0.0008862016307375832,
+        0.001159791429109966,
+        0.011942135370414407
+      ],
+      "place": 0.18477802126033388,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 30.97237499999983
+    },
+    {
+      "id": "r004-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-590-594",
+          "qorikancha-ticket-booth",
+          "steps-340-350"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "steps-0-10",
+        "no-photos-150-170",
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo",
+        "monasterio-de-santa-catalina-de-sena",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "kind": [
+        0.9774292982263384,
+        0.02234394008350756,
+        0.00022676169015400897
+      ],
+      "category": [
+        0.8394405688297911,
+        0.11098689553822577,
+        0.020520638912549426,
+        0.009654113440580921,
+        0.0018690116406180884,
+        0.01752877163823467
+      ],
+      "place": 0.9783870264564686,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 34.00929200000019
+    },
+    {
+      "id": "r004-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "steps-590-594",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "steps-340-350",
+        "steps-130-140",
+        "steps-0-10",
+        "kerb-80-100",
+        "calle-loreto",
+        "no-photos-150-170",
+        "portal-de-carrizos",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.7431759940681067,
+        0.25647895072641624,
+        0.00034505520547692815
+      ],
+      "category": [
+        0.4781775768224029,
+        0.4643174627054896,
+        0.015888971733328754,
+        0.0051257723705000965,
+        0.012363970177281771,
+        0.02412624619099671
+      ],
+      "place": 0.9845701668195377,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 34.84562499999993
+    },
+    {
+      "id": "r005-en",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "steps-340-350"
+        ]
+      },
+      "ranked": [
+        "calle-loreto",
+        "steps-130-140",
+        "steps-340-350",
+        "no-photos-150-170",
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-0-10",
+        "iglesia-de-la-compania-de-jesus",
+        "catedral-del-cusco",
+        "plaza-de-armas",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9966792512601529,
+        0.003172986402546258,
+        0.0001477623373007129
+      ],
+      "category": [
+        0.6527031660651822,
+        0.05916421391934432,
+        0.018977798716196002,
+        0.20882088823688394,
+        0.010326310693778084,
+        0.05000762236861559
+      ],
+      "place": 0.9446303237827859,
+      "baseline": [
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "calle-loreto"
+      ],
+      "ms": 34.63237499999968
+    },
+    {
+      "id": "r005-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "calle-loreto",
+        "steps-130-140",
+        "steps-340-350",
+        "no-photos-150-170",
+        "iglesia-de-la-compania-de-jesus",
+        "qorikancha-ticket-booth",
+        "kerb-80-100",
+        "plaza-de-armas",
+        "steps-0-10",
+        "catedral-del-cusco",
+        "steps-590-594",
+        "monasterio-de-santa-catalina-de-sena",
+        "portal-de-carrizos",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.7860009999094828,
+        0.2100902064834287,
+        0.003908793607088595
+      ],
+      "category": [
+        0.5067669151045939,
+        0.03422210491321685,
+        0.15282491228437728,
+        0.13428523362331551,
+        0.01742511628067895,
+        0.1544757177938175
+      ],
+      "place": 0.934557417197933,
+      "baseline": [
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "calle-loreto"
+      ],
+      "ms": 38.40249999999969
+    },
+    {
+      "id": "r005-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "kerb-80-100",
+        "steps-0-10",
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "portal-de-carrizos",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.7029297356227361,
+        0.29521610077778143,
+        0.0018541635994823384
+      ],
+      "category": [
+        0.3551105988725917,
+        0.25228233075114864,
+        0.09347520472783441,
+        0.007198546335255835,
+        0.0016436230139611045,
+        0.2902896962992082
+      ],
+      "place": 0.9965909998637658,
+      "baseline": [
+        "steps-130-140",
+        "no-photos-150-170",
+        "calle-loreto"
+      ],
+      "ms": 40.533416000000216
+    },
+    {
+      "id": "r006-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "portal-de-carrizos",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "steps-0-10",
+        "portal-de-carrizos",
+        "kerb-80-100",
+        "plaza-de-armas",
+        "steps-340-350",
+        "calle-loreto",
+        "steps-130-140",
+        "steps-590-594",
+        "catedral-del-cusco",
+        "no-photos-150-170",
+        "qorikancha-ticket-booth",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9169428743054272,
+        0.061101459515409816,
+        0.021955666179162798
+      ],
+      "category": [
+        0.649567364649097,
+        0.19710251799334483,
+        0.04148595498346253,
+        0.012322155861833736,
+        0.0010466027304343844,
+        0.09847540378182751
+      ],
+      "place": 0.9999879899632397,
+      "baseline": [
+        "steps-0-10",
+        "kerb-80-100",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "ms": 43.53675000000021
+    },
+    {
+      "id": "r006-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "kerb-80-100",
+        "steps-340-350",
+        "portal-de-carrizos",
+        "steps-130-140",
+        "calle-loreto",
+        "catedral-del-cusco",
+        "no-photos-150-170",
+        "steps-590-594",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.7029209038318371,
+        0.2808830547419098,
+        0.016196041426252958
+      ],
+      "category": [
+        0.38536342601748724,
+        0.3401320174135479,
+        0.23056390536564414,
+        0.0022573881898318576,
+        0.00653412584327913,
+        0.03514913717020975
+      ],
+      "place": 0.999991942975942,
+      "baseline": [
+        "steps-0-10",
+        "plaza-de-armas"
+      ],
+      "ms": 45.187374999999975
+    },
+    {
+      "id": "r006-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "kerb-80-100",
+          "steps-0-10",
+          "plaza-de-armas"
+        ]
+      },
+      "ranked": [
+        "kerb-80-100",
+        "steps-0-10",
+        "plaza-de-armas",
+        "steps-340-350",
+        "calle-loreto",
+        "qorikancha-ticket-booth",
+        "no-photos-150-170",
+        "steps-130-140",
+        "portal-de-carrizos",
+        "steps-590-594",
+        "monasterio-de-santa-catalina-de-sena",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.9115279386735555,
+        0.08716581629789806,
+        0.0013062450285464618
+      ],
+      "category": [
+        0.7345873770850463,
+        0.10998713143691702,
+        0.03024710333096995,
+        0.027291597975450353,
+        0.001647324620258076,
+        0.09623946555135844
+      ],
+      "place": 0.9988030271697899,
+      "baseline": [
+        "steps-0-10",
+        "plaza-de-armas"
+      ],
+      "ms": 45.630540999999994
+    },
+    {
+      "id": "r007-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "iglesia-de-santo-domingo",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "steps-340-350",
+        "calle-loreto",
+        "no-photos-150-170",
+        "plaza-de-armas",
+        "steps-130-140",
+        "kerb-80-100",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.00004732567660078108,
+        0.9999098948500215,
+        0.000042779473377768535
+      ],
+      "category": [
+        0.034432868028042386,
+        0.005293749052688448,
+        0.39970760514542597,
+        0.000077919655458079,
+        0.000051604188586017505,
+        0.560436253929799
+      ],
+      "place": 0.473856448981208,
+      "baseline": [
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 29.215666000000056
+    },
+    {
+      "id": "r007-es",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "iglesia-de-santo-domingo",
+          "steps-340-350"
+        ]
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo",
+        "steps-340-350",
+        "steps-590-594",
+        "calle-loreto",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-130-140",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "catedral-del-cusco",
+        "plaza-de-armas"
+      ],
+      "kind": [
+        0.008898880937515972,
+        0.9908206847482394,
+        0.0002804343142448395
+      ],
+      "category": [
+        0.14458479248614392,
+        0.009931155985922127,
+        0.5046331567636189,
+        0.07484655438997084,
+        0.0065760703782748635,
+        0.2594282699960693
+      ],
+      "place": 0.9398937609450759,
+      "baseline": [
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 31.163374999999633
+    },
+    {
+      "id": "r007-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "monasterio-de-santa-catalina-de-sena",
+          "no-photos-150-170"
+        ]
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "monasterio-de-santa-catalina-de-sena",
+        "no-photos-150-170",
+        "iglesia-de-santo-domingo",
+        "plaza-de-armas",
+        "portal-de-carrizos",
+        "steps-340-350",
+        "calle-loreto",
+        "catedral-del-cusco",
+        "steps-0-10",
+        "iglesia-de-la-compania-de-jesus",
+        "kerb-80-100",
+        "steps-590-594",
+        "steps-130-140"
+      ],
+      "kind": [
+        0.02245645488814533,
+        0.9651787016147221,
+        0.012364843497132676
+      ],
+      "category": [
+        0.0032819616189781464,
+        0.0037177826666975637,
+        0.07042237169822817,
+        0.0010744606727221162,
+        0.0003017338713655206,
+        0.9212016894720084
+      ],
+      "place": 0.691744864687242,
+      "baseline": [
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 27.665416999999707
+    },
+    {
+      "id": "r007-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "kerb-80-100",
+          "steps-130-140"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "kerb-80-100",
+        "steps-130-140",
+        "iglesia-de-santo-domingo",
+        "steps-590-594",
+        "iglesia-de-la-compania-de-jesus",
+        "calle-loreto",
+        "monasterio-de-santa-catalina-de-sena",
+        "no-photos-150-170",
+        "steps-340-350",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "kind": [
+        0.001709544646793026,
+        0.9981128669840104,
+        0.00017758836919651546
+      ],
+      "category": [
+        0.0014928645285019985,
+        0.08092811671169511,
+        0.7527354304722039,
+        0.003058063360428517,
+        0.025013294350549137,
+        0.1367722305766214
+      ],
+      "place": 0.9788181725576541,
+      "baseline": [],
+      "ms": 47.32354200000009
+    },
+    {
+      "id": "r008-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "steps-340-350",
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-0-10",
+        "iglesia-de-santo-domingo",
+        "monasterio-de-santa-catalina-de-sena",
+        "catedral-del-cusco",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.0011596031437120366,
+        0.0032874235958781865,
+        0.9955529732604098
+      ],
+      "category": [
+        0.025899073178045233,
+        0.03351945226874848,
+        0.11856729993183474,
+        0.23283200516158617,
+        0.0024049111055404475,
+        0.5867772583542449
+      ],
+      "place": 0.049835906892769656,
+      "baseline": [
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 32.41350000000011
+    },
+    {
+      "id": "r008-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "steps-590-594",
+        "steps-340-350",
+        "calle-loreto",
+        "iglesia-de-santo-domingo",
+        "no-photos-150-170",
+        "portal-de-carrizos",
+        "steps-130-140",
+        "kerb-80-100",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "kind": [
+        0.007881277920588672,
+        0.0035887684062586465,
+        0.9885299536731527
+      ],
+      "category": [
+        0.030264950703286345,
+        0.00600238436588728,
+        0.04870893956726171,
+        0.19137825101523726,
+        0.0016669733637987428,
+        0.7219785009845288
+      ],
+      "place": 0.11485153653873059,
+      "baseline": [
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 34.92637500000001
+    },
+    {
+      "id": "r008-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "no-photos-150-170",
+          "steps-340-350"
+        ]
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "no-photos-150-170",
+        "steps-340-350",
+        "steps-590-594",
+        "kerb-80-100",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "steps-130-140",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-0-10",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.03786286098920252,
+        0.0022710961759713722,
+        0.9598660428348261
+      ],
+      "category": [
+        0.05438503416875209,
+        0.017749007786049483,
+        0.08409992969359642,
+        0.4208233560514412,
+        0.003034607760619872,
+        0.41990806453954077
+      ],
+      "place": 0.9882905211044131,
+      "baseline": [
+        "steps-590-594",
+        "qorikancha-ticket-booth"
+      ],
+      "ms": 37.78012499999977
+    },
+    {
+      "id": "r009-en",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ]
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "steps-340-350",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "steps-590-594",
+        "monasterio-de-santa-catalina-de-sena",
+        "steps-130-140",
+        "portal-de-carrizos",
+        "iglesia-de-la-compania-de-jesus",
+        "calle-loreto",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.0007475866267104421,
+        0.9992519135140432,
+        4.998592463563573e-7
+      ],
+      "category": [
+        0.7899064108072393,
+        0.02992421288058295,
+        0.1318587636361613,
+        0.0004977595927844676,
+        0.0009019685677624915,
+        0.04691088451546948
+      ],
+      "place": 0.9998989954708472,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "ms": 32.27087500000016
+    },
+    {
+      "id": "r009-es",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "steps-340-350",
+          "steps-130-140"
+        ]
+      },
+      "ranked": [
+        "steps-0-10",
+        "steps-340-350",
+        "steps-130-140",
+        "steps-590-594",
+        "plaza-de-armas",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus",
+        "calle-loreto",
+        "portal-de-carrizos",
+        "monasterio-de-santa-catalina-de-sena",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.01653621703026798,
+        0.9834570463785623,
+        0.000006736591169624312
+      ],
+      "category": [
+        0.8053301357811967,
+        0.03032129530961907,
+        0.13292003999067148,
+        0.0011038224095048994,
+        0.0019811642073596617,
+        0.028343542301648456
+      ],
+      "place": 0.9999811066976776,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco"
+      ],
+      "ms": 34.307708000000275
+    },
+    {
+      "id": "r009-ko",
+      "decision": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "steps-590-594"
+        ]
+      },
+      "ranked": [
+        "steps-0-10",
+        "plaza-de-armas",
+        "steps-590-594",
+        "steps-340-350",
+        "catedral-del-cusco",
+        "kerb-80-100",
+        "steps-130-140",
+        "no-photos-150-170",
+        "calle-loreto",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo",
+        "qorikancha-ticket-booth",
+        "portal-de-carrizos"
+      ],
+      "kind": [
+        0.16339795837578494,
+        0.8363352827703568,
+        0.00026675885385833123
+      ],
+      "category": [
+        0.5070976810271095,
+        0.07072459536749656,
+        0.17666485955773098,
+        0.025833210213241514,
+        0.012403514176798297,
+        0.20727613965762315
+      ],
+      "place": 0.9989464357007533,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo"
+      ],
+      "ms": 35.15350000000035
+    },
+    {
+      "id": "r010-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "steps-or-slope",
+        "candidates": [
+          "steps-0-10",
+          "steps-340-350",
+          "steps-130-140"
+        ],
+        "reason": "unclear-place"
+      },
+      "ranked": [
+        "steps-0-10",
+        "steps-340-350",
+        "steps-130-140",
+        "steps-590-594",
+        "calle-loreto",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "portal-de-carrizos",
+        "qorikancha-ticket-booth",
+        "monasterio-de-santa-catalina-de-sena",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.9366170588833629,
+        0.06310554295032904,
+        0.0002773981663080159
+      ],
+      "category": [
+        0.2150488711400761,
+        0.759306683823594,
+        0.009025098518214973,
+        0.00025874687243396466,
+        0.0002294470029063014,
+        0.016131152642774583
+      ],
+      "place": 0.938175208442513,
+      "baseline": [],
+      "ms": 32.295374999999694
+    },
+    {
+      "id": "r010-es",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-0-10",
+        "steps-340-350",
+        "steps-130-140",
+        "kerb-80-100",
+        "steps-590-594",
+        "calle-loreto",
+        "no-photos-150-170",
+        "portal-de-carrizos",
+        "plaza-de-armas",
+        "monasterio-de-santa-catalina-de-sena",
+        "catedral-del-cusco",
+        "qorikancha-ticket-booth",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.301635567692135,
+        0.6935876456468489,
+        0.004776786661016128
+      ],
+      "category": [
+        0.4104277810381205,
+        0.48370791670676355,
+        0.04470164160366334,
+        0.004320436637903159,
+        0.0014001579322819647,
+        0.055442066081267394
+      ],
+      "place": 0.5448918892173319,
+      "baseline": [],
+      "ms": 36.04008299999987
+    },
+    {
+      "id": "r010-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "steps-0-10",
+        "steps-590-594",
+        "plaza-de-armas",
+        "qorikancha-ticket-booth",
+        "catedral-del-cusco",
+        "portal-de-carrizos",
+        "iglesia-de-la-compania-de-jesus",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.983692849443041,
+        0.015260272842552972,
+        0.0010468777144059702
+      ],
+      "category": [
+        0.5013028741989379,
+        0.3743386509723801,
+        0.029014502322132162,
+        0.011235216547388014,
+        0.0017591045702649913,
+        0.08234965138889681
+      ],
+      "place": 0.9504858684636479,
+      "baseline": [],
+      "ms": 45.71791699999994
+    },
+    {
+      "id": "r011-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "no-photos-150-170",
+        "steps-590-594",
+        "steps-340-350",
+        "steps-130-140",
+        "portal-de-carrizos",
+        "catedral-del-cusco",
+        "steps-0-10",
+        "kerb-80-100",
+        "monasterio-de-santa-catalina-de-sena",
+        "calle-loreto",
+        "iglesia-de-la-compania-de-jesus",
+        "plaza-de-armas",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9959511709923302,
+        0.003841183845939581,
+        0.00020764516173003652
+      ],
+      "category": [
+        0.021062188448130615,
+        0.04457120695250086,
+        0.02965379040882549,
+        0.07260381271332023,
+        0.0008298195814144281,
+        0.8312791818958084
+      ],
+      "place": 0.000012724329649738014,
+      "baseline": [],
+      "ms": 31.054458000000523
+    },
+    {
+      "id": "r011-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-590-594",
+        "no-photos-150-170",
+        "catedral-del-cusco",
+        "steps-340-350",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "steps-130-140",
+        "monasterio-de-santa-catalina-de-sena",
+        "kerb-80-100",
+        "calle-loreto",
+        "iglesia-de-santo-domingo",
+        "plaza-de-armas"
+      ],
+      "kind": [
+        0.05834750801087326,
+        0.9410479457859138,
+        0.0006045462032129898
+      ],
+      "category": [
+        0.267509304806682,
+        0.07230372019924425,
+        0.3357064785366559,
+        0.005916032117810429,
+        0.0029490160760491818,
+        0.3156154482635582
+      ],
+      "place": 0.00112585505434845,
+      "baseline": [],
+      "ms": 27.267124999999396
+    },
+    {
+      "id": "r011-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "steps-340-350",
+        "no-photos-150-170",
+        "kerb-80-100",
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "steps-130-140",
+        "portal-de-carrizos",
+        "steps-0-10",
+        "calle-loreto",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo",
+        "plaza-de-armas",
+        "catedral-del-cusco",
+        "iglesia-de-la-compania-de-jesus"
+      ],
+      "kind": [
+        0.8822599142946825,
+        0.11368406995520411,
+        0.004056015750113235
+      ],
+      "category": [
+        0.027420603628955775,
+        0.029942241236029257,
+        0.044213399756196974,
+        0.12905269981808462,
+        0.0025375121399002242,
+        0.7668335434208331
+      ],
+      "place": 0.00005851587995335112,
+      "baseline": [],
+      "ms": 27.881500000000415
+    },
+    {
+      "id": "r011-qu",
+      "decision": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "qorikancha-ticket-booth",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "steps-0-10",
+        "kerb-80-100",
+        "steps-130-140",
+        "calle-loreto",
+        "portal-de-carrizos",
+        "catedral-del-cusco",
+        "no-photos-150-170",
+        "steps-590-594",
+        "iglesia-de-santo-domingo",
+        "steps-340-350",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.022602178905275123,
+        0.9771151313999336,
+        0.00028268969479128443
+      ],
+      "category": [
+        0.0013146302180633077,
+        0.007305484103918067,
+        0.9839989186038598,
+        0.0002516181388246791,
+        0.0013949290012407248,
+        0.005734419934093422
+      ],
+      "place": 0.9995553865762659,
+      "baseline": [],
+      "ms": 35.08050000000003
+    },
+    {
+      "id": "r012-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "kerb-80-100",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "steps-130-140",
+        "calle-loreto",
+        "steps-0-10",
+        "portal-de-carrizos",
+        "steps-590-594",
+        "qorikancha-ticket-booth",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "catedral-del-cusco",
+        "iglesia-de-santo-domingo",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.8726132580068583,
+        0.12130250479555582,
+        0.006084237197585989
+      ],
+      "category": [
+        0.5101719163425801,
+        0.05413449447467521,
+        0.33594889881559814,
+        0.0318020636739461,
+        0.004599711325608679,
+        0.06334291536759196
+      ],
+      "place": 0.994492528731207,
+      "baseline": [
+        "steps-0-10",
+        "kerb-80-100",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "portal-de-carrizos"
+      ],
+      "ms": 38.81458300000031
+    },
+    {
+      "id": "r012-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "kerb-80-100",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "kerb-80-100",
+        "no-photos-150-170",
+        "steps-130-140",
+        "calle-loreto",
+        "portal-de-carrizos",
+        "steps-0-10",
+        "plaza-de-armas",
+        "steps-590-594",
+        "iglesia-de-la-compania-de-jesus",
+        "catedral-del-cusco",
+        "qorikancha-ticket-booth",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.9106831549858083,
+        0.05376188128830536,
+        0.035554963725886464
+      ],
+      "category": [
+        0.2538421146238267,
+        0.06099199485350591,
+        0.45890174209765844,
+        0.047775088165925406,
+        0.0069268196809110245,
+        0.17156224057817254
+      ],
+      "place": 0.9993297452029075,
+      "baseline": [
+        "steps-0-10",
+        "steps-130-140",
+        "steps-340-350",
+        "steps-590-594",
+        "portal-de-carrizos"
+      ],
+      "ms": 41.87829200000033
+    },
+    {
+      "id": "r012-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "ranked": [
+        "steps-340-350",
+        "steps-130-140",
+        "no-photos-150-170",
+        "calle-loreto",
+        "kerb-80-100",
+        "steps-0-10",
+        "steps-590-594",
+        "plaza-de-armas",
+        "portal-de-carrizos",
+        "iglesia-de-la-compania-de-jesus",
+        "qorikancha-ticket-booth",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "monasterio-de-santa-catalina-de-sena"
+      ],
+      "kind": [
+        0.8588109182414753,
+        0.042944478295361105,
+        0.09824460346316363
+      ],
+      "category": [
+        0.1299545430796051,
+        0.061685128505671524,
+        0.1949393469956905,
+        0.26501856027171994,
+        0.00644678508766517,
+        0.3419556360596476
+      ],
+      "place": 0.9997294632774442,
+      "baseline": [
+        "steps-0-10",
+        "kerb-80-100",
+        "steps-130-140",
+        "no-photos-150-170",
+        "steps-340-350",
+        "steps-590-594",
+        "plaza-de-armas",
+        "calle-loreto",
+        "portal-de-carrizos"
+      ],
+      "ms": 45.55458300000009
+    },
+    {
+      "id": "r013-en",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "steps-0-10",
+        "steps-590-594",
+        "kerb-80-100",
+        "qorikancha-ticket-booth",
+        "steps-340-350",
+        "no-photos-150-170",
+        "steps-130-140",
+        "portal-de-carrizos",
+        "calle-loreto",
+        "plaza-de-armas",
+        "iglesia-de-la-compania-de-jesus",
+        "catedral-del-cusco",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.004658450522813374,
+        0.001064463779388038,
+        0.9942770856977986
+      ],
+      "category": [
+        0.012791105819525162,
+        0.022956279249088624,
+        0.27800427340614814,
+        0.10117021022640316,
+        0.0005860995210657929,
+        0.5844920317777691
+      ],
+      "place": 0.0063964859460091585,
+      "baseline": [],
+      "ms": 30.28570799999943
+    },
+    {
+      "id": "r013-es",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "steps-340-350",
+        "qorikancha-ticket-booth",
+        "no-photos-150-170",
+        "steps-130-140",
+        "steps-590-594",
+        "calle-loreto",
+        "kerb-80-100",
+        "steps-0-10",
+        "iglesia-de-la-compania-de-jesus",
+        "portal-de-carrizos",
+        "iglesia-de-santo-domingo",
+        "catedral-del-cusco",
+        "monasterio-de-santa-catalina-de-sena",
+        "plaza-de-armas"
+      ],
+      "kind": [
+        0.014315068210643642,
+        0.0021849331288275407,
+        0.9834999986605287
+      ],
+      "category": [
+        0.010105533716065901,
+        0.0012361296911724761,
+        0.02750524175006182,
+        0.21746087609528722,
+        0.000288473879169282,
+        0.7434037448682432
+      ],
+      "place": 0.00024318598439847586,
+      "baseline": [],
+      "ms": 31.817584000000352
+    },
+    {
+      "id": "r013-ko",
+      "decision": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "ranked": [
+        "no-photos-150-170",
+        "steps-340-350",
+        "steps-130-140",
+        "calle-loreto",
+        "steps-0-10",
+        "steps-590-594",
+        "kerb-80-100",
+        "qorikancha-ticket-booth",
+        "portal-de-carrizos",
+        "catedral-del-cusco",
+        "plaza-de-armas",
+        "monasterio-de-santa-catalina-de-sena",
+        "iglesia-de-la-compania-de-jesus",
+        "iglesia-de-santo-domingo"
+      ],
+      "kind": [
+        0.005155365716886195,
+        0.002259091864133914,
+        0.99258554241898
+      ],
+      "category": [
+        0.12425864780429535,
+        0.056255714002747516,
+        0.04822646203353228,
+        0.060816226826532524,
+        0.0008512470728826681,
+        0.7095917022600097
+      ],
+      "place": 0.01957552045407125,
+      "baseline": [],
+      "ms": 31.852791000000252
+    }
+  ]
+}

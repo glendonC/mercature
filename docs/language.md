@@ -148,12 +148,12 @@ On the development Mac (Apple M5 Max, one inference thread):
 | --- | ---: | ---: | ---: |
 | Read, check and create the inference session | 0.5 s | | |
 | Embed the farm's 17 features, first time (`prepareSite`) | | 1.8 to 2.2 s | 13.1 to 13.6 s |
-| Embed the Qorikancha walk's 14 spots, first time (`prepareSite`) | | 1.9 s | 11.5 s |
+| Embed the Qorikancha walk's 14 spots, first time (`prepareSite`) | | 1.7 to 1.9 s | 10.8 to 11.5 s |
 | `prepareSite` again, vectors already stored | | 0 ms | 1 ms |
 | Embed the 27 label passages and the 17 features | 2.3 s | | |
 | One message, median | 26 ms | 25 to 38 ms | 156 to 221 ms |
 | One message, 95th percentile | 38 ms | | 255 ms |
-| First message after a cold restart, model and vectors stored | | 0.3 to 0.5 s | 1.9 s |
+| First message after a cold restart, model and vectors stored | | 0.3 to 0.5 s | 1.8 to 2.0 s |
 | The same before spot and label vectors were stored | | 2.7 to 2.9 s | 18.2 s |
 
 No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. A place's spots are embedded once, with one progress tick per spot, and `prepareSite` can do it before the first message; later sessions read the stored vectors.
@@ -190,6 +190,9 @@ The 4-bit and fp16 files are larger because most of the model is its 250,000-tok
 An earlier trial with the same encoder accepted a feature only when its cosine similarity was at least 0.85. The model card says these scores cluster between 0.7 and 1.0 and only their order matters, so the cutoff suppressed correct answers along with wrong ones: 1 of 13 expected features found, even though the right feature ranked first for every positive message. This version uses order only, and learned heads for everything else.
 
 ## Reproduce
+
+Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), and the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`). Each has every decision, ranking and timing.
+
 
 Node 24 or newer, from the repository root:
 

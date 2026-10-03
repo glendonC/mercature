@@ -66,7 +66,7 @@ const { messages } = split === 'route'
   ? JSON.parse(await readFile(new URL('./route-messages.json', import.meta.url), 'utf8'))
   : await loadMessages();
 const chosen = messages.filter(message => message.split === split);
-const result = { split, throttle, source: fromHub ? 'huggingface.co' : 'local files via redirect', userAgent: '' };
+const result = { split, throttle, source: '', userAgent: '' };
 try {
   let page = await open(false);
   await page.goto(origin);
@@ -87,6 +87,8 @@ try {
     return { final, ms: performance.now() - started, progressEvents: states.length, first: states[0], last: states.at(-1) };
   });
   result.provision = prepared;
+  result.source = prepared.final.model?.revision.includes('+latin-hangul') ? 'trimmed files served by this origin'
+    : fromHub ? 'pinned files from huggingface.co' : 'pinned files, Hub URLs redirected to local copies';
   result.downloadBytesAfter = await page.evaluate(() => window.languageCheck.modelDownloadBytes());
   result.prepareSite = [
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
