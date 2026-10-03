@@ -98,7 +98,7 @@ export type FeatureIndex = readonly {
 }[];
 
 /** Embeds a site's features once; the index is reused for every message about that site. */
-export async function buildIndex(features: readonly SiteFeature[], embed: Embed): Promise<FeatureIndex> {
+export async function buildIndex(features: readonly SiteFeature[], embed: Embed, onFeature?: () => void): Promise<FeatureIndex> {
   const index = [];
   for (const feature of features) {
     const texts = passageTexts(feature);
@@ -106,6 +106,7 @@ export async function buildIndex(features: readonly SiteFeature[], embed: Embed)
     const lists = [];
     for (const text of texts.lists) lists.push(await embed(text));
     index.push({ id: feature.id, full, lists });
+    onFeature?.();
   }
   return index;
 }

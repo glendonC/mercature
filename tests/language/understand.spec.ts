@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
-import type { Site } from '../../src/site/contracts';
 import { FARM_FEATURES } from '../../src/site/inventory';
 import { LANGUAGE_LIMITS } from '../../src/language';
-import { modelState, prepareModel, understand } from '../../src/language/understand';
+import { modelState, prepareModel, prepareSite, understand } from '../../src/language/understand';
 import { buildIndex, decide, prepareHeads, queryText, score, type Heads } from '../../src/language/policy';
 
-const farm = { id: 'noor-farm', features: FARM_FEATURES } as unknown as Site;
+const farm = { id: 'noor-farm', features: FARM_FEATURES };
 const modelProvisioned = existsSync('.local/language/model/onnx/model_quantized.onnx');
 const heads = JSON.parse(readFileSync(new URL('../../src/language/heads.json', import.meta.url), 'utf8')) as Heads;
 
@@ -14,7 +13,7 @@ test('invalid messages are refused before any model work', async () => {
   for (const text of ['', ' \n ', 'x'.repeat(LANGUAGE_LIMITS.messageCodePoints + 1)]) {
     expect(await understand(text, farm)).toEqual({ status: 'invalid', kind: null, category: null, candidates: [], reason: 'invalid-input' });
   }
-  expect((await understand('The gate was stuck.', { ...farm, features: [] } as unknown as Site)).status).toBe('invalid');
+  expect((await understand('The gate was stuck.', { ...farm, features: [] })).status).toBe('invalid');
 });
 
 test('without a stored model the manual workflow continues and nothing is downloaded', async () => {
@@ -25,6 +24,19 @@ test('without a stored model the manual workflow continues and nothing is downlo
     expect(modelState().status).not.toBe('ready');
     expect(await understand('The wheelbarrow blocked the path.', farm)).toEqual({ status: 'unavailable', kind: null, category: null, candidates: [], reason: 'model-missing' });
     expect(calls).toBe(0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('preparing a site without a loaded model does nothing and reports unavailable', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new Error('offline'); };
+  try {
+    const ticks: number[] = [];
+    expect(await prepareSite(farm, done => ticks.push(done))).toBe('unavailable');
+    expect(ticks).toEqual([]);
+    expect(calls).toBe(0);
+    expect(modelState().status).not.toBe('ready');
   } finally { globalThis.fetch = originalFetch; }
 });
 

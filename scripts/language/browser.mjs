@@ -76,6 +76,10 @@ try {
     return { final, ms: performance.now() - started, progressEvents: states.length, first: states[0], last: states.at(-1) };
   });
   result.provision = prepared;
+  result.prepareSite = [
+    await page.evaluate(() => window.languageCheck.prepareSite()),
+    await page.evaluate(() => window.languageCheck.prepareSite()),
+  ];
   const answers = [];
   for (const message of chosen) {
     answers.push({ id: message.id, ...(await page.evaluate(text => window.languageCheck.understand(text), message.text)) });

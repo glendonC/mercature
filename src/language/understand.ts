@@ -1,4 +1,7 @@
 import type { IssueCategory, MessageKind, Site } from '../site/contracts';
+
+/** Understanding needs only a place's id and named features; a full Site also fits. */
+export type Place = Pick<Site, 'id' | 'features'>;
 import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
 import { ENCODER, ENCODER_BYTES } from './model';
 import { buildIndex, decide, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
@@ -46,7 +49,14 @@ let state: ModelState = { status: 'absent' };
 let preparing: Promise<ModelState> | null = null;
 let loading: Promise<Loaded> | null = null;
 const listeners = new Set<(state: ModelState) => void>();
-const indexCache = new Map<string, Promise<FeatureIndex>>();
+type SiteIndex = {
+  promise: Promise<FeatureIndex>;
+  done: number;
+  settled: boolean;
+  readonly total: number;
+  readonly listeners: Set<(done: number, total: number) => void>;
+};
+const indexCache = new Map<string, SiteIndex>();
 
 function publish(next: ModelState) {
   state = next;
@@ -113,20 +123,61 @@ export async function prepareModel(onProgress?: (state: ModelState) => void): Pr
   }
 }
 
-function siteIndex(site: Site, loaded: Loaded): Promise<FeatureIndex> {
-  const key = `${site.id}\u0000${JSON.stringify(site.features.map(feature => [feature.id, passageTexts(feature)]))}`;
-  let index = indexCache.get(key);
-  if (!index) {
-    index = buildIndex(site.features, loaded.embed);
-    index.catch(() => indexCache.delete(key));
-    indexCache.set(key, index);
+/** 53-bit string hash (cyrb53); a cache key, not a security check. */
+function hash(text: string): string {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 2654435761);
+    h2 = Math.imul(h2 ^ code, 1597334677);
   }
-  return index;
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
-export async function understand(message: string, site: Site): Promise<Understanding> {
+/** The site index is keyed by model revision, site id and the exact feature passages. */
+function siteIndex(site: Place, loaded: Loaded): SiteIndex {
+  const key = `${ENCODER.revision}:${site.id}:${hash(JSON.stringify(site.features.map(feature => [feature.id, passageTexts(feature)])))}`;
+  const existing = indexCache.get(key);
+  if (existing) return existing;
+  const entry: SiteIndex = { promise: Promise.resolve([]), done: 0, settled: false, total: site.features.length, listeners: new Set() };
+  entry.promise = buildIndex(site.features, loaded.embed, () => {
+    entry.done++;
+    for (const listener of entry.listeners) listener(entry.done, entry.total);
+  }).then(index => {
+    entry.settled = true;
+    return index;
+  });
+  entry.promise.catch(() => indexCache.delete(key));
+  indexCache.set(key, entry);
+  return entry;
+}
+
+/**
+ * Embeds a site's features ahead of the first message, with one progress tick per feature.
+ * Works only on an already loaded model: it never downloads and never loads.
+ */
+export async function prepareSite(site: Place, onProgress?: (done: number, total: number) => void): Promise<'embedded' | 'cached' | 'unavailable'> {
+  if (state.status !== 'ready' || !loading || !site?.features?.length) return 'unavailable';
+  try {
+    const entry = siteIndex(site, await loading);
+    if (entry.settled) return 'cached';
+    if (onProgress) entry.listeners.add(onProgress);
+    try {
+      await entry.promise;
+    } finally {
+      if (onProgress) entry.listeners.delete(onProgress);
+    }
+    return 'embedded';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+export async function understand(message: string, site: Place): Promise<Understanding> {
   const length = typeof message === 'string' ? Array.from(message).length : 0;
-  if (!length || length > LANGUAGE_LIMITS.messageCodePoints || !normalizeLanguageText(message) || !site.features.length) {
+  if (!length || length > LANGUAGE_LIMITS.messageCodePoints || !normalizeLanguageText(message) || !site?.features?.length) {
     return { status: 'invalid', kind: null, category: null, candidates: [], reason: 'invalid-input' };
   }
   const started = performance.now();
@@ -135,7 +186,7 @@ export async function understand(message: string, site: Site): Promise<Understan
   }
   try {
     const loaded = await load();
-    const index = await siteIndex(site, loaded);
+    const index = await siteIndex(site, loaded).promise;
     const query = await loaded.embed(queryText(message));
     const decision = decide(score(query, index, loaded.heads), loaded.heads);
     return { ...decision, model: loaded.model, elapsedMs: Math.round(performance.now() - started) };
