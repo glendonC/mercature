@@ -2,23 +2,130 @@ import { useEffect, useRef, useState } from 'react';
 import Companion from '../components/Companion';
 import { putEvidence, readEvidence, savePlace, validateBoundary, type Place, type Evidence } from './store';
 import './places.css';
-function EvidencePreview({evidence}:{evidence:Evidence}) {
-  const [url,setUrl]=useState('');const [error,setError]=useState('');
-  useEffect(()=>{let alive=true;let objectURL='';readEvidence(evidence.id).then(blob=>{if(!blob)throw new Error('The original file is missing from this browser. Add it again.');objectURL=URL.createObjectURL(blob);if(alive)setUrl(objectURL);else URL.revokeObjectURL(objectURL);}).catch(e=>{if(alive)setError(e.message);});return()=>{alive=false;if(objectURL)URL.revokeObjectURL(objectURL);};},[evidence.id]);
-  return <figure className="evidence-preview">{error?<p role="alert">{error}</p>:url?evidence.type.startsWith('video/')?<video src={url} controls preload="metadata"/>:<img src={url} alt={evidence.name}/>:<p role="status">Reading local file…</p>}<figcaption>{evidence.name} · {(evidence.bytes/1024/1024).toFixed(1)} MB · Local only</figcaption></figure>;
+
+function PhotoOutline({ small = false }: { small?: boolean }) {
+  return <svg className={small ? 'photo-outline small' : 'photo-outline'} viewBox="0 0 120 100" fill="none" aria-hidden="true"><rect x="11" y="14" width="91" height="69" rx="8" stroke="currentColor" strokeWidth="1.5"/><path d="m12 68 25-25 21 20 16-15 28 26" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="79" cy="34" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M23 89h79a7 7 0 0 0 7-7V27" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>;
 }
-export default function PlaceWorkspace({initial,onHome,onSaved}:{initial:Place;onHome:()=>void;onSaved:(place:Place)=>void}) {
-  const [place,setPlace]=useState(initial);const [status,setStatus]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [permission,setPermission]=useState(false);const [selected,setSelected]=useState<string|null>(null);const picker=useRef<HTMLInputElement>(null);
-  const [boundary,setBoundary]=useState({west:initial.boundary?.west.toString()??'',south:initial.boundary?.south.toString()??'',east:initial.boundary?.east.toString()??'',north:initial.boundary?.north.toString()??''});
-  const save=(next=place)=>{try{savePlace(next);setPlace(next);onSaved(next);setStatus('Place saved on this device.');setError('');}catch(e){setError(e instanceof Error?e.message:'Could not save this place.');}};
-  async function addFiles(files:FileList|null) {if(!files?.length)return;setBusy(true);setError('');setStatus('Reading and saving your files…');try{let next=place;for(const file of Array.from(files)){if(next.evidence.length>=100)throw new Error('This place has reached its 100-file limit.');const item=await putEvidence(file);next={...next,evidence:[...next.evidence,item]};savePlace(next);setPlace(next);onSaved(next);setSelected(item.id);}setStatus(`${files.length} file${files.length===1?'':'s'} saved locally. Geometry is still unverified.`);}catch(e){setStatus('');setError(e instanceof Error?e.message:'Could not add evidence.');}finally{setBusy(false);if(picker.current)picker.current.value='';}}
-  const current=place.evidence.find(e=>e.id===selected)??place.evidence[0];
-  return <main className="place-workspace"><header className="workspace-header"><button onClick={onHome}>← Home</button><div><span className="eyebrow">Your place · Evidence workspace</span><h1>{place.name}</h1></div><button className="primary" onClick={()=>save()} disabled={busy}>Save place</button></header>
-    <div className="intake-layout"><section className="intake-main"><div className="section-heading"><div><span className="eyebrow">Scope</span><h2>Start with one visitor area</h2></div><span className="status-tag unknown">Analysis unavailable</span></div><p>Choose an entrance, courtyard or a short section of a visit. A place name locates your work; it does not supply a measured model.</p>
-    <div className="boundary-board"><svg viewBox="0 0 600 260" aria-label="Boundary overview"><defs><pattern id="intake-grid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M25 0H0V25" fill="none" stroke="#d5deda" strokeWidth="1"/></pattern></defs><rect width="600" height="260" fill="url(#intake-grid)"/><rect x="85" y="40" width="430" height="180" rx="12" fill="#c7e1bc55" stroke="#638e79" strokeWidth="2" strokeDasharray={place.boundary?undefined:'7 7'}/><text x="300" y="124" textAnchor="middle" fill="#38544b" fontSize="18">{place.boundary?'Recorded geographic boundary':'Boundary not yet recorded'}</text><text x="300" y="150" textAnchor="middle" fill="#526760" fontSize="13">{place.boundary?'Schematic overview · not a terrain map':'Add coordinates below, or describe the area in notes'}</text></svg></div>
-    <details className="boundary-fields"><summary>{place.boundary?'Edit geographic boundary':'Add an optional geographic boundary'}</summary><p>Decimal degrees. This records scope only; it does not measure ground, clearance or slope.</p><div className="field-row">{(['west','south','east','north'] as const).map(k=><label key={k}>{k[0].toUpperCase()+k.slice(1)}<input type="number" disabled={busy} step="any" value={boundary[k]} onChange={e=>setBoundary({...boundary,[k]:e.target.value})}/></label>)}</div><button disabled={busy} onClick={()=>{try{if(Object.values(boundary).some(v=>!v.trim()))throw new Error('Enter all four coordinates.');const bounds={west:Number(boundary.west),south:Number(boundary.south),east:Number(boundary.east),north:Number(boundary.north)};validateBoundary(bounds);save({...place,boundary:bounds});}catch(e){setError((e as Error).message);}}}>Record boundary</button></details>
-    <label className="notes-label">Area and measurement notes<textarea disabled={busy} value={place.notes} maxLength={20000} onChange={e=>{setPlace({...place,notes:e.target.value});setStatus('Unsaved notes');}} placeholder="Describe the entrance, obstruction and where you measured. Keep independent checks separate from the measurements used to build a model." rows={4}/></label>
-    <section><h2>Linked evidence</h2>{current?<EvidencePreview key={current.id} evidence={current}/>:<div className="empty-evidence"><span aria-hidden="true">▧</span><h3>Bring the place into view</h3><p>Add your own permitted photos or a short video. Originals stay in this browser.</p></div>}<div className="evidence-tabs">{place.evidence.map(e=><button key={e.id} aria-pressed={current?.id===e.id} onClick={()=>setSelected(e.id)}>{e.name}</button>)}</div></section></section>
-    <aside className="intake-side"><h2>Prepare this area</h2><ol className="capture-list"><li><strong>Show the approach</strong><p>Photograph the route to the obstruction, with overlapping views from both sides.</p></li><li><strong>Record what supports movement</strong><p>Include the ground beneath and around movable objects. Hidden ground stays unknown.</p></li><li><strong>Measure independently</strong><p>Record the narrowest gap, object dimensions, levels and measurement uncertainty. Use separate checks to validate a model.</p></li></ol><label className="permission"><input type="checkbox" checked={permission} onChange={e=>setPermission(e.target.checked)}/>I have permission to store these files locally.</label><button className="primary" disabled={!permission||busy} onClick={()=>picker.current?.click()}>{busy?'Saving files…':'Add photos or video'}</button><input hidden type="file" ref={picker} multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={e=>void addFiles(e.target.files)}/><p className="fine-print">Up to 20 MB per file. Capture is stored for review; automated reconstruction and measured-site analysis are not available.</p><Companion>Start with evidence you can explain. I’ll keep this place separate from the authored editing example.</Companion></aside></div>
-    <div className="workspace-notices" aria-live="polite">{status&&<p role="status">{status}</p>}{error&&<p role="alert" className="error-text">{error}</p>}</div></main>;
+function useEvidenceURL(evidence: Evidence) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    let objectURL = '';
+    setUrl(''); setError('');
+    readEvidence(evidence.id).then(blob => {
+      if (!blob) throw new Error('This file is missing from this browser. Add it again.');
+      objectURL = URL.createObjectURL(blob);
+      if (active) setUrl(objectURL); else URL.revokeObjectURL(objectURL);
+    }).catch(e => { if (active) setError(e instanceof Error ? e.message : 'Could not open this local file.'); });
+    return () => { active = false; if (objectURL) URL.revokeObjectURL(objectURL); };
+  }, [evidence.id]);
+  return { url, error, setError };
+}
+function EvidencePreview({ evidence }: { evidence: Evidence }) {
+  const { url, error, setError } = useEvidenceURL(evidence);
+  const previewFailed = () => setError('This file is saved, but this browser cannot preview it. Try another photo or video.');
+  return <figure className="place-photo">
+    <div className="place-photo-frame">{error ? <p role="alert">{error}</p> : url ? evidence.type.startsWith('video/')
+      ? <video src={url} controls playsInline preload="metadata" onError={previewFailed} />
+      : <img src={url} alt={evidence.name} onError={previewFailed} />
+      : <p role="status">Opening your file…</p>}</div>
+    <figcaption>{evidence.name}</figcaption>
+  </figure>;
+}
+function Thumbnail({ evidence, selected, onSelect }: { evidence: Evidence; selected: boolean; onSelect: () => void }) {
+  const { url, error, setError } = useEvidenceURL(evidence);
+  return <button className="place-thumbnail" aria-label={`View ${evidence.name}`} aria-pressed={selected} onClick={onSelect}>
+    {url && !error && evidence.type.startsWith('image/') ? <img src={url} alt="" loading="lazy" onError={() => setError('Preview unavailable')} /> : evidence.type.startsWith('video/') ? <span aria-hidden="true">▷</span> : <PhotoOutline small />}
+  </button>;
+}
+const boundaryFields = ['west', 'south', 'east', 'north'] as const;
+const boundaryDraft = (place: Place) => ({ west: place.boundary?.west.toString() ?? '', south: place.boundary?.south.toString() ?? '', east: place.boundary?.east.toString() ?? '', north: place.boundary?.north.toString() ?? '' });
+
+export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: Place; onHome: () => void; onSaved: (place: Place) => void }) {
+  const [place, setPlace] = useState(initial);
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [notes, setNotes] = useState(initial.notes);
+  const [boundary, setBoundary] = useState(boundaryDraft(initial));
+  const [detailError, setDetailError] = useState('');
+  const picker = useRef<HTMLInputElement>(null);
+  const details = useRef<HTMLDialogElement>(null);
+  const current = place.evidence.find(item => item.id === selected) ?? place.evidence[0];
+
+  function openDetails() {
+    setNotes(place.notes); setBoundary(boundaryDraft(place)); setDetailError('');
+    details.current?.showModal();
+  }
+  function saveDetails(event: React.FormEvent) {
+    event.preventDefault();
+    try {
+      let bounds = null;
+      if (Object.values(boundary).some(value => value.trim())) {
+        if (Object.values(boundary).some(value => !value.trim())) throw new Error('Enter all four coordinates, or leave them all blank.');
+        bounds = { west: Number(boundary.west), south: Number(boundary.south), east: Number(boundary.east), north: Number(boundary.north) };
+        validateBoundary(bounds);
+      }
+      const next = { ...place, notes, boundary: bounds };
+      savePlace(next); setPlace(next); onSaved(next);
+      setError(''); setStatus('Details saved on this device.'); details.current?.close();
+    } catch (e) { setDetailError(e instanceof Error ? e.message : 'Could not save these details.'); }
+  }
+  async function addFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setBusy(true); setError(''); setStatus('Saving on this device…');
+    let saved = 0;
+    try {
+      let next = place;
+      for (const file of Array.from(files)) {
+        if (next.evidence.length >= 100) throw new Error('This place has reached its 100-file limit.');
+        const item = await putEvidence(file);
+        next = { ...next, evidence: [...next.evidence, item] };
+        savePlace(next); setPlace(next); onSaved(next); setSelected(item.id); saved++;
+      }
+      setStatus(`${saved} file${saved === 1 ? '' : 's'} saved on this device.`);
+    } catch (e) {
+      setStatus(saved ? `${saved} file${saved === 1 ? '' : 's'} saved on this device.` : '');
+      setError(e instanceof Error ? e.message : 'Could not add this file.');
+    } finally { setBusy(false); if (picker.current) picker.current.value = ''; }
+  }
+  const addButton = <button className="place-add" disabled={busy} onClick={() => picker.current?.click()}>{busy ? 'Saving files…' : 'Add photos or video'}</button>;
+
+  return <main className={`place-workspace${current ? ' has-evidence' : ''}`}>
+    <header className="place-header">
+      <button className="place-quiet-button" onClick={onHome} disabled={busy}>← Home</button>
+      <h1>{place.name}</h1>
+      <button className="place-quiet-button" onClick={openDetails} disabled={busy}>Details</button>
+    </header>
+    <input hidden type="file" ref={picker} multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Photos or video" onChange={event => void addFiles(event.target.files)} />
+    {current ? <section className="place-viewer" aria-label="Your place photos">
+      <EvidencePreview key={current.id} evidence={current} />
+      <div className="place-photo-tools">
+        <div className="place-thumbnails" aria-label="Saved views">{place.evidence.map(item => <Thumbnail key={item.id} evidence={item} selected={current.id === item.id} onSelect={() => setSelected(item.id)} />)}</div>
+        {addButton}
+      </div>
+      <p className="place-local-caption">Files stay on this device · Add only files you may keep</p>
+    </section> : <section className="place-invitation">
+      <PhotoOutline />
+      <h2>Show your place</h2>
+      <p>Add a few views of the entrance.</p>
+      {addButton}
+      <span className="place-local-caption">Files stay on this device · Add only files you may keep</span>
+    </section>}
+    <footer className="place-guide"><Companion>{current ? 'Add another angle of the entrance.' : 'Start with a clear view from outside.'}</Companion>
+      <div className="place-notices" aria-live="polite">{status && <p role="status">{status}</p>}{error && <p role="alert" className="place-error">{error}</p>}</div>
+    </footer>
+    <dialog className="place-details" ref={details} aria-labelledby="place-details-title">
+      <form onSubmit={saveDetails}>
+        <div className="place-details-header"><h2 id="place-details-title">Place details</h2><button type="button" className="place-quiet-button" aria-label="Close details" onClick={() => details.current?.close()}>×</button></div>
+        <label className="place-notes-label">Area and measurement notes<textarea value={notes} maxLength={20000} onChange={event => setNotes(event.target.value)} placeholder="Anything to remember about this entrance?" rows={4} /></label>
+        <details className="place-boundary"><summary>Geographic boundary <span>Optional</span></summary><p>Coordinates describe the area; they do not measure it.</p><div className="place-coordinate-fields">{boundaryFields.map(field => <label key={field}>{field[0].toUpperCase() + field.slice(1)}<input type="number" step="any" value={boundary[field]} onChange={event => setBoundary({ ...boundary, [field]: event.target.value })} /></label>)}</div></details>
+        <p className="place-detail-note">{place.evidence.length} saved view{place.evidence.length === 1 ? '' : 's'} · Up to 20 MB per file<br />Photos are for review. Measured-site analysis is not available yet.</p>
+        {detailError && <p role="alert" className="place-error">{detailError}</p>}
+        <div className="place-details-actions"><button type="button" className="place-quiet-button" onClick={() => details.current?.close()}>Cancel</button><button className="place-add" type="submit">Save details</button></div>
+      </form>
+    </dialog>
+  </main>;
 }
