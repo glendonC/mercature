@@ -1,5 +1,5 @@
-import { useId, useMemo, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import type { Rect, Result, Scene, Status } from './contracts';
 import './SpatialView.css';
 
@@ -9,6 +9,8 @@ export type SpatialViewProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   view: 'map' | '3d' | 'split';
+  compact?: boolean;
+  onPlace?: (point: { x: number; y: number }) => void;
 };
 type Point = { x: number; y: number };
 const corners = (b: Rect) => [{ x: b.minX, y: b.minY }, { x: b.maxX, y: b.minY }, { x: b.maxX, y: b.maxY }, { x: b.minX, y: b.maxY }];
@@ -16,47 +18,61 @@ const colors: Record<Status, string> = { reachable: '#c7e2cc', blocked: '#e9c5b8
 const statusText: Record<Status, string> = { reachable: 'Connected', blocked: 'Blocked', unknown: 'Unresolved' };
 
 /** Both projections use the same scene coordinates and shared feature selection. */
-export default function SpatialView({ scene, result, selectedId, onSelect, view }: SpatialViewProps) {
+export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace }: SpatialViewProps) {
   const [showAssessment, setShowAssessment] = useState(true);
   const [showPath, setShowPath] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const evidenceDialog = useRef<HTMLDialogElement>(null);
+  const evidenceButton = useRef<HTMLButtonElement>(null);
+  const evidenceTitleId = useId();
   const selected = scene.obstacles.find(item => item.id === selectedId) ?? scene.supports.find(item => item.id === selectedId);
   const unknown = scene.unknown.find(item => item.id === selectedId);
   const destination = scene.destinations.find(item => item.id === selectedId);
   const destinationResult = result.destinations.find(item => item.id === selectedId);
   const evidence = selected?.evidence ?? (unknown ? [unknown.reason] : destination ? ['Authored destination coordinate; no source photograph or site measurement.'] : []);
   const selectedBounds = selected?.bounds ?? unknown?.bounds;
-  return <section className="spatial-view" aria-label="Spatial model">
-    <div className="spatial-tools">
-      <span className="spatial-authored"><span aria-hidden="true">◇</span> Authored courtyard <small>· synthetic</small></span>
-      <div className="spatial-layer-controls">
-        <button type="button" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}>Check overlay</button>
-        <button type="button" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}>Checked path</button>
-        {view !== 'map' && <button type="button" onClick={() => setRotation(value => (value + 1) % 4)} aria-label="Rotate 3D view">↻ Rotate</button>}
-      </div>
-    </div>
-    <div className={`spatial-canvases ${view === 'split' ? 'spatial-split' : ''}`}>
-      {(view === 'map' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, rotation: 0 }} mode="map" />}
-      {(view === '3d' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, rotation }} mode="3d" />}
-    </div>
-    <div className="spatial-legend" aria-label="Assessment legend">
-      {(['reachable', 'blocked', 'unknown'] as const).map(status => <span key={status}><i style={{ background: colors[status] }} />{statusText[status]}</span>)}
-      <span className="spatial-legend-note">Under the selected requirements</span>
-    </div>
-    {showPath && <p className="spatial-path-note">{result.traversals[0]?.kind === 'complete' ? 'Checked cardinal path to the destination.' : result.traversals[0]?.kind === 'approach' ? 'Checked approach only. The line stops before unsupported continuation.' : 'No checked path is available under these requirements.'} A square-envelope illustration, not a prediction of individual passage.</p>}
-    <div className="spatial-evidence" aria-live="polite">
+  const pathNote = `${result.traversals[0]?.kind === 'complete' ? 'Checked cardinal path to the destination.' : result.traversals[0]?.kind === 'approach' ? 'Checked approach only. The line stops before unsupported continuation.' : 'No checked path is available under these requirements.'} A square-envelope illustration, not a prediction of individual passage.`;
+  const evidenceContent = <div className="spatial-evidence" aria-live="polite">
       <div><span className="spatial-eyebrow">Linked evidence</span><h3>{selected?.label ?? unknown?.label ?? destination?.label ?? 'Select a feature to inspect'}</h3>
         {selectedBounds && <p className="spatial-dimensions">{(selectedBounds.maxX - selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY - selectedBounds.minY).toFixed(2)} m footprint{'top' in (selected ?? {}) ? ` · ${((selected as Scene['obstacles'][number]).top - (selected as Scene['obstacles'][number]).bottom).toFixed(2)} m high` : ''}</p>}
         {destinationResult && <p className={`spatial-status spatial-status-${destinationResult.status}`}>{statusText[destinationResult.status]} · {destinationResult.reason}</p>}
       </div>
       <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose the bench, dividing walls, destination or unresolved corner in either view. Every dimension in this example is authored.</p>}</div>
+    </div>;
+  return <section className={`spatial-view${compact ? ' spatial-view-compact' : ''}`} aria-label="Spatial model">
+    <div className="spatial-tools">
+      <span className="spatial-authored">{compact ? 'Synthetic example' : <><span aria-hidden="true">◇</span> Authored courtyard <small>· synthetic</small></>}</span>
+      <div className="spatial-layer-controls">
+        <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}>{compact ? <span aria-hidden="true">◫</span> : 'Check overlay'}</button>
+        <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}>{compact ? <span aria-hidden="true">⌁</span> : 'Checked path'}</button>
+        {view !== 'map' && <button type="button" onClick={() => setRotation(value => (value + 1) % 4)} aria-label="Rotate 3D view" title="Rotate 3D view">{compact ? <span aria-hidden="true">↻</span> : '↻ Rotate'}</button>}
+        {compact && <button type="button" ref={evidenceButton} className="spatial-evidence-trigger" onClick={() => evidenceDialog.current?.showModal()}>Evidence</button>}
+      </div>
     </div>
+    <div className={`spatial-canvases ${view === 'split' ? 'spatial-split' : ''}`}>
+      {(view === 'map' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, compact, onPlace, rotation: 0 }} mode="map" />}
+      {(view === '3d' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, compact, onPlace, rotation }} mode="3d" />}
+    </div>
+    {!compact && <div className="spatial-legend" aria-label="Assessment legend">
+      {(['reachable', 'blocked', 'unknown'] as const).map(status => <span key={status}><i style={{ background: colors[status] }} />{statusText[status]}</span>)}
+      <span className="spatial-legend-note">Under the selected requirements</span>
+    </div>}
+    {!compact && showPath && <p className="spatial-path-note">{pathNote}</p>}
+    {compact ? <dialog ref={evidenceDialog} className="spatial-evidence-dialog" aria-labelledby={evidenceTitleId} onClose={() => evidenceButton.current?.focus()}>
+      <header><h2 id={evidenceTitleId}>Evidence</h2><button type="button" aria-label="Close evidence" autoFocus onClick={() => evidenceDialog.current?.close()}>×</button></header>
+      {evidenceContent}
+      <div className="spatial-dialog-context">
+        <p>Original authored records · synthetic example.</p>
+        {showAssessment && <div className="spatial-legend" aria-label="Assessment legend">{(['reachable', 'blocked', 'unknown'] as const).map(status => <span key={status}><i style={{ background: colors[status] }} />{statusText[status]}</span>)}</div>}
+        {showPath && <p>{pathNote}</p>}
+      </div>
+    </dialog> : evidenceContent}
   </section>;
 }
 
 type ProjectionProps = Omit<SpatialViewProps, 'view'> & { mode: 'map' | '3d'; rotation: number; showAssessment: boolean; showPath: boolean };
 
-function Projection({ scene, result, selectedId, onSelect, mode, rotation, showAssessment, showPath }: ProjectionProps) {
+function Projection({ scene, result, selectedId, onSelect, mode, rotation, showAssessment, showPath, compact, onPlace }: ProjectionProps) {
   const id = useId().replaceAll(':', '');
   const project = (point: Point, z = 0): Point => {
     const x = point.x - (scene.bounds.minX + scene.bounds.maxX) / 2;
@@ -80,6 +96,18 @@ function Projection({ scene, result, selectedId, onSelect, mode, rotation, showA
     }
     return Object.fromEntries(Object.entries(paths).map(([key, values]) => [key, values.join(' ')])) as Record<Status, string>;
   }, [result, scene.bounds, mode, rotation]);
+  function placeAt(event: MouseEvent<SVGSVGElement>) {
+    if (mode !== 'map' || !onPlace) return;
+    // Capture handles floor, feature and marker clicks consistently during placement.
+    event.stopPropagation();
+    const svg = event.currentTarget, matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    const x = local.x / 40 + (scene.bounds.minX + scene.bounds.maxX) / 2;
+    const y = -local.y / 40 + (scene.bounds.minY + scene.bounds.maxY) / 2;
+    if (Number.isFinite(x) && Number.isFinite(y)) onPlace({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
+  }
   const activate = (event: KeyboardEvent<SVGGElement>, featureId: string) => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(featureId); }
   };
@@ -87,8 +115,8 @@ function Projection({ scene, result, selectedId, onSelect, mode, rotation, showA
   const obstacles = [...scene.obstacles].sort((a, b) => project({ x: (a.bounds.minX + a.bounds.maxX) / 2, y: (a.bounds.minY + a.bounds.maxY) / 2 }).y - project({ x: (b.bounds.minX + b.bounds.maxX) / 2, y: (b.bounds.minY + b.bounds.maxY) / 2 }).y);
   const start = project(scene.start, .08);
   return <figure className={`spatial-projection spatial-projection-${mode}`}>
-    <figcaption><span>{mode === 'map' ? 'Plan view' : 'Spatial view'}</span><small>{mode === 'map' ? 'Metric geometry · metres' : 'Projected geometry · rotate to inspect'}</small></figcaption>
-    <svg viewBox={`${minX} ${minY} ${width} ${height}`} aria-label={`${mode === 'map' ? 'Map' : '3D'} of synthetic courtyard`} role="group">
+    <figcaption><span>{compact ? (mode === 'map' ? 'Map' : '3D') : (mode === 'map' ? 'Plan view' : 'Spatial view')}</span>{!compact && <small>{mode === 'map' ? 'Metric geometry · metres' : 'Projected geometry · rotate to inspect'}</small>}</figcaption>
+    <svg viewBox={`${minX} ${minY} ${width} ${height}`} onClickCapture={placeAt} className={mode === 'map' && onPlace ? 'spatial-placing' : undefined} aria-description={mode === 'map' && onPlace ? 'Choose a placement point. Coordinates snap to 0.1 metres; the proposed placement will be validated.' : undefined} aria-label={`${mode === 'map' ? 'Map' : '3D'} of synthetic courtyard`} role="group">
       <defs><pattern id={`${id}-unknown`} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="9" height="9" fill="#f5edda"/><line x1="0" y1="0" x2="0" y2="9" stroke="#baad89" strokeWidth="2"/></pattern></defs>
       <polygon points={polygon(scene.bounds, -.14)} fill="#dedbd0" transform="translate(0 6)" />
       {scene.supports.map(support => <g key={support.id} {...interaction(support.id, support.label)}><polygon points={polygon(support.bounds, support.elevation)} fill="#f5f0e5" stroke="#c4c5b5" strokeWidth="1.5"/><title>{support.evidence.join(' ')}</title></g>)}
@@ -108,6 +136,6 @@ function Projection({ scene, result, selectedId, onSelect, mode, rotation, showA
       <g pointerEvents="none"><circle cx={start.x} cy={start.y} r="7" fill="#fffaf0" stroke="#537a69" strokeWidth="2"/><circle cx={start.x} cy={start.y} r="2.5" fill="#537a69"/><text x={start.x} y={start.y + 22} className="spatial-pin-label">Start</text></g>
       {scene.destinations.map(destination => { const point = project(destination, .08); const status = result.destinations.find(item => item.id === destination.id)?.status ?? 'unknown'; return <g key={destination.id} {...interaction(destination.id, destination.label)}><circle cx={point.x} cy={point.y} r="13" fill="#fffaf0" stroke={status === 'reachable' ? '#537a69' : '#a3735e'} strokeWidth="2"/><text x={point.x} y={point.y + 4} className="spatial-marker-letter">{status === 'reachable' ? '✓' : '↗'}</text><text x={point.x} y={point.y + 28} className="spatial-pin-label">{destination.label}</text></g>; })}
     </svg>
-    <div className="spatial-projection-foot"><span>{result.hypothetical ? 'Proposed geometry' : 'Original geometry'}</span><span>{(scene.bounds.maxX - scene.bounds.minX).toFixed(0)} × {(scene.bounds.maxY - scene.bounds.minY).toFixed(0)} m boundary</span></div>
+    {!compact && <div className="spatial-projection-foot"><span>{result.hypothetical ? 'Proposed geometry' : 'Original geometry'}</span><span>{(scene.bounds.maxX - scene.bounds.minX).toFixed(0)} × {(scene.bounds.maxY - scene.bounds.minY).toFixed(0)} m boundary</span></div>}
   </figure>;
 }
