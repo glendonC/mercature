@@ -8,14 +8,14 @@ It answers the tourism challenge of the World Bank Small AI for Development brie
 
 Noor runs coffee farm tours for a few visitors a month in La Convención, in the Cusco region of Peru. She speaks Quechua at home and Spanish with everyone else. Visitors write to her in English, Korean and other languages. She uses her daughter's smartphone at weekends and buys mobile data when she needs it. Her coffee cooperative helps members with tools like this one.
 
-Noor and her farm are fictional, like the persona in the brief. Her site in Mercature is an authored model and is labeled synthetic.
+Noor and her farm are fictional, like the persona in the brief. Her site in Mercature is authored and labeled synthetic.
 
 ## The loop
 
 1. **Message.** Noor pastes or types what a visitor wrote. The original text is kept.
 2. **Understand.** A small multilingual model on the phone answers three questions from fixed lists: is this a problem, praise or a question; what kind of problem; and which parts of the site it most likely concerns (up to three). When it is not sure, it says so.
 3. **Confirm.** Noor chooses the part of the site, or picks another one. Nothing changes until she does.
-4. **Try a fix.** She moves or removes the obstruction in the site model. A deterministic check shows which places a wheelchair-width path reaches before and after, including any new problem the move creates.
+4. **Try a fix.** She moves or removes the obstruction on the site's 3D map. A deterministic check shows which places a path 0.9 m wide (roughly wheelchair width, illustrative) reaches before and after, including any new problem the move creates.
 5. **Save and reply.** The plan keeps the message, her choice, the change and the result. She can answer the visitor with a pre-written message in the visitor's language.
 
 ## What the AI does and does not do
@@ -40,8 +40,8 @@ Noor and her farm are fictional, like the persona in the brief. Her site in Merc
 ## Live and prepared
 
 - **Live:** understanding new messages, the path check, comparison, saving, and offline use after the first download.
-- **Prepared:** Noor's farm model is authored. The destination examples on Home show recorded street imagery from an earlier preparation run; they are labeled as recorded.
-- **Not built:** turning new photos into a site model, measured real sites, and sending messages.
+- **Prepared:** Noor's farm map is authored. The destination examples on Home show recorded street imagery from an earlier preparation run; they are labeled as recorded.
+- **Not built:** turning new photos into a site map, measured real sites, and sending messages.
 
 ## Out of scope
 

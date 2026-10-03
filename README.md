@@ -8,7 +8,7 @@
 <h1 align="center">Mercature</h1>
 
 <p align="center">
-  Understand every visitor. Fix the right spot.
+  Understand your visitors. Fix the right spot.
 </p>
 
 <p align="center">
@@ -30,8 +30,8 @@ visitor does.
 
 Mercature turns a visitor's message into a decision on the operator's own site. A small
 multilingual model on the phone says whether the message is a problem, praise or a question, and
-which parts of the site it most likely means. The operator confirms the spot, tries a fix in an
-editable model of the place, and sees what changes before the next visit. After one download, it
+which parts of the site it most likely means. The operator confirms the spot, tries a fix on an
+editable 3D map of the place, and sees what changes before the next visit. After one download, it
 works offline.
 
 Built for the World Bank Small AI for Development challenge, tourism track.
@@ -86,7 +86,7 @@ than 4173.
 
 ## Limits
 
-- Noor and her farm are fictional, like the persona in the challenge brief. The farm model is
+- Noor and her farm are fictional, like the persona in the challenge brief. The farm map is
   authored and labeled synthetic.
 - The path check is geometric planning with an illustrative 0.9 m width. It is not accessibility
   certification.
