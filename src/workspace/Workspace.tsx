@@ -1,12 +1,13 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import SpatialView from "../spatial/SpatialView";
-import SceneFrame from "../components/SceneFrame";
-import SceneProgress from "../components/SceneProgress";
+import PlaceCanvas, {type PlaceView} from "../components/PlaceCanvas";
+import ScenePins from "../components/ScenePins";
+import {NOOR_FARM} from "../site/farm";
+import type {Site} from "../site/contracts";
+import {understand, prepareModel, modelState, type Understanding, type ModelState} from "../language/understand";
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
-  DEFAULT_PROFILE,
-  SYNTHETIC_SCENE,
   BENCH_CLEAR_POSITION,
 } from "../spatial/fixtures";
 import {
@@ -41,7 +42,7 @@ const outcome = (status: string) =>
     ? "Connected"
     : status === "blocked"
       ? "Blocked"
-      : "Not yet known";
+      : "Unknown";
 export default function Workspace({
   initialPlan,
   analysisResult,
@@ -52,7 +53,7 @@ export default function Workspace({
 }: WorkspaceProps) {
   const initial = initialPlan?.project ?? initialProject;
   const [scene] = useState(() =>
-    structuredClone(initial?.scene ?? SYNTHETIC_SCENE),
+    structuredClone(initial?.scene ?? NOOR_FARM.scene),
   );
   const inventory = useMemo(
     () => [
@@ -64,7 +65,7 @@ export default function Workspace({
     [scene],
   );
   const [profile, setProfile] = useState(() =>
-    structuredClone(initial?.profile ?? DEFAULT_PROFILE),
+    structuredClone(initial?.profile ?? NOOR_FARM.profile),
   );
   const [scenario, setScenario] = useState(() =>
     structuredClone(initial?.scenario ?? createScenario(scene, profile)),
@@ -77,11 +78,16 @@ export default function Workspace({
   );
   const [selected, setSelected] = useState<string | null>(
     initialPlan?.confirmation.targets[0]?.id ??
-      initialViewState?.selectedId ??
-      scene.obstacles.find((o) => o.movable)?.id ??
-      inventory[0]?.id ??
+      (initialViewState?.selectedId && inventory.some(item => item.id === initialViewState.selectedId) ? initialViewState.selectedId : null) ??
       null,
   );
+  const [section, setSection] = useState<PlaceView>(initialPlan ? "changes" : "place");
+  const [understanding, setUnderstanding] = useState<Understanding | null>(null);
+  const [thinking, setThinking] = useState(false);
+  const [model, setModel] = useState<ModelState>(() => modelState());
+  const [preparingModel, setPreparingModel] = useState(false);
+  const request = useRef(0);
+  useEffect(() => () => {request.current++;}, []);
   const [step, setStep] = useState<Step>(initialPlan ? "done" : "start");
   const [mode, setMode] = useState<"concern" | "proactive">(
     initialPlan?.origin.kind ?? "proactive",
@@ -130,10 +136,7 @@ export default function Workspace({
   const [controlsTarget, setControlsTarget] = useState<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLElement>(null);
-  const actionCard = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    actionCard.current?.focus({ preventScroll: true });
-  }, [step]);
+
   const details = useRef<HTMLDialogElement>(null);
   const placementDialog = useRef<HTMLDialogElement>(null);
   const baseline = useMemo(() => solveScene(scene, profile), [scene, profile]);
@@ -145,6 +148,11 @@ export default function Workspace({
     () => applyScenario(scene, profile, scenario),
     [scene, profile, scenario],
   );
+  const site: Site = useMemo(() => scene.id === NOOR_FARM.id ? {...NOOR_FARM, scene, profile} : {
+    id: scene.id, name: {en: scene.title, es: scene.title}, place: '', provenance: 'synthetic', scene, profile,
+    features: inventory.map(item => ({id: item.id, name: {en: item.label, es: item.label}, description: '', aliases: {}})), placements: [],
+  }, [scene, profile, inventory]);
+  const nameOf = (id: string) => site.features.find(item => item.id === id)?.name.en ?? inventory.find(item => item.id === id)?.label ?? id;
   const target = confirmation?.targets[0]?.id ?? selected;
   const feature = scene.obstacles.find((o) => o.id === target);
   const selectedFeature = inventory.find((o) => o.id === selected);
@@ -161,6 +169,7 @@ export default function Workspace({
     dirty();
   };
   function begin(kind: "concern" | "proactive") {
+    setSection(kind === "concern" ? "messages" : "changes");
     setMode(kind);
     setConfirmation(null);
     setOrigin(null);
@@ -222,6 +231,7 @@ export default function Workspace({
       setScenario(createScenario(scene, profile));
       setTitle(`Review ${selectedFeature.label.toLocaleLowerCase()}`);
       setStep("edit");
+      setSection("changes");
       setError("");
       materialDirty();
     } catch (e) {
@@ -243,7 +253,8 @@ export default function Workspace({
       materialDirty();
       placementDialog.current?.close();
     } catch (e) {
-      setError((e as Error).message);
+      const raw = (e as Error).message;
+      setError(/support|ground|unknown/i.test(raw) ? "The ground there isn’t mapped. Try another position." : /intersect|collision|overlap/i.test(raw) ? "Something is already there. Try another position." : /bounds|outside|edge/i.test(raw) ? "Too close to the edge. Try another position." : "That position can’t be checked. Try another position.");
     }
   }
   function changeProfile(next: Profile) {
@@ -309,323 +320,127 @@ export default function Workspace({
     setPlacing(false);
     materialDirty();
   }
-  const afterStatus = proposed.destinations[0]?.status ?? "unknown";
-  const connected = afterStatus === "reachable";
-  const cue = step === "start" ? "Let’s see what’s getting in the way."
-    : step === "message" ? "Keep the visitor’s own words. We’ll connect them to a spot."
-    : step === "confirm" ? "Select the object you want to work on."
-    : placing ? "Tap a clear spot to preview the move."
-    : step === "edit" ? editable ? `Try moving the ${actionName} out of the passage.` : "This feature needs a closer review."
-    : step === "compare" ? connected ? `This proposal opens a route to ${destination.toLocaleLowerCase()}.`
-      : afterStatus === "blocked" ? "The passage is still blocked. Try another position."
-      : "There isn’t enough information to confirm this route."
-    : plan ? "Your plan is saved on this device." : "Save your changes when you’re ready.";
-  const progressIndex = step === "start" || step === "message" || step === "confirm" ? 0 : step === "edit" ? 1 : 2;
+  const pathChanges = proposed.destinations.map(after => ({after, before: baseline.destinations.find(item => item.id === after.id)!})).sort((a,b) => Number(b.before.status !== b.after.status) - Number(a.before.status !== a.after.status));
+  const newProblems = pathChanges.filter(({before, after}) => before.status === "reachable" && after.status !== "reachable");
+  const improved = pathChanges.filter(({before, after}) => before.status !== "reachable" && after.status === "reachable");
+  const reviewed = step === "compare" || step === "done";
   const selectedRecord = selectedFeature && 'evidence' in selectedFeature ? selectedFeature.evidence : [];
   const selectedBounds = selectedFeature && 'bounds' in selectedFeature ? selectedFeature.bounds : null;
-  function retryChange() {
-    setScenario(createScenario(scene, profile));
-    setStep("edit"); setPlacing(false); setSelected(target); setComparison("proposed"); materialDirty();
+  const candidateSpots = useMemo(() => (understanding?.candidates ?? analysisResult?.spots.map(item => item.id) ?? [])
+    .filter(id => inventory.some(item => item.id === id)).slice(0, 3).map(id => ({id, label: site.features.find(item => item.id === id)?.name.en ?? id})), [understanding, analysisResult, inventory, site]);
+  const categoryNames: Record<string, string> = {'path-blocked':'Blocked path','steps-or-slope':'Steps or slope','seating-or-shade':'Seating or shade','signs-or-language':'Signs or language',facilities:'Facilities',other:'Other'};
+  const resultCard: AIResult | undefined = understanding && (understanding.status === 'ready' || understanding.status === 'unsure') ? {
+    messageType: understanding.kind ? understanding.kind[0].toUpperCase() + understanding.kind.slice(1) : 'Not sure',
+    issueType: understanding.category ? categoryNames[understanding.category] : '',
+    state: understanding.status === 'ready' ? 'matched' : 'not-sure', spots: candidateSpots,
+  } : analysisResult;
+  const pins = useMemo(() => section === 'messages' ? candidateSpots : confirmation ? confirmation.targets.map(item => ({id: item.id, label: site.features.find(spot => spot.id === item.id)?.name.en ?? item.id})) : [], [section, candidateSpots, confirmation, site]);
+  const cue = thinking ? "Reading the visitor’s message."
+    : section === 'place' ? selected ? "This spot can be linked to a message or a plan." : "Select a spot to look closer, or bring in a visitor’s message."
+    : section === 'messages' ? step === 'confirm' ? understanding?.status === 'unavailable' ? "Choose the spot yourself. AI isn’t available on this device yet." : "Check the suggested spot before planning a fix." : "Start with the visitor’s own words."
+    : placing ? "Tap a new position to check it."
+    : plan ? "Your plan is saved on this device."
+    : reviewed ? newProblems.length ? "This fix creates another blocked path. Check it before saving." : improved.length ? "The path check improved. Review the result before saving." : "No path improved. Try another position or keep it for review."
+    : confirmation ? "Preview a fix. Nothing here changes the real place." : "Choose a spot to start a plan.";
+  async function readMessage() {
+    const ticket = ++request.current;
+    setThinking(true); setError(''); setUnderstanding(null); setSelected(null);
+    try {
+      const result = await understand(message, site);
+      if (ticket !== request.current) return;
+      if (result.status === 'invalid') {setError('Add a shorter message with some words.'); return;}
+      setUnderstanding(result); setMode('concern'); setConfirmation(null); setOrigin(null);
+      setScenario(createScenario(scene, profile)); setComparison('proposed'); materialDirty();
+      setSelected(result.status === 'ready' && result.candidates[0] && inventory.some(item => item.id === result.candidates[0]) ? result.candidates[0] : null);
+      setStep('confirm');
+    } catch { if (ticket === request.current) {setConfirmation(null); setOrigin(null); setScenario(createScenario(scene, profile)); materialDirty(); setUnderstanding({status:'unavailable',kind:null,category:null,candidates:[],reason:'model-failed'}); setStep('confirm'); setMode('concern');} }
+    finally { if (ticket === request.current) setThinking(false); }
   }
+  async function loadModel() {
+    setPreparingModel(true); setError('');
+    try {setModel(await prepareModel(setModel));} catch {setError('AI could not be prepared. You can choose the spot yourself.');}
+    finally {setPreparingModel(false);}
+  }
+  function switchSection(next: PlaceView) {setSection(next); setPlacing(false); setError('');}
+  function selectSpot(id: string) {setSelected(id); setError('');}
+  function retryChange() {
+    setScenario(createScenario(scene, profile)); setStep("edit"); setPlacing(false); setSelected(target); setComparison("proposed"); materialDirty();
+  }
+  const spotPicker = <><label className="canvas-label" htmlFor="feature-choice">Choose a spot</label><select id="feature-choice" value={selected ?? ''} onChange={event => selectSpot(event.target.value)}><option value="" disabled>Select on the map or here</option>{inventory.map(item => <option key={item.id} value={item.id}>{nameOf(item.id)}</option>)}</select></>;
+  const selectedDetails = selectedFeature && <details className="feature-facts"><summary>Spot details</summary>
+    {selectedBounds && <p>{(selectedBounds.maxX-selectedBounds.minX).toFixed(1)} × {(selectedBounds.maxY-selectedBounds.minY).toFixed(1)} m footprint</p>}
+    {selectedRecord.map((text,index) => <p key={index}>{text}</p>)}
+    {'reason' in selectedFeature && <p>{selectedFeature.reason}</p>}
+  </details>;
+  const messagesOverview = <>
+    <span className="place-kicker">Visitor message</span><h1>What did they say?</h1>
+    <label className="sr-only" htmlFor="visitor-message">Original visitor message</label>
+    <textarea id="visitor-message" value={message} maxLength={4000} placeholder="Paste or type their message…" onChange={event => {
+      request.current++; setThinking(false); setMessage(event.target.value); setUnderstanding(null); setStep('message');
+      if (/[\uac00-\ud7af]/.test(event.target.value)) setLanguage('ko');
+    }} />
+    <label className="canvas-label" htmlFor="message-language">Message language</label>
+    <select id="message-language" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">Other</option></select>
+    <div className="canvas-actions"><button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{thinking ? 'Reading message…' : 'Find the spot'}</button></div>
+    <p className="canvas-note">Kept on this device.</p>
+    {model.status !== 'ready' && <details className="feature-facts"><summary>Use AI on this device</summary><p>Prepare it once while connected. You can also choose a spot yourself.</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? `${Math.round(model.loadedBytes / 1_000_000)} / ${Math.round(model.totalBytes / 1_000_000)} MB` : 'Preparing AI…' : 'Download AI (about 147 MB)'}</button></div></details>}
+  </>;
+  const placeOverview = <>
+    <span className="place-kicker">Look around</span><h1>{site.name.en}</h1>
+    <p className="place-copy">{site.place || 'An editable example'}</p>
+    <ul className="spot-list" aria-label="Paths to destinations">{proposed.destinations.map(item => <li key={item.id}><button aria-pressed={selected === item.id} onClick={() => selectSpot(item.id)}><span className="spot-symbol" aria-hidden="true">◇</span><span>{nameOf(item.id)}</span><span className={`spot-state result-${item.status}`}>{outcome(item.status)}</span></button></li>)}</ul>
+    <div className="canvas-actions"><button className="primary" onClick={() => {setSection('messages'); if (step === 'start') setStep('message');}}>Add a visitor message</button></div>
+    {spotPicker}<p className="canvas-note">Path check on an example. Select a spot for details.</p>
+  </>;
+  const changesOverview = <>
+    <span className="place-kicker">Plan a fix</span><h1>{confirmation ? nameOf(target!) : 'No fixes yet'}</h1>
+    {!confirmation ? <><p className="place-copy">Start with a message or select a spot on the map.</p><div className="canvas-actions"><button className="primary" onClick={() => switchSection('place')}>Explore the place</button></div></> : <>
+      {origin?.kind === 'concern' && <blockquote>{origin.originalText}</blockquote>}
+      {scenario.operations.length > 0 && <p className="place-copy">{scenario.operations.at(-1)?.kind === 'remove' ? 'Remove from this position' : 'Move to a new position'}</p>}
+      <table className="canvas-comparison" aria-label="All path results"><thead><tr><th>Path to</th><th>Before</th><th>After</th></tr></thead><tbody>{pathChanges.map(({before, after}) => <tr key={after.id} className={before.status === 'reachable' && after.status !== 'reachable' ? 'new-problem' : ''}><td>{nameOf(after.id)}</td><td className={`result-${before.status}`}>{outcome(before.status)}</td><td className={`result-${after.status}`}>{outcome(after.status)}</td></tr>)}</tbody></table>
+      {newProblems.length > 0 && <p className="guide-error" role="status">New problem: {newProblems.map(({after}) => nameOf(after.id)).join(', ')}</p>}
+      <div className="canvas-comparison-switch" aria-label="Compare scene"><button aria-pressed={comparison === 'original'} onClick={() => setComparison('original')}>Before</button><button aria-pressed={comparison === 'proposed'} onClick={() => setComparison('proposed')}>After</button></div>
+      <p className="canvas-note">Checks the proposed layout, not work done on site.</p>
+    </>}
+  </>;
+  const inspector = section === 'place' ? selectedFeature && <>
+    <div className="place-inspector-head"><span className="place-kicker">Selected spot</span><button className="place-dismiss" onClick={() => setSelected(null)} aria-label="Close spot details">×</button></div>
+    <h2>{nameOf(selectedFeature.id)}</h2><p className="place-copy">{site.features.find(item => item.id === selected)?.description}</p>
+    <div className="canvas-actions"><button className="primary" onClick={() => {setMode('proactive'); begin('proactive');}}>Plan a fix</button><button onClick={() => {setSection('messages'); setStep('message');}}>Link a visitor message</button></div>{selectedDetails}
+  </> : section === 'messages' ? (step === 'confirm' || thinking) && <>
+    <span className="place-kicker">{thinking ? 'Reading message' : 'Check the spot'}</span><h2>{thinking ? 'Finding the right spot…' : 'Which spot is it about?'}</h2>
+    {resultCard && !thinking && <AIResultCard result={resultCard} selectedId={selected} onSpot={selectSpot} onNotSure={() => setSelected(null)} />}
+    {!thinking && <>{understanding?.status === 'unavailable' && <p className="place-copy">AI isn’t available. Choose a spot to continue.</p>}{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>Yes, this spot</button></div>{selectedDetails}</>}
+  </> : confirmation || step === 'confirm' ? <>
+    <span className="place-kicker">{plan ? 'Saved plan' : reviewed ? 'Review the fix' : 'Try a position'}</span>
+    {step === 'confirm' ? <><h2>{selected ? nameOf(selected) : 'Choose a spot'}</h2>{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>Plan this fix</button></div></>
+    : plan ? <><h2>Plan saved.</h2><p className="place-copy">{title}</p><label className="canvas-label" htmlFor="visitor-reply">Reply to the visitor</label><select id="visitor-reply" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">Other</option></select><blockquote>{language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.'}</blockquote><p className="canvas-note">Pre-written reply{language === 'ko' ? ' · Korean wording needs review' : language !== 'en' && language !== 'es' ? ' · English fallback' : ''}</p><div className="canvas-actions"><button className="primary" onClick={() => void navigator.clipboard.writeText(language === 'ko' ? '알려 주셔서 감사합니다. 말씀하신 장소를 확인하고 개선 계획을 세웠습니다.' : language === 'es' ? 'Gracias por avisarnos. Revisamos el lugar y preparamos un plan para mejorarlo.' : 'Thank you for letting us know. We reviewed the spot and made a plan to improve it.').then(() => setNotice('Reply copied.')).catch(() => setError('Copy the reply text above. Clipboard access is unavailable.'))}>Copy reply</button><button onClick={retryChange}>Try another fix</button><button onClick={backup}>Download backup</button></div></>
+    : reviewed ? <><h2>{newProblems.length ? 'A new path is blocked.' : improved.length ? 'Review your fix.' : 'The path check is unchanged.'}</h2><div className="canvas-actions"><button className={newProblems.length ? '' : 'primary'} onClick={save}>Save plan</button><button className={newProblems.length ? 'primary' : ''} onClick={retryChange}>Try another position</button></div><label className="canvas-label" htmlFor="plan-notes">Note for this plan</label><textarea id="plan-notes" value={notes} onChange={event => {setNotes(event.target.value); dirty();}} maxLength={4000} placeholder="What needs checking on site?" /></>
+    : <><h2>{placing ? 'Choose a position on the map.' : editable ? `Move ${nameOf(target!).toLowerCase()}` : 'Keep this for review.'}</h2><div className="canvas-actions">
+      {editable ? <>{!placing && site.placements.filter(item => item.featureId === target).map((item,index) => <button key={index} className={index === 0 ? 'primary' : ''} onClick={() => edit({kind:'move',objectId:target!,to:item.to})}>{item.name.en}</button>)}
+        <button onClick={() => {setSelected(target); viewBeforePlacement.current = view; setPlacing(true); setView('map'); setComparison('proposed');}}>Choose on map</button>
+        {placing && <><button onClick={() => placementDialog.current?.showModal()}>Enter a position</button><button onClick={() => {setPlacing(false); setView(viewBeforePlacement.current);}}>Cancel move</button></>}
+        <button onClick={() => edit({kind:'remove',objectId:target!})}>Remove from this position</button>
+      </> : <button className="primary" onClick={() => setStep('compare')}>Review plan</button>}
+    </div></>}
+  </> : null;
   return (
-    <SceneFrame className="guided-workspace" step={step} label="Visitor courtyard editing demo"
-      sceneRef={stageRef} dialogueRef={dockRef}
-      progress={<SceneProgress title="Open the passage" items={[
-        {id:'identify',label:'Choose a feature',state:progressIndex === 0 ? 'current' : 'complete'},
-        {id:'try',label:'Preview a change',state:progressIndex === 1 ? 'current' : progressIndex > 1 && scenario.operations.length > 0 ? 'complete' : 'upcoming'},
-        {id:'save',label:'Review and save',state:plan ? 'complete' : progressIndex === 2 ? 'current' : 'upcoming'},
-      ]}>
-        {(step === "compare" || step === "done") && <section className="result-panel" aria-label="Passage result">
-          <h2>{destination}</h2>
-          <div className="compact-comparison" aria-label="Before and after comparison">
-            <div><span>Before</span><strong className={`result-${baseline.destinations[0]?.status}`}>{outcome(baseline.destinations[0]?.status ?? "unknown")}</strong></div>
-            <div><span>After</span><strong className={`result-${afterStatus}`}>{outcome(afterStatus)}</strong></div>
-          </div>
-          <p>Modelled proposal</p>
-          <div className="result-switch" aria-label="Compare scene">
-            <button aria-pressed={comparison === 'original'} onClick={() => setComparison('original')}>Before</button>
-            <button aria-pressed={comparison === 'proposed'} onClick={() => setComparison('proposed')}>After</button>
-          </div>
-        </section>}
-      </SceneProgress>}
-      scene={<SpatialView
-          controlsTarget={controlsTarget}
-          returnFocus={() => optionsButton.current?.focus()}
-          rotation={rotation}
-          onRotationChange={setRotation}
-          scene={comparison === "original" ? scene : applied}
-          result={comparison === "original" ? baseline : proposed}
-          selectedId={selected}
-          onSelect={setSelected}
-          view={view}
-          compact
-          evidenceScene={scene}
-          onPlace={
-            placing
-              ? (point) => edit({ kind: "move", objectId: target!, to: point })
-              : undefined
-          }
-        />}
-      context={<>
-        <div className="context-panel-head"><span className="scene-caption">{step === "start" ? "Get started" : step === "message" ? "Visitor message" : step === "confirm" ? "Selected feature" : step === "edit" ? "Preview" : step === "compare" ? "Next step" : "Your plan"}</span>
-          <button ref={optionsButton} className="dialogue-options" popoverTarget={optionsId} aria-label="Scene options" title="Scene options">•••</button>
-        </div>
-        {(step === "message" || step === "confirm") && analysisResult && <AIResultCard
-          result={{...analysisResult, spots: analysisResult.spots.filter(spot => inventory.some(item => item.id === spot.id))}}
-          selectedId={selected}
-          onSpot={id => { setSelected(id); setStep("confirm"); }}
-          onNotSure={() => { setSelected(null); setStep("confirm"); }} />}
-        <div className="guide-action" key={step} ref={actionCard} tabIndex={-1}>
-          {step === "start" && (
-            <>
-              <h2>What needs attention?</h2>
-              <div className="action-row">
-                <button className="primary" onClick={() => begin("proactive")}>
-                  Check the passage <span>→</span>
-                </button>
-                <button
-                  className="quiet-button"
-                  onClick={() => begin("concern")}
-                >
-                  Add a visitor message
-                </button>
-              </div>
-            </>
-          )}
-          {step === "message" && (
-            <>
-              <h2>What did the visitor say?</h2>
-              <label className="sr-only" htmlFor="visitor-message">
-                Original visitor message
-              </label>
-              <textarea
-                id="visitor-message"
-                value={message}
-                maxLength={4000}
-                rows={2}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Paste or type their message…"
-              />
-              <div className="action-row">
-                <label className="sr-only" htmlFor="message-language">
-                  Message language
-                </label>
-                <select
-                  id="message-language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                >
-                  <option value="en">English</option>
-                  <option value="ko">한국어</option>
-                  <option value="other">Other / unsure</option>
-                </select>
-                <button
-                  className="primary"
-                  disabled={!message.trim()}
-                  onClick={() => setStep("confirm")}
-                >
-                  Find the feature <span>→</span>
-                </button>
-                <button
-                  className="quiet-button"
-                  onClick={() => setStep("start")}
-                >
-                  Back
-                </button>
-              </div>
-              <p className="subtle-line">
-                Select the feature in the scene next.
-              </p>
-            </>
-          )}
-          {step === "confirm" && (
-            <>
-              <h2>{selectedFeature?.label ?? "Select a feature"}</h2>
-              {selectedFeature && <details className="feature-facts"><summary>Feature details</summary>
-                {selectedBounds && <p>{(selectedBounds.maxX-selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY-selectedBounds.minY).toFixed(2)} m footprint</p>}
-                {selectedRecord.map((text, index) => <p key={index}>{text}</p>)}
-                {selectedRecord.length === 0 && <p>{'reason' in selectedFeature ? selectedFeature.reason : 'Authored feature in the example scene.'}</p>}
-              </details>}
-              <div className="action-row">
-                <button
-                  className="primary"
-                  disabled={!selectedFeature}
-                  onClick={confirm}
-                >
-                  Yes, this feature <span>→</span>
-                </button>
-                <details className="feature-picker"><summary>Choose another feature</summary>
-                <label className="sr-only" htmlFor="feature-choice">
-                  Affected feature
-                </label>
-                <select
-                  id="feature-choice"
-                  value={selected ?? ""}
-                  onChange={(e) => setSelected(e.target.value)}
-                >
-                  {inventory.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select></details>
-                <button
-                  className="quiet-button"
-                  onClick={() => setStep("start")}
-                >
-                  Back
-                </button>
-              </div>
-            </>
-          )}
-          {step === "edit" && (
-            <>
-              <h2>
-                {placing
-                  ? "Where should it go?"
-                  : editable
-                    ? "Give the passage more room."
-                    : "Keep this issue for review."}
-              </h2>
-              <div className="action-row">
-                {editable && !placing ? (
-                  <>
-                    <button
-                      className="primary"
-                      onClick={() => {
-                        setSelected(target);
-                        viewBeforePlacement.current = view;
-                        setPlacing(true);
-                        setView("map");
-                        setComparison("proposed");
-                      }}
-                    >
-                      Move {actionName} <span>→</span>
-                    </button>
-                    <button
-                      onClick={() =>
-                        edit({ kind: "remove", objectId: target! })
-                      }
-                    >
-                      Remove {actionName}
-                    </button>
-                  </>
-                ) : placing ? (
-                  <>
-                    <button
-                      className="quiet-button"
-                      onClick={() => placementDialog.current?.showModal()}
-                    >
-                      Enter a position
-                    </button>
-                    {scene.id === SYNTHETIC_SCENE.id &&
-                      contentHash(scene) === contentHash(SYNTHETIC_SCENE) && (
-                        <button
-                          className="primary"
-                          onClick={() =>
-                            edit({
-                              kind: "move",
-                              objectId: target!,
-                              to: BENCH_CLEAR_POSITION,
-                            })
-                          }
-                        >
-                          Try the open corner <span>→</span>
-                        </button>
-                      )}
-                    <button
-                      className="quiet-button"
-                      onClick={() => setPlacing(false)}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="primary"
-                    onClick={() => setStep("compare")}
-                  >
-                    Review the plan <span>→</span>
-                  </button>
-                )}
-                <button
-                  className="quiet-button"
-                  onClick={() => {
-                    setPlacing(false);
-                    setConfirmation(null);
-                    setStep("confirm");
-                  }}
-                >
-                  Change feature
-                </button>
-              </div>
-            </>
-          )}
-          {step === "compare" && (
-            <>
-              <h2>{connected ? "Keep this proposal?" : afterStatus === "blocked" ? "The route is still blocked." : "The route is unresolved."}</h2>
-              <p className="context-description">{connected ? "Save it for review before making a change on site." : "Try a different placement, or keep this proposal for review."}</p>
-              <div className="action-row">
-                {connected ? <><button className="primary" onClick={save}>Save improvement plan</button><button onClick={retryChange}>Try another change</button></>
-                  : <><button className="primary" onClick={retryChange}>Try another change</button><button onClick={save}>Save for review</button></>}
-              </div>
-            </>
-          )}
-          {step === "done" && (
-            <>
-              <h2>{plan ? "Plan saved." : "Save your updated plan."}</h2>
-              <p className="subtle-line">{title}</p>
-              <div className="action-row">
-                {!plan ? (
-                  <button className="primary" onClick={save}>
-                    Save improvement plan
-                  </button>
-                ) : (
-                  <button className="primary" onClick={onHome}>
-                    Back to home <span>→</span>
-                  </button>
-                )}
-                <button
-                  className="quiet-button"
-                  onClick={() => {
-                    setScenario(createScenario(scene, profile));
-                    setStep("edit");
-                    setPlacing(false);
-                    setSelected(target);
-                    materialDirty();
-                  }}
-                >
-                  Keep exploring
-                </button>
-                {plan && (
-                  <button className="quiet-button" onClick={backup}>
-                    Download backup
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-        {error && (
-          <p className="guide-error" role="alert">
-            {error}
-          </p>
-        )}
-        {notice && (
-          <p className="guide-notice" role="status">
-            {notice}
-          </p>
-        )}
-      </>}
+    <PlaceCanvas title={site.name.en} view={section} onView={switchSection} onHome={onHome} sceneRef={stageRef} dialogueRef={dockRef}
+      tools={<><button className="view-mode" aria-pressed={view === 'map'} onClick={() => setView(view === 'map' ? '3d' : 'map')}>{view === 'map' ? 'Map' : '3D'}</button><button ref={optionsButton} popoverTarget={optionsId} aria-label="Scene options">Options</button></>}
+      scene={<><SpatialView controlsTarget={controlsTarget} returnFocus={() => optionsButton.current?.focus()} rotation={rotation} onRotationChange={setRotation}
+        scene={comparison === 'original' ? scene : applied} result={comparison === 'original' ? baseline : proposed} selectedId={selected} onSelect={selectSpot} view={view} compact evidenceScene={scene}
+        onPlace={placing ? point => edit({kind:'move',objectId:target!,to:point}) : undefined} />
+        <ScenePins stageRef={stageRef} spots={pins} selectedId={selected} onSelect={selectSpot} revision={`${view}:${rotation}:${comparison}:${scenario.operations.length}`} /></>}
+      overview={section === 'place' ? placeOverview : section === 'messages' ? messagesOverview : changesOverview}
+      inspector={inspector && <>{inspector}{error && <p className="guide-error" role="alert">{error}</p>}{notice && <p className="guide-notice" role="status">{notice}</p>}</>}
       dialogue={<p role="status">{cue}</p>}>
-      <ContextualGuide stageRef={stageRef} dockRef={dockRef}
-        selectedId={step === "confirm" || step === "edit" ? selected : null}
-        revision={`${step}:${view}:${rotation}:${scenario.operations.length}:${comparison}:${placing}`}
-        tone={step === "confirm" ? "evidence" : step === "compare" || step === "done" ? "review" : "guide"} />
+      {!inspector && error && <p className="canvas-toast guide-error" role="alert">{error}</p>}
+      <ContextualGuide stageRef={stageRef} dockRef={dockRef} selectedId={section === 'messages' && step === 'confirm' ? selected : null}
+        revision={`${section}:${step}:${view}:${rotation}:${scenario.operations.length}:${comparison}:${placing}`} tone={section === 'messages' ? 'evidence' : section === 'changes' ? 'review' : 'guide'} />
       <div popover="auto" id={optionsId} ref={options} className="scene-options" onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) options.current?.hidePopover();
       }}>
-        <p>Courtyard demo <span>Authored geometry</span></p>
+        <p>{site.name.en} <span>Authored example</span></p>
         <div className="segmented" aria-label="Workspace view">
           {(["map", "3d", "split"] as const).map((v) => (
             <button
@@ -643,7 +458,7 @@ export default function Workspace({
         {scenario.operations.length > 0 && (
           <div className="scenario-tools">
             <button className="quiet-button" onClick={undo}>
-              ↶ Undo
+              Undo fix
             </button>
           </div>
         )}
@@ -801,7 +616,7 @@ export default function Workspace({
               details.current?.close();
             }}
           >
-            Save improvement plan
+            Save plan
           </button>
         )}
       </dialog>
@@ -864,6 +679,6 @@ export default function Workspace({
           Preview move
         </button>
       </dialog>
-    </SceneFrame>
+    </PlaceCanvas>
   );
 }
