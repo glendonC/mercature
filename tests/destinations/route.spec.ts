@@ -13,7 +13,7 @@ test('a decision on a recorded photo is kept by stretch and writes the visitor n
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await openRoute(page);
-  const loreto = page.getByRole('button', {name:/^Stone steps on Calle Loreto, 340 to 350 m/});
+  const loreto = page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m/});
   await loreto.click();
   await expect(page.getByText('Model suggestion, unverified').first()).toBeVisible();
   await page.getByRole('button', {name:'Confirm', exact:true}).click();
@@ -25,5 +25,5 @@ test('a decision on a recorded photo is kept by stretch and writes the visitor n
   expect(review.decisions['34'].verdict).toBe('barrier');
   await page.getByRole('button', {name:'Home', exact:true}).click();
   await openRoute(page);
-  await expect(page.getByRole('button', {name:/^Stone steps on Calle Loreto, 340 to 350 m, Barrier confirmed$/})).toBeVisible();
+  await expect(page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m, Barrier confirmed$/})).toBeVisible();
 });

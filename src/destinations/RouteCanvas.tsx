@@ -113,7 +113,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
 
   // Names and positions
   const routeSpotFor = (stretches: readonly number[]) => routeSpots.find(spot => spot.stretches.length && spot.stretches[0] === stretches[0]);
-  const spotName = (spot: Spot) => { const named = routeSpotFor(spot.stretches); return named ? bare(named.name[lang]) : spot.kind === 'no-photos' ? t.noPhotos : spot.findings[0] ? fromRecord(spot.findings[0].label, lang) : t.range(Math.round(spot.from), Math.round(spot.to)); };
+  /** A spot as people read it: where it is and how far along the walk. Display only; the route.ts names feed the model. */
+  const spotName = (spot: Spot) => {
+    const at = whereOf(spot), place = lang === 'es' ? at.es.replace(/^(en|cerca)\s+(de\s+)?(la\s+|el\s+|los\s+|las\s+|del\s+)?/i, '') : at.en.replace(/^(at|near|on|by)\s+(the\s+)?/i, '');
+    return `${place.charAt(0).toLocaleUpperCase()}${place.slice(1)}, ${t.range(Math.round(spot.from), Math.round(spot.to))}`;
+  };
   const spotOf = (index: number) => walk.spots.find(spot => spot.stretches.includes(index)) ?? null;
   function targetOf(id: string): Selection | null {
     const named = routeSpots.find(spot => spot.id === id);
@@ -254,7 +258,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     const verdict = verdictOf(review, spot.stretches), name = spotName(spot), target: Selection = { kind: 'spot', id: spot.id };
     const state = spot.kind === 'no-photos' ? 'no-photos' : verdict ?? 'open';
     const status = spot.kind === 'no-photos' ? t.noPhotos : verdict ? t.verdicts[verdict] : t.unreviewed;
-    return { id: spot.id, at: spot.at, state, selected: same(selection, target), rank: rankOf(target), tag: spot.kind === 'no-photos' ? t.noPhotos : verdict ? t.verdicts[verdict] : undefined, label: `${name}, ${t.range(Math.round(spot.from), Math.round(spot.to))}, ${status}` };
+    return { id: spot.id, at: spot.at, state, selected: same(selection, target), rank: rankOf(target), tag: spot.kind === 'no-photos' ? t.noPhotos : verdict ? t.verdicts[verdict] : undefined, label: `${name}, ${status}` };
   });
   type Extra = Exclude<Selection, { kind: 'spot' }>;
   const extraTargets: Extra[] = [...candidates.map(targetOf).filter((target): target is Extra => !!target && target.kind !== 'spot'), ...(selection && selection.kind !== 'spot' ? [selection] : [])];
@@ -298,7 +302,6 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     if (selection?.kind === 'stretch') return data.stretches[selection.index]?.views.find(id => views.has(id)) ?? null;
     return null;
   })();
-  const shownPhoto = shownView ? photos.get(views.get(shownView)!.photoId) : undefined;
   const card = selection && <SpotCard key={JSON.stringify(selection)} t={t} lang={lang} selection={selection} walk={walk} data={data} review={review} views={views} photos={photos} asset={asset}
     page={page} setPage={setPage} name={selection.kind === 'spot' ? spotName(walk.spots.find(spot => spot.id === selection.id)!) : selection.kind === 'landmark' ? nameOfKey(selection.id) : t.noBarrier}
     onJudge={judge} onClose={() => open(null)} link={linking ? () => link(selection) : undefined} />;
@@ -337,16 +340,16 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <li key={spot.id}><button onClick={() => open({ kind: 'spot', id: spot.id })}><span>{spotName(spot)}</span><span className="route-verdict" data-verdict={verdict}>{t.verdicts[verdict]}</span></button></li>)}</ul></>}
     {review.messages.length > 0 && <><h2>{t.messages}</h2><ul className="route-list">{review.messages.slice(0, 8).map(message =>
       <li key={message.id}><button aria-pressed={replyMessage?.id === message.id} onClick={() => { setReplyFor(message.id); setReplyLanguage(null); }}><span className="route-excerpt" lang={message.language === 'other' ? undefined : message.language}>{message.text}</span><span className="route-verdict">{message.spot ? nameOfKey(message.spot) : t.notLinked}</span></button></li>)}</ul></>}
-    {(decided.length > 0 || review.messages.length > 0) && <>
-      <h2>{t.note}</h2>
-      <LanguageSwitch value={noteLang} onChange={setNoteLang} label={t.note} />
-      {note ? <><p className="route-text" lang={noteLang}>{note}</p><div className="route-actions"><button className="route-primary" onClick={() => copy(note)}>{t.copyNote}</button></div></> : <p className="route-quiet">{t.noNote}</p>}
-    </>}
     {replyMessage && <>
       <h2>{t.reply}</h2>
       <LanguageSwitch value={replyLanguageNow} onChange={setReplyLanguage} label={t.reply} />
       <p className="route-text" lang={replyLanguageNow}>{replyText(replyMessage, replyLanguageNow)}</p>
       <div className="route-actions"><button className="route-primary" onClick={() => copy(replyText(replyMessage, replyLanguageNow))}>{t.copyReply}</button></div>
+    </>}
+    {(decided.length > 0 || review.messages.length > 0) && <>
+      <h2>{t.note}</h2>
+      <LanguageSwitch value={noteLang} onChange={setNoteLang} label={t.note} />
+      {note ? <><p className="route-text" lang={noteLang}>{note}</p><div className="route-actions"><button className="route-primary" onClick={() => copy(note)}>{t.copyNote}</button></div></> : <p className="route-quiet">{t.noNote}</p>}
     </>}
   </section>;
 
@@ -375,7 +378,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   function keyTabs(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const next = event.key === 'ArrowRight' ? (index + 1) % TABS.length : event.key === 'ArrowLeft' ? (index + TABS.length - 1) % TABS.length : event.key === 'Home' ? 0 : event.key === 'End' ? TABS.length - 1 : -1;
     if (next < 0) return;
-    event.preventDefault(); setTab(TABS[next]); setSaid('');
+    event.preventDefault(); setTab(TABS[next]); setSaid(''); setSelection(null);
     document.getElementById(`${tabsId}-${TABS[next]}`)?.focus();
   }
   const insets = narrow ? { top: 112, right: 20, bottom: 150, left: 20 } : { top: 150, right: 60, bottom: 110, left: 70 };
@@ -384,7 +387,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     <header className="route-bar">
       <button className="route-icon-button" onClick={onHome} aria-label={t.home}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>
       <div className="route-tabs" role="tablist" aria-label={t.workspace}>
-        {TABS.map((item, index) => <button key={item} id={`${tabsId}-${item}`} role="tab" aria-selected={tab === item} tabIndex={tab === item ? 0 : -1} onKeyDown={event => keyTabs(event, index)} onClick={() => { setTab(item); setSaid(''); }}>
+        {TABS.map((item, index) => <button key={item} id={`${tabsId}-${item}`} role="tab" aria-selected={tab === item} tabIndex={tab === item ? 0 : -1} onKeyDown={event => keyTabs(event, index)} onClick={() => { setTab(item); setSaid(''); setSelection(null); }}>
           {t.views[item]}{item === 'place' && left > 0 && <span className="route-count" aria-hidden="true">{left}</span>}
         </button>)}
       </div>
@@ -395,7 +398,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p>
       <p className="route-recorded">{t.recorded}</p>
     </div>
-    <RouteMap ref={map} data={data} photoView={shownView ?? ''} photoAt={shownPhoto ? walk.project(shownPhoto.position) : null} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
+    <RouteMap ref={map} data={data} photoView={shownView ?? ''} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
       onMap={tapMap} words={t.map} clearBottom={(narrow ? sheetHeight : 0) + footHeight + 12} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
     {!narrow && panel}
     {problem && <p className="route-problem" role="alert">{problem === 'unreadable' ? t.unreadable : t.notSaved}<button className="route-icon-button" aria-label={t.close} onClick={() => setProblem('')}><Close /></button></p>}
@@ -464,7 +467,7 @@ function SpotCard({ t, lang, selection, walk, data, review, views, photos, asset
     <button className="route-icon-button route-card-close" aria-label={t.close} onClick={onClose}><Close /></button>
     {figure}
     <h2 ref={heading} tabIndex={-1}>{name}</h2>
-    {range && <p className="route-card-line">{range}</p>}
+    {stretch && range && <p className="route-card-line">{range}</p>}
     {shown && <p className="route-card-quiet"><span className="route-mark" aria-hidden="true" />{fromRecord(shown.label, lang)}. {shown.viewId ? t.suggestion : t.mapRecord}</p>}
     {spot?.kind === 'no-photos' && <p className="route-card-quiet">{t.noPhotos}</p>}
     {stretch && <p className="route-card-quiet">{t.noBarrier}</p>}

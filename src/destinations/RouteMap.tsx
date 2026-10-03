@@ -21,7 +21,6 @@ type Props = {
   walk: Walk;
   /** The view whose camera position and heading to draw, when a photo is open. */
   photoView: string;
-  photoAt: Point | null;
   markers: Marker[];
   /** Map words; dy moves one below a point drawn by the map itself. */
   labels: { name: string; at: Point; dy?: number }[];
@@ -47,15 +46,14 @@ const Cameras = memo(function Cameras({ walk }: { walk: Walk }) {
   return <g className="route-cameras">{walk.cameras.map((c, i) => <circle key={i} cx={c[0].toFixed(1)} cy={c[1].toFixed(1)} r="1.3" />)}</g>;
 });
 /** Over the shared map's blue walk: the stretches without photos, and the selected spot. */
-const Overlay = memo(function Overlay({ walk, highlight, photoAt }: { walk: Walk; highlight: Point[] | null; photoAt: Point | null }) {
+const Overlay = memo(function Overlay({ walk, highlight }: { walk: Walk; highlight: Point[] | null }) {
   return <g className="route-overlay">
     {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path)} /><polyline className="route-unseen" points={line(run.path)} /></g>)}
     {highlight && <><polyline className="route-highlight-halo" points={line(highlight)} /><polyline className="route-highlight" points={line(highlight)} /></>}
-    {photoAt && <circle className="route-photo-camera" cx={photoAt[0]} cy={photoAt[1]} r="4" />}
   </g>;
 });
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, photoAt, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words }, ref) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<Camera | null>(null);
@@ -203,6 +201,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const placed = markers.map(marker => ({ marker, at: toScreen(marker.at) }));
   // Labels never cover a marker or each other; earlier labels win.
   const taken: { x: number; y: number; w: number; h: number }[] = placed.map(p => ({ x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }));
+  const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
+  if (controls && bounds && controls.width) taken.push({ x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 });
   const visibleLabels = camera ? labels.map(label => { const at = toScreen(label.at); return { label, at: [at[0], at[1] + (label.dy ?? 0)] as Point }; }).filter(({ label, at }) => {
     const w = Math.min(180, label.name.length * 6.6) + 8, h = label.name.length * 6.6 > 180 ? 34 : 18, box = { x: at[0] - w / 2, y: at[1] - h / 2, w, h };
     if (at[0] < 8 || at[0] > size.width - 8 || at[1] < insets.top || at[1] > size.height - clearBottom) return false;
@@ -219,7 +219,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   };
   return <div className="route-map" ref={box} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} underlay={<Cameras walk={walk} />}>
-      <Overlay walk={walk} highlight={highlight} photoAt={photoAt} />
+      <Overlay walk={walk} highlight={highlight} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
