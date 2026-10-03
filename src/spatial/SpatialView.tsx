@@ -63,11 +63,11 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
         {selectedBounds && <p className="spatial-dimensions">{evidenceScene ? 'Original footprint: ' : ''}{(selectedBounds.maxX - selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY - selectedBounds.minY).toFixed(2)} m{evidenceScene ? '' : ' footprint'}{'top' in (selected ?? {}) ? ` · ${((selected as Obstacle).top - (selected as Obstacle).bottom).toFixed(2)} m high` : ''}</p>}
         {destinationResult && <p className={`spatial-status spatial-status-${destinationResult.status}`}>{statusText[destinationResult.status]} · {destinationResult.reason}</p>}
       </div>
-      <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose a spot in either view. Nothing in this example was measured.</p>}</div>
+      <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose a spot in either view.</p>}</div>
     </div>;
   const iconControls = compact && controlsTarget === undefined;
   const controls = <div className="spatial-tools">
-      <span className="spatial-authored">{compact ? 'Example' : <><Icon name="authored" />{scene.title} <small>· Example</small></>}</span>
+      {!compact && <span className="spatial-authored"><Icon name="authored" />{scene.title} <small>· Example</small></span>}
       <div className="spatial-layer-controls">
         <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}><Icon name="overlay" />{!iconControls && <span>Check overlay</span>}</button>
         <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}><Icon name="path" />{!iconControls && <span>Checked path</span>}</button>

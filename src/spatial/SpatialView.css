@@ -41,7 +41,6 @@
 /* The compact workspace keeps the model as its main surface. */
 .spatial-view-compact{position:relative;border-radius:18px;background:var(--paper)}
 .spatial-view-compact .spatial-tools{position:absolute;inset:14px 16px auto;z-index:2;padding:0;border:0;gap:8px;pointer-events:none}
-.spatial-view-compact .spatial-authored{font-size:12px;letter-spacing:.025em;color:var(--muted);pointer-events:auto}
 .spatial-view-compact .spatial-layer-controls{gap:3px;align-items:center;padding:3px;background:var(--glass);border:1px solid var(--glass-border);border-radius:11px;pointer-events:auto;backdrop-filter:var(--glass-blur)}
 .spatial-view-compact .spatial-layer-controls button{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:5px 8px;font-size:13px;line-height:1}
 .spatial-view-compact .spatial-layer-controls .spatial-icon{width:20px;height:20px}
@@ -62,6 +61,6 @@
 .spatial-dialog-context .spatial-legend{padding:14px 0;border:0}
 .spatial-layer-controls button:focus-visible,.spatial-evidence-dialog button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 @media(max-width:1024px){.spatial-view-compact .spatial-split{grid-template-columns:1fr 1fr}.spatial-view-compact .spatial-split .spatial-projection+.spatial-projection{border-top:0;border-left:1px solid var(--line)}}
-@media(max-width:640px){.spatial-view-compact .spatial-tools{inset:12px 10px auto}.spatial-view-compact .spatial-authored{font-size:13px}.spatial-view-compact .spatial-canvases{min-height:max(310px,54svh)}.spatial-view-compact .spatial-projection svg{height:54svh;min-height:310px}.spatial-view-compact .spatial-layer-controls button{min-width:34px;min-height:36px;padding:5px}.spatial-view-compact .spatial-split{grid-template-columns:1fr}.spatial-view-compact .spatial-split .spatial-projection{min-height:240px}.spatial-view-compact .spatial-split .spatial-projection svg{height:32svh;min-height:240px}.spatial-view-compact .spatial-split .spatial-projection+.spatial-projection{border-left:0;border-top:1px solid var(--line)}.spatial-evidence-dialog{margin:auto 8px 8px;width:calc(100vw - 16px);max-width:none;border-radius:20px 20px 12px 12px}}
+@media(max-width:640px){.spatial-view-compact .spatial-tools{inset:12px 10px auto}.spatial-view-compact .spatial-canvases{min-height:max(310px,54svh)}.spatial-view-compact .spatial-projection svg{height:54svh;min-height:310px}.spatial-view-compact .spatial-layer-controls button{min-width:34px;min-height:36px;padding:5px}.spatial-view-compact .spatial-split{grid-template-columns:1fr}.spatial-view-compact .spatial-split .spatial-projection{min-height:240px}.spatial-view-compact .spatial-split .spatial-projection svg{height:32svh;min-height:240px}.spatial-view-compact .spatial-split .spatial-projection+.spatial-projection{border-left:0;border-top:1px solid var(--line)}.spatial-evidence-dialog{margin:auto 8px 8px;width:calc(100vw - 16px);max-width:none;border-radius:20px 20px 12px 12px}}
 
 .spatial-placing,.spatial-placing .spatial-feature{cursor:crosshair}
