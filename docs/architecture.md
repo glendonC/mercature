@@ -1,35 +1,62 @@
-# Application boundaries
+# Architecture
 
-Mercature is a browser-local React/TypeScript application. It has no server-side reconstruction or cloud language service. The small runtime consists of React, the canvas avatar library, and pure TypeScript domain modules. Production assets are cached by a versioned service worker after initial provisioning.
+Mercature runs entirely in the browser. There is no server: the app, the published place and the model are static files, and after one download the model answers on the device. This page shows how the pieces fit and how to add a place.
 
-## Flow and interface
+## Map
 
-Home uses a shared catalogue for clickable destination photographs and search results. Search also finds the authored Visitor courtyard and work saved on this device. The split upload control accepts original photos/video or a saved JSON plan/project. Unknown queries offer an explicit photo intake action; search never silently creates a reconstructed model. In the example, a short guide leads through a site check or original visitor message, explicit feature confirmation, one supported change, comparison and saving. Map, projected 3D, original/proposed views and undo stay directly available. Evidence, precise placement, requirements and plan metadata open on demand.
+| Path | What it holds |
+| --- | --- |
+| `src/site/` | What a place is. `route.ts` lists the Qorikancha spots with the words visitors use, `registry.ts` lists every place with spots, `farm.ts` and `inventory.ts` hold Noor's farm, and `contracts.ts` holds the shared types and the fixed lists the model answers from. |
+| `scripts/places/package.mjs` | Builds a place's published package from its recorded walk. |
+| `public/places/qorikancha/` | The published package: `place.json` (route, stretches, findings, every photo as a credited record, spots) and the photo views the app shows. |
+| `src/destinations/` | Loads a recorded place (`data.ts`) and shows it: the route canvas (`RouteCanvas.tsx`, `RouteMap.tsx`, `walk.ts`) and the note and reply templates (`copy.ts`). |
+| `src/decisions/store.ts` | What a person decided for each stretch, and the visitor messages they linked, kept on the device. |
+| `src/language/` | The on-device model. `understand.ts` is its whole interface. |
+| `src/workspace/`, `src/spatial/`, `src/plans/` | Noor's farm: its canvas, the path check (Connected, Blocked, Unknown) and saved fix plans. |
+| `src/home/`, `src/preparation/`, `src/App.tsx` | Home search, the reveal before a place opens, and the app shell. |
+| `src/places/` | Photos and notes for a place that has no recording yet, kept in the browser. |
+| `src/components/` | Pieces shared by the canvases. |
 
-Unlisted places have a photo-first workspace. Uploaded originals stay in IndexedDB; metadata and notes stay in local storage. Local evidence is not automatically converted to a spatial model. The optional geographic rectangle records scope only. File reading and persistence drive actual busy states; no animation stands in for reconstruction or AI inference.
+## From a recorded walk to a decision
 
-Preparation is a skippable two-stage entry into existing workspaces. Captured destinations first load and validate their local records, display actual camera positions and source previews, then read and decode a retained point piece. The scene-ready action appears only after a canvas draw completes. Missing geometry stays on the photo/map path; fetch or rendering errors do not become readiness. Counters describe source records, and previews show their actual loading or missing-file state. No artificial progress delays or fresh-reconstruction claim is made.
+1. **Record.** A walk is recorded once, outside this repository: street photos from Mapillary, the route on foot from Valhalla on OpenStreetMap, SAM 3 outlines of possible barriers in the photos, and the walk cut into 10 m stretches. The result is one local file, `.local/routes/<id>/route.json` (`mercature-route/1`). Point clouds and full-size photos never ship.
+2. **Name the spots.** `src/site/route.ts` turns the record into spots a visitor would talk about. Each flagged stretch and each landmark gets an id, a name in English and Spanish, one plain description, and the words visitors use in English, Spanish, Korean and Quechua. Nothing in it states a width, height or slope.
+3. **Package.** `node scripts/places/package.mjs cusco-qorikancha` writes `public/places/qorikancha/`: the route, stretches and findings, every photo as a credited record, only the views the app shows, and the spot list. The same input gives the same bytes.
+4. **Load.** `loadDestination` in `src/destinations/data.ts` reads the package on any host, and offline once cached. Every field is checked before use.
+5. **Read a message.** `understand(message, place)` in `src/language/understand.ts` returns the message kind (problem, praise or question), an issue type for problems, and up to three spot ids, best first, or Not sure with a reason. It never writes text. The suggested spots light up on the map; the route never shows the issue type (see below).
+6. **Decide.** A person confirms on the photo, marks it Not a barrier, or chooses Check on site. `src/decisions/store.ts` keeps that for each stretch, with the linked message.
+7. **Answer.** The visitor note and the reply in English, Spanish or Korean come from fixed templates in `src/destinations/copy.ts`.
 
-The authored courtyard starts with its dimensioned layout, validates that same scene, runs its baseline solver, then opens the existing editing workspace. Returning to an in-progress authored workspace or reopening a saved plan bypasses preparation and preserves its state. Recorded photo processing, reconstruction from new inputs and richer preparation animation remain later work.
+Noor's farm is the Example with geometry. `NOOR_FARM` in `src/site/farm.ts` has an authored layout, so a fix (move or remove an object) is checked before and after with `solveScene` in `src/spatial/solver.ts` and saved as a plan with `src/plans/`. Nothing on the route claims geometry.
 
-## Retained destinations
+## Add a place
 
-A separate inspection workspace loads original local route records for Qorikancha, Narikala and Swayambhu. Geographic maps use retained route, OpenStreetMap and source camera coordinates. Photo selection binds to explicit source records; available partial MRP1 point pieces load on demand. The canvas displays a bounded deterministic sample of actual retained points, with the displayed and retained counts visible. Swayambhu has no reconstruction and presents that state directly.
+1. **Record the walk** into `.local/routes/<id>/route.json`, in the same `mercature-route/1` shape as `cusco-qorikancha`.
+2. **Write its spots** as a `RoutePlace`, like `QORIKANCHA_PLACE` in `src/site/route.ts`: one spot for each group of flagged stretches and for each landmark people name, with the stretches it covers, its nearest landmark, names in English and Spanish, one plain sentence, and the words visitors use in each language. Give it the folder for its package and add it to `ROUTE_PLACES` in `src/site/registry.ts`. `tests/site/route.spec.ts` shows the checks a spot list should pass: every flagged stretch in exactly one spot, landmarks taken from the record and near their spot, no measurements in the text.
+3. **Package it** with `node scripts/places/package.mjs <id>` (Node 22.18 or newer, on macOS, which resizes views with `sips`), and commit `public/places/<folder>/`. `tests/site/package.spec.ts` fails if a registered place has no package, or if its package no longer matches its spots.
+4. **Register it** in `src/destinations/data.ts`: its name and city in `DESTINATIONS`, its folder in `PACKAGES`. To show it as a photo on Home, add a cover and its credit to `covers` in `src/home/Home.tsx`.
+5. **Check the model**, as below.
 
-The Vite development and preview middleware serves only allowlisted routes from `.local/routes` to loopback clients. It applies real-path containment, private/no-store responses and no external fetching. Restricted captures never enter `public`, the production bundle or the service-worker cache. Destination data cannot enter the synthetic editing solver. Source credits and recorded observation status remain available in the viewer.
+## What the model needs for a new place
 
-## Domain separation
+- **No retraining for spots or message kinds.** The model compares a message with each spot's names, description and visitor words, so a new spot list is all it needs. On first use `prepareSite` embeds the spots on the device and stores the vectors; changing a spot's words recomputes them.
+- **A few labeled messages to check it.** Write 10 to 20 messages in the format of `scripts/language/route-messages.json` (text, language, kind, issue type, the spots meant) and score them with `scripts/language/evaluate.mjs route`, pointed at the new place's spots instead of Qorikancha's. On Qorikancha, with heads trained only on farm messages, the right spot came first for 28 of 31 messages and was always in the top three, and the kind was right for 38 of 40.
+- **The issue type needs those messages too.** It did not carry over (right for 8 of 28 problems), so the route never shows it. On a new place, keep it hidden unless its labeled messages show it holds, or retrain the issue-type head with them. Details are in `docs/language.md`.
 
-- `spatial` validates authored geometry, applies reversible scenarios and evaluates continuous swept square envelopes. The immutable baseline remains separate from the hypothetical scene. Unknown support stays unknown after removal. Unsupported required checks prevent a positive result.
-- `plans` retains original concern/check provenance, human-confirmed IDs and source snapshots, operations, exact result hashes and the operator decision. Parsing and reopening recompute the comparison. Approval does not imply implementation, and material edits reset the interface decision to proposed.
-- `places` stores inspection-only evidence. Original files have hashes and an explicit local-only policy. They do not enter the synthetic solver.
-- `language` validates bounded inputs and exposes an unavailable state following a failed model-quality experiment. The separate alias baseline is not represented as AI.
-- `workspace` coordinates presentation and human actions. Selecting evidence and changing the camera do not retarget an already confirmed operation.
+## Words in the code
 
-Local backups use the complete plan serializer and parser and retain source restrictions. Shareable synthetic exports use a separate restricted API. No UI uploads or publishes private reports or site captures. Browser storage can be cleared or unavailable; failures remain visible. Exported local backups are the operator's recovery mechanism for plans; original photo/video files should also be retained independently.
+The interface says place, spot, message, fix, plan and path check. Some code names are older:
 
-## Validation scope
+| In the code | In the interface |
+| --- | --- |
+| `RoutePlace` (`src/site/route.ts`), `Site` (`src/site/contracts.ts`) | A place: spots only on the route, spots and geometry on the farm |
+| `RouteSpot`, `SiteFeature` | A spot the model can name |
+| `Spot` in `src/destinations/walk.ts` | A map marker for a run of flagged stretches |
+| `Destination`, `src/destinations/` | A recorded place, as loaded from its package |
+| `Scene.destinations` in `src/spatial/` | Where the farm's path check tries to reach |
+| `ImprovementPlan`, `src/plans/` | A plan: a fix on the farm and its path check |
+| `src/places/` and its `Place` | Photos and notes for a place with no recording yet |
 
-Domain regressions cover clearance thresholds, support uncertainty, thin obstacles, disconnected levels, invalid placements, immutable baselines, stale records, exact undo/reopen and source restrictions. Browser tests cover the guided loop, focus, desktop/narrow layouts, original evidence after removal, approval reset and local intake.
+## Checks
 
-The production offline check closes Chromium, relaunches the same browser profile with networking disabled, enters a fresh authored Korean message for manual confirmation, moves the bench, verifies blocked/connected comparison and saves. Another offline restart reopens the original text and recomputed proposal, then verifies undo. This establishes local manual operation on the test host, not offline AI or representative-device acceptance.
+Tests sit under `tests/` in folders named like the code they check. `npm run check:fast` runs the type check and every test that needs no browser. `bash scripts/checks/gate.sh` builds the app and runs everything, including a restart with the network off.
