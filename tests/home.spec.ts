@@ -50,7 +50,7 @@ for (const size of [{width:1280,height:720},{width:390,height:844}]) {
     expect(submit!.x + submit!.width).toBeLessThanOrEqual(size.width);
     await page.screenshot({path:`.local/home-${size.width}.png`});
     await page.getByRole('textbox', {name:'Explore a place'}).fill('Qorikancha');
-    await expect(page.getByRole('button', {name:'Qorikancha Cusco Recorded',exact:true})).toBeVisible();
+    await expect(page.getByRole('button', {name:'Qorikancha Cusco',exact:true})).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
   });
 }

@@ -96,8 +96,8 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
         </form>
         <div id="place-results" ref={results} className="home-results" hidden={!expanded} aria-label={t('home.results')}>
           {(showFarm || destinations.length>0 || showDemo) && <div className="home-prepared">
+            {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span></button>)}
             {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span></button>}
-            {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span><span className="badge">{t('common.recorded')}</span></button>)}
             {showDemo && <button onClick={onExample}><span className="result-scene-icon"><SceneIcon/></span><span><strong>{t('home.courtyard')}</strong></span><span className="badge">{t('common.example')}</span></button>}
           </div>}
           {expanded && matches.length>0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{matches.map(item => <button key={item.id} onClick={() => onOpenSaved(item)}><span>{item.title}</span><small>{t(item.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small></button>)}</div>}

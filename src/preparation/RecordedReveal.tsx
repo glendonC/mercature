@@ -2,17 +2,22 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
-import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type View } from '../destinations/data';
+import { hasRouteCanvas } from '../destinations/RouteCanvas';
+import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record. */
 const CAMERAS_FROM = 1900, CAMERAS_FOR = 2800, POINTS_FROM = 4800, POINT_GAP = 95, CARDS_FROM = 7000, CARD_GAP = 550, HANDOFF_AT = 9900, HANDOFF_LATEST = 11200, MAX_CARDS = 4;
+/** Without point areas the cards follow the photos directly, and the hand-off follows the last card. */
+const PHOTO_CARDS_FROM = CAMERAS_FROM + CAMERAS_FOR + 400, HANDOFF_AFTER_CARDS = 1250;
+/** The landing on the inspection map, then the fade that uncovers it. */
+const LAND_FOR = 720, FADE_FOR = 220;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
 const LAYER = { x: -100, y: -100, width: 1000, height: 700, density: 1.5 } as const;
 /** Card footprints in pixels, width by height, matching reveal.css. */
 const CARD = { wide: [232, 224], phone: [164, 170] } as const;
 
-type Card = { view: View; findings: Finding[]; position: Coordinate };
+type Card = { view: View; findings: Finding[]; position: Coordinate; photo: Photo };
 type Placed = { left: number; top: number; x: number; y: number };
 
 /** Draws one retained area in grey, sampled to bound device work; coordinates are not altered. */
@@ -51,7 +56,7 @@ function chooseCards(data: Destination): Card[] {
   const candidates = data.views.flatMap(view => {
     const findings = data.findings.filter(finding => finding.viewId === view.id && finding.outline.length > 2);
     const photo = data.photos.find(item => item.id === view.photoId);
-    return findings.length && photo ? [{ view, findings, position: photo.position, at: along(photo.position), barrier: findings.some(f => f.barrier) }] : [];
+    return findings.length && photo ? [{ view, findings, photo, position: photo.position, at: along(photo.position), barrier: findings.some(f => f.barrier) }] : [];
   });
   const picked: typeof candidates = [];
   for (let slot = 0; slot < MAX_CARDS; slot++) {
@@ -60,7 +65,7 @@ function chooseCards(data: Destination): Card[] {
     if (choice) picked.push(choice);
   }
   for (const c of candidates) if (picked.length < MAX_CARDS && !picked.includes(c) && c.barrier) picked.push(c);
-  return picked.sort((a, b) => a.at - b.at).map(({ view, findings, position }) => ({ view, findings, position }));
+  return picked.sort((a, b) => a.at - b.at).map(({ view, findings, position, photo }) => ({ view, findings, position, photo }));
 }
 
 /** Plays the retained preparation of a recorded place, then opens its inspection on the same map. */
@@ -136,9 +141,12 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
 
   const total = ordered.length;
   const shown = phase !== 'play' || quiet ? total : Math.max(0, Math.min(total, Math.round((elapsed - CAMERAS_FROM) / CAMERAS_FOR * total)));
-  const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || phase !== 'play' || elapsed >= CARDS_FROM + i * CARD_GAP));
+  const areas = !!data?.pieces.length;
+  const cardsFrom = areas ? CARDS_FROM : PHOTO_CARDS_FROM;
+  const handoffAt = areas ? HANDOFF_AT : cardsFrom + Math.max(0, cards.length - 1) * CARD_GAP + HANDOFF_AFTER_CARDS;
+  const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || phase !== 'play' || elapsed >= cardsFrom + i * CARD_GAP));
 
-  useEffect(() => { if (phase === 'play' && data && elapsed >= HANDOFF_AT && (pointsDone || elapsed >= HANDOFF_LATEST)) setPhase('handoff'); }, [phase, data, elapsed, pointsDone]);
+  useEffect(() => { if (phase === 'play' && data && elapsed >= handoffAt && (pointsDone || elapsed >= HANDOFF_LATEST)) setPhase('handoff'); }, [phase, data, elapsed, pointsDone, handoffAt]);
   useEffect(() => {
     if (phase !== 'play' || !data) return;
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape' || event.key === ' ') { event.preventDefault(); setPhase('handoff'); } };
@@ -180,25 +188,33 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     return () => removeEventListener('resize', place);
   }, [data, cards, view]);
 
-  /** Shrinks the replay map onto the inspection map, which draws the same records at the same scale. */
+  /** Lands the replay map on the inspection map, which draws the same records in the same frame; a route canvas frames itself once measured, so wait for that, then fade to uncover it. */
   useLayoutEffect(() => {
     if (phase !== 'handoff') return;
-    let frame = requestAnimationFrame(() => {
-      const target = root.current?.querySelector('.destination-workspace .destination-scene')?.getBoundingClientRect();
-      const box = mapBox.current, map = svg.current;
+    let frame = 0, fade = 0, waited = 0;
+    const land = () => {
+      const host = root.current, box = mapBox.current, map = svg.current;
+      const canvas = host?.querySelector<HTMLElement>('.route-canvas .route-map');
+      const framed = canvas?.querySelector('.destination-map > svg')?.getAttribute('viewBox')?.split(' ').map(Number);
+      const goal = framed?.length === 4 && framed.every(Number.isFinite) && framed[2] > 1 ? framed : null;
+      if (canvas && !goal && waited++ < 30) { frame = requestAnimationFrame(land); return; }
+      const target = (canvas ?? host?.querySelector('.destination-workspace .destination-scene'))?.getBoundingClientRect();
       if (!target || !box || !map || quiet) return setPhase('done');
       const from = { top: 0, left: 0, width: innerWidth, height: innerHeight, radius: 0, view: (map.getAttribute('viewBox') ?? '').split(' ').map(Number) };
-      const to = { top: target.top, left: target.left, width: target.width, height: target.height, radius: 15, view: [...MAP_VIEWBOX] };
+      const to = { top: target.top, left: target.left, width: target.width, height: target.height, radius: canvas ? 0 : 15, view: canvas ? goal ?? from.view : [...MAP_VIEWBOX] };
       const began = performance.now(), mix = (a: number, b: number, k: number) => a + (b - a) * k;
       const step = (now: number) => {
-        const t = Math.min(1, (now - began) / 720), k = 1 - Math.pow(1 - t, 3);
+        const t = Math.min(1, (now - began) / LAND_FOR), k = 1 - Math.pow(1 - t, 3);
         Object.assign(box.style, { top: `${mix(from.top, to.top, k)}px`, left: `${mix(from.left, to.left, k)}px`, width: `${mix(from.width, to.width, k)}px`, height: `${mix(from.height, to.height, k)}px`, borderRadius: `${mix(from.radius, to.radius, k)}px` });
         if (from.view.length === 4) map.setAttribute('viewBox', from.view.map((value, i) => mix(value, to.view[i], k)).join(' '));
-        if (t < 1) frame = requestAnimationFrame(step); else setPhase('done');
+        if (t < 1) frame = requestAnimationFrame(step);
+        else if (canvas) { Object.assign(box.style, { transition: `opacity ${FADE_FOR}ms ease`, opacity: '0' }); fade = window.setTimeout(() => setPhase('done'), FADE_FOR); }
+        else setPhase('done');
       };
       frame = requestAnimationFrame(step);
-    });
-    return () => cancelAnimationFrame(frame);
+    };
+    frame = requestAnimationFrame(land);
+    return () => { cancelAnimationFrame(frame); clearTimeout(fade); };
   }, [phase, quiet]);
 
   if (failed) return <RecordedPreview id={id} onHome={onHome} onOpen={onOpen} onRetry={() => setAttempt(n => n + 1)}/>;
@@ -207,12 +223,13 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const last = ordered[Math.max(0, shown - 1)];
   const first = year(ordered[0]?.capturedAt ?? null), final = year(ordered.at(-1)?.capturedAt ?? null);
   const span = first && final ? first === final ? first : `${first} to ${final}` : '';
+  const toCanvas = !!data && hasRouteCanvas(data);
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
-    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}`} data-phase={phase} role="region" aria-label={`${name}, recorded preparation`}>
+    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${toCanvas ? ' to-canvas' : ''}`} data-phase={phase} role="region" aria-label={name}>
       {data && <>
         <div className="reveal-map" ref={mapBox}>
-          <GeographicMap data={data} selected={phase === 'play' ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')}
+          <GeographicMap data={data} selected={phase === 'play' || toCanvas ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')}
             underlay={layer && <image href={layer.url} x={LAYER.x} y={LAYER.y} width={LAYER.width} height={LAYER.height} preserveAspectRatio="none" className="reveal-points"/>}>
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
@@ -221,7 +238,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{data.start ? `${data.start.name} to ${targetName}` : data.title} · {Math.round(data.lengthMetres).toLocaleString('en')} m</p>
-          <div className="reveal-counter"><span className="badge">Recorded</span>{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{!data.pieces.length ? data.localOnly ? 'No 3D here' : '' : layer ? <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</> : ''}</span></>}</div>
+          <div className="reveal-counter">{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{layer && <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</>}</span></>}</div>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
         {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>
@@ -229,11 +246,11 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
             <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
           </div>
-          <figcaption><strong>{card.findings.find(f => f.barrier)?.label ?? card.findings[0].label}</strong><span>Model suggestion, unverified</span></figcaption>
+          <figcaption><strong>{card.findings.find(f => f.barrier)?.label ?? card.findings[0].label}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
         <footer className="reveal-hints"><span className="reveal-credit-long">Street photos: Mapillary contributors, CC BY-SA 4.0 · Map © OpenStreetMap</span><span className="reveal-credit-short">Mapillary, CC BY-SA 4.0 · © OpenStreetMap</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>Skip</button></footer>
       </>}
-      {!data && <p className="reveal-opening" role="status">Opening the recorded route</p>}
+      {!data && <p className="reveal-opening" role="status">Opening {name}</p>}
     </div>}
   </div>;
 }

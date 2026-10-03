@@ -12,26 +12,29 @@ test('the Qorikancha reveal replays the published records and opens the inspecti
   await page.goto('/');
   await page.getByRole('textbox', {name:'Explore a place'}).fill('Plaza de Armas');
   await page.locator('#place-results button').first().click();
-  const reveal = page.getByRole('region', {name:'Qorikancha, recorded preparation'});
+  const reveal = page.getByRole('region', {name:'Qorikancha', exact:true});
   await expect(reveal.getByRole('heading', {name:'Qorikancha'})).toBeVisible();
   await expect(reveal).toContainText('Plaza de Armas to the ticket booth · 594 m');
   await expect(reveal).toContainText(/\d+ of 403 photos/);
-  await expect(reveal.getByText('Model suggestion, unverified').first()).toBeVisible({timeout: 10000});
+  await expect(reveal.getByRole('figure').first()).toBeVisible({timeout: 10000});
+  await expect(reveal).not.toContainText(/recorded|unverified/i);
   await page.getByRole('button', {name:'Skip', exact:true}).click();
+  // The replay lands on the canvas map before it gives way, rather than cutting to it.
+  await expect(reveal).toHaveAttribute('data-phase', 'handoff');
   await expect(reveal).toBeHidden();
   await expect(page.getByRole('heading', {name:'Qorikancha', exact:true})).toBeVisible();
   await expect(page.getByRole('region', {name:'Geographic source map'})).toBeVisible();
   await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
 });
 
-test('a photo-only place says it has no 3D and still opens its map', async ({page}) => {
+test('a photo-only place replays its photo and still opens its map', async ({page}) => {
   test.setTimeout(20000);
   await page.route('**/routes/**/route.json', route => route.fulfill({json: photoOnly}));
   await page.route('**/routes/**/views/*.jpg', route => route.fulfill({status:404}));
   await page.goto('/');
   await page.getByRole('button', {name:'Explore Swayambhu · Kathmandu'}).click();
-  const reveal = page.getByRole('region', {name:'Swayambhu, recorded preparation'});
-  await expect(reveal).toContainText('No 3D here', {timeout: 8000});
+  const reveal = page.getByRole('region', {name:'Swayambhu', exact:true});
+  await expect(reveal).toContainText('1 photo', {timeout: 8000});
   await page.keyboard.press('Escape');
   await expect(reveal).toBeHidden();
   await page.getByRole('button', {name:'3D', exact:true}).click();

@@ -11,7 +11,6 @@ export default function RecordedPreview({ id, onHome, onOpen, onRetry }: { id: D
       {cover && <figure><span className="recorded-preview-frame"><img src={cover.image} alt={`${cover.name}, ${cover.area}`}/></span>
         <figcaption>Cover: <a href={cover.source} target="_blank" rel="noreferrer">{cover.author}, {cover.year}</a>, <a href={cover.licenseUrl} target="_blank" rel="noreferrer">{cover.license}</a></figcaption></figure>}
       <div className="recorded-preview-text">
-        <span className="badge">Recorded</span>
         <h1>{DESTINATIONS[id].name}</h1>
         <p className="recorded-preview-place">{DESTINATIONS[id].place}</p>
         <div className="recorded-preview-actions">

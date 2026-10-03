@@ -38,12 +38,13 @@
 .reveal-photo polygon { fill: rgb(166 80 28 / .18); fill-opacity: 0; stroke: var(--blocked); stroke-width: 2.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: reveal-draw .9s cubic-bezier(.45, 0, .2, 1) .35s forwards, reveal-fill .4s ease 1.1s forwards; }
 .reveal-card figcaption { display: grid; gap: 2px; padding: 7px 4px 2px; }
 .reveal-card strong { font-size: var(--text-label); font-weight: 500; line-height: 1.3; }
-.reveal-card span { font-size: var(--text-caption); color: var(--muted); }
+.reveal-card span { font-size: var(--text-caption); color: var(--muted); overflow-wrap: anywhere; }
 
 .reveal[data-phase=handoff] { background-color: transparent; }
 .reveal[data-phase=handoff] .reveal-map { overflow: hidden; }
 .reveal[data-phase=handoff] :is(.reveal-banner, .reveal-hints, .reveal-card, .reveal-leaders, .reveal-scan) { opacity: 0; transition: opacity .3s ease; animation: none; }
-.reveal[data-phase=handoff] .destination-map-controls, .reveal[data-phase=handoff] .destination-map-credit { opacity: 1; }
+/* The inspection map has the same controls in the same place; the route canvas has its own. */
+.reveal[data-phase=handoff]:not(.to-canvas) :is(.destination-map-controls, .destination-map-credit) { opacity: 1; }
 .reveal[data-phase=handoff] .map-route polyline { animation: none; stroke-dashoffset: 0; }
 
 @keyframes reveal-fade { from { opacity: 0; } }
@@ -84,7 +85,7 @@
 .recorded-preview-frame img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.85); }
 .recorded-preview-card figcaption { margin-top: var(--space-3); font-size: var(--text-caption); color: var(--muted); text-align: center; }
 .recorded-preview-card figcaption a { color: inherit; }
-.recorded-preview-text h1 { margin: var(--space-4) 0 var(--space-1); font-size: 40px; font-weight: 300; letter-spacing: -.04em; line-height: 1.05; }
+.recorded-preview-text h1 { margin: 0 0 var(--space-1); font-size: 40px; font-weight: 300; letter-spacing: -.04em; line-height: 1.05; }
 .recorded-preview-place { margin: 0 0 var(--space-5); font-size: var(--text-label); color: var(--muted); }
 .recorded-preview-text > p:not(.recorded-preview-place) { margin: 0; font-size: var(--text-body); line-height: 1.5; color: var(--ink); }
 .recorded-preview-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }

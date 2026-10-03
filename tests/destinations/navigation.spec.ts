@@ -8,13 +8,13 @@ test('background photos and search results open the same place, from its package
     return route.fulfill({status:404, body:'Prepared files are not installed on this device.'});
   });
   await page.goto('/');
-  const reveal = page.getByRole('region', {name:'Qorikancha, recorded preparation'});
+  const reveal = page.getByRole('region', {name:'Qorikancha', exact:true});
   await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
   await expect(reveal).toBeVisible();
   await page.keyboard.press('Escape');
   await page.getByRole('button', {name:'Home', exact:true}).click();
   await page.getByRole('textbox', {name:'Explore a place'}).fill('Cusco');
-  await page.getByRole('button', {name:'Qorikancha Cusco Recorded', exact:true}).click();
+  await page.getByRole('button', {name:'Qorikancha Cusco', exact:true}).click();
   await expect(reveal).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
