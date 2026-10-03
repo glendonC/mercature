@@ -13,7 +13,7 @@ export const SYNTHETIC_SCENE: Scene = {
   obstacles: [
     { id: 'wall-south', label: 'South dividing wall', bounds: { minX: 5.5, minY: 0, maxX: 6, maxY: 3 }, bottom: 0, top: 3, uncertainty: 0, reviewed: true, movable: false, evidence: ['Authored wall box; 0.5 m thick, 3 m high.'] },
     { id: 'wall-north', label: 'North dividing wall', bounds: { minX: 5.5, minY: 5, maxX: 6, maxY: 8 }, bottom: 0, top: 3, uncertainty: 0, reviewed: true, movable: false, evidence: ['Authored wall box; north/south walls leave a 2.00 m opening.'] },
-    { id: 'bench', label: 'Reviewed movable bench', bounds: { minX: 5.4, minY: 3, maxX: 6.1, maxY: 4.2 }, bottom: 0, top: .8, uncertainty: 0, reviewed: true, movable: true, evidence: ['Synthetic reviewed obstacle box: 0.70 × 1.20 × 0.80 m.', 'Analytic gap to north wall: 5.00 − 4.20 = 0.80 m.', 'Support beneath the bench is independently authored; removing it reveals no new measurement.'] },
+    { id: 'bench', label: 'Reviewed movable bench', bounds: { minX: 5.4, minY: 3, maxX: 6.1, maxY: 4.2 }, bottom: 0, top: .8, uncertainty: 0, reviewed: true, movable: true, evidence: ['Synthetic reviewed obstacle box: 0.70 × 1.20 × 0.80 m.', 'Original authored layout gap to north wall: 5.00 − 4.20 = 0.80 m. Proposed placements do not alter this source record.', 'Support beneath the bench is independently authored; removing it reveals no new measurement.'] },
   ],
   unknown: [{ id: 'occluded-corner', label: 'Unresolved corner', bounds: { minX: 9, minY: 5, maxX: 11, maxY: 7 }, elevation: 0, reason: 'Synthetic missing-support control; floor coverage is explicitly unknown here.' }],
   start: { x: 2, y: 4, supportId: 'courtyard' },

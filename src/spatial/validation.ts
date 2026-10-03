@@ -74,7 +74,7 @@ export function validateScene(value: unknown): asserts value is Scene {
     const p = obj(raw); finite(p.x, 'location x'); finite(p.y, 'location y'); str(p.supportId, 'location support');
     const support = scene.supports.find(f => f.id === p.supportId);
     if (!support || (p.x as number) < support.bounds.minX || (p.x as number) > support.bounds.maxX || (p.y as number) < support.bounds.minY || (p.y as number) > support.bounds.maxY) fail('Location must reference support at its position');
-    if (raw !== s.start) { str(p.id, 'destination id'); str(p.label, 'destination label'); if (destinationIds.has(p.id)) fail('Duplicate destination'); destinationIds.add(p.id); }
+    if (raw !== s.start) { str(p.id, 'destination id'); str(p.label, 'destination label'); if (destinationIds.has(p.id) || ids.has(p.id)) fail('Destination and feature IDs must be unique'); destinationIds.add(p.id); }
   }
 }
 export function validateProfile(value: unknown): asserts value is Profile {

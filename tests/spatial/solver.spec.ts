@@ -223,3 +223,15 @@ test('assessment boundary is unknown rather than an invented physical wall', () 
   const scene=openRoom();scene.obstacles=[];scene.destinations[0].x=.1;
   expect(status(scene)).toBe('unknown');
 });
+
+
+test('destination identities cannot alias selected scene features or other destinations', () => {
+  for (const id of ['bench', 'courtyard', 'occluded-corner']) {
+    const scene = structuredClone(SYNTHETIC_SCENE);
+    scene.destinations[0].id = id;
+    expect(() => validateScene(scene)).toThrow(/IDs must be unique/);
+  }
+  const scene = structuredClone(SYNTHETIC_SCENE);
+  scene.destinations.push({ ...scene.destinations[0] });
+  expect(() => validateScene(scene)).toThrow(/IDs must be unique/);
+});
