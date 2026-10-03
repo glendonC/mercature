@@ -16,9 +16,15 @@ React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respecti
 
 The guide uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
 
+The preparation views use [thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt).
+
+## Published place package
+
+`public/places/qorikancha` ships 27 cropped views of Mapillary street photos along the Qorikancha walk, the records of the 403 photos used, OpenStreetMap context and the walking route. Each photo keeps its contributor, capture date, source link and license (CC BY-SA 4.0) in `place.json`, and the app shows them with the photo. The cropped views are adaptations and remain under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Map data is from OpenStreetMap contributors under the ODbL. No point clouds are published.
+
 ## Local destination inspection
 
-Retained Mapillary route records and images are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
+The local Mapillary route records (Narikala and Swayambhu), their images and every point cloud are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
 
 ## Mark
 
@@ -26,7 +32,7 @@ The Mercature mark samples land outlines from [Natural Earth](https://www.natura
 
 ## Recorded destination examples
 
-The local-only destination examples display records prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data, SAM 3 photo outlines (SAM License) and VGGT-1B-Commercial reconstructions (custom licence). Those tools are not part of this application; each keeps its own licence.
+The destination records, including the published Qorikancha package, were prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data and SAM 3 photo outlines (SAM License). The local-only records also hold VGGT-1B-Commercial reconstructions (custom licence), which are not published. Those tools are not part of this application; each keeps its own licence.
 
 ## Language model and runtime
 
