@@ -440,7 +440,7 @@ export default function Workspace({
       <div popover="auto" id={optionsId} ref={options} className="scene-options" onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) options.current?.hidePopover();
       }}>
-        <p>{site.name.en} <span>Authored example</span></p>
+        <p>{site.name.en} <span>Example</span></p>
         <div className="segmented" aria-label="Workspace view">
           {(["map", "3d", "split"] as const).map((v) => (
             <button

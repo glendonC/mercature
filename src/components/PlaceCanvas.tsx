@@ -23,7 +23,7 @@ export default function PlaceCanvas({title, view, onView, onHome, scene, overvie
     <div className="place-scene guide-scene" ref={sceneRef}>{scene}</div>
     <header className="place-bar">
       <button className="place-home" onClick={onHome} aria-label="Home" title="Home"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>
-      <div className="place-identity"><span>{title}</span><small>Authored example</small></div>
+      <div className="place-identity"><span>{title}</span><small>Example</small></div>
       <div className="place-tabs" role="tablist" aria-label="Place workspace">
         {views.map((item, index) => <button key={item.id} id={`${id}-${item.id}`} role="tab" aria-selected={view === item.id} aria-controls={`${id}-panel`} tabIndex={view === item.id ? 0 : -1} onKeyDown={event => navigate(event, index)} onClick={() => onView(item.id)}>{item.label}</button>)}
       </div>
