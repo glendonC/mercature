@@ -401,3 +401,4 @@
 .site-home-demo button span { margin-left: 24px; }
 .site-home-demo p { font-size: 13px; color: rgb(var(--w-ink) / .68); margin: 10px 0 0; }
 .site-home-demo + .site-home-open-actions { margin-top: 18px; }
+.home-matches{width:min(440px,100%);margin:12px auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 25px #253b2b0a;overflow:hidden}.home-matches button,.saved-list button{display:flex;flex-direction:column;gap:5px;width:100%;border:0;border-radius:0;text-align:left;padding:14px 18px;background:#fff;font-size:14px}.home-matches button+button,.saved-list button+button{border-top:1px solid var(--line)}.home-matches span,.saved-list span{font-size:11px;color:#647770}.saved-list strong{font-weight:400}.home-matches button:hover,.saved-list button:hover{background:#eff4ef}.saved-dialog{width:min(500px,calc(100vw - 40px))}.saved-list{margin-top:18px}.welcome-tools{gap:2px}.welcome-tools button{white-space:nowrap}
