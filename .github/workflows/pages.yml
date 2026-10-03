@@ -13,21 +13,34 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
+      # The trim runs onnx and numpy through uv; trim.mjs pins their versions.
+      - uses: astral-sh/setup-uv@v10
+        with:
+          cache-dependency-glob: scripts/language/trim.mjs
       - run: npm ci
+      - id: encoder
+        run: node --input-type=module -e "import { ENCODER } from './src/language/model.ts'; console.log('revision=' + ENCODER.revision)" >> "$GITHUB_OUTPUT"
+      # The pinned Hub files, kept between runs until the encoder revision changes.
+      - uses: actions/cache@v6
+        with:
+          path: .local/language/model
+          key: encoder-${{ steps.encoder.outputs.revision }}
+      # Without the trimmed files the deployed app would download the larger Hub files instead.
+      - run: bash scripts/release/model.sh
       - run: npm run build
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
