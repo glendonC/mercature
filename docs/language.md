@@ -7,7 +7,7 @@ A small multilingual model on the phone reads a visitor's message and answers th
 - **Encoder.** [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small/blob/614241f622f53c4eeff9890bdc4f31cfecc418b3/README.md) (MIT, 12 layers, 384 dimensions), as the int8 ONNX file of the [Xenova export](https://huggingface.co/Xenova/multilingual-e5-small/tree/761b726dd34fb83930e26aab4e9ac3899aa1fa78) pinned at revision `761b726d`. It follows the model card: `query: ` and `passage: ` prefixes, mean pooling, normalized embeddings.
 - **Runtime.** ONNX Runtime Web 1.22 (CPU WebAssembly build, one thread), served from the app's own origin, and [@huggingface/tokenizers](https://github.com/huggingface/tokenizers) 0.2.0 for the tokenizer. Transformers.js 3.8.1 was the first plan; it cannot use the CPU-only runtime in a browser (it then finds no supported device), and its default path needs the 21.6 MB WebGPU build. The same files run directly with half the runtime download.
 - **Heads.** Three small logistic regressions trained on labeled example messages, in a 16 KB JSON file shipped with the app (`src/language/heads.json`).
-- **Same code everywhere.** The browser and the evaluation scripts share the tokenizer, the WebAssembly runtime, the pooling and the decision code (`src/language/policy.ts`). On the 51 dev messages the browser and Node gave identical decisions.
+- **Same code everywhere.** The browser and the evaluation scripts share the tokenizer, the WebAssembly runtime, the pooling and the decision code (`src/language/policy.ts`). On all 88 held-out messages the browser and Node gave identical decisions.
 
 One-time download, kept in the browser's Cache Storage after SHA-256 checks. The app serves a trimmed copy of the encoder from its own origin (see the size study); where those files are not deployed it downloads the pinned files from the Hugging Face Hub instead. Both give the same answers for English, Spanish, Korean and Quechua.
 
@@ -41,13 +41,13 @@ The kind and issue-type heads do not read the embedding directly. Each reads the
 | `scripts/language/messages-train-extra.json` | 150 (50 families) | training only |
 | `scripts/language/route-messages.json` | 44 (14 families) | Qorikancha walk, evaluation only |
 
-Both files are synthetic, written by a large language model for this project, under CC0-1.0. Each family is one message written in English, Spanish and Korean as separate paraphrases with the same labels. 22 families also have a Southern Quechua (Cusco-Collao) machine translation. No text has been reviewed by a native speaker and no message comes from a real visitor.
+All three files are synthetic, written by a large language model for this project, under CC0-1.0. Each family is one message written in English, Spanish and Korean as separate paraphrases with the same labels. In the first file 22 families also have a Southern Quechua (Cusco-Collao) machine translation, and in the route file 4. No text has been reviewed by a native speaker and no message comes from a real visitor.
 
 Labels: message kind, issue type for problems (two for two-concern messages), and the features meant. Case types: direct and indirect problems, praise of a place and in general, questions about a place and in general, negations ("the pots were not in the way at all"), resolved problems, vague complaints, two concerns in one message, and off-topic problems (price, taste, timing).
 
 Splits are by family, so translations and paraphrases of one message never cross splits. The 22 Quechua families form the held-out set, so Quechua is never used for training or thresholds. Quechua is not among the languages of XLM-R, the base of multilingual-e5-small, while English, Spanish and Korean are. Every English message was read to check labels before the split; the extra training families were written without access to the evaluation file.
 
-Not covered: real visitor writing (length, spelling, slang, mixed languages), other sites, long reviews, voice, and any review by native speakers.
+Not covered: real visitor writing (length, spelling, slang, mixed languages), places other than the farm and the Qorikancha walk, long reviews, voice, and any review by native speakers.
 
 ## Training and thresholds
 
@@ -110,7 +110,7 @@ One run on the 88 held-out messages, with the frozen heads and thresholds. "As e
 - **Not sure.** Of the 66 English, Spanish and Korean messages, 26 got a confident answer, 11 were marked as about no place (10 rightly; one was praise of a place), and 29 got *Not sure* with candidates, mostly because the issue type was below its threshold. 11 of the 12 messages about no place were left without features.
 - **Confident errors.** 7 of the 26 confident answers were wrong, more than out-of-fold testing suggested. Two polite complaints that end with a request ("could it be kept off to the side?") were taken as questions. A Korean complaint that the sign is only in Spanish was taken as praise, and a Korean question about a step at the restroom as a problem. Tree roots were filed under a blocked path instead of steps or slope. A resolved complaint about the gate ranked the welcome sign first. A vague complaint about slippery ground got the muddy patch with confidence.
 - **Against exact aliases.** The alias baseline finds the right feature about as often (46 of 48), because the aliases cover these messages' words well. It cannot tell praise or a negation from a complaint: it would flag a place for all 15 praise, negation and resolved messages, where the model reported none of them as a problem.
-- **Quechua fails.** The model takes most Quechua messages for praise, ranks the right feature first for 5 of 16 and gives 9 confident answers, only 1 of them right. Its 9 of 22 "as expected" mostly come from praise and negations that it called praise anyway. This matches Quechua being outside the encoder's listed languages; today a Quechua message can get a confident wrong answer.
+- **Quechua fails.** The model takes most Quechua messages for praise, ranks the right feature first for 5 of 16 and gives 9 confident answers, only 1 of them right. Its 9 of 22 "as expected" mostly come from praise and negations that it called praise anyway. This matches Quechua being outside the encoder's listed languages. Without the language check below, a Quechua message could get a confident wrong answer.
 
 The same run in Chromium (production build, same Mac) gave identical decisions for all 88 messages. With the shipped heads, `int8` and `uint8` would have scored 68 and 71 of 88 "as expected" against 68 for the shipped file, a difference within noise for 0.2% fewer bytes.
 
@@ -193,6 +193,8 @@ node scripts/language/provision.mjs
 node scripts/language/passages.mjs
 node scripts/language/train.mjs
 node scripts/language/evaluate.mjs dev
+node scripts/language/evaluate.mjs test
+node scripts/language/evaluate.mjs route
 node scripts/language/trim.mjs
 node scripts/language/verify-trim.mjs
 npx vite build --config scripts/language/harness/vite.config.ts
