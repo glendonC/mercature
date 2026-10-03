@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { Tokenizer } from '@huggingface/tokenizers';
 import * as ort from 'onnxruntime-web/wasm';
 import { createEmbedder } from '../../src/language/embedding.ts';
-import { ENCODER, RUNTIME_WASM } from '../../src/language/model.ts';
+import { ENCODER, RUNTIME_WASM, TRIMMED_ENCODER } from '../../src/language/model.ts';
 
 export const MODEL_DIR = resolve(process.env.MERCATURE_MODEL_DIR ?? '.local/language/model');
 const RUNTIME_PATH = resolve('node_modules/onnxruntime-web/dist', RUNTIME_WASM.path);
@@ -28,11 +28,16 @@ export const VARIANTS = {
   uint8: { path: 'onnx/model_uint8.onnx', bytes: 118054630, sha256: 'ee13574a23e4384619a172d4c0c8c6b825528fde30258c56130d5e3efcc9c8f1' },
 };
 
+const TRIMMED_DIR = resolve(`public${TRIMMED_ENCODER.directory}`);
+
+/** Without a variant, the pinned Hub files; 'latin-hangul' is the trimmed set the app serves itself. */
 export async function loadEncoder(variant) {
   const started = performance.now();
-  const manifest = ENCODER.files.map(file => (variant && file.path.startsWith('onnx/') ? VARIANTS[variant] : file));
+  const trimmed = variant === TRIMMED_ENCODER.name;
+  const manifest = trimmed ? TRIMMED_ENCODER.files : ENCODER.files.map(file => (variant && file.path.startsWith('onnx/') ? VARIANTS[variant] : file));
   const isModel = file => file.path.startsWith('onnx/');
-  const pathOf = file => (variant && isModel(file) ? resolve('.local/language/variants', file.path.slice('onnx/'.length)) : resolve(MODEL_DIR, file.path));
+  const pathOf = file => (trimmed ? resolve(TRIMMED_DIR, file.path)
+    : variant && isModel(file) ? resolve('.local/language/variants', file.path.slice('onnx/'.length)) : resolve(MODEL_DIR, file.path));
   const files = Object.fromEntries(await Promise.all(manifest.map(async file => [isModel(file) ? 'model' : file.path, await verified(pathOf(file), file)])));
   ort.env.wasm.wasmBinary = await verified(RUNTIME_PATH, RUNTIME_WASM);
   ort.env.wasm.numThreads = 1;

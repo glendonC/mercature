@@ -3,7 +3,7 @@ import type { IssueCategory, MessageKind, Site } from '../site/contracts';
 /** Understanding needs only a place's id and named features; a full Site also fits. */
 export type Place = Pick<Site, 'id' | 'features'>;
 import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
-import { ENCODER, ENCODER_BYTES } from './model';
+import { ENCODER } from './model';
 import { buildIndex, decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
 
 /** Identity of the model that produced a result, so a saved decision can name its source. */
@@ -83,10 +83,11 @@ export async function modelStored(): Promise<boolean> {
 function load(): Promise<Loaded> {
   loading ??= (async () => {
     const [encoder, heads] = await Promise.all([import('./encoder'), import('./heads.json')]);
-    const { embed } = await encoder.loadEncoder();
+    const { embed, set } = await encoder.loadEncoder();
     const weights = heads.default as unknown as Heads;
     const prepared = await prepareHeads(weights, embed);
-    const model: ModelInfo = { id: ENCODER.id, revision: `${ENCODER.revision}+heads.${weights.version}`, bytes: ENCODER_BYTES };
+    const vocabulary = set.name === 'latin-hangul' ? '+latin-hangul' : '';
+    const model: ModelInfo = { id: ENCODER.id, revision: `${ENCODER.revision}${vocabulary}+heads.${weights.version}`, bytes: set.modelBytes };
     publish({ status: 'ready', model });
     return { embed, heads: prepared, model };
   })().catch(error => {

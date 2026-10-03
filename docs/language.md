@@ -9,15 +9,15 @@ A small multilingual model on the phone reads a visitor's message and answers th
 - **Heads.** Three small logistic regressions trained on labeled example messages, in a 16 KB JSON file shipped with the app (`src/language/heads.json`).
 - **Same code everywhere.** The browser and the evaluation scripts share the tokenizer, the WebAssembly runtime, the pooling and the decision code (`src/language/policy.ts`). On the 51 dev messages the browser and Node gave identical decisions.
 
-One-time download, kept in the browser's Cache Storage after SHA-256 checks:
+One-time download, kept in the browser's Cache Storage after SHA-256 checks. The app serves a trimmed copy of the encoder from its own origin (see the size study); where those files are not deployed it downloads the pinned files from the Hugging Face Hub instead. Both give the same answers for English, Spanish, Korean and Quechua.
 
-| File | Bytes |
-| --- | ---: |
-| `onnx/model_quantized.onnx` (encoder, int8) | 118,308,185 |
-| `tokenizer.json` | 17,082,730 |
-| `tokenizer_config.json` | 443 |
-| `ort-wasm-simd-threaded.wasm` (runtime) | 11,133,407 |
-| **Total** | **146,524,765** |
+| File | Trimmed, from the app | Pinned, from the Hub |
+| --- | ---: | ---: |
+| `onnx/model_quantized.onnx` (encoder, int8) | 68,375,897 | 118,308,185 |
+| `tokenizer.json` | 4,273,447 | 17,082,730 |
+| `tokenizer_config.json` | 443 | 443 |
+| `ort-wasm-simd-threaded.wasm` (runtime) | 11,133,407 | 11,133,407 |
+| **Total** | **83,783,194** | **146,524,765** |
 
 The app shell gains about 125 KB, precached by the service worker: the language code (84 KB, 27 KB gzipped), the heads (16 KB) and the runtime loader (21 KB). The 11 MB runtime binary is not precached for every visitor; it is stored with the model when Noor asks for it.
 
@@ -157,7 +157,9 @@ Published ONNX files of the same export at revision `761b726d`:
 | `model_uint8.onnx` | 118,054,630 |
 | `model_int8.onnx` | 118,054,593 |
 
-The 4-bit and fp16 files are larger because most of the model is its 250,000-token embedding table, which those formats leave in 16 or 32 bits. `int8` and `uint8` would save 253,592 bytes (0.2%). Used in place of the shipped file with the same heads, on dev they were no better: top-1 33 and 35 of 39 against 36, confident answers 17 and 24 of 51 against 27. The shipped file stays. A real reduction needs a smaller vocabulary, which is not done.
+The 4-bit and fp16 files are larger because most of the model is its 250,000-token embedding table, which those formats leave in 16 or 32 bits. `int8` and `uint8` would save 253,592 bytes (0.2%). Used in place of the shipped file with the same heads, on dev they were no better: top-1 33 and 35 of 39 against 36, confident answers 17 and 24 of 51 against 27. The shipped file stays.
+
+**Smaller vocabulary.** Most of the encoder is its 250,002-token vocabulary, and English, Spanish, Korean and Quechua can only ever use the tokens written in Latin or Korean script, digits, punctuation and symbols. `scripts/language/trim.mjs` keeps those 120,005 tokens: it rewrites the tokenizer and keeps the matching rows of the int8 embedding table, leaving every other weight unchanged. On all 498 texts the evaluation uses (every message, label passage and feature passage) the trimmed encoder produced the same tokens and bit-identical embeddings (`scripts/language/verify-trim.mjs`), so its answers are the same on dev and held-out alike; the held-out re-run gave identical decisions and rankings for all 88 messages. The download falls from 146,524,765 to 83,783,194 bytes (43% less). Text in other scripts, such as Japanese or Russian, would become unknown tokens. The derived files are reproducible from the pinned ones (same hashes on every run) but are not on the Hub, so the app serves them itself and falls back to the Hub files when they are missing.
 
 ## Earlier trial
 
@@ -172,8 +174,10 @@ node scripts/language/provision.mjs
 node scripts/language/passages.mjs
 node scripts/language/train.mjs
 node scripts/language/evaluate.mjs dev
+node scripts/language/trim.mjs
+node scripts/language/verify-trim.mjs
 npx vite build --config scripts/language/harness/vite.config.ts
 node scripts/language/browser.mjs dev
 ```
 
-`provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium through the Hub URLs (redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.
+`provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `trim.mjs` writes the trimmed encoder to `public/models/` (not in version control), where the app serves it; it needs [uv](https://docs.astral.sh/uv/) to run the ONNX edit with `onnx` and `numpy`. `evaluate.mjs` takes `--variant latin-hangul` to evaluate it. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium (the trimmed files if `public/models/` has them, otherwise the Hub URLs, redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.
