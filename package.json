@@ -12,7 +12,9 @@
     "test:offline": "playwright test --config offline.config.ts"
   },
   "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
     "bot-avatars": "0.1.2",
+    "onnxruntime-web": "1.22.0-dev.20250409-89f8206ba4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "thinking-orbs": "0.3.2"
