@@ -1,48 +1,46 @@
 # Product
 
-Mercature helps a small tour operator understand what a visitor reported, in any language, see where on her site it happened, and test a fix before the next visit. It runs in the browser on a phone she already has, and its core works offline.
+Mercature helps a small tour operator act on what visitors tell her about a place, in languages she cannot read. A small model on her phone reads a visitor's message and points to the spots on her route it most likely means. She checks each one on a real street photo and decides. After one download it works offline.
 
-It answers the tourism challenge of the World Bank Small AI for Development brief (Annex C): a small operator who cannot read every visitor's language and has no simple way to turn feedback into a concrete improvement.
+It answers the tourism challenge of the World Bank Small AI for Development brief (Annex C): a small operator who cannot read every visitor's language and has no simple way to turn feedback into an improvement.
 
-## Who it is for
+## The place: the Qorikancha walk
 
-Noor runs coffee farm tours for a few visitors a month in La Convención, in the Cusco region of Peru. She speaks Quechua at home and Spanish with everyone else. Visitors write to her in English, Korean and other languages. She uses her daughter's smartphone at weekends and buys mobile data when she needs it. Her coffee cooperative helps members with tools like this one.
-
-Noor and her farm are fictional, like the persona in the brief. Her site in Mercature is authored and labeled synthetic.
+A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model outlined steps and kerbs in the photos. 8 of the 52 findings are flagged as possible barriers, on 6 stretches. None is verified until the operator checks it.
 
 ## The loop
 
-1. **Message.** Noor pastes or types what a visitor wrote. The original text is kept.
-2. **Understand.** A small multilingual model on the phone answers three questions from fixed lists: is this a problem, praise or a question; what kind of problem; and which parts of the site it most likely concerns (up to three). When it is not sure, it says so.
-3. **Confirm.** Noor chooses the part of the site, or picks another one. Nothing changes until she does.
-4. **Try a fix.** She moves or removes the obstruction on the site's 3D map. A deterministic check shows which places a path 0.9 m wide (roughly wheelchair width, illustrative) reaches before and after, including any new problem the move creates.
-5. **Save and reply.** The plan keeps the message, her choice, the change and the result. She can answer the visitor with a pre-written message in the visitor's language.
+1. **Place.** The route on a monochrome map, with its real photos and the possible barriers.
+2. **Message.** She pastes what a visitor wrote. The model says whether it is a problem, praise or a question, and the spots it most likely means light up, best first.
+3. **Verify on the photo.** For each suggested spot she opens the photo with its recorded outline and chooses Confirm, Not a barrier, or Check on site.
+4. **Changes.** She adds a visitor note from fixed templates and copies a pre-written reply in English, Spanish or Korean.
 
-## What the AI does and does not do
+## Example: Noor's farm
 
-- It answers only from fixed lists: three message kinds, six issue types and the site's own named features. It never writes free text, so it cannot invent a place, a measurement or a promise.
-- It ranks the site's features by meaning across languages. It does not translate and it does not decide whether a path is passable.
-- Unclear results are shown as "Not sure", and Noor chooses herself or checks with the visitor.
-- The path check is ordinary deterministic code. A saved plan is a proposal, not proof that anything changed on the farm.
+Noor, the operator in the brief, runs coffee farm tours in La Convención. Her farm is an authored map labeled Example. On it, the operator can move an obstruction and recheck which places a path 0.9 m wide reaches before and after (an illustrative width, not a wheelchair standard).
 
-## Model and device
+## What the model does and does not do
 
-- A quantized multilingual sentence encoder, with small classifier heads trained on labeled example messages for this site.
-- Downloaded once and cached on the phone. After that, understanding a message needs no connection.
-- The application itself is under 1 MB. Model size, accuracy by language and speed are reported in [language](language.md).
+- It answers only from fixed lists: message kind, and the place's own named spots. It never writes free text, so it cannot invent a place, a measurement or a promise.
+- When it is unsure it says Not sure, and she decides. Messages that do not look like English, Spanish or Korean always get Not sure.
+- It does not translate, and it does not judge whether a path is passable.
+- On the route the issue type is never shown: it did not carry over from the farm-trained model.
+- A large model ran once to prepare the route; only the small model runs on the phone.
 
-## Languages
+Results by language, size and speed are in [language](language.md).
 
-- Operator interface: Spanish and English.
-- Visitor messages: evaluated in English, Spanish and Korean.
-- Less-supported language: Quechua is tested and its results are reported, including failures.
+## Honesty limits
 
-## Live and prepared
+- No widths, heights, slopes or reachability are claimed on the route. A stretch with no flagged barrier means only that no barrier was seen in the photos.
+- Photo outlines are recorded and unverified until the operator confirms them.
+- The farm and all test messages are synthetic; the messages were written by a large language model and none has been reviewed by a native speaker.
+- A saved plan or note is a proposal, not proof that anything changed on the ground.
+- No phone has been measured, and no real operator has used it.
 
-- **Live:** understanding new messages, the path check, comparison, saving, and offline use after the first download.
-- **Prepared:** Noor's farm map is authored. The destination examples on Home show recorded street imagery from an earlier preparation run; they are labeled as recorded.
-- **Not built:** turning new photos into a site map, measured real sites, and sending messages.
+## Data
+
+Street photos from Mapillary (CC BY-SA 4.0, credited on every photo), places and paths from OpenStreetMap (ODbL), a walking route from Valhalla, and model-written test messages (CC0). The figures behind the problem, every dataset, and what the data does not cover are in [evidence](evidence.md).
 
 ## Out of scope
 
-Bookings, payments, accounts, a server database and accessibility certification.
+Bookings, payments, accounts, a server database, sending messages and accessibility certification.

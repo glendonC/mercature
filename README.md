@@ -7,9 +7,7 @@
 
 <h1 align="center">Mercature</h1>
 
-<p align="center">
-  Understand your visitors. Fix the right spot.
-</p>
+<!-- Subtitle pending the Home text decision. -->
 
 <p align="center">
   <a href="#get-started">Get started</a> ·
@@ -24,30 +22,41 @@
 </p>
 
 Peru welcomed over four million international visitors in 2025, and 7 in 10 of its workers are
-in businesses of ten people or fewer. Small tour operators live on what visitors tell them. Much
-of it arrives in languages they cannot read, about parts of the site they cannot see the way a
-visitor does.
+in businesses of ten people or fewer. Small tour operators live on what visitors tell them, and much
+of it arrives in languages they cannot read, about places they cannot easily check.
 
-Mercature turns a visitor's message into a decision on the operator's own site. A small
-multilingual model on the phone says whether the message is a problem, praise or a question, and
-which parts of the site it most likely means. The operator confirms the spot, tries a fix on an
-editable 3D map of the place, and sees what changes before the next visit. After one download, it
-works offline.
+Mercature turns a visitor's message into a checked spot on a real route. A small multilingual model
+on the phone reads the message and lights up the spots it most likely means. The operator opens the
+real street photo for each one and decides: Confirm, Not a barrier, or Check on site. She then adds
+a note for future visitors and copies a pre-written reply. After one download, it works offline.
 
 Built for the World Bank Small AI for Development challenge, tourism track.
 
 <sub>Figures: 4,157,469 international visitors to Peru in 2025, preliminary (MINCETUR, <a href="https://www.gob.pe/institucion/mincetur/informes-publicaciones/7619520-reportes-de-turismo-reporte-mensual-de-turismo-diciembre-2025">Reporte Mensual de Turismo, diciembre 2025</a>, 14 January 2026); 71.7% of Peru's employed people work in units of 1 to 10 people, 88.6% of them informally (INEI, <a href="https://m.inei.gob.pe/media/MenuRecursivo/boletines/01-informe-tecnico-empleo-nacional.pdf">mercado laboral, enero a diciembre 2025</a>, February 2026).</sub>
 
-## Small AI, by the rules
+## The Qorikancha walk
 
-| The challenge asks | Mercature |
-| --- | --- |
-| Runs on a device the user already has | A web app installed from the browser on a phone |
-| Core feature works offline | After one download, messages are understood and checked with no connection |
-| Model files small enough to side-load | One quantized multilingual encoder with small classifier heads ([sizes](docs/language.md)) |
-| At least one local language | Spanish interface; Quechua tested as the less-supported language ([results](docs/language.md)) |
-| A person makes the final call | The model suggests; the operator confirms every spot and every change |
-| Avoid hallucinations | Fixed lists only; unclear results say "Not sure" |
+A real route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
+stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
+segmentation model outlined steps and kerbs once, when the route was prepared; 8 of its 52 findings
+are flagged as possible barriers, and none is verified until the operator checks the photo. A
+stretch with no flagged barrier means only that no barrier was seen in the photos: Mercature claims
+no widths, slopes or reachability.
+
+Noor's farm, the persona from the brief, is a second, authored place labeled Example, where an
+obstruction can be moved and the path rechecked.
+
+## The model
+
+[multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) (MIT), int8 and
+trimmed to Latin and Korean script, with three small trained heads, runs in the browser with ONNX
+Runtime Web. It downloads once (83,783,194 bytes) and then works with no connection. It answers only
+from fixed lists and says Not sure when unsure. On 48 held-out English, Spanish and Korean messages
+about the farm it put the right spot first 46 times; moved to the Qorikancha walk with no new
+training, 28 of 31. It failed on Quechua, so messages that do not look like English, Spanish or
+Korean now always get Not sure. About 29 ms per message on the development Mac; no phone has been measured.
+All test messages are synthetic, written by a large language model. Details: [model and
+evaluation](docs/language.md).
 
 ## Get started
 
@@ -58,23 +67,34 @@ npm ci
 npm run dev
 ```
 
-Open [127.0.0.1:4173](http://127.0.0.1:4173) and search for **Noor's farm**. The first visit
-downloads the model once; after that the core loop works with no connection. To try the
-installable offline build, run `npm run build` and `npm run preview`.
-
-The recorded destination examples on Home need local capture data that is not part of this
-repository; see [architecture](docs/architecture.md#retained-destinations).
+Open [127.0.0.1:4173](http://127.0.0.1:4173) and choose **Qorikancha**, or search for **Noor's
+farm**. The first visit downloads the model once. To try the installable offline build, run
+`npm run build` and `npm run preview`.
 
 ## Checks
 
 ```sh
 npx playwright install chromium
+npm run check:fast
+npm run check:ui
 bash scripts/checks/gate.sh
 ```
 
-The gate builds the app, starts its own preview, runs the domain and browser checks, and restarts
-a browser with networking off to test the offline loop. Set `MERCATURE_PORT` to use a port other
-than 4173.
+- `check:fast` type-checks and runs the domain checks in about four seconds.
+- `check:ui` runs the browser checks against a server you already started.
+- `gate.sh` builds the app, starts its own preview, runs everything, and restarts a browser with
+  networking off to test the offline loop.
+
+Set `MERCATURE_PORT` to use a port other than 4173.
+
+## Data and credits
+
+Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on every photo; this
+repository ships 27 credited crops of the route in `public/places/qorikancha`. Places and paths are
+from OpenStreetMap (ODbL), the walking route from Valhalla, outlines from SAM 3 and partial 3D from
+VGGT. Test messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources
+behind every figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses
+are in [attribution](ATTRIBUTION.md).
 
 ## Documentation
 
@@ -83,14 +103,3 @@ than 4173.
 | [Product](docs/product.md) | [Architecture](docs/architecture.md) |
 | [Model and evaluation](docs/language.md) | [Plan records](docs/contracts.md) |
 | [Evidence and data](docs/evidence.md) | [Attribution](ATTRIBUTION.md) |
-
-## Limits
-
-- Noor and her farm are fictional, like the persona in the challenge brief. The farm map is
-  authored and labeled synthetic.
-- The path check is geometric planning with an illustrative 0.9 m width. It is not accessibility
-  certification.
-- No real visitor messages were used, and the Korean and Quechua examples have not been reviewed
-  by native speakers. What the data does not cover is listed in [evidence](docs/evidence.md).
-
-Photographs, fonts, map data and libraries keep their own terms; see [attribution](ATTRIBUTION.md).
