@@ -31,7 +31,7 @@ The app shell gains about 125 KB, precached by the service worker: the language 
 
 The kind and issue-type heads do not read the embedding directly. Each reads the message's similarity to short passages describing every label, three per label in English, Spanish and Korean (`scripts/language/labels.mjs`). These passages paraphrase the label definitions written for the data before any message existed. The place head reads the full 384-dimensional embedding.
 
-**Reuse.** None of the heads refers to the farm's feature names: a new site needs its spot list with aliases, and its layout for the path check. The heads were trained only on messages about this farm, though, so a new site should still be checked with a few labeled messages of its own before trusting them.
+**Reuse.** None of the heads refers to the farm's feature names: a new place needs its spot list with aliases, and its layout for the path check. Tested on the Qorikancha walk without retraining (below), the spot ranking and the message kind carried over, but the issue type did not, so a new place also needs a few labeled messages to check or retrain the issue-type head.
 
 ## Data
 
@@ -39,6 +39,7 @@ The kind and issue-type heads do not read the embedding directly. Each reads the
 | --- | ---: | --- |
 | `scripts/language/messages.json` | 253 (77 families) | train 114, dev 51, held-out 88 |
 | `scripts/language/messages-train-extra.json` | 150 (50 families) | training only |
+| `scripts/language/route-messages.json` | 44 (14 families) | Qorikancha walk, evaluation only |
 
 Both files are synthetic, written by a large language model for this project, under CC0-1.0. Each family is one message written in English, Spanish and Korean as separate paraphrases with the same labels. 22 families also have a Southern Quechua (Cusco-Collao) machine translation. No text has been reviewed by a native speaker and no message comes from a real visitor.
 
@@ -120,6 +121,24 @@ Because a Quechua message could get a confident wrong answer, a check was added 
 - On the 315 train, dev and extra-training messages it flagged none. A first version with one function word per seven flagged one ("Muddy patch was super slippery, nearly fell"), so the ratio was set on that data.
 - Re-running the held-out set with it: no English, Spanish or Korean answer changed, and all 22 Quechua messages now get *Not sure*, where 9 had received confident answers, 1 of them right.
 - This shows only that the tool now abstains on Quechua. It says nothing about understanding Quechua, and very short English or Spanish messages without function words ("Excelente tour!") also get *Not sure*.
+
+## Transfer to the Qorikancha walk
+
+The heads were trained only on farm messages. To see whether they carry over, 44 messages about the recorded walk from the Plaza de Armas to Qorikancha (14 spots in `src/site/route.ts`: six flagged stretches and eight landmarks) were written after the heads were frozen and scored once with them, without retraining (`scripts/language/route-messages.json`, synthetic, written by a large language model for this project; `node scripts/language/evaluate.mjs route`). Four spots are steps, told apart only by their landmarks.
+
+| Language | Top-1 | Top-3 | Kind | Issue type | Confident and right | Not sure | As expected |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| English | 9/10 | 10/10 | 13/13 | 4/9 | 2/4 | 9/13 | 11/13 |
+| Spanish | 9/10 | 10/10 | 11/13 | 2/9 | 2/2 | 11/13 | 12/13 |
+| Korean | 10/11 | 11/11 | 14/14 | 2/10 | 3/4 | 10/14 | 13/14 |
+| **English, Spanish, Korean** | **28/31** | **31/31** | **38/40** | **8/28** | **7/10** | **30/40** | **36/40** |
+| Quechua | 1/3 | 2/3 | 1/4 | 0/3 | 0/0 | 4/4 | 3/4 |
+
+- **What carried over.** The right spot came first for 28 of 31 messages and was always in the top three, including the four look-alike steps. The message kind was right for 38 of 40.
+- **What did not.** The issue type was right for only 8 of 28 problems: the farm-trained head filed 19 of them, mostly step complaints, as a blocked path. Because it seldom clears its threshold, 30 of 40 messages got *Not sure* (9 of them as about no place), and all three confident errors had the right spot with the wrong issue type.
+- **Exact aliases** found a right spot about as often (29 of 31) but suggested exactly the right spots for only 3 of 34, since "steps" matches all four step spots.
+
+**Demo message.** A Korean visitor writes 코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요 ("On the way to Qorikancha, the stone steps in the Inca-walled alley by the church were so steep that my mother struggled to go down"). The model returns: status `unsure`, reason `unclear-kind`, kind `problem`, issue type `null` (its best guess, a blocked path at 0.47, is below 0.55), candidates `steps-340-350`, `steps-130-140`, `qorikancha-ticket-booth`. Both Calle Loreto steps fit the message and come first and second.
 
 ## Speed
 

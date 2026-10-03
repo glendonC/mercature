@@ -1,7 +1,8 @@
 /**
  * Evaluate the shipped heads and thresholds on one split with fresh inference for every message.
- * Usage: node scripts/language/evaluate.mjs [dev|test]. The held-out split ("test") is for the
- * single preregistered run; thresholds are never changed after it.
+ * Usage: node scripts/language/evaluate.mjs [dev|test|route]. The held-out split ("test") is for the
+ * single preregistered run; thresholds are never changed after it. "route" scores the Qorikancha
+ * walk messages against that place with the same farm-trained heads, as a transfer test.
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -9,22 +10,24 @@ import { resolve } from 'node:path';
 import { aliasBaseline } from '../../src/language/index.ts';
 import { RUNTIME_WASM } from '../../src/language/model.ts';
 import { buildIndex, decide, looksSupported, prepareHeads, queryText, score } from '../../src/language/policy.ts';
+import { QORIKANCHA_PLACE } from '../../src/site/route.ts';
 import { FARM_FEATURES, HEADS_PATH, VARIANT, categoryLabels, concernsPlace, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
 
-const split = process.argv.slice(2).find(arg => ['train', 'dev', 'test'].includes(arg)) ?? 'dev';
-if (!['train', 'dev', 'test'].includes(split)) throw new Error('Split must be train, dev or test.');
+const SPLITS = ['train', 'dev', 'test', 'route'];
+const split = process.argv.slice(2).find(arg => SPLITS.includes(arg)) ?? 'dev';
 const headsText = await readFile(HEADS_PATH, 'utf8');
 const heads = JSON.parse(headsText);
-const data = await loadMessages();
-if (heads.training.messagesSha256 !== data.sha256) console.warn('Warning: messages.json changed since the heads were trained.');
+const data = split === 'route' ? JSON.parse(await readFile(new URL('./route-messages.json', import.meta.url), 'utf8')) : await loadMessages();
+if (split !== 'route' && heads.training.messagesSha256 !== data.sha256) console.warn('Warning: messages.json changed since the heads were trained.');
 const messages = data.messages.filter(message => message.split === split);
+const features = split === 'route' ? QORIKANCHA_PLACE.features : FARM_FEATURES;
 
 const encoder = await encoderInfo();
 const indexStarted = performance.now();
 const prepared = await prepareHeads(heads, encoder.embed);
-const index = await buildIndex(FARM_FEATURES, encoder.embed);
+const index = await buildIndex(features, encoder.embed);
 const indexMs = performance.now() - indexStarted;
-const inventory = FARM_FEATURES.map(feature => ({ id: feature.id, label: feature.name.en, description: feature.description, aliases: [...new Set(Object.values(feature.aliases).flat())] }));
+const inventory = features.map(feature => ({ id: feature.id, label: feature.name.en, description: feature.description, aliases: [...new Set(Object.values(feature.aliases).flat())] }));
 
 const rows = [];
 for (const message of messages) {
