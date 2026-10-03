@@ -207,10 +207,10 @@ test("a local backup restores its plan before the interface calls it saved", asy
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download backup" }).click();
   const file = await (await downloadPromise).path();
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL: `http://127.0.0.1:${process.env.MERCATURE_PORT ?? "4173"}` });
   const restored = await context.newPage();
   try {
-    await restored.goto("http://127.0.0.1:4173/");
+    await restored.goto("/");
     await restored.locator("input[type=file][accept*=json]").setInputFiles(file!);
     await expect(
       restored.getByRole("heading", { name: "Plan saved." }),
