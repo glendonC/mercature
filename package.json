@@ -8,7 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "test": "playwright test",
-    "check": "npm run build && npm test",
+    "check": "bash scripts/checks/gate.sh",
+    "check:fast": "tsc --noEmit && playwright test --config fast.config.ts",
+    "check:ui": "node scripts/checks/server.mjs && playwright test --project ui",
     "test:offline": "playwright test --config offline.config.ts"
   },
   "dependencies": {
