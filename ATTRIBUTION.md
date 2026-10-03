@@ -27,3 +27,7 @@ The Mercature mark samples land outlines from [Natural Earth](https://www.natura
 ## Recorded destination examples
 
 The local-only destination examples display records prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data, SAM 3 photo outlines (SAM License) and VGGT-1B-Commercial reconstructions (custom licence). Those tools are not part of this application; each keeps its own licence.
+
+## Language model and runtime
+
+Message understanding runs [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) by Microsoft (MIT), through the [Xenova ONNX export](https://huggingface.co/Xenova/multilingual-e5-small) pinned at revision `761b726d`. The weights are downloaded once to the device and are not redistributed in this repository. Inference uses [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) (MIT) and tokenization uses [@huggingface/tokenizers](https://github.com/huggingface/tokenizers) (Apache-2.0).
