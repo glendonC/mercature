@@ -37,10 +37,14 @@ type Props = {
   underlay?: ReactNode;
   /** A different framing of the same 800 by 500 map coordinates. */
   viewBox?: string;
+  /** The map's own words, for an interface in another language. */
+  words?: MapWords;
 };
+export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: string };
+const ENGLISH: MapWords = { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Fit route', credit: '© OpenStreetMap contributors' };
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
-export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' ') }: Props) {
+export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words = ENGLISH }: Props) {
   const selectedView = data.views.find(v => v.id === selected), selectedPhoto = data.photos.find(p => p.id === selectedView?.photoId);
   const focus = zoom > 1 ? selectedPhoto?.position : undefined;
   const { project, scale } = useMemo(() => routeFrame(data, zoom, focus), [data, zoom, focus]);
@@ -70,5 +74,5 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
     <g transform={`translate(${target.join(' ')})`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>
     {children}
     <g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text>
-  </svg><div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label="Zoom map in">+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label="Zoom map out">−</button><button onClick={() => setZoom(1)}>Fit route</button></div><span className="destination-map-credit">© OpenStreetMap contributors</span></section>;
+  </svg><div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div><span className="destination-map-credit">{words.credit}</span></section>;
 }

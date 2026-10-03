@@ -1,6 +1,6 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 import type { Destination } from './data';
-import GeographicMap from './GeographicMap';
+import GeographicMap, { type MapWords } from './GeographicMap';
 import './destinations.css';
 import type { Point, Walk } from './walk';
 
@@ -34,6 +34,9 @@ type Props = {
   card?: ReactNode;
   cardFor?: string | null;
   ariaLabel: string;
+  /** Pixels at the bottom kept free of map words, for the guide line and any sheet. */
+  clearBottom: number;
+  words: MapWords;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -52,7 +55,7 @@ const Overlay = memo(function Overlay({ walk, highlight, photoAt }: { walk: Walk
   </g>;
 });
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, photoAt, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, photoAt, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words }, ref) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<Camera | null>(null);
@@ -202,7 +205,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const taken: { x: number; y: number; w: number; h: number }[] = placed.map(p => ({ x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }));
   const visibleLabels = camera ? labels.map(label => { const at = toScreen(label.at); return { label, at: [at[0], at[1] + (label.dy ?? 0)] as Point }; }).filter(({ label, at }) => {
     const w = Math.min(180, label.name.length * 6.6) + 8, h = label.name.length * 6.6 > 180 ? 34 : 18, box = { x: at[0] - w / 2, y: at[1] - h / 2, w, h };
-    if (at[0] < 8 || at[0] > size.width - 8 || at[1] < insets.top || at[1] > size.height - 40) return false;
+    if (at[0] < 8 || at[0] > size.width - 8 || at[1] < insets.top || at[1] > size.height - clearBottom) return false;
     if (taken.some(t => box.x < t.x + t.w && t.x < box.x + box.w && box.y < t.y + t.h && t.y < box.y + box.h)) return false;
     taken.push(box);
     return true;
@@ -215,7 +218,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
   };
   return <div className="route-map" ref={box} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
-    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} underlay={<Cameras walk={walk} />}>
+    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} underlay={<Cameras walk={walk} />}>
       <Overlay walk={walk} highlight={highlight} photoAt={photoAt} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">

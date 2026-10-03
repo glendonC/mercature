@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { BotAvatar } from 'bot-avatars';
 import AIResultCard, { type AIResult } from '../components/AIResultCard';
 import { decide, loadReview, logMessage, saveReview, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
@@ -227,7 +227,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     const ends = language === 'ko' ? ['아르마스 광장', '코리칸차 매표소'] : language === 'es' ? ['la Plaza de Armas', 'la boletería del Qorikancha'] : ['the Plaza de Armas', 'the Qorikancha ticket booth'];
     const head = data.id === 'cusco-qorikancha' ? NOTE.title[language](ends[0], ends[1], Math.round(data.lengthMetres)) : data.title;
     const steps = decided.some(item => item.verdict === 'barrier' && subjectOf(item.spot.findings) === 'steps');
-    return [head, ...lines, ...(steps ? [NOTE.stepFree[language]] : []), NOTE.basis[language]].join('\n');
+    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), NOTE.basis[language]].join('\n');
   }
   function replyText(message: LoggedMessage, language: VisitorLang) {
     // Questions get a personal answer, never a statement about access.
@@ -313,7 +313,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
         : answer && answer.status !== 'unavailable' ? <AIResultCard numbered hideEmpty labels={{ region: t.views.messages, message: t.kind, issue: t.issue, notSure: answer.candidates.length ? t.notSureSpots : t.notSureNone, suggested: t.suggested, none: t.none }}
           result={{ messageType: answer.kind ? t.kinds[answer.kind] : t.notSure, issueType: '', state: answer.kind ? 'matched' : 'not-sure', spots: answer.candidates.map(id => ({ id, label: nameOfKey(id) })) } satisfies AIResult}
           selectedId={answer.candidates.find(id => same(targetOf(id), selection)) ?? null} onSpot={id => open(targetOf(id))} onNotSure={() => { open(null); setSaid(t.guide.manual); }} />
-        : <p className="route-quiet">{t.guide.manual}</p>}
+        : <p className="route-quiet">{t.noModel}</p>}
       <div className="route-actions"><button className="route-secondary" onClick={freshMessage}>{t.newMessage}</button></div>
     </>}
   </section>;
@@ -342,11 +342,12 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
 
   const panel = tab === 'messages' ? messagesPanel : tab === 'changes' ? changesPanel : null;
   const sheetContent = narrow ? card ?? panel : null;
+  const [sheetHeight, setSheetHeight] = useState(0);
   useLayoutEffect(() => {
     const element = sheet.current, canvas = root.current;
     if (!canvas) return;
-    if (!element) { canvas.style.setProperty('--sheet', '0px'); return; }
-    const measure = () => canvas.style.setProperty('--sheet', `${element.offsetHeight}px`);
+    if (!element) { canvas.style.setProperty('--sheet', '0px'); setSheetHeight(0); return; }
+    const measure = () => { canvas.style.setProperty('--sheet', `${element.offsetHeight}px`); setSheetHeight(element.offsetHeight); };
     measure();
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
@@ -376,7 +377,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <p className="route-recorded">{t.recorded}</p>
     </div>
     <RouteMap ref={map} data={data} photoView={shownView ?? ''} photoAt={shownPhoto ? walk.project(shownPhoto.position) : null} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
-      onMap={tapMap} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
+      onMap={tapMap} words={t.map} clearBottom={narrow ? sheetHeight + 110 : 90} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
     {!narrow && panel}
     {problem && <p className="route-problem" role="alert">{problem === 'unreadable' ? t.unreadable : t.notSaved}<button className="route-icon-button" aria-label={t.close} onClick={() => setProblem('')}><Close /></button></p>}
     <footer className="route-foot">
@@ -431,18 +432,18 @@ function SpotCard({ t, lang, selection, walk, data, review, views, photos, asset
   const shown = evidence[Math.min(page, evidence.length - 1)] ?? null;
   const plainView = stretch ? stretch.views.map(id => views.get(id)).find(Boolean) ?? null : null;
   const range = spot ? t.range(Math.round(spot.from), Math.round(spot.to)) : stretch ? t.range(Math.round(stretch.from), Math.round(stretch.to)) : null;
+  const pager = evidence.length > 1 ? <div className="route-pager">
+    <button className="route-icon-button" aria-label={t.previous} onClick={() => setPage((page + evidence.length - 1) % evidence.length)}><Chevron back /></button>
+    <span>{t.photoOf(Math.min(page, evidence.length - 1) + 1, evidence.length)}</span>
+    <button className="route-icon-button" aria-label={t.next} onClick={() => setPage((page + 1) % evidence.length)}><Chevron /></button>
+  </div> : null;
   let figure: ReactNode = null;
-  if (shown?.viewId) figure = <Evidence key={shown.id} t={t} view={views.get(shown.viewId)!} finding={shown} photo={photos.get(views.get(shown.viewId)!.photoId)} asset={asset} lang={lang} alt={`${shown.label}, ${name}`} />;
-  else if (shown?.osm) figure = <div className="route-map-record"><strong>{shown.label}</strong><span>OpenStreetMap</span></div>;
+  if (shown?.viewId) figure = <Evidence key={shown.id} t={t} view={views.get(shown.viewId)!} finding={shown} photo={photos.get(views.get(shown.viewId)!.photoId)} asset={asset} lang={lang} alt={`${shown.label}, ${name}`} pager={pager} />;
+  else if (shown?.osm) figure = <div className="route-map-record"><strong>{shown.label}</strong><span>OpenStreetMap</span>{pager}</div>;
   else if (plainView) figure = <Evidence key={plainView.id} t={t} view={plainView} finding={null} photo={photos.get(plainView.photoId)} asset={asset} lang={lang} alt={name} />;
   return <section className="route-card" aria-label={name}>
     <button className="route-icon-button route-card-close" aria-label={t.close} onClick={onClose}><Close /></button>
     {figure}
-    {evidence.length > 1 && <div className="route-pager">
-      <button className="route-icon-button" aria-label={t.previous} onClick={() => setPage((page + evidence.length - 1) % evidence.length)}><Chevron back /></button>
-      <span>{t.photoOf(Math.min(page, evidence.length - 1) + 1, evidence.length)}</span>
-      <button className="route-icon-button" aria-label={t.next} onClick={() => setPage((page + 1) % evidence.length)}><Chevron /></button>
-    </div>}
     <h2 ref={heading} tabIndex={-1}>{name}</h2>
     {range && <p className="route-card-line">{range}</p>}
     {shown && <p className="route-card-quiet"><span className="route-mark" aria-hidden="true" />{shown.label}. {shown.viewId ? t.suggestion : t.mapRecord}</p>}
@@ -470,7 +471,7 @@ function zoomOn(view: View, finding: Finding | null) {
   return `translate(${shift(cx)}%, ${shift(cy)}%) scale(${scale})`;
 }
 
-function Evidence({ view, finding, photo, asset, lang, alt, t }: { view: View; finding: Finding | null; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; alt: string; t: Copy }) {
+function Evidence({ view, finding, photo, asset, lang, alt, t, pager }: { view: View; finding: Finding | null; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; alt: string; t: Copy; pager?: ReactNode }) {
   const [failed, setFailed] = useState(false);
   const zoom = zoomOn(view, finding);
   const [whole, setWhole] = useState(false);
@@ -482,9 +483,14 @@ function Evidence({ view, finding, photo, asset, lang, alt, t }: { view: View; f
       <polygon className="outline" points={finding.outline.map(p => p.join(',')).join(' ')} />
     </svg>}
   </div>;
-  return <figure className="route-photo">
-    {zoom ? <button className="route-photo-frame" style={{ aspectRatio: `${view.width} / ${view.height}` }} aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button>
-      : <div className="route-photo-frame" style={{ aspectRatio: `${view.width} / ${view.height}` }}>{image}</div>}
+  // The frame may crop the photo to save height on phones; the image and its outline keep one box, centred in it.
+  const ratio = { '--ratio': view.height / view.width } as CSSProperties;
+  return <figure className="route-photo" style={ratio}>
+    <div className="route-photo-box">
+      {zoom ? <button className="route-photo-frame" aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button>
+        : <div className="route-photo-frame">{image}</div>}
+      {pager}
+    </div>
     {photo && <figcaption>{photo.creator}{date ? `, ${date}` : ''}. CC BY-SA 4.0 · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</figcaption>}
   </figure>;
 }

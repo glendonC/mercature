@@ -17,7 +17,7 @@ export const COPY = {
     previous: 'Previous photo', next: 'Next photo', whole: 'Show the whole photo', closer: 'Show the marked part',
     task: (left: number) => left ? `${left} ${left === 1 ? 'spot' : 'spots'} to check` : 'All spots checked',
     reviewed: (done: number, total: number) => `${done} of ${total} checked`,
-    fit: 'Whole route', credits: 'Photos: Mapillary contributors, CC BY-SA 4.0.', creditsShort: '© OpenStreetMap. Photos: Mapillary, CC BY-SA 4.0',
+    map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' }, credits: 'Photos: Mapillary contributors, CC BY-SA 4.0.', creditsShort: '© OpenStreetMap. Photos: Mapillary, CC BY-SA 4.0',
     guide: {
       place: (left: number) => left ? 'Tap a marker to see what the model found.' : 'Every marked spot has a decision.',
       spot: 'Is there a barrier in this photo?', decided: (verdict: Verdict) => verdict === 'barrier' ? 'Confirmed. It will go in the route note.' : verdict === 'check' ? 'Saved for your next walk.' : 'Marked as not a barrier.',
@@ -29,7 +29,7 @@ export const COPY = {
       changes: 'Copy the note or a reply for the visitor.', nothing: 'Decisions and messages will appear here.',
     },
     message: 'Visitor message', messagePlaceholder: 'Paste or type what the visitor wrote', language: 'Message language',
-    find: 'Find the spot', withoutAi: 'Use without AI', download: (mb: number) => `Download ${mb} MB`,
+    find: 'Find the spot', withoutAi: 'Use without AI', noModel: 'Read without the model.', download: (mb: number) => `Download ${mb} MB`,
     downloadProgress: (done: number, total: number) => `${done} of ${total} MB`, modelFailed: 'The model could not be prepared. Pick the spot on the map.',
     kind: 'Message', issue: 'Issue', suggested: 'Suggested spots', none: 'None of these', notSure: 'Not sure',
     notSureSpots: 'These spots are suggestions only.', notSureNone: 'Ask the visitor, or pick the spot on the map.',
@@ -52,7 +52,7 @@ export const COPY = {
     previous: 'Foto anterior', next: 'Foto siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
     task: (left: number) => left ? `${left} ${left === 1 ? 'lugar' : 'lugares'} por revisar` : 'Todo revisado',
     reviewed: (done: number, total: number) => `${done} de ${total} revisados`,
-    fit: 'Toda la ruta', credits: 'Fotos: colaboradores de Mapillary, CC BY-SA 4.0.', creditsShort: '© OpenStreetMap. Fotos: Mapillary, CC BY-SA 4.0',
+    map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' }, credits: 'Fotos: colaboradores de Mapillary, CC BY-SA 4.0.', creditsShort: '© OpenStreetMap. Fotos: Mapillary, CC BY-SA 4.0',
     guide: {
       place: (left: number) => left ? 'Toca una marca para ver lo que encontró el modelo.' : 'Cada lugar marcado tiene una decisión.',
       spot: '¿Hay una barrera en esta foto?', decided: (verdict: Verdict) => verdict === 'barrier' ? 'Confirmado. Irá en la nota de la ruta.' : verdict === 'check' ? 'Guardado para tu próximo recorrido.' : 'Marcado como sin barrera.',
@@ -64,7 +64,7 @@ export const COPY = {
       changes: 'Copia la nota o una respuesta para el visitante.', nothing: 'Aquí aparecerán las decisiones y los mensajes.',
     },
     message: 'Mensaje del visitante', messagePlaceholder: 'Pega o escribe lo que escribió el visitante', language: 'Idioma del mensaje',
-    find: 'Buscar el lugar', withoutAi: 'Usar sin IA', download: (mb: number) => `Descargar ${mb} MB`,
+    find: 'Buscar el lugar', withoutAi: 'Usar sin IA', noModel: 'Leído sin el modelo.', download: (mb: number) => `Descargar ${mb} MB`,
     downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, modelFailed: 'No se pudo preparar el modelo. Elige el lugar en el mapa.',
     kind: 'Mensaje', issue: 'Tema', suggested: 'Lugares sugeridos', none: 'Ninguno', notSure: 'No estoy seguro',
     notSureSpots: 'Estos lugares son solo sugerencias.', notSureNone: 'Pregunta al visitante o elige el lugar en el mapa.',
@@ -104,14 +104,14 @@ export const NOTE = {
     es: (_s: Subject, w: Where) => `Aún no hemos revisado el camino ${w.es}.`,
     ko: (_s: Subject, w: Where) => `${w.ko} 근처 길은 아직 확인하지 못했습니다.`,
   },
-  stepFree: { en: 'Ask us about a step-free start.', es: 'Pregúntenos por un inicio sin escalones.', ko: '계단 없는 출발 방법은 저희에게 문의해 주세요.' },
+  steps: { en: 'Ask us if steps are hard for you.', es: 'Pregúntenos si los escalones le resultan difíciles.', ko: '계단이 힘드시면 미리 문의해 주세요.' },
   basis: { en: 'From street photos, not measurements.', es: 'Según fotos de la calle, no mediciones.', ko: '측정이 아닌 거리 사진을 바탕으로 합니다.' },
 };
 export const REPLY = {
   barrier: {
-    en: (s: Subject, w: Where) => `Thank you. We've added a note about ${SUBJECTS[s].en} ${w.en} so future visitors know before they go. Ask us about a step-free start.`,
-    es: (s: Subject, w: Where) => `Gracias. Añadimos una nota sobre ${SUBJECTS[s].es} ${w.es} para que los próximos visitantes lo sepan antes de ir. Pregúntenos por un inicio sin escalones.`,
-    ko: (s: Subject, w: Where) => `감사합니다. 다음 방문객이 미리 알 수 있도록 ${w.ko} 근처 ${SUBJECTS[s].ko}에 대한 안내를 추가했습니다. 계단 없는 출발 방법은 저희에게 문의해 주세요.`,
+    en: (s: Subject, w: Where) => `Thank you. We've added a note about ${SUBJECTS[s].en} ${w.en} so future visitors know before they go. Ask us if steps are hard for you.`,
+    es: (s: Subject, w: Where) => `Gracias. Añadimos una nota sobre ${SUBJECTS[s].es} ${w.es} para que los próximos visitantes lo sepan antes de ir. Pregúntenos si los escalones le resultan difíciles.`,
+    ko: (s: Subject, w: Where) => `감사합니다. 다음 방문객이 미리 알 수 있도록 ${w.ko} 근처 ${SUBJECTS[s].ko}에 대한 안내를 추가했습니다. 계단이 힘드시면 미리 문의해 주세요.`,
   },
   'not-barrier': {
     en: () => 'Thank you for telling us. We checked the photos of that spot and saw no barrier.',
