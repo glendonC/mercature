@@ -76,7 +76,7 @@ export default function AuthoredPreparation({onHome, onReady}: {onHome: () => vo
     });
     return () => { cancelled = true; cancelAnimationFrame(frame); };
   }, [stage]);
-  return <Preparation optionsContent={<div ref={setControlsTarget}/>} title="Visitor courtyard" provenance="Authored example" sourceLabel="Layout" stage={stage} busy={stage === 'scene' && !result && !error} onHome={onHome} onSkip={enter}
+  return <Preparation optionsContent={<div ref={setControlsTarget}/>} title="Visitor courtyard" provenance="Example" sourceLabel="Layout" stage={stage} busy={stage === 'scene' && !result && !error} onHome={onHome} onSkip={enter}
     message={stage === 'views' ? 'Start with the layout.' : error ? 'The layout needs attention.' : result ? 'Your scene is ready.' : 'Checking the layout…'}
     detail={stage === 'views' ? 'A dimensioned example with one movable bench.' : result ? 'Explore the bench, then preview a change.' : undefined}
     action={stage === 'views' ? 'Load scene' : result ? 'Enter scene' : undefined} onAction={stage === 'views' ? () => setStage('scene') : enter} error={error}>
@@ -93,5 +93,5 @@ function Layout() {
     <circle cx={scene.start.x} cy={8-scene.start.y} r=".1" fill="#283e40"/>
     <text x="2" y="4.55" textAnchor="middle">Entrance</text><text x="7.2" y="4.4">Bench</text><path d="M6.2 4.4H7" stroke="#697e71" strokeWidth=".025"/>
     <text x="6" y="8.65" textAnchor="middle">12 m</text><text x="-.5" y="4.1" textAnchor="middle" transform="rotate(-90,-.5,4.1)">8 m</text>
-  </svg><span className="preparation-layout-caption">Authored dimensions · no captured photographs</span></div>;
+  </svg><span className="preparation-layout-caption">Example layout, not measured</span></div>;
 }

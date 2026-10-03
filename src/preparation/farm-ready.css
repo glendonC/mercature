@@ -21,7 +21,7 @@ li[data-state=off] .step-mark { border-style: dashed; }
 li[data-state=error] .step-mark { border-color: var(--error); }
 .step-bar { grid-column: 2 / 4; height: 2px; margin: -6px 0 10px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .step-bar i { display: block; height: 100%; background: var(--ink); transition: width var(--fast) linear; }
-.step-action { grid-column: 2 / 4; justify-self: end; min-height: 36px; margin: -4px 0 10px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: rgb(255 255 255 / .6); font-size: 13px; }
+.step-action { grid-column: 2 / 4; justify-self: end; min-height: var(--tap); margin: -4px 0 10px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: rgb(255 255 255 / .6); font-size: 13px; }
 .step-action:hover { border-color: var(--field); }
 
 /* The authored scene assembles as each real step finishes. */
