@@ -11,8 +11,11 @@ export type Photo = { id: string; position: Coordinate; heading: number | null; 
 export type View = { id: string; photoId: string; file: string; width: number; height: number; heading: number | null };
 export type Piece = { id: string; file: string; points: number; bytes: number; views: string[]; center: Coordinate; model: string; residual: number };
 export type MapFeature = { id: string; name: string; kind: string; points: Coordinate[]; holes: Coordinate[][] };
-export type Finding = { id: string; viewId: string; label: string; outline: Coordinate[]; verified: boolean; barrier: boolean };
-export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
+/** A recorded observation: a model outline on one source photo, or an OpenStreetMap tag with no photo (viewId null). Never verified here. */
+export type Finding = { id: string; viewId: string | null; photoId: string | null; label: string; concept: string; score: number | null; outline: Coordinate[]; verified: boolean; barrier: boolean; osm: Record<string, string> | null };
+/** A 10 m piece of the walk, as the preparation run classified it from its photos. */
+export type Stretch = { index: number; from: number; to: number; status: 'clear' | 'barrier' | 'no-photos'; line: Coordinate[]; findings: string[]; views: string[] };
+export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; stretches: Stretch[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : fail('The prepared record is malformed.');
@@ -89,17 +92,30 @@ function parseRecord(value: unknown, expectedId: DestinationId, published: boole
   }
   const context = record(root.map_context);
   // A package ships only the views behind flagged stretches; findings on other views stay in the local record.
-  const findings = list(root.findings, 3000).filter(raw => record(raw).view_id != null && (!published || viewIds.has(String(record(raw).view_id)))).map(raw => {
-    const f = record(raw), viewId = text(f.view_id), source = allViews.find(view => view.id === viewId);
+  // OpenStreetMap tag findings have no view and are kept with their tags.
+  const findings: Finding[] = list(root.findings, 3000).filter(raw => { const f = record(raw); return f.view_id == null ? f.osm != null : !published || viewIds.has(String(f.view_id)); }).map(raw => {
+    const f = record(raw), common = { id: idText(f.id), label: text(f.label), concept: typeof f.concept === 'string' ? text(f.concept, 100) : '', score: typeof f.score === 'number' ? number(f.score, 0, 1) : null, verified: f.verified === true, barrier: f.barrier === true };
+    if (f.view_id == null) {
+      const tags = record(record(f.osm).tags);
+      return { ...common, viewId: null, photoId: null, outline: [], osm: Object.fromEntries(Object.entries(tags).filter(([, value]) => typeof value === 'string').map(([key, value]) => [text(key, 100), text(value, 200)])) };
+    }
+    const viewId = text(f.view_id), source = allViews.find(view => view.id === viewId);
     if (!source) throw new Error('Finding references an unknown source.');
     if (f.photo_id !== source.photo_id) fail('Finding photograph does not match its source view.');
     const width = count(source.width, 20000), height = count(source.height, 20000);
-    return { id: idText(f.id), viewId, label: text(f.label), outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, width), number(p[1], 0, height)] as Coordinate; }), verified: f.verified === true, barrier: f.barrier === true };
+    return { ...common, viewId, photoId: text(f.photo_id), osm: null, outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, width), number(p[1], 0, height)] as Coordinate; }) };
+  });
+  const findingIds = new Set(findings.map(finding => finding.id));
+  const statuses = { clear: 'clear', barrier: 'barrier', no_photos: 'no-photos' } as const;
+  const stretches: Stretch[] = list(root.stretches ?? [], 2000).map((raw, index) => {
+    const s = record(raw), key = String(s.status), status = Object.hasOwn(statuses, key) ? statuses[key as keyof typeof statuses] : fail('Unknown stretch status.');
+    if (s.index !== index) fail('Stretches are out of order.');
+    return { index, from: number(s.from_m, 0, 1e5), to: number(s.to_m, 0, 1e5), status, line: list(s.line, 2000).map(coordinate), findings: list(s.findings ?? [], 200).map(idText).filter(id => findingIds.has(id)), views: list(s.views ?? [], 400).map(idText).filter(id => views.some(view => view.id === id)) };
   });
   const line = list(route.line, 20000).map(coordinate);
   const start = request.start == null ? null : record(request.start);
   const walked = line.slice(1).reduce((sum, point, i) => sum + Math.hypot(...metres(point, line[i])), 0);
-  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
+  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, stretches, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }
 export function parseDestination(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, false); }
 export function parsePlace(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, true); }
