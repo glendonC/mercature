@@ -30,8 +30,11 @@ export const concernsPlace = message => message.places.length > 0;
 export const categoryLabels = message => message.categories ?? (message.category ? [message.category] : []);
 
 let encoder;
+/** A size-study variant can be chosen with --variant int8 or --variant uint8. */
+const variantArg = process.argv.indexOf('--variant');
+export const VARIANT = variantArg > 0 ? process.argv[variantArg + 1] : undefined;
 export async function encoderInfo() {
-  encoder ??= await loadEncoder();
+  encoder ??= await loadEncoder(VARIANT);
   return encoder;
 }
 

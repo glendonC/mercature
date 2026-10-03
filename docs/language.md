@@ -1,141 +1,114 @@
-# Bounded language matching
+# Message understanding
 
-Korean is the first proposed local language, alongside English. The selection supports the
-Seoul presentation context; it is not evidence of suitability for a particular operator.
-Korean examples below are authored, unreviewed test material. No competent Korean reviewer,
-operator device or real visitor corpus has been supplied. These acceptance gates remain open.
+A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise.
 
-## Task boundary
+## What runs on the phone
 
-Match a short concern to existing inventory IDs for operator review. Preserve the original
-wording. Do not infer geometry, dimensions, movability, complaint truth, accessibility, or an
-appropriate physical action. Similarity is not a confidence percentage. Negation, resolved
-conditions, praise, ambiguous references and multiple concerns require review. Manual selection
-must remain available without model files and after inference failure.
+- **Encoder.** [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small/blob/614241f622f53c4eeff9890bdc4f31cfecc418b3/README.md) (MIT, 12 layers, 384 dimensions), as the int8 ONNX file of the [Xenova export](https://huggingface.co/Xenova/multilingual-e5-small/tree/761b726dd34fb83930e26aab4e9ac3899aa1fa78) pinned at revision `761b726d`. It follows the model card: `query: ` and `passage: ` prefixes, mean pooling, normalized embeddings.
+- **Runtime.** ONNX Runtime Web 1.22 (CPU WebAssembly build, one thread), served from the app's own origin, and [@huggingface/tokenizers](https://github.com/huggingface/tokenizers) 0.2.0 for the tokenizer. Transformers.js 3.8.1 was the first plan; it cannot use the CPU-only runtime in a browser (it then finds no supported device), and its default path needs the 21.6 MB WebGPU build. The same files run directly with half the runtime download.
+- **Heads.** Three small logistic regressions trained on labeled example messages, in a 16 KB JSON file shipped with the app (`src/language/heads.json`).
+- **Same code everywhere.** The browser and the evaluation scripts share the tokenizer, the WebAssembly runtime, the pooling and the decision code (`src/language/policy.ts`). On the 51 dev messages the browser and Node gave identical decisions.
 
-## Registered candidate and permissions
+One-time download, kept in the browser's Cache Storage after SHA-256 checks:
 
-The publisher's [multilingual-e5-small card](https://huggingface.co/intfloat/multilingual-e5-small/blob/614241f622f53c4eeff9890bdc4f31cfecc418b3/README.md)
-declares MIT and requires `query: ` and `passage: ` prefixes, mean pooling and normalized
-embeddings. Publisher revision: `614241f622f53c4eeff9890bdc4f31cfecc418b3`.
-The [Transformers.js export](https://huggingface.co/Xenova/multilingual-e5-small/tree/761b726dd34fb83930e26aab4e9ac3899aa1fa78)
-is pinned at `761b726dd34fb83930e26aab4e9ac3899aa1fa78`. Its q8 ONNX file is 118,308,185
-bytes with SHA-256 `f80102d3f2a1229f387d3c81909990d8945513e347b0eab049f7de3c6f98c193`;
-tokenizer JSON is 17,082,730 bytes with SHA-256
-`0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39`.
-The export card links to the publisher but carries no separate license field. The trial retains
-the publisher card and Microsoft's E5 repository MIT notice locally. No model redistribution
-is part of the application. Authored fixtures contain no private visitor inputs or real-site
-observations. The library trial uses `@huggingface/transformers` 3.8.1 (Apache-2.0), with CPU
-inference only. No existing Ollama model is substituted.
+| File | Bytes |
+| --- | ---: |
+| `onnx/model_quantized.onnx` (encoder, int8) | 118,308,185 |
+| `tokenizer.json` | 17,082,730 |
+| `tokenizer_config.json` | 443 |
+| `ort-wasm-simd-threaded.wasm` (runtime) | 11,133,407 |
+| **Total** | **146,524,765** |
 
-## Trial protocol registered before inference
+The app shell gains about 125 KB, precached by the service worker: the language code (84 KB, 27 KB gzipped), the heads (16 KB) and the runtime loader (21 KB). The 11 MB runtime binary is not precached for every visitor; it is stored with the model when Noor asks for it.
 
-This is a feasibility experiment on the available development Mac (Apple silicon), not a target
-phone benchmark. Raw artifacts, model weights, hardware details and outputs stay under ignored
-`.local/language/`. Reproduction scripts accept local paths; committed files contain no machine
-paths. The separate control and evaluation JSON fixtures are authored synthetic inventories
-from two different imagined sites. English and Korean control/evaluation texts are distinct;
-there is no training or threshold tuning. Translation validity is unreviewed.
+## How a message is answered
 
-Predeclared limits:
+1. The message and every feature are embedded. A feature is one passage (its names, its description and all its aliases) plus one short word list per language for English, Spanish and Korean. Its score averages the passage's cosine with its best word list's cosine. Only the order is used, never the value.
+2. **Kind.** If the most likely kind is below 0.76, the answer is *Not sure* (`unclear-kind`).
+3. **Issue type**, for problems. Below 0.55, *Not sure* (`unclear-kind`); the place candidates are still offered.
+4. **Place or not.** Below 0.58, the message is about no place, such as price, booking or taste (`no-place`), and no features are offered.
+5. **Which place.** If the top two features' scores are within 0.005, *Not sure* (`unclear-place`), with the three best offered in order. Otherwise the answer is ready.
 
-| Resource or decision | Limit |
-| --- | --- |
-| Model and tokenizer provisioning | 160 MB, no hidden first-inference download |
-| Browser runtime plus app provisioning | 40 MB (must be measured before deployment) |
-| Site inventory index | 100 KB; at most 32 entries |
-| Message | 500 Unicode code points; 128 model tokens maximum |
-| Local persisted model/runtime/index | 250 MB |
-| Cold model load | 15 seconds |
-| Warm single message and cached inventory | 2 seconds p95 |
-| Peak process memory | 1.5 GB |
-| Sustained run | 30 fresh inferences, no failure or retained-message growth |
-| Candidate selection | cosine >= 0.85, at most 3 IDs, within 0.04 of highest score |
-| Positive target recall | >= 85% across held-out targets |
-| Wrong suggested target fraction | <= 15% of emitted candidates |
-| No-match recall | >= 80% of no-match cases |
-| Multiple-target coverage | all expected IDs on >= 80% of multi-target cases |
-| Human review | competent Korean meaning/target review and manual-baseline comparison required |
+The kind and issue-type heads do not read the embedding directly. Each reads the message's similarity to short passages describing every label, three per label in English, Spanish and Korean (`scripts/language/labels.mjs`). These passages paraphrase the label definitions written for the data before any message existed. The place head reads the full 384-dimensional embedding.
 
-Controls include lexical grounding, cross-language grounding, known absent objects, praise,
-negation, historical resolution and multiple concerns. Held-out evaluation includes similar
-objects, another site, unseen objects, vague location, mixed languages and nonspatial feedback.
-A no-match annotation means no actionable current inventory concern, which is intentionally
-harder than retrieving the mentioned noun. The trial records target retrieval separately from
-meaning: embeddings cannot establish whether the complaint is current or true.
+**Reuse.** None of the heads refers to the farm's feature names: a new site needs its spot list with aliases, and its layout for the path check. The heads were trained only on messages about this farm, though, so a new site should still be checked with a few labeled messages of its own before trusting them.
 
-Compare exact alias matching against the same expected IDs, clearly labeled as a deterministic
-baseline. Manual translation plus pinning, operator task time/correction effort, reference
-PyTorch/export agreement, and a cold browser run with the network disconnected remain separate
-required checks. Do not claim them from a Node CPU benchmark. Do not relax thresholds after
-seeing results. Failed quality/resource gates keep the model unavailable in the product.
+## Data
 
-## Observed feasibility and decision
+| File | Messages | Use |
+| --- | ---: | --- |
+| `scripts/language/messages.json` | 253 (77 families) | train 114, dev 51, held-out 88 |
+| `scripts/language/messages-train-extra.json` | 150 (50 families) | training only |
 
-The fixed policy failed its quality gate. Local embedding inference is **not adopted** in the
-application. `suggestFeatures(message, inventory)` returns an explicit unavailable/manual state;
-it does not make a remote request, replay predictions, download files, or disguise alias search
-as AI. `aliasBaseline` is a separate exact-alias comparator, with tests that demonstrate its
-inability to distinguish praise and negation. `validateConfirmedFeatures` supports manual
-selection, correction and no selection using only IDs in the current inventory.
+Both files are synthetic, written by a large language model for this project, under CC0-1.0. Each family is one message written in English, Spanish and Korean as separate paraphrases with the same labels. 22 families also have a Southern Quechua (Cusco-Collao) machine translation. No text has been reviewed by a native speaker and no message comes from a real visitor.
 
-Two fresh Node processes ran the pinned q8 export on an Apple M5 Max development Mac with
-64 GiB memory, CPU provider, two inference threads and Node 24.15.0. Every extractor invocation
-was awaited through tokenization, ONNX inference, pooling and conversion to 384 finite numbers.
-The verification run produced 28 distinct fixture embeddings and 30 distinct sustained-run
-embeddings; no prediction cache was used. These are very short inputs and a fast development
-machine. They do not predict phone or browser latency.
+Labels: message kind, issue type for problems (two for two-concern messages), and the features meant. Case types: direct and indirect problems, praise of a place and in general, questions about a place and in general, negations ("the pots were not in the way at all"), resolved problems, vague complaints, two concerns in one message, and off-topic problems (price, taste, timing).
 
-| Check | Observed result |
-| --- | --- |
-| Exact model/tokenizer/config bytes | 135,392,183, SHA-256 verified |
-| Pipeline load after library import | 355 ms first process; 390 ms verification process |
-| Warm end-to-end query p95, 58 queries | 2.8 ms first process; 7.2 ms verification process |
-| Verification process total wall time | 790 ms, independently measured by OS process timer |
-| Peak RSS | 868 MB measured by OS process timer; Node reported 788 MB before disposal |
-| Sustained run | 30/30 finite fresh outputs; RSS 785 MB to 788 MB, no failures |
-| Network attempts | 0 with global fetch rejected and remote models disabled |
-| Control fixture SHA-256 | `22783d339da3aa7f3fc383e5af9d90ca11f4b453d815d0db277c3c02e9c016c6` |
-| Held-out fixture SHA-256 | `f54730e3797be612df5b34dd8df867947823a8aacc3a302708dc9fb3d365112e` |
+Splits are by family, so translations and paraphrases of one message never cross splits. The 22 Quechua families form the held-out set, so Quechua is never used for training or thresholds. Quechua is not among the languages of XLM-R, the base of multilingual-e5-small, while English, Spanish and Korean are. Every English message was read to check labels before the split; the extra training families were written without access to the evaluation file.
 
-The 30-query run is a bounded smoke test, not an energy, thermal or memory-leak study.
-Networking was disabled in the benchmark process, not disconnected at the device. Browser
-runtime bytes, app/index provisioning as a complete package, interrupted/resumed provisioning,
-corrupt model runtime behavior, and cold offline browser workflow remain unmeasured. The
-provisioner verifies complete files and atomically replaces each completed file; interruption
-restarts the interrupted file rather than providing byte-range resume.
+Not covered: real visitor writing (length, spelling, slang, mixed languages), other sites, long reviews, voice, and any review by native speakers.
 
-| Held-out metric | Fixed embedding policy | Exact alias baseline |
-| --- | --- | --- |
-| Correct targets / expected targets | 1/13 (7.7%) | 10/13 (76.9%) |
-| Wrong targets / suggested targets | 0/1 (0%) | 6/16 (37.5%) |
-| No-match cases correctly empty | 10/10 (100%) | 4/10 (40%) |
-| Multiple-target cases fully covered | 0/3 (0%) | 2/3 (66.7%) |
-| Cases with exact target set | 11/20 | 11/20 |
+## Training and thresholds
 
-The positive-recall and multi-target gates failed. The fixed threshold suppressed relevant
-Korean suggestions along with false positives; it was not retuned after evaluation. All ten
-positive messages had a relevant top-ranked ID, but ranking alone cannot identify current
-complaints. For example, a control negating obstruction scored 0.846 for the cart, higher than
-the Korean sign complaint scored for its correct sign (0.786). The alias baseline incorrectly
-linked praise, negation, resolved conditions and another site's similarly named feature.
-Neither is a validated concern interpreter. Raw results remain local and excluded from Git.
-Reference PyTorch agreement and competent language/operator reviews remain unperformed.
+Each head is an L2-regularized, class-balanced logistic regression. Regularization and all thresholds come from out-of-fold predictions: the 315 train, dev and extra-training messages are split into 5 folds by family, and no message is scored by a head that saw it. Each threshold maximizes correct answers minus three times confident wrong answers; the place threshold maximizes balanced accuracy. The final heads are then fitted on all 315 messages.
 
-## Reproduce the bounded local experiment
+Out-of-fold estimates before the held-out run: kind 269 of 315, issue type 123 of 177 problems, place or not 294 of 306. Feature ranking has no trained parameters; on train and dev messages naming a feature it put a right one first in 205 of 228 and in the top three in 223 of 228.
 
-Use Node 24 or newer. Run from the repository root; these commands install the experimental
-runtime and permitted model into ignored local storage. They do not enable the application AI.
+How each feature is embedded was chosen on the same train and dev messages (top-1 ranking, of 132 before the extra training families existed):
+
+| Passage | Top-1 | Top-3 | English | Spanish | Korean |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Description only | 50 | 89 | 27/44 | 12/44 | 11/44 |
+| Names and description | 75 | 107 | 37/44 | 28/44 | 10/44 |
+| Names, description and all aliases | 99 | 127 | 38/44 | 36/44 | 25/44 |
+| Best of description and per-language alias lists | 105 | 123 | 40/44 | 28/44 | 37/44 |
+| Average of full passage and best alias list (shipped) | 113 | 129 | 41/44 | 34/44 | 38/44 |
+
+Quechua aliases stay in each feature's full passage but get no separate word list: one- to three-word lists, several of them Spanish loanwords, embedded close to everything and pulled unrelated messages (top-1 rose from 201 to 205 of 228 without them).
+
+## Preregistered held-out evaluation
+
+Frozen before the held-out set was scored:
+
+- Heads `b6a40a3cfcfa` (`src/language/heads.json`, SHA-256 `cae6f446…80c1e6`) with thresholds kind 0.76, issue type 0.55, place 0.58, margin 0.005.
+- Held-out set: the 88 messages with `"split": "test"` in `messages.json` (SHA-256 `0a6aa395…d2ee3e`), 22 families in English, Spanish, Korean and Quechua.
+- Model file `model_quantized.onnx` (see the size study below).
+- One run of `node scripts/language/evaluate.mjs test`, with fresh inference for every message.
+
+Reported: feature top-1 and top-3, both features of two-concern messages in the top three, kind and issue-type accuracy, place-or-not accuracy, confident answers and how many were right, and whether each case type got what a person should see (a right answer or *Not sure*, never a confident wrong one; praise, negations and resolved problems not reported as problems; vague complaints marked *Not sure*; messages about no place left without features). Everything is broken down by language, with the exact-alias baseline from `src/language/index.ts` alongside.
+
+## Size study
+
+Published ONNX files of the same export at revision `761b726d`:
+
+| File | Bytes |
+| --- | ---: |
+| `model.onnx` (fp32) | 470,268,533 |
+| `model_q4.onnx` | 398,649,233 |
+| `model_bnb4.onnx` | 397,322,585 |
+| `model_fp16.onnx` | 235,336,732 |
+| `model_q4f16.onnx` | 204,777,691 |
+| `model_quantized.onnx` (shipped) | 118,308,185 |
+| `model_uint8.onnx` | 118,054,630 |
+| `model_int8.onnx` | 118,054,593 |
+
+The 4-bit and fp16 files are larger because most of the model is its 250,000-token embedding table, which those formats leave in 16 or 32 bits. `int8` and `uint8` would save 253,592 bytes (0.2%). Used in place of the shipped file with the same heads, on dev they were no better: top-1 33 and 35 of 39 against 36, confident answers 17 and 24 of 51 against 27. The shipped file stays. A real reduction needs a smaller vocabulary, which is not done.
+
+## Earlier trial
+
+An earlier trial with the same encoder accepted a feature only when its cosine similarity was at least 0.85. The model card says these scores cluster between 0.7 and 1.0 and only their order matters, so the cutoff suppressed correct answers along with wrong ones: 1 of 13 expected features found, even though the right feature ranked first for every positive message. This version uses order only, and learned heads for everything else.
+
+## Reproduce
+
+Node 24 or newer, from the repository root:
 
 ```sh
-npm install --prefix .local/language/runtime --no-audit --no-fund --save-exact @huggingface/transformers@3.8.1
 node scripts/language/provision.mjs
-node scripts/language/benchmark.mjs
+node scripts/language/passages.mjs
+node scripts/language/train.mjs
+node scripts/language/evaluate.mjs dev
+npx vite build --config scripts/language/harness/vite.config.ts
+node scripts/language/browser.mjs dev
 ```
 
-The provisioner accepts a model output directory as its first argument. The benchmark accepts
-model directory, Transformers Node module path and output JSON path. Use a fresh process for
-each cold run; do not confuse operating-system file cache with a fully cold device. Keep
-outputs local. A future decision policy needs its own preregistered, independently reviewed
-evaluation set rather than tuning against these held-out results.
+`provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium through the Hub URLs (redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.

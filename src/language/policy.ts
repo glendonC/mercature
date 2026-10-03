@@ -12,7 +12,7 @@ type Layer = {
 };
 
 /**
- * A head over label descriptions: the message's similarity to each label's example passages
+ * A head over label descriptions: the message's similarity to each label's passages
  * (written in English, Spanish and Korean) feeds a small logistic regression.
  */
 type PrototypeHead<Label> = Layer & {
@@ -72,13 +72,22 @@ export function queryText(message: string): string {
   return `query: ${message.normalize('NFKC').replace(/\s+/gu, ' ').trim()}`;
 }
 
-/** A feature is embedded as one full passage and one short word list per alias language. */
+/**
+ * Separate word lists only for the languages the ranking was validated on. Other languages'
+ * aliases still join the full passage; a one-word list in a language the encoder barely knows
+ * embeds close to everything and pulls unrelated messages.
+ */
+const LIST_LANGUAGES = new Set(['en', 'es', 'ko']);
+
+/** A feature is embedded as one full passage and one short word list per validated language. */
 export function passageTexts(feature: SiteFeature): { readonly full: string; readonly lists: readonly string[] } {
   const aliases = [...new Set(Object.values(feature.aliases).flat())];
   const names = [...new Set([feature.name.en, feature.name.es])].join(', ');
   return {
     full: `passage: ${names}. ${feature.description}${aliases.length ? ` Also called: ${aliases.join(', ')}.` : ''}`,
-    lists: Object.values(feature.aliases).filter(list => list.length).map(list => `passage: ${list.join(', ')}`),
+    lists: Object.entries(feature.aliases)
+      .filter(([language, list]) => LIST_LANGUAGES.has(language) && list.length)
+      .map(([, list]) => `passage: ${list.join(', ')}`),
   };
 }
 
@@ -126,9 +135,9 @@ const dot = (a: ArrayLike<number>, b: ArrayLike<number>) => {
   return sum;
 };
 
-/** Mean cosine between the message and each label's passages. */
+/** Cosine between the message and every label passage, in label order. */
 export function prototypeSimilarities(query: ArrayLike<number>, vectors: readonly (readonly ArrayLike<number>[])[]): number[] {
-  return vectors.map(group => group.reduce((sum, vector) => sum + dot(query, vector), 0) / group.length);
+  return vectors.flatMap(group => group.map(vector => dot(query, vector)));
 }
 
 export function softmax(values: readonly number[]): number[] {

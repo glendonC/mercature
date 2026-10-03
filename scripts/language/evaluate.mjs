@@ -9,9 +9,9 @@ import { resolve } from 'node:path';
 import { aliasBaseline } from '../../src/language/index.ts';
 import { RUNTIME_WASM } from '../../src/language/model.ts';
 import { buildIndex, decide, prepareHeads, queryText, score } from '../../src/language/policy.ts';
-import { FARM_FEATURES, HEADS_PATH, categoryLabels, concernsPlace, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
+import { FARM_FEATURES, HEADS_PATH, VARIANT, categoryLabels, concernsPlace, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
 
-const split = process.argv[2] ?? 'dev';
+const split = process.argv.slice(2).find(arg => ['train', 'dev', 'test'].includes(arg)) ?? 'dev';
 if (!['train', 'dev', 'test'].includes(split)) throw new Error('Split must be train, dev or test.');
 const headsText = await readFile(HEADS_PATH, 'utf8');
 const heads = JSON.parse(headsText);
@@ -96,6 +96,7 @@ const twoConcerns = rows.filter(row => row.message.case === 'two-concerns');
 const noPlace = rows.filter(row => hasPlaceLabel(row.message) && !concernsPlace(row.message));
 const report = {
   split,
+  variant: VARIANT ?? 'quantized',
   heads: heads.version,
   thresholds: heads.thresholds,
   overall: summarize(rows),
@@ -122,7 +123,7 @@ const failures = rows.filter(row => !expectation(row) || readyWrong(row) || (has
   got: row.decision, top3: ranked(row).slice(0, 3),
 }));
 await mkdir(resolve('.local/language'), { recursive: true });
-const out = resolve('.local/language', `results-${split}.json`);
+const out = resolve('.local/language', `results-${split}${VARIANT ? `-${VARIANT}` : ''}.json`);
 await writeFile(out, JSON.stringify({ report, failures, rows: rows.map(row => ({ id: row.message.id, decision: row.decision, ranked: ranked(row), kind: row.scores.kind, category: row.scores.category, place: row.scores.place, baseline: row.baseline, ms: row.ms })) }, null, 2));
 console.log(JSON.stringify(report, null, 2));
 console.log(`${failures.length} messages with a wrong ranking or decision; details in ${out}`);
