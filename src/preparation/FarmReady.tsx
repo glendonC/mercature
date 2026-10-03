@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Companion from '../components/Companion';
-import SceneFrame from '../components/SceneFrame';
+import PlaceCanvas from '../components/PlaceCanvas';
 import SpatialView from '../spatial/SpatialView';
 import { modelState, modelStored, prepareModel, type ModelState } from '../language/understand';
 import { NOOR_FARM } from '../site/farm';
@@ -55,6 +55,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
   const alive = useRef(true);
   const stored = useRef(false);
   const enterButton = useRef<HTMLButtonElement>(null);
+  const stage = useRef<HTMLDivElement>(null), dock = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
   const [project, setProject] = useState<Project | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -135,34 +136,27 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
     : model.kind === 'downloading' ? { state: 'working', value: model.total ? `${Math.floor(model.loaded / model.total * 100)}% of ${megabytes(model.total)}` : 'Starting' }
     : { state: 'working', value: model.kind === 'loading' ? 'Loading' : 'Checking' };
   const rows: { id: string; label: string; state: RowState; value: string }[] = [
-    { id: 'site', label: 'Site', state: step < 1 ? 'waiting' : project ? 'done' : error ? 'error' : 'working', value: project ? `Authored, ${size}` : '' },
+    { id: 'site', label: 'Site', state: step < 1 ? 'waiting' : project ? 'done' : error ? 'error' : 'working', value: project ? size : '' },
     { id: 'model', label: 'Language model', state: step < 2 ? 'waiting' : modelRow.state, value: step < 2 ? '' : modelRow.value },
     { id: 'spots', label: 'Spots', state: step < 3 ? 'waiting' : 'done', value: step < 3 ? '' : `${NOOR_FARM.features.length} listed` },
-    { id: 'paths', label: 'Paths', state: step < 4 ? 'waiting' : result ? 'done' : error ? 'error' : 'working', value: result ? `${reachable} of ${result.destinations.length} places reachable` : step < 4 ? '' : 'Checking' },
+    { id: 'paths', label: 'Paths', state: step < 4 ? 'waiting' : result ? 'done' : error ? 'error' : 'working', value: result ? `${reachable} of ${result.destinations.length} reachable` : step < 4 ? '' : 'Checking' },
   ];
   const line = error ? 'The site needs attention.' : result ? `${NOOR_FARM.name.en} is ready.` : `Getting ${NOOR_FARM.name.en} ready.`;
-  const stage = !project ? 'empty' : result ? 'paths' : 'site';
+  const stage_ = !project ? 'empty' : result ? 'paths' : 'site';
 
-  return <SceneFrame className={`guided-workspace farm-ready${leaving ? ' is-leaving' : ''}`} label={`Getting ${NOOR_FARM.name.en} ready`} step={stage}
-    progress={<header className="scene-progress farm-ready-title">
-      <button className="farm-ready-back" onClick={onHome} aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <div><h1>{NOOR_FARM.name.en}</h1><p>{NOOR_FARM.place}</p></div>
-      <span className="badge">Authored site</span>
-    </header>}
-    scene={project && <SpatialView controlsTarget={null} rotation={0} scene={project.scene} result={result ?? unchecked(project)} selectedId={selected} onSelect={setSelected} view="3d" compact />}
-    context={null}
-    dialogue={<>
-      <div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">Guide</span></Companion></div>
-      <div className="farm-ready-panel">
-        <p className="farm-ready-line" role="status">{line}</p>
-        <ol className="farm-ready-steps" aria-label="Getting ready">{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
-          <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
-          {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
-          {row.id === 'model' && step >= 2 && model.kind === 'off' && <button className="step-action" onClick={download}>{model.failed && model.stored ? 'Try again' : 'Download model'}</button>}
-        </li>)}</ol>
-        {error && <p className="farm-ready-error" role="alert">{error}</p>}
-        <button ref={enterButton} className="farm-ready-enter" data-ready={!!result} onClick={error ? onHome : enter}>{error ? 'Return home' : 'Enter'}</button>
-      </div>
-    </>}
-  />;
+  return <PlaceCanvas title={NOOR_FARM.name.en} view="place" onView={() => undefined} onHome={onHome} sceneRef={stage} dialogueRef={dock}
+    scene={<div className={`farm-ready-scene${leaving ? ' is-leaving' : ''}`} data-stage={stage_}>{project && <SpatialView controlsTarget={null} rotation={0} scene={project.scene} result={result ?? unchecked(project)} selectedId={selected} onSelect={setSelected} view="3d" compact />}</div>}
+    overview={<div className={`farm-ready${leaving ? ' is-leaving' : ''}`}>
+      <span className="place-kicker">Getting ready</span>
+      <h1>{NOOR_FARM.name.en}</h1>
+      <p className="place-copy">{NOOR_FARM.place}</p>
+      <ol className="farm-ready-steps" aria-label="Getting ready">{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
+        <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
+        {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
+        {row.id === 'model' && step >= 2 && model.kind === 'off' && <button className="step-action" onClick={download}>{model.failed && model.stored ? 'Try again' : 'Download model'}</button>}
+      </li>)}</ol>
+      {error && <p className="guide-error" role="alert">{error}</p>}
+      <div className="canvas-actions"><button ref={enterButton} className={result || error ? 'primary' : undefined} onClick={error ? onHome : enter}>{error ? 'Return home' : 'Enter'}</button></div>
+    </div>}
+    dialogue={<><div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">Guide</span></Companion></div><p role="status">{line}</p></>}/>;
 }

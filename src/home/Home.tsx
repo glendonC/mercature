@@ -6,9 +6,9 @@ import { NOOR_FARM } from '../site/farm';
 import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from '../icons';
 import './Home.css';
 export const covers = [
-  { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
-  { id: 'tbilisi-narikala', area: 'Tbilisi', name: 'Narikala', image: narikala, author: 'shankar s.', year: 2016, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Looking_towards_Narikala_Fortress_from_the_cable_car_station.jpg' },
-  { id: 'kathmandu-swayambhu', area: 'Kathmandu', name: 'Swayambhu', image: swayambhu, author: 'Jorge Láscar', year: 2014, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Stairs_with_365_steps_to_climb_to_Swayambhunath_(17209517714).jpg' },
+  { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
+  { id: 'tbilisi-narikala', area: 'Tbilisi', name: 'Narikala', aliases: 'Narikala fortress cable car', image: narikala, author: 'shankar s.', year: 2016, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Looking_towards_Narikala_Fortress_from_the_cable_car_station.jpg' },
+  { id: 'kathmandu-swayambhu', area: 'Kathmandu', name: 'Swayambhu', aliases: 'Swayambhunath monkey temple stupa', image: swayambhu, author: 'Jorge Láscar', year: 2014, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Stairs_with_365_steps_to_climb_to_Swayambhunath_(17209517714).jpg' },
 ];
 export type SavedEntry = { id: string; title: string; kind: 'place' | 'plan' };
 type Props = {
@@ -53,7 +53,7 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
   }, [expanded]);
   const term = query.trim().toLocaleLowerCase();
   const matches = saved.filter(item => item.title.toLocaleLowerCase().includes(term));
-  const destinations = covers.filter(cover => fold(`${cover.name} ${cover.area}`).includes(fold(term)));
+  const destinations = covers.filter(cover => fold(`${cover.name} ${cover.area} ${cover.aliases}`).includes(fold(term)));
   const showFarm = !term || farmTerms.includes(fold(term));
   const showDemo = !term || 'visitor courtyard example editing demo'.includes(term);
   const showNew = !!term && !matches.length && !destinations.length && !showDemo && !showFarm;

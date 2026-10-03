@@ -202,6 +202,8 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const last = ordered[Math.max(0, shown - 1)];
+  const first = year(ordered[0]?.capturedAt ?? null), final = year(ordered.at(-1)?.capturedAt ?? null);
+  const span = first && final ? first === final ? first : `${first} to ${final}` : '';
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
     {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}`} data-phase={phase} role="region" aria-label={`${name}, recorded preparation`}>
@@ -216,7 +218,7 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{data.start ? `${data.start.name} to ${targetName}` : data.title} · {Math.round(data.lengthMetres).toLocaleString('en')} m</p>
-          <div className="reveal-counter"><span className="badge">Recorded</span>{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> photos, {year(ordered[0]?.capturedAt ?? null)} to {year(ordered.at(-1)?.capturedAt ?? null)}</span><span className="reveal-when">{!data.pieces.length ? 'No 3D here' : layer ? <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</> : ''}</span></>}</div>
+          <div className="reveal-counter"><span className="badge">Recorded</span>{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{!data.pieces.length ? 'No 3D here' : layer ? <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</> : ''}</span></>}</div>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
         {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>

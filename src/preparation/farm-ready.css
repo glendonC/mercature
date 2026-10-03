@@ -1,29 +1,15 @@
-/* Getting Noor's farm ready: the workspace frame with the guide and its task card in the dialogue row. */
-.farm-ready .context-panel { display: none; }
-.farm-ready-title { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: var(--space-2) var(--space-3); padding-top: 0; }
-.farm-ready-title > div { min-width: 0; }
-.farm-ready-title h1 { margin: 8px 0 0; font-size: var(--text-title); font-weight: 400; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
-.farm-ready-title p { margin: var(--space-1) 0 0; font-size: var(--text-label); line-height: 1.4; color: var(--muted); }
-.farm-ready-title .badge { grid-column: 2; justify-self: start; }
-.farm-ready-back { display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 1px solid var(--glass-border); border-radius: 50%; background: var(--glass); backdrop-filter: var(--glass-blur); box-shadow: var(--highlight), var(--shadow-s); color: var(--ink); }
-.farm-ready-back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-
-.farm-ready .scene-dialogue { align-self: end; align-items: flex-end; width: min(460px, calc(100% - 80px)); }
-.farm-ready-bot { position: absolute; left: -76px; bottom: 6px; width: 64px; height: 64px; animation: farm-bot-in .7s var(--ease) both; }
+/* Getting Noor's farm ready inside the canvas the workspace uses, so the scene, the list and the guide stay put. */
+.place-canvas:has(.farm-ready) .place-tabs { visibility: hidden; }
+.farm-ready-bot { position: absolute; left: -76px; top: -5px; width: 64px; height: 64px; animation: farm-bot-in .7s var(--ease) both; }
 .farm-ready-bot .companion { margin: 0; padding: 0; border: 0; gap: 0; background: none; }
 .farm-ready-bot .companion p { margin: 0; }
-.farm-ready-panel {
-  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "line enter" "steps steps"; align-items: center; gap: var(--space-3) var(--space-4);
-  padding: var(--space-4) var(--space-4) var(--space-3) var(--space-5); border: 1px solid var(--glass-border); border-radius: var(--radius-l);
-  background: var(--glass); backdrop-filter: var(--glass-blur); box-shadow: var(--highlight), var(--shadow-l);
-  animation: farm-panel-in .55s var(--ease) .18s both;
-}
-.farm-ready-line { grid-area: line; margin: 0; font-size: var(--text-guide); font-weight: 300; letter-spacing: -.01em; line-height: 1.35; color: var(--ink); }
-.farm-ready-steps { grid-area: steps; list-style: none; margin: 0; padding: 0; display: grid; }
-.farm-ready-steps li { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); align-items: center; column-gap: var(--space-3); min-height: 36px; border-top: 1px solid var(--line); font-size: var(--text-body); color: var(--ink); transition: color var(--fast) ease; }
+.farm-ready { transition: opacity .26s ease, transform .26s var(--ease); }
+.farm-ready.is-leaving { opacity: 0; transform: translateY(6px); }
+.farm-ready-steps { list-style: none; margin: 22px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.farm-ready-steps li { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); align-items: center; column-gap: var(--space-3); min-height: 46px; border-bottom: 1px solid var(--line); color: var(--ink); transition: color var(--fast) ease; }
 .farm-ready-steps li[data-state=waiting] { color: var(--muted); }
 .step-label { white-space: nowrap; }
-.step-value { justify-self: end; min-width: 0; text-align: right; font-size: var(--text-label); color: var(--muted); font-variant-numeric: tabular-nums; animation: farm-value-in var(--slow) var(--ease) both; }
+.step-value { justify-self: end; min-width: 0; text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; animation: farm-value-in var(--slow) var(--ease) both; }
 li[data-step=paths][data-state=done] .step-value { color: var(--ink); font-weight: 500; }
 .step-mark { display: grid; place-items: center; width: 16px; height: 16px; border: 1.5px solid var(--field); border-radius: 50%; transition: background var(--fast) ease, border-color var(--fast) ease; }
 .step-mark svg { width: 12px; height: 12px; fill: none; stroke: var(--on-primary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
@@ -33,57 +19,45 @@ li[data-state=done] .step-mark { border-color: var(--ink); background: var(--ink
 li[data-state=done] .step-mark svg { opacity: 1; }
 li[data-state=off] .step-mark { border-style: dashed; }
 li[data-state=error] .step-mark { border-color: var(--error); }
-.step-bar { grid-column: 2 / 4; height: 2px; margin: -4px 0 8px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.step-bar { grid-column: 2 / 4; height: 2px; margin: -6px 0 10px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .step-bar i { display: block; height: 100%; background: var(--ink); transition: width var(--fast) linear; }
-.step-action { grid-column: 2 / 4; justify-self: end; min-height: 36px; margin: -4px 0 8px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font-size: var(--text-label); }
+.step-action { grid-column: 2 / 4; justify-self: end; min-height: 36px; margin: -4px 0 10px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-pill); background: rgb(255 255 255 / .6); font-size: 13px; }
 .step-action:hover { border-color: var(--field); }
-.farm-ready-enter { grid-area: enter; min-height: var(--tap); padding: 0 var(--space-5); border: 1px solid transparent; border-radius: var(--radius-pill); background: rgb(29 33 37 / .06); color: var(--ink); font-size: var(--text-body); transition: background var(--fast) ease, color var(--fast) ease; }
-.farm-ready-enter[data-ready=true] { background: var(--primary); color: var(--on-primary); box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), var(--shadow-s); }
-.farm-ready-enter[data-ready=true]:hover { background: var(--primary-hover); }
-.farm-ready-error { grid-column: 1 / -1; margin: 0; font-size: var(--text-label); line-height: 1.5; color: var(--error); }
 
 /* The authored scene assembles as each real step finishes. */
-.farm-ready .spatial-projection svg > * { animation: farm-fade .5s var(--ease) both; }
-.farm-ready .spatial-projection svg > g.spatial-feature { animation-name: farm-drop; }
-.farm-ready .spatial-projection svg > :nth-child(5) { animation-delay: 120ms; }
-.farm-ready .spatial-projection svg > :nth-child(6) { animation-delay: 160ms; }
-.farm-ready .spatial-projection svg > :nth-child(7) { animation-delay: 220ms; }
-.farm-ready .spatial-projection svg > :nth-child(8) { animation-delay: 270ms; }
-.farm-ready .spatial-projection svg > :nth-child(9) { animation-delay: 320ms; }
-.farm-ready .spatial-projection svg > :nth-child(10) { animation-delay: 370ms; }
-.farm-ready .spatial-projection svg > :nth-child(11) { animation-delay: 420ms; }
-.farm-ready .spatial-projection svg > :nth-child(12) { animation-delay: 470ms; }
-.farm-ready .spatial-projection svg > :nth-child(13) { animation-delay: 520ms; }
-.farm-ready .spatial-projection svg > :nth-child(14) { animation-delay: 570ms; }
-.farm-ready .spatial-projection svg > :nth-child(15) { animation-delay: 620ms; }
-.farm-ready .spatial-projection svg > :nth-child(16) { animation-delay: 670ms; }
-.farm-ready .spatial-projection svg > :nth-child(n+17) { animation-delay: 720ms; }
-.farm-ready .spatial-projection svg > g[opacity] { animation: none; transition: opacity .8s var(--ease); }
-.farm-ready:not([data-step=paths]) .spatial-projection svg > g[opacity] { opacity: 0; }
-.farm-ready:not([data-step=paths]) .spatial-projection svg > g.spatial-feature:has(> circle[r="13"]) { visibility: hidden; }
-.farm-ready[data-step=paths] .spatial-projection svg > g.spatial-feature:has(> circle[r="13"]) { animation: farm-drop .5s var(--ease) both; }
-
-.farm-ready.is-leaving .farm-ready-panel, .farm-ready.is-leaving .farm-ready-title { opacity: 0; transform: translateY(6px); transition: opacity .26s ease, transform .26s var(--ease); }
+.farm-ready-scene { display: grid; min-width: 0; min-height: 0; }
+.farm-ready-scene .spatial-projection svg > * { animation: farm-fade .5s var(--ease) both; }
+.farm-ready-scene .spatial-projection svg > g.spatial-feature { animation-name: farm-drop; }
+.farm-ready-scene .spatial-projection svg > :nth-child(3) { animation-name: farm-fade; }
+.farm-ready-scene .spatial-projection svg > :nth-child(5) { animation-delay: 120ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(6) { animation-delay: 160ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(7) { animation-delay: 220ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(8) { animation-delay: 270ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(9) { animation-delay: 320ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(10) { animation-delay: 370ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(11) { animation-delay: 420ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(12) { animation-delay: 470ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(13) { animation-delay: 520ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(14) { animation-delay: 570ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(15) { animation-delay: 620ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(16) { animation-delay: 670ms; }
+.farm-ready-scene .spatial-projection svg > :nth-child(n+17) { animation-delay: 720ms; }
+.farm-ready-scene .spatial-assessment { animation: none; transition: opacity .8s var(--ease); }
+.farm-ready-scene:not([data-stage=paths]) .spatial-assessment { opacity: 0; }
+.farm-ready-scene:not([data-stage=paths]) .spatial-destination { visibility: hidden; }
+.farm-ready-scene[data-stage=paths] .spatial-destination { animation: farm-pin .5s var(--ease) both; }
 
 @keyframes farm-bot-in { from { opacity: 0; transform: translateY(18px) scale(.6); } 60% { opacity: 1; } }
-@keyframes farm-panel-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
 @keyframes farm-value-in { from { opacity: 0; transform: translateX(-4px); } }
 @keyframes farm-fade { from { opacity: 0; } }
 @keyframes farm-drop { from { opacity: 0; transform: translateY(-16px); } }
+@keyframes farm-pin { from { opacity: 0; transform: translateY(-10px); } }
 @keyframes farm-spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 700px) {
-  .farm-ready-title { grid-template-columns: auto 1fr auto; align-items: center; }
-  .farm-ready-title h1 { margin: 0; }
-  .farm-ready-title p { font-size: var(--text-phone-min); }
-  .farm-ready-title .badge { grid-column: 3; grid-row: 1; justify-self: end; }
-  .farm-ready .scene-dialogue { align-self: start; align-items: flex-start; width: calc(100% - 70px); }
-  .farm-ready-bot { top: 0; bottom: auto; }
-  .farm-ready-panel { grid-template-columns: minmax(0, 1fr); grid-template-areas: "line" "steps" "enter"; padding: var(--space-4); }
-  .farm-ready-steps li { font-size: var(--text-body); }
-  .farm-ready-enter { width: 100%; }
+@media (max-width: 640px) {
+  .step-value, .step-action { font-size: var(--text-phone-min); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .farm-ready *, .farm-ready .spatial-projection svg > * { animation: none !important; transition: none !important; }
+  .farm-ready, .farm-ready *, .farm-ready-bot, .farm-ready-scene .spatial-projection svg > * { animation: none !important; transition: none !important; }
   li[data-state=working] .step-mark { border-top-color: var(--field); }
 }
