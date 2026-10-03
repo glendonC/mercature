@@ -1,4 +1,4 @@
-/** Local inspection adapter for the retained mercature-route/1 records.
+/** Inspection adapter for the retained mercature-route/1 records and their published mercature-place/1 packages.
  * It never supplies accepted geometry to the synthetic access solver. */
 export const DESTINATIONS = {
   'cusco-qorikancha': { name: 'Qorikancha', place: 'Cusco, Peru' },
@@ -12,7 +12,7 @@ export type View = { id: string; photoId: string; file: string; width: number; h
 export type Piece = { id: string; file: string; points: number; bytes: number; views: string[]; center: Coordinate; model: string; residual: number };
 export type MapFeature = { id: string; name: string; kind: string; points: Coordinate[]; holes: Coordinate[][] };
 export type Finding = { id: string; viewId: string; label: string; outline: Coordinate[]; verified: boolean; barrier: boolean };
-export type Destination = { id: DestinationId; title: string; place: string; localOnly: true; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
+export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : fail('The prepared record is malformed.');
@@ -27,8 +27,12 @@ const link = (value: unknown) => { if (value == null) return null; const url = n
 const path = (value: unknown): string => { const name = text(value, 200); if (!/^(views|photos|thumbs)\/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\.jpg$/.test(name) && !/^pieces\/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\.bin$/.test(name)) fail('Invalid local asset path.'); return name; };
 const unique = (items: { id: string }[]) => { if (new Set(items.map(item => item.id)).size !== items.length) fail('Prepared identifiers must be unique.'); };
 export function isDestinationId(value: string): value is DestinationId { return Object.hasOwn(DESTINATIONS, value); }
+/** Places with a published package under public/places, readable on any host. */
+export const PACKAGES: Partial<Record<DestinationId, string>> = { 'cusco-qorikancha': 'qorikancha' };
+const BASE = import.meta.env?.BASE_URL ?? '/';
+const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 export function localAsset(id: DestinationId, file: string, host = window.location): string {
-  if (!isDestinationId(id) || !['localhost', '127.0.0.1', '[::1]'].includes(host.hostname) || !['http:', 'https:'].includes(host.protocol)) fail('This prepared destination is local-only. Open Mercature on localhost to inspect it.');
+  if (!isDestinationId(id) || !LOOPBACK.includes(host.hostname) || !['http:', 'https:'].includes(host.protocol)) fail('This prepared destination is local-only. Open Mercature on localhost to inspect it.');
   if (file !== 'route.json') path(file);
   return `/routes/${id}/${file}`;
 }
@@ -37,9 +41,10 @@ export function metres(position: Coordinate, origin: Coordinate): Coordinate {
   const r = 6371008.8 * Math.PI / 180;
   return [(position[0] - origin[0]) * Math.cos(origin[1] * Math.PI / 180) * r, (position[1] - origin[1]) * r];
 }
-export function parseDestination(value: unknown, expectedId: DestinationId): Destination {
+/** Shared reader for the local mercature-route/1 record and the published mercature-place/1 package. */
+function parseRecord(value: unknown, expectedId: DestinationId, published: boolean): Destination {
   const root = record(value);
-  if (root.schema !== 'mercature-route/1' || root.id !== expectedId || root.local_only !== true || root.synthetic !== false) fail('This is not the expected local-only prepared destination.');
+  if (root.schema !== (published ? 'mercature-place/1' : 'mercature-route/1') || root.id !== expectedId || root.local_only !== !published || root.synthetic !== false) fail(published ? 'This is not the expected published place.' : 'This is not the expected local-only prepared destination.');
   const route = record(root.route), frame = record(route.frame), request = record(root.request), destination = record(request.destination);
   if (frame.axes !== 'east-north-up') fail('Unsupported reconstruction coordinate frame.');
   const origin = list(frame.origin, 3); if (origin.length !== 3) fail('Missing reconstruction origin.');
@@ -60,7 +65,7 @@ export function parseDestination(value: unknown, expectedId: DestinationId): Des
     if (file !== `views/${id}.jpg`) fail('A retained view does not match its source.');
     return { id, photoId: text(v.photo_id), file, width: count(v.width, 20000), height: count(v.height, 20000), heading: v.cut == null ? null : heading(record(v.cut).yaw_deg) };
   });
-  const pieces: Piece[] = list(root.spots, 200).filter(raw => record(raw).state === 'joined').map(raw => {
+  const pieces: Piece[] = published ? [] : list(root.spots, 200).filter(raw => record(raw).state === 'joined').map(raw => {
     const spot = record(raw), piece = record(spot.piece), id = idText(spot.id), file = path(piece.file);
     if (file !== `pieces/${id}.bin`) fail('A reconstruction file does not match its capture area.');
     const views = list(spot.views, 200).map(idText); if (views.some(v => !viewIds.has(v))) fail('A reconstruction links an unknown source view.');
@@ -83,7 +88,8 @@ export function parseDestination(value: unknown, expectedId: DestinationId): Des
     }).flat();
   }
   const context = record(root.map_context);
-  const findings = list(root.findings, 3000).filter(raw => record(raw).view_id != null).map(raw => {
+  // A package ships only the views behind flagged stretches; findings on other views stay in the local record.
+  const findings = list(root.findings, 3000).filter(raw => record(raw).view_id != null && (!published || viewIds.has(String(record(raw).view_id)))).map(raw => {
     const f = record(raw), viewId = text(f.view_id), source = allViews.find(view => view.id === viewId);
     if (!source) throw new Error('Finding references an unknown source.');
     if (f.photo_id !== source.photo_id) fail('Finding photograph does not match its source view.');
@@ -93,8 +99,12 @@ export function parseDestination(value: unknown, expectedId: DestinationId): Des
   const line = list(route.line, 20000).map(coordinate);
   const start = request.start == null ? null : record(request.start);
   const walked = line.slice(1).reduce((sum, point, i) => sum + Math.hypot(...metres(point, line[i])), 0);
-  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: true, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
+  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }
+export function parseDestination(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, false); }
+export function parsePlace(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, true); }
+/** The URL of one of this record's own images. */
+export function assetUrl(data: Destination, file: string): string { return data.assets + path(file); }
 export async function fetchLocal(id: DestinationId, file: string, limit: number, signal?: AbortSignal): Promise<ArrayBuffer> {
   const response = await fetch(localAsset(id, file), { signal, redirect: 'error', cache: 'no-store', credentials: 'same-origin' });
   if (!response.ok || /text\/html/i.test(response.headers.get('content-type') ?? '')) fail('The prepared files are not available on this device.');
@@ -106,9 +116,32 @@ export async function fetchLocal(id: DestinationId, file: string, limit: number,
   finally { await reader.cancel().catch(() => {}); }
   const bytes = new Uint8Array(length); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; } return bytes.buffer;
 }
+const decode = (bytes: ArrayBuffer): unknown => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+async function loadLocal(id: DestinationId, signal?: AbortSignal): Promise<Destination> {
+  return parseDestination(decode(await fetchLocal(id, 'route.json', 8000000, signal)), id);
+}
+async function loadPlace(id: DestinationId, signal?: AbortSignal): Promise<Destination> {
+  const response = await fetch(`${BASE}places/${PACKAGES[id] ?? fail('No published package for this place.')}/place.json`, { signal, redirect: 'error', credentials: 'same-origin' });
+  if (!response.ok || !/json/i.test(response.headers.get('content-type') ?? '')) fail('The published place is not available.');
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength > 8000000) fail('The published place exceeds the size limit.');
+  return parsePlace(decode(bytes), id);
+}
+/**
+ * The published package when one exists, which works on any host and offline once cached.
+ * On this device's loopback address the retained local record also supplies its point pieces;
+ * without a package, only the local record can open the place.
+ */
 export async function loadDestination(id: DestinationId, signal?: AbortSignal): Promise<Destination> {
-  const bytes = await fetchLocal(id, 'route.json', 8000000, signal);
-  return parseDestination(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), id);
+  if (PACKAGES[id]) {
+    const place = await loadPlace(id, signal).catch(error => { if (signal?.aborted) throw error; return null; });
+    if (place) {
+      if (!LOOPBACK.includes(location.hostname)) return place;
+      const local = await loadLocal(id, signal).catch(() => null);
+      return local ? { ...place, pieces: local.pieces } : place;
+    }
+  }
+  return loadLocal(id, signal);
 }
 /** MRP1 layout adapted from the reference route/piece.ts decoder. */
 export function decodeCloud(data: ArrayBuffer, expected: Piece): Cloud {

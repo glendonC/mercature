@@ -3,7 +3,7 @@ import qorikancha from '../covers/qorikancha.webp';
 import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
 import { NOOR_FARM } from '../site/farm';
-import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from './icons';
+import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from '../icons';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },

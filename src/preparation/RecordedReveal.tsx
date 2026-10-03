@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
-import { DESTINATIONS, decodeCloud, fetchLocal, loadDestination, localAsset, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type View } from '../destinations/data';
+import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type View } from '../destinations/data';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record. */
@@ -89,7 +89,7 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
     for (const card of cards) {
       const image = new Image();
       image.onload = () => setLoaded(previous => new Set(previous).add(card.view.id));
-      image.src = localAsset(id, card.view.file);
+      image.src = assetUrl(data!, card.view.file);
     }
   }, [cards, id]);
 
@@ -221,7 +221,7 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
         {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>
           <div className="reveal-photo" style={{ aspectRatio: `${card.view.width} / ${card.view.height}` }}>
-            <img src={localAsset(id, card.view.file)} alt=""/>
+            <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
           </div>
           <figcaption><strong>{card.findings.find(f => f.barrier)?.label ?? card.findings[0].label}</strong><span>Model suggestion, unverified</span></figcaption>

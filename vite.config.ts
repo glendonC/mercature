@@ -1,7 +1,16 @@
 import { defineConfig, type Plugin } from "vite";
 import { localDestinations } from "./local-destinations.ts";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+/** Published place packages are small and precached so a recorded place opens offline; public/models keeps its own cache. */
+function placeFiles(): string[] {
+  const root = new URL("./public/places/", import.meta.url);
+  if (!existsSync(root)) return [];
+  return readdirSync(root, { recursive: true, encoding: "utf8" })
+    .map((name) => name.split("\\").join("/"))
+    .filter((name) => statSync(new URL(name, root)).isFile())
+    .sort();
+}
 function offlineShell(): Plugin {
   return {
     name: "mercature-offline-shell",
@@ -15,6 +24,7 @@ function offlineShell(): Plugin {
           // The 11 MB inference runtime is stored with the model on request, not precached for every visitor.
           .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm"))
           .map((k) => `/${k}`),
+        ...placeFiles().map((name) => `/places/${name}`),
       ];
       const digest = createHash("sha256");
       for (const [name, item] of Object.entries(bundle).sort(([a], [b]) =>
@@ -27,6 +37,7 @@ function offlineShell(): Plugin {
         readFileSync(new URL("./public/manifest.webmanifest", import.meta.url)),
       );
       digest.update(readFileSync(new URL("./index.html", import.meta.url)));
+      for (const name of placeFiles()) digest.update(readFileSync(new URL(`./public/places/${name}`, import.meta.url)));
       const cache = `mercature-app-${digest.digest("hex").slice(0, 16)}`;
       const source = `const CACHE=${JSON.stringify(cache)};const ASSETS=${JSON.stringify([...new Set(assets)])};
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));

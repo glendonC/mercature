@@ -3,7 +3,6 @@ import Companion from '../components/Companion';
 import SceneFrame from '../components/SceneFrame';
 import SpatialView from '../spatial/SpatialView';
 import { modelState, modelStored, prepareModel, type ModelState } from '../language/understand';
-import { PROVISION_BYTES } from '../language/model';
 import { NOOR_FARM } from '../site/farm';
 import { createScenario } from '../spatial/scenario';
 import { solveScene } from '../spatial/solver';
@@ -124,7 +123,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
 
   function download() {
     setHold(true);
-    setModel({ kind: 'downloading', loaded: 0, total: PROVISION_BYTES });
+    setModel({ kind: 'downloading', loaded: 0, total: 0 });
     const update = (next: ModelState) => { if (alive.current) setModel(fromState(next, stored.current)); };
     void prepareModel(update).then(update);
   }
@@ -133,7 +132,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
   const modelRow: { state: RowState; value: string } =
     model.kind === 'ready' ? { state: 'done', value: 'Ready' }
     : model.kind === 'off' ? { state: 'off', value: 'Use without AI' }
-    : model.kind === 'downloading' ? { state: 'working', value: `${Math.floor(model.loaded / Math.max(1, model.total) * 100)}% of ${megabytes(model.total)}` }
+    : model.kind === 'downloading' ? { state: 'working', value: model.total ? `${Math.floor(model.loaded / model.total * 100)}% of ${megabytes(model.total)}` : 'Starting' }
     : { state: 'working', value: model.kind === 'loading' ? 'Loading' : 'Checking' };
   const rows: { id: string; label: string; state: RowState; value: string }[] = [
     { id: 'site', label: 'Site', state: step < 1 ? 'waiting' : project ? 'done' : error ? 'error' : 'working', value: project ? `Authored, ${size}` : '' },
@@ -159,7 +158,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
         <ol className="farm-ready-steps" aria-label="Getting ready">{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
           <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
           {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
-          {row.id === 'model' && step >= 2 && model.kind === 'off' && <button className="step-action" onClick={download}>{model.failed && model.stored ? 'Try again' : `Download ${megabytes(PROVISION_BYTES)}`}</button>}
+          {row.id === 'model' && step >= 2 && model.kind === 'off' && <button className="step-action" onClick={download}>{model.failed && model.stored ? 'Try again' : 'Download model'}</button>}
         </li>)}</ol>
         {error && <p className="farm-ready-error" role="alert">{error}</p>}
         <button ref={enterButton} className="farm-ready-enter" data-ready={!!result} onClick={error ? onHome : enter}>{error ? 'Return home' : 'Enter'}</button>
