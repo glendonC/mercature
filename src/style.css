@@ -40,6 +40,8 @@
   --blocked: #a6501c;
   --blocked-fill: #f6d2b8;
   --unknown: #5f6368;
+  /* One accent, only for a route and the current selection on a map */
+  --accent: #e5412d;
   /* Type */
   --text-display: clamp(40px, 6vw, 84px);
   --text-title: 22px;

@@ -11,8 +11,8 @@ export type Photo = { id: string; position: Coordinate; heading: number | null; 
 export type View = { id: string; photoId: string; file: string; width: number; height: number; heading: number | null };
 export type Piece = { id: string; file: string; points: number; bytes: number; views: string[]; center: Coordinate; model: string; residual: number };
 export type MapFeature = { id: string; name: string; kind: string; points: Coordinate[]; holes: Coordinate[][] };
-export type Finding = { id: string; viewId: string; label: string; outline: Coordinate[]; verified: boolean };
-export type Destination = { id: DestinationId; title: string; place: string; localOnly: true; origin: [number, number, number]; line: Coordinate[]; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
+export type Finding = { id: string; viewId: string; label: string; outline: Coordinate[]; verified: boolean; barrier: boolean };
+export type Destination = { id: DestinationId; title: string; place: string; localOnly: true; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; sources: { name: string; credit: string; licence: string; link: string | null }[] };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : fail('The prepared record is malformed.');
@@ -88,9 +88,12 @@ export function parseDestination(value: unknown, expectedId: DestinationId): Des
     if (!source) throw new Error('Finding references an unknown source.');
     if (f.photo_id !== source.photo_id) fail('Finding photograph does not match its source view.');
     const width = count(source.width, 20000), height = count(source.height, 20000);
-    return { id: idText(f.id), viewId, label: text(f.label), outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, width), number(p[1], 0, height)] as Coordinate; }), verified: f.verified === true };
+    return { id: idText(f.id), viewId, label: text(f.label), outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, width), number(p[1], 0, height)] as Coordinate; }), verified: f.verified === true, barrier: f.barrier === true };
   });
-  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: true, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line: list(route.line, 20000).map(coordinate), target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
+  const line = list(route.line, 20000).map(coordinate);
+  const start = request.start == null ? null : record(request.start);
+  const walked = line.slice(1).reduce((sum, point, i) => sum + Math.hypot(...metres(point, line[i])), 0);
+  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: true, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }
 export async function fetchLocal(id: DestinationId, file: string, limit: number, signal?: AbortSignal): Promise<ArrayBuffer> {
   const response = await fetch(localAsset(id, file), { signal, redirect: 'error', cache: 'no-store', credentials: 'same-origin' });

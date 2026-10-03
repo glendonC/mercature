@@ -2,19 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, PointerEvent } from 'react';
 import Companion from '../components/Companion';
 import { Preparation } from '../preparation/Preparation';
-import { DESTINATIONS, decodeCloud, fetchLocal, isDestinationId, loadDestination, localAsset, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type View } from './data';
+import { DESTINATIONS, decodeCloud, fetchLocal, isDestinationId, loadDestination, localAsset, type Cloud, type Destination, type DestinationId, type View } from './data';
+import GeographicMap from './GeographicMap';
 import './destinations.css';
-export type DestinationWorkspaceProps = { id: string; onHome: () => void };
-export default function DestinationWorkspace({id,onHome}: DestinationWorkspaceProps) { return isDestinationId(id) ? <Session key={id} id={id} onHome={onHome}/> : <main className="destination-loading"><p>This prepared destination is not in the local catalogue.</p><button onClick={onHome}>Home</button></main>; }
-function Session({ id, onHome }: {id:DestinationId;onHome:()=>void}) {
+/** initial: records already read and replayed, so the inspection opens directly on the same map. */
+export type DestinationWorkspaceProps = { id: string; onHome: () => void; initial?: Destination };
+export default function DestinationWorkspace({id,onHome,initial}: DestinationWorkspaceProps) { return isDestinationId(id) ? <Session key={id} id={id} onHome={onHome} initial={initial?.id === id ? initial : undefined}/> : <main className="destination-loading"><p>This prepared destination is not in the local catalogue.</p><button onClick={onHome}>Home</button></main>; }
+function Session({ id, onHome, initial }: {id:DestinationId;onHome:()=>void;initial?:Destination}) {
   const [mapZoom, setMapZoom] = useState(1), [camera, setCamera] = useState({yaw:.55,pitch:.45,zoom:1});
-  const [preparing, setPreparing] = useState(true), [preparationStage, setPreparationStage] = useState<'views' | 'scene'>('views'), [rendered, setRendered] = useState(false);
-  const [data, setData] = useState<Destination | null>(null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
-  const [selected, setSelected] = useState(''), [view, setView] = useState<'map' | '3d' | 'split'>('map');
-  const [pieceId, setPieceId] = useState(''), [cloud, setCloud] = useState<Cloud | null>(null), [cloudError, setCloudError] = useState(''), [cloudBusy, setCloudBusy] = useState(false);
+  const [preparing, setPreparing] = useState(!initial), [preparationStage, setPreparationStage] = useState<'views' | 'scene'>('views'), [rendered, setRendered] = useState(false);
+  const [data, setData] = useState<Destination | null>(initial ?? null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
+  const [selected, setSelected] = useState(initial?.views[0]?.id ?? ''), [view, setView] = useState<'map' | '3d' | 'split'>('map');
+  const [pieceId, setPieceId] = useState(() => initial ? initial.pieces.find(p => p.views.includes(initial.views[0]?.id))?.id ?? initial.pieces[0]?.id ?? '' : ''), [cloud, setCloud] = useState<Cloud | null>(null), [cloudError, setCloudError] = useState(''), [cloudBusy, setCloudBusy] = useState(false);
   const [imageError, setImageError] = useState(false), [showOutlines, setShowOutlines] = useState(false);
   const evidence = useRef<HTMLDialogElement>(null), credits = useRef<HTMLDialogElement>(null), evidenceTrigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => { const controller = new AbortController(); setError(''); setData(null); loadDestination(id, controller.signal).then(next => { setData(next); setSelected(next.views[0]?.id ?? ''); setPieceId(next.pieces.find(p => p.views.includes(next.views[0]?.id))?.id ?? next.pieces[0]?.id ?? ''); }).catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'This destination could not be opened.'); }); return () => controller.abort(); }, [id, retry]);
+  useEffect(() => { if (initial && retry === 0) return; const controller = new AbortController(); setError(''); setData(null); loadDestination(id, controller.signal).then(next => { setData(next); setSelected(next.views[0]?.id ?? ''); setPieceId(next.pieces.find(p => p.views.includes(next.views[0]?.id))?.id ?? next.pieces[0]?.id ?? ''); }).catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'This destination could not be opened.'); }); return () => controller.abort(); }, [id, retry]);
   const source = data?.views.find(v => v.id === selected), photo = data?.photos.find(p => p.id === source?.photoId);
   const piece = data?.pieces.find(p => p.id === pieceId);
   useEffect(() => { setRendered(false); }, [pieceId]);
@@ -73,30 +75,6 @@ function Session({ id, onHome }: {id:DestinationId;onHome:()=>void}) {
     </>}</dialog>
     <dialog ref={credits} className="destination-dialog" aria-label="Prepared source credits"><header><h2>Prepared sources</h2><button autoFocus aria-label="Close source credits" onClick={() => credits.current?.close()}>×</button></header><p>These retained route files and photographs stay on this Mac. This viewer makes no external data requests.</p>{data?.sources.map(source => <p key={source.name}><strong>{source.name}</strong><br/>{source.credit} · {source.licence}{source.link && <> · <a href={source.link} target="_blank" rel="noreferrer">Source</a></>}</p>)}{cloud && <p>The current area contains {cloud.points.toLocaleString()} retained points. A deterministic sample of {Math.ceil(cloud.points / Math.max(1, Math.ceil(cloud.points / 45000))).toLocaleString()} points is displayed to bound device work; the original coordinates and colours are preserved.</p>}<p>Reconstruction covers selected capture areas only. No measured-site access model has been accepted.</p></dialog>
   </main>;
-}
-
-function GeographicMap({data, selected, onSelect, hidden, zoom, setZoom}: {data: Destination; selected: string; onSelect: (id: string) => void; hidden: boolean; zoom: number; setZoom: Dispatch<SetStateAction<number>>}) {
-  const origin: Coordinate = [data.origin[0], data.origin[1]];
-  const photos = data.photos.filter(photo => data.views.some(view => view.photoId === photo.id));
-  const selectedView = data.views.find(v => v.id === selected), selectedPhoto = photos.find(p => p.id === selectedView?.photoId);
-  const extent = [...data.line, data.target.position, ...photos.map(p => p.position)].map(p => metres(p, origin));
-  const minX = Math.min(...extent.map(p => p[0])), maxX = Math.max(...extent.map(p => p[0])), minY = Math.min(...extent.map(p => p[1])), maxY = Math.max(...extent.map(p => p[1]));
-  const w = Math.max(maxX - minX, 40), h = Math.max(maxY - minY, 40), scale = Math.min(700 / w, 420 / h) * zoom;
-  const centre = selectedPhoto && zoom > 1 ? metres(selectedPhoto.position, origin) : [(minX + maxX) / 2, (minY + maxY) / 2];
-  const project = (point: Coordinate): Coordinate => {const p = metres(point, origin); return [400 + (p[0] - centre[0]) * scale, 250 - (p[1] - centre[1]) * scale];};
-  const line = (points: Coordinate[]) => points.map(p => project(p).join(',')).join(' ');
-  const selectedPosition = selectedPhoto && project(selectedPhoto.position), selectedHeading = selectedView?.heading ?? selectedPhoto?.heading;
-  const scaleMetres = zoom > 1 ? 20 : 50;
-  return <section className="destination-map" hidden={hidden} aria-label="Geographic source map"><svg viewBox="0 0 800 500" role="group" aria-label="Recorded geographic route and source cameras">
-    <rect width="800" height="500" fill="#f0f1e9"/>
-    {data.buildings.map(feature => <path key={feature.id} d={[feature.points,...feature.holes].map(ring=>`M${line(ring)}Z`).join(' ')} fillRule="evenodd" fill="#e0dfd2" stroke="#d0d1c3" strokeWidth=".7"><title>{feature.name || 'OpenStreetMap building'}</title></path>)}
-    {data.ways.map(feature => <polyline key={feature.id} points={line(feature.points)} fill="none" stroke={feature.kind === 'steps' ? '#cab9a4' : '#fffdf5'} strokeWidth={feature.kind === 'residential' ? 9 : 4} strokeDasharray={feature.kind === 'steps' ? '2 2' : undefined} strokeLinecap="round"><title>{feature.name || feature.kind}</title></polyline>)}
-    <polyline points={line(data.line)} fill="none" stroke="#d3e0d1" strokeWidth="8" strokeLinecap="round"/><polyline points={line(data.line)} fill="none" stroke="#638a79" strokeWidth="3" strokeLinecap="round"/>
-    {photos.map(photo => {const point = project(photo.position); const chosen = selectedPhoto?.id === photo.id, first = data.views.find(v => v.photoId === photo.id)!;return <g key={photo.id} role="button" tabIndex={0} aria-label={`Inspect source photograph by ${photo.creator} on ${photo.capturedAt?.slice(0,10) ?? 'unknown date'}`} aria-pressed={chosen} onClick={() => onSelect(first.id)} onKeyDown={e => {if(e.key === 'Enter' || e.key === ' '){e.preventDefault();onSelect(first.id);}}}><circle cx={point[0]} cy={point[1]} r="12" fill="transparent"/><circle cx={point[0]} cy={point[1]} r={chosen ? 6 : 3.3} fill={chosen ? '#385f54' : '#93b1a1'} stroke="#fffdf3" strokeWidth={chosen ? 2 : 1}/></g>;})}
-    {selectedPosition && selectedHeading != null && <path d="M0 0L-14 -31L14 -31Z" transform={`translate(${selectedPosition.join(' ')}) rotate(${selectedHeading})`} fill="#537d6550" stroke="#537d65" strokeWidth="1" pointerEvents="none"/>}
-    <g transform={`translate(${project(data.target.position).join(' ')})`}><circle r="9" fill="#eee0c0" stroke="#a89160" strokeWidth="2"/><text y="4" textAnchor="middle" fill="#846c44" fontSize="12">◇</text><title>{data.target.name}</title></g>
-    <g transform="translate(24 456)"><path d={`M0 -4V0H${scaleMetres*scale}V-4`} fill="none" stroke="#607467" strokeWidth="1.5"/><text y="17" fontSize="11" fill="#687567">{scaleMetres} m · geographic scale</text></g><text x="766" y="28" fontSize="12" fill="#667863">N ↑</text>
-  </svg><div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label="Zoom map in">+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label="Zoom map out">−</button><button onClick={() => setZoom(1)}>Fit route</button></div><span className="destination-map-credit">© OpenStreetMap contributors · source camera positions</span></section>;
 }
 
 function PointCloud({cloud, selectedView, onReady, onFailure, orbit, setOrbit}: {cloud: Cloud; selectedView: string; onReady?: () => void; onFailure?: (error: string) => void; orbit: {yaw:number;pitch:number;zoom:number}; setOrbit: Dispatch<SetStateAction<{yaw:number;pitch:number;zoom:number}>>}) {
