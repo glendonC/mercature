@@ -21,7 +21,7 @@ type Download = { readonly file: PinnedFile; readonly key: string; readonly sour
 export type ModelSet = { readonly name: 'latin-hangul' | 'full'; readonly modelBytes: number; readonly downloads: readonly Download[] };
 
 const runtime: Download = { file: RUNTIME_WASM, key: runtimeKey, source: runtimeSource };
-const sameOrigin = (path: string) => new URL(`${import.meta.env.BASE_URL}${TRIMMED_ENCODER.directory}${path}`, location.origin).href;
+const sameOrigin = (path: string) => new URL(`${import.meta.env.BASE_URL}${TRIMMED_ENCODER.directory}${path}`, location.href).href;
 const sets: readonly ModelSet[] = [
   {
     name: 'latin-hangul',
