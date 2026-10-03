@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
+import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type View } from '../destinations/data';
 import './reveal.css';
@@ -63,7 +64,7 @@ function chooseCards(data: Destination): Card[] {
 }
 
 /** Plays the retained preparation of a recorded place, then opens its inspection on the same map. */
-export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHome: () => void }) {
+export default function RecordedReveal({ id, onHome, onOpen }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void }) {
   const [data, setData] = useState<Destination | null>(null);
   const [failed, setFailed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -76,11 +77,13 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null);
 
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
+    setFailed(false);
     loadDestination(id, controller.signal).then(setData).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
-  }, [id]);
+  }, [id, attempt]);
 
   const ordered = useMemo(() => data ? captureOrder(data.photos) : [], [data]);
   const cards = useMemo(() => data ? chooseCards(data) : [], [data]);
@@ -198,7 +201,7 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
     return () => cancelAnimationFrame(frame);
   }, [phase, quiet]);
 
-  if (failed) return <DestinationWorkspace id={id} onHome={onHome}/>;
+  if (failed) return <RecordedPreview id={id} onHome={onHome} onOpen={onOpen} onRetry={() => setAttempt(n => n + 1)}/>;
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const last = ordered[Math.max(0, shown - 1)];
@@ -218,7 +221,7 @@ export default function RecordedReveal({ id, onHome }: { id: DestinationId; onHo
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{data.start ? `${data.start.name} to ${targetName}` : data.title} · {Math.round(data.lengthMetres).toLocaleString('en')} m</p>
-          <div className="reveal-counter"><span className="badge">Recorded</span>{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{!data.pieces.length ? 'No 3D here' : layer ? <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</> : ''}</span></>}</div>
+          <div className="reveal-counter"><span className="badge">Recorded</span>{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{!data.pieces.length ? data.localOnly ? 'No 3D here' : '' : layer ? <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</> : ''}</span></>}</div>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
         {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>

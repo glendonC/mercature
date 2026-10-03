@@ -73,3 +73,30 @@
   .reveal .map-route polyline, .reveal-photo polygon { stroke-dashoffset: 0; }
   .reveal-photo polygon { fill-opacity: 1; }
 }
+
+/* A recorded place that cannot be read here: a calm preview, never an error. */
+.recorded-preview { position: relative; min-height: 100svh; display: grid; place-items: center; padding: var(--space-7) var(--space-5); color: var(--ink); background: radial-gradient(ellipse at 18% 22%, #dbe9ef80, transparent 44%), radial-gradient(ellipse at 84% 80%, #e6ebd880, transparent 42%), var(--paper); }
+.recorded-preview-back { position: absolute; top: 24px; left: 24px; display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 1px solid var(--glass-border); border-radius: 50%; background: var(--glass); backdrop-filter: var(--glass-blur); box-shadow: var(--highlight), var(--shadow-s); }
+.recorded-preview-back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.recorded-preview-card { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: var(--space-7); width: min(980px, 100%); animation: reveal-card .6s var(--ease) both; }
+.recorded-preview-card figure { margin: 0; }
+.recorded-preview-frame { display: block; aspect-ratio: 1.9; mask: url('../covers/photo-squircle-mask.png') center / 100% 100% no-repeat; }
+.recorded-preview-frame img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.85); }
+.recorded-preview-card figcaption { margin-top: var(--space-3); font-size: var(--text-caption); color: var(--muted); text-align: center; }
+.recorded-preview-card figcaption a { color: inherit; }
+.recorded-preview-text h1 { margin: var(--space-4) 0 var(--space-1); font-size: 40px; font-weight: 300; letter-spacing: -.04em; line-height: 1.05; }
+.recorded-preview-place { margin: 0 0 var(--space-5); font-size: var(--text-label); color: var(--muted); }
+.recorded-preview-text > p:not(.recorded-preview-place) { margin: 0; font-size: var(--text-body); line-height: 1.5; color: var(--ink); }
+.recorded-preview-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+.recorded-preview-actions button { min-height: var(--tap); padding: 0 var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-pill); background: rgb(255 255 255 / .6); color: var(--ink); font-size: var(--text-body); }
+.recorded-preview-actions .primary { border-color: transparent; background: var(--primary); color: var(--on-primary); box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), var(--shadow-s); }
+.recorded-preview-actions .quiet { border-color: transparent; background: transparent; color: var(--muted); }
+@media (max-width: 639px) {
+  .recorded-preview { place-items: start center; padding: 88px var(--space-4) var(--space-6); }
+  .recorded-preview-back { top: 16px; left: 16px; }
+  .recorded-preview-card { grid-template-columns: 1fr; gap: var(--space-5); }
+  .recorded-preview-text h1 { font-size: 32px; }
+  .recorded-preview-card figcaption, .recorded-preview-place { font-size: var(--text-phone-min); }
+  .recorded-preview-actions button { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .recorded-preview-card { animation: none; } }

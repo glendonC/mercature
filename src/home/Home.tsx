@@ -70,7 +70,7 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
         </form>
         <div id="place-results" ref={results} className="home-results" hidden={!expanded} aria-label="Places">
           {(showFarm || destinations.length>0 || showDemo) && <div className="home-prepared">
-            {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name.en}</strong><small>{NOOR_FARM.place}</small></span><span className="badge">Authored site</span></button>}
+            {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name.en}</strong><small>{NOOR_FARM.place}</small></span><span className="badge">Example</span></button>}
             {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span><span className="badge">Recorded</span></button>)}
             {showDemo && <button onClick={onExample}><span className="result-scene-icon"><SceneIcon/></span><span><strong>Visitor courtyard</strong></span><span className="badge">Example</span></button>}
           </div>}

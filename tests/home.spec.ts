@@ -61,7 +61,7 @@ test('farm search terms find Noor\'s farm first and its getting-ready steps hand
   const search = page.getByRole('textbox', {name:'Explore a place'});
   for (const term of ['Noor', 'farm', 'finca']) {
     await search.fill(term);
-    await expect(page.locator('#place-results button').first()).toHaveAccessibleName(/^Noor's farm .*Authored site$/);
+    await expect(page.locator('#place-results button').first()).toHaveAccessibleName(/^Noor's farm .*Example$/);
   }
   await page.locator('#place-results button').first().click();
   await expect(page.locator('li[data-step=paths]')).toContainText('3 of 4 reachable');
@@ -69,4 +69,14 @@ test('farm search terms find Noor\'s farm first and its getting-ready steps hand
   await expect(page.getByRole('status').filter({hasText:"Noor's farm is ready."})).toBeVisible();
   await expect(page.locator('.farm-ready')).toHaveCount(0, {timeout: 8000});
   await expect(page.getByRole('button', {name:'Scene options', exact:true})).toBeVisible();
+});
+
+test('the install manifest uses relative paths and every icon it names is served', async ({page, request}) => {
+  await page.goto('/');
+  const href = await page.locator('link[rel=manifest]').getAttribute('href');
+  expect(href).toBe('./manifest.webmanifest');
+  const manifest = await (await request.get(href!)).json();
+  expect(manifest).toMatchObject({name:'Mercature', start_url:'./', scope:'./', display:'standalone'});
+  expect(manifest.icons.map((icon: {purpose: string}) => icon.purpose)).toContain('maskable');
+  for (const icon of manifest.icons) expect((await request.get(icon.src)).status(), icon.src).toBe(200);
 });

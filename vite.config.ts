@@ -2,13 +2,13 @@ import { defineConfig, type Plugin } from "vite";
 import { localDestinations } from "./local-destinations.ts";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-/** Published place packages are small and precached so a recorded place opens offline; public/models keeps its own cache. */
-function placeFiles(): string[] {
-  const root = new URL("./public/places/", import.meta.url);
+/** Everything in public/ except the model, which keeps its own cache: the manifest, icons and published places. */
+function publicFiles(): string[] {
+  const root = new URL("./public/", import.meta.url);
   if (!existsSync(root)) return [];
   return readdirSync(root, { recursive: true, encoding: "utf8" })
     .map((name) => name.split("\\").join("/"))
-    .filter((name) => statSync(new URL(name, root)).isFile())
+    .filter((name) => !name.startsWith("models/") && !name.endsWith(".DS_Store") && statSync(new URL(name, root)).isFile())
     .sort();
 }
 function offlineShell(): Plugin {
@@ -16,15 +16,14 @@ function offlineShell(): Plugin {
     name: "mercature-offline-shell",
     apply: "build",
     generateBundle(_options, bundle) {
+      // Paths relative to the service worker, so the same build works at a domain root or under a sub-path.
       const assets = [
-        "/",
-        "/index.html",
-        "/manifest.webmanifest",
+        "",
+        "index.html",
         ...Object.keys(bundle)
           // The 11 MB inference runtime is stored with the model on request, not precached for every visitor.
-          .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm"))
-          .map((k) => `/${k}`),
-        ...placeFiles().map((name) => `/places/${name}`),
+          .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm")),
+        ...publicFiles(),
       ];
       const digest = createHash("sha256");
       for (const [name, item] of Object.entries(bundle).sort(([a], [b]) =>
@@ -33,18 +32,15 @@ function offlineShell(): Plugin {
         digest.update(name);
         digest.update(item.type === "chunk" ? item.code : item.source);
       }
-      digest.update(
-        readFileSync(new URL("./public/manifest.webmanifest", import.meta.url)),
-      );
       digest.update(readFileSync(new URL("./index.html", import.meta.url)));
-      for (const name of placeFiles()) digest.update(readFileSync(new URL(`./public/places/${name}`, import.meta.url)));
+      for (const name of publicFiles()) digest.update(readFileSync(new URL(`./public/${name}`, import.meta.url)));
       const cache = `mercature-app-${digest.digest("hex").slice(0, 16)}`;
-      const source = `const CACHE=${JSON.stringify(cache)};const ASSETS=${JSON.stringify([...new Set(assets)])};
+      const source = `const CACHE=${JSON.stringify(cache)};const SCOPE=new URL('./',self.location.href).pathname;const ASSETS=${JSON.stringify([...new Set(assets)])}.map(path=>SCOPE+path);
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('mercature-app-')&&key!==CACHE).map(key=>caches.delete(key)))),self.clients.claim()])));
-self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin)return;if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.open(CACHE).then(cache=>cache.match('/index.html'))));return;}if(ASSETS.includes(url.pathname))event.respondWith(caches.open(CACHE).then(cache=>cache.match(event.request).then(response=>response||fetch(event.request))));});`;
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin)return;if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.open(CACHE).then(cache=>cache.match(SCOPE+'index.html'))));return;}if(ASSETS.includes(url.pathname))event.respondWith(caches.open(CACHE).then(cache=>cache.match(event.request).then(response=>response||fetch(event.request))));});`;
       this.emitFile({ type: "asset", fileName: "sw.js", source });
     },
   };
 }
-export default defineConfig({ plugins: [localDestinations(), offlineShell()] });
+export default defineConfig({ base: "./", plugins: [localDestinations(), offlineShell()] });

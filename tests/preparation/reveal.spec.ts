@@ -37,3 +37,16 @@ test('a photo-only place says it has no 3D and still opens its map', async ({pag
   await page.getByRole('button', {name:'3D', exact:true}).click();
   await expect(page.getByText('No retained 3D at this destination')).toBeVisible();
 });
+
+test('a recorded place without its records shows a calm preview that leads to a place that plays anywhere', async ({page}) => {
+  test.setTimeout(20000);
+  await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
+  await page.goto('/');
+  await page.getByRole('button', {name:'Explore Narikala · Tbilisi'}).click();
+  const preview = page.getByRole('main', {name:'Narikala, recorded example'});
+  await expect(preview).toContainText('Recorded example, available in a local install.');
+  await expect(preview.getByRole('link', {name:'CC BY 2.0'})).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await preview.getByRole('button', {name:'See Qorikancha'}).click();
+  await expect(page.getByRole('region', {name:'Qorikancha, recorded preparation'})).toBeVisible();
+});

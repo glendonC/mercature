@@ -211,7 +211,7 @@ export default function App() {
       )}
       {active === "prepare" && <AuthoredPreparation onHome={() => setActive("home")} onReady={(initialViewState) => { setWorkspace({key: crypto.randomUUID(), example: true, initialViewState}); setActive("spatial"); }} />}
       {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
-      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />)}
+      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />)}
       <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Upload photos or video" onChange={event => void uploadPhotos(event.target.files)} />
       <input
         type="file"
