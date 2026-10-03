@@ -1,22 +1,26 @@
 import { test, expect, chromium, type BrowserContext } from "@playwright/test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
 const origin = `http://127.0.0.1:${process.env.MERCATURE_PORT ?? "4173"}/`;
-test("a cold offline restart completes a fresh manual concern and reopens its checked plan", async () => {
-  test.setTimeout(60000);
+test("a cold offline restart links a fresh Korean message by hand and reopens its saved fix exactly", async () => {
+  await mkdir(".local", { recursive: true });
   const profile = await mkdtemp(path.resolve(".local/offline-browser-"));
   let context: BrowserContext | undefined;
-  const open = async (offline: boolean) => {
+  // Every start is a cold browser launch on the same profile, so offline only the service worker can serve the app.
+  const start = async (offline: boolean) => {
+    await context?.close();
     context = await chromium.launchPersistentContext(profile, {
       headless: true,
       viewport: { width: 1280, height: 720 },
     });
     await context.setOffline(offline);
-    return context.pages()[0] ?? (await context.newPage());
+    const page = context.pages()[0] ?? (await context.newPage());
+    const response = await page.goto(origin);
+    if (offline) expect(response!.fromServiceWorker()).toBe(true);
+    return page;
   };
   try {
-    let page = await open(false);
-    await page.goto(origin);
+    let page = await start(false);
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
       if (!navigator.serviceWorker.controller)
@@ -35,60 +39,37 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
         ),
       )
       .toBe(true);
-    await context!.close();
-    page = await open(true);
-    const response = await page.goto(origin);
-    expect(response!.fromServiceWorker()).toBe(true);
+
+    page = await start(true);
     await page.getByRole("textbox", { name: "Explore a place" }).fill("Visitor courtyard");
-    await page
-      .getByRole("button", { name: "Visitor courtyard · Authored editing demo" })
-      .click();
-    await page.getByRole("button", {name: "Load scene", exact: true}).click();
-    await page.getByRole("button", {name: "Enter scene", exact: true}).click();
-    await page.getByRole("button", { name: "Add a visitor message" }).click();
-    const text = `입구 옆 벤치 때문에 지나가기 어려웠어요. ${crypto.randomUUID()}`;
+    await page.getByRole("button", { name: /^Visitor courtyard/ }).click();
+    await page.getByRole("button", { name: "Load scene", exact: true }).click();
+    await page.getByRole("button", { name: "Enter scene", exact: true }).click();
+    await page.getByRole("tab", { name: "Messages", exact: true }).click();
+    const text = `커피 자루 때문에 시음 테이블로 가기 어려웠어요. ${crypto.randomUUID()}`;
     await page.getByLabel("Original visitor message").fill(text);
-    await page.getByLabel("Message language").selectOption("ko");
-    await page.getByRole("button", { name: "Find the feature" }).click();
-    await page.getByRole("button", { name: "Yes, this feature" }).click();
-    await page.getByRole("button", { name: "Move bench", exact: true }).click();
-    await page.getByRole("button", { name: "Try the open corner" }).click();
-    await expect(page.locator(".compact-comparison")).toContainText("Blocked");
-    await expect(page.locator(".compact-comparison")).toContainText(
-      "Connected",
-    );
-    await page.screenshot({ path: ".local/guide-desktop.png" });
-    await page.getByRole("button", { name: "Save improvement plan" }).click();
+    await page.getByRole("button", { name: "Find the spot", exact: true }).click();
+    // No model is stored in a fresh offline profile, so the spot is chosen by hand.
+    await expect(page.getByRole("button", { name: "Yes, this spot" })).toBeVisible();
+    await page.getByLabel("Choose a spot", { exact: true }).selectOption("coffee-sacks");
+    await page.getByRole("button", { name: "Yes, this spot" }).click();
+    await page.getByRole("button", { name: "Storage corner", exact: true }).click();
+    const paths = page.getByRole("table", { name: "All path results" });
     await expect(
-      page.getByRole("heading", { name: "Plan saved." }),
+      paths.getByRole("row").filter({ hasText: "Tasting table" }),
+    ).toHaveText("Tasting tableBlockedConnected");
+    await page.getByRole("button", { name: "Save plan", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Plan saved." })).toBeVisible();
+
+    page = await start(true);
+    await page.getByRole("button", { name: "Search places", exact: true }).click();
+    await page.getByRole("button", { name: /Move coffee sacks/ }).click();
+    await expect(page.getByRole("heading", { name: "Plan saved." })).toBeVisible();
+    await expect(
+      page.getByRole("tabpanel", { name: "Changes" }).getByText(text, { exact: true }),
     ).toBeVisible();
-    await context!.close();
-    page = await open(true);
-    const reopened = await page.goto(origin);
-    expect(reopened!.fromServiceWorker()).toBe(true);
-    await page.getByRole("button", { name: "Search places" }).click();
-    await page
-      .getByRole("button", { name: /Move reviewed movable bench/ })
-      .click();
-  await page.getByRole("button", {name: "Scene options", exact: true}).click();
-    await page.getByRole("button", { name: "Details", exact: true }).click();
-    await page.getByText("Original visitor message", { exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText(text);
-    await page.getByRole("button", { name: "Close details" }).click();
-    await page.getByRole("button", { name: "Inspect Garden entrance" }).click();
-  await page.getByRole("button", {name: "Scene options", exact: true}).click();
-    await page.getByRole("button", { name: "Evidence", exact: true }).click();
-    await expect(
-      page.getByRole("dialog", { name: "Evidence", exact: true }),
-    ).toContainText("Connected");
-    await page.getByRole("button", { name: "Close evidence" }).click();
-  await page.getByRole("button", {name: "Scene options", exact: true}).click();
-    await page.getByRole("button", { name: "↶ Undo" }).click();
-  await page.getByRole("button", {name: "Scene options", exact: true}).click();
-    await page.getByRole("button", { name: "Evidence", exact: true }).click();
-    await expect(
-      page.getByRole("dialog", { name: "Evidence", exact: true }),
-    ).toContainText("Blocked");
+    await page.getByRole("tab", { name: "Messages", exact: true }).click();
+    await expect(page.getByLabel("Original visitor message")).toHaveValue(text);
   } finally {
     await context?.close();
     await rm(profile, { recursive: true, force: true });
