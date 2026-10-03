@@ -1,0 +1,18 @@
+{
+  "provenance": "Authored synthetic training-free controls; Korean unreviewed",
+  "inventory": [
+    {"id":"west-cart","label":"Wooden display cart beside the west courtyard passage","aliases":["display cart","west cart","수레"]},
+    {"id":"east-sign","label":"Visitor information sign at the east entrance","aliases":["information sign","east sign","안내판"]},
+    {"id":"courtyard-bench","label":"Stone bench in the courtyard seating area","aliases":["stone bench","벤치"]}
+  ],
+  "cases": [
+    {"id":"c1","text":"The display cart leaves little room to pass.","targets":["west-cart"],"kind":"explicit"},
+    {"id":"c2","text":"입구 안내판의 글씨가 너무 작아요.","targets":["east-sign"],"kind":"korean"},
+    {"id":"c3","text":"The lift upstairs is broken.","targets":[],"kind":"absent"},
+    {"id":"c4","text":"The information sign is excellent.","targets":[],"kind":"praise"},
+    {"id":"c5","text":"The cart is not blocking anything.","targets":[],"kind":"negation"},
+    {"id":"c6","text":"Yesterday the cart blocked me, but it has been removed.","targets":[],"kind":"resolved"},
+    {"id":"c7","text":"The cart blocks passage and the information sign is hard to read.","targets":["west-cart","east-sign"],"kind":"multiple"},
+    {"id":"c8","text":"벤치가 더러워요.","targets":["courtyard-bench"],"kind":"korean"}
+  ]
+}
