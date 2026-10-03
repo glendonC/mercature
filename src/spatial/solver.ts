@@ -118,5 +118,18 @@ export function solveScene(base: Scene, profile: Profile, scenario?: Scenario): 
     startIndex: start, destinationIndex: locate(scene.destinations[index]), cells, reached, parents,
   }));
   const area=(status: Cell['status'])=> Number((cells.filter(c=>c.status===status).reduce((sum,c)=>sum+Math.max(0,Math.min(c.x+step/2,scene.bounds.maxX)-Math.max(c.x-step/2,scene.bounds.minX))*Math.max(0,Math.min(c.y+step/2,scene.bounds.maxY)-Math.max(c.y-step/2,scene.bounds.minY)),0)).toFixed(8));
-  return {schemaVersion:SCHEMA_VERSION,sceneHash:contentHash(base),profileHash:contentHash(profile),scenarioHash:contentHash(scenario?.operations.length?scenario:null),solverHash:SOLVER_HASH,traversals,cells,destinations,reachableArea:area('reachable'),blockedArea:area('blocked'),unknownArea:area('unknown'),cellSize:step,unsupported,hypothetical:Boolean(scenario?.operations.length),assumptions:[...scene.assumptions,'Only fixed-axis square translations on coplanar horizontal support are evaluated; no rotations, vertical transitions or biomechanical claims.','Each reachable cell certifies its full tile using an extra half-cell envelope margin; four-neighbour paths use continuous swept rectangles.','Areas count clipped assessed tiles per elevation, not visitor capacity or total physical floor area. Unknown includes discretization and measurement margins.', 'A grid-row alignment penalty adds up to another half-cell on each side; a straight passage may need width plus twice the cell size for a guaranteed grid certificate. Geometry comparisons use a 1e-9 m numerical tolerance.']};
+  return {
+    schemaVersion: SCHEMA_VERSION, sceneHash: contentHash(base), profileHash: contentHash(profile),
+    scenarioHash: contentHash(scenario?.operations.length ? scenario : null), solverHash: SOLVER_HASH,
+    traversals, cells, destinations,
+    reachableArea: area('reachable'), blockedArea: area('blocked'), unknownArea: area('unknown'), cellSize: step,
+    unsupported, hypothetical: Boolean(scenario?.operations.length),
+    assumptions: [
+      ...scene.assumptions,
+      'Only fixed-axis square translations on coplanar horizontal support are evaluated; no rotations, vertical transitions or biomechanical claims.',
+      'Each reachable cell certifies its full tile using an extra half-cell envelope margin; four-neighbour paths use continuous swept rectangles.',
+      'Areas count clipped assessed tiles per elevation, not visitor capacity or total physical floor area. Unknown includes discretization and measurement margins.',
+      'A grid-row alignment penalty adds up to another half-cell on each side; a straight passage may need width plus twice the cell size for a guaranteed grid certificate. Geometry comparisons use a 1e-9 m numerical tolerance.'
+    ]
+  };
 }
