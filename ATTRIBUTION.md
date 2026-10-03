@@ -19,3 +19,11 @@ The guide uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik,
 ## Local destination inspection
 
 Retained Mapillary route records and images are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
+
+## Mark
+
+The Mercature mark samples land outlines from [Natural Earth](https://www.naturalearthdata.com/) 1:110m, version 4.1.0 (public domain), as redistributed by [world-atlas](https://github.com/topojson/world-atlas) 2.0.2.
+
+## Recorded destination examples
+
+The local-only destination examples display records prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data, SAM 3 photo outlines (SAM License) and VGGT-1B-Commercial reconstructions (custom licence). Those tools are not part of this application; each keeps its own licence.

@@ -1,10 +1,55 @@
-# Mercature
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/mark-dark.svg">
+    <img src="docs/assets/mark-light.svg" width="88" alt="Mercature">
+  </picture>
+</p>
 
-Turn a visitor concern or a site check into a reviewed improvement plan.
+<h1 align="center">Mercature</h1>
 
-Search for **Visitor courtyard**, open the authored editing demo, load its scene, then choose the affected feature, preview a move or removal, compare the result and save. The scene stays central; the guide offers one next action at a time. Evidence, movement requirements and plan details remain available on demand.
+<p align="center">
+  Understand every visitor. Fix the right spot.
+</p>
 
-## Run locally
+<p align="center">
+  <a href="#get-started">Get started</a> ·
+  <a href="docs/product.md">Product</a> ·
+  <a href="docs/language.md">Model</a> ·
+  <a href="docs/evidence.md">Evidence</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/glendonC/mercature/actions/workflows/check.yml"><img src="https://github.com/glendonC/mercature/actions/workflows/check.yml/badge.svg?branch=main" alt="Checks"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.12%2B-3c4043" alt="Node.js 22.12 or newer"></a>
+</p>
+
+Peru welcomed over four million international visitors in 2025, and 7 in 10 of its workers are
+in businesses of ten people or fewer. Small tour operators live on what visitors tell them. Much
+of it arrives in languages they cannot read, about parts of the site they cannot see the way a
+visitor does.
+
+Mercature turns a visitor's message into a decision on the operator's own site. A small
+multilingual model on the phone says whether the message is a problem, praise or a question, and
+which parts of the site it most likely means. The operator confirms the spot, tries a fix in an
+editable model of the place, and sees what changes before the next visit. After one download, it
+works offline.
+
+Built for the World Bank Small AI for Development challenge, tourism track.
+
+<sub>Figures: 4,157,469 international visitors to Peru in 2025, preliminary (MINCETUR, <a href="https://www.gob.pe/institucion/mincetur/informes-publicaciones/7619520-reportes-de-turismo-reporte-mensual-de-turismo-diciembre-2025">Reporte Mensual de Turismo, diciembre 2025</a>, 14 January 2026); 71.7% of Peru's employed people work in units of 1 to 10 people, 88.6% of them informally (INEI, <a href="https://m.inei.gob.pe/media/MenuRecursivo/boletines/01-informe-tecnico-empleo-nacional.pdf">mercado laboral, enero a diciembre 2025</a>, February 2026).</sub>
+
+## Small AI, by the rules
+
+| The challenge asks | Mercature |
+| --- | --- |
+| Runs on a device the user already has | A web app installed from the browser on a phone |
+| Core feature works offline | After one download, messages are understood and checked with no connection |
+| Model files small enough to side-load | One quantized multilingual encoder with small classifier heads ([sizes](docs/language.md)) |
+| At least one local language | Spanish interface; Quechua tested as the less-supported language ([results](docs/language.md)) |
+| A person makes the final call | The model suggests; the operator confirms every spot and every change |
+| Avoid hallucinations | Fixed lists only; unclear results say "Not sure" |
+
+## Get started
 
 Requires Node.js 22.12 or newer.
 
@@ -13,33 +58,12 @@ npm ci
 npm run dev
 ```
 
-Open the address printed by the server. To try the offline build, stop the development server, then run `npm run build` and `npm run preview`. Open it once online to provision the application. Saved work and original evidence remain in this browser and origin; changing browser or hostname does not transfer them.
+Open [127.0.0.1:4173](http://127.0.0.1:4173) and search for **Noor's farm**. The first visit
+downloads the model once; after that the core loop works with no connection. To try the
+installable offline build, run `npm run build` and `npm run preview`.
 
-## What works
-
-- Photographic Home with clickable prepared destinations, search across examples and work saved on this device, and guided photo or plan import.
-- Local retained destination inspection: geographic source maps, linked photographs and available partial point clouds. Captured destinations remain separate from the authored editing solver.
-- A clearly synthetic courtyard with map, projected 3D and split views, shared selection and original evidence.
-- Human-confirmed visitor concerns or proactive checks, supported object move/removal, deterministic comparison and undo.
-- Saved improvement plans with exact source, geometry, profile and solver bindings. Local backups retain private-source restrictions.
-- Local photo/video intake with hashes, original-file storage, notes and an optional geographic boundary.
-- A provisioned offline manual workflow, including cold browser restart, fresh input, comparison, saving and reopening.
-
-The guide uses [bot-avatars](https://libraries.dev/bots). Animation reflects interface state and is not evidence of AI inference.
-
-## Boundaries
-
-The scene is an authored control. No real site has accepted measured geometry. The solver checks horizontal support, fixed-axis square clearance and headroom; unsupported requirements remain unresolved. This is not accessibility certification or a prediction of individual passage.
-
-The first local Korean/English matcher failed its preregistered quality gate. AI matching is unavailable; manual selection remains usable. The offline test preserves Korean text but does not demonstrate language understanding. Representative-phone performance, competent language review and operator benefit remain unverified.
-
-Search covers the prepared catalogue and work saved in this browser. Online place search, automatic photo geolocation, fresh reconstruction, measured-site acceptance and live preparation jobs are not implemented. Uploaded images do not acquire invented camera positions or accepted geometry. A saved or approved plan does not mean physical work has happened.
-
-## Prepared destinations
-
-The three background photographs open Qorikancha, Narikala and Swayambhu. Each opens a skippable recorded-preparation view with source cameras and photo previews, then loads available retained geometry before entering the same inspection workspace. Their original capture files are intentionally excluded from the repository and build. For a local installation, place the retained `routes` directory at `.local/routes` (a local symbolic link also works). Only the loopback development/preview server can serve it; public hosting has no capture files. Source records and images retain their existing local-only restrictions. Qorikancha and Narikala have partial point reconstructions; Swayambhu has photographs without usable 3D.
-
-For the editing demonstration, type **Visitor courtyard** into search and choose **Authored editing demo**. Its layout-to-scene preparation leads into the same edit/check/save workflow. It is available in a fresh checkout and after offline provisioning. No account or server database is required; “On this device” lists browser-local work. The three captured examples are inspection cases and are not interchangeable with the authored editing model.
+The recorded destination examples on Home need local capture data that is not part of this
+repository; see [architecture](docs/architecture.md#retained-destinations).
 
 ## Checks
 
@@ -48,6 +72,25 @@ npx playwright install chromium
 bash scripts/checks/gate.sh
 ```
 
-The full gate builds the app, starts its own production preview, runs domain/browser checks and tests an offline workflow across cold browser restarts. Stop the existing Mercature preview first; the gate never stops other servers. For focused checks with a preview already running, use `npm test`. The offline check requires a production preview: `npm run test:offline`.
+The gate builds the app, starts its own preview, runs the domain and browser checks, and restarts
+a browser with networking off to test the offline loop. Set `MERCATURE_PORT` to use a port other
+than 4173.
 
-See [architecture](docs/architecture.md), [plan contracts](docs/contracts.md), [language evaluation](docs/language.md), and [attribution](ATTRIBUTION.md).
+## Documentation
+
+| Start here | Go deeper |
+| --- | --- |
+| [Product](docs/product.md) | [Architecture](docs/architecture.md) |
+| [Model and evaluation](docs/language.md) | [Plan records](docs/contracts.md) |
+| [Evidence and data](docs/evidence.md) | [Attribution](ATTRIBUTION.md) |
+
+## Limits
+
+- Noor and her farm are fictional, like the persona in the challenge brief. The farm model is
+  authored and labeled synthetic.
+- The path check is geometric planning with an illustrative 0.9 m width. It is not accessibility
+  certification.
+- No real visitor messages were used, and the Korean and Quechua examples have not been reviewed
+  by native speakers. What the data does not cover is listed in [evidence](docs/evidence.md).
+
+Photographs, fonts, map data and libraries keep their own terms; see [attribution](ATTRIBUTION.md).
