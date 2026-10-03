@@ -1,0 +1,4 @@
+.language-switch { display: flex; align-items: center; }
+.language-switch button { min-width: var(--tap); height: var(--tap); padding: 0 6px; border: 0; border-radius: var(--radius-s); background: transparent; color: var(--muted); font-size: 13px; letter-spacing: 0.04em; }
+.language-switch button:hover { color: var(--ink); }
+.language-switch button[aria-pressed=true] { color: var(--ink); font-weight: 500; }
