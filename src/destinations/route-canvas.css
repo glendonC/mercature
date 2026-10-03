@@ -119,8 +119,6 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .route-tabs button[aria-selected=true]::after { transform: scaleX(1); }
 .route-count { display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--blocked); color: var(--on-primary); font-size: 11px; }
 .route-ui-lang { justify-self: end; display: flex; }
-.route-ui-lang button { min-width: var(--tap); height: var(--tap); padding: 0 8px; border: 0; background: transparent; color: var(--muted); font-size: 13px; letter-spacing: 0.04em; }
-.route-ui-lang button[aria-pressed=true] { color: var(--ink); font-weight: 500; }
 .route-title { position: absolute; z-index: 5; top: 70px; left: 28px; max-width: min(420px, 60vw); pointer-events: none; text-shadow: var(--halo); }
 .route-title h1 { margin: 0 0 2px; font-size: var(--text-title); font-weight: 400; line-height: 1.2; letter-spacing: -0.03em; }
 .route-title p { margin: 0; font-size: var(--text-label); color: var(--muted); }
@@ -190,7 +188,6 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .route-tabs { justify-content: center; }
   .route-tabs button { padding: 0 9px; font-size: 15px; }
   .route-tabs button::after { left: 9px; right: 9px; }
-  .route-ui-lang button { min-width: 40px; padding: 0 4px; }
   .route-title { top: 56px; left: 16px; right: 16px; max-width: none; }
   .route-title h1 { font-size: 17px; }
   .route-title p, .route-title .route-recorded { font-size: var(--text-phone-min); }

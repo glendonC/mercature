@@ -8,6 +8,8 @@ import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type 
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import RouteMap, { type MapHandle, type Marker } from './RouteMap';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot, type Walk } from './walk';
+import { useLanguage } from '../i18n';
+import InterfaceLanguage from '../i18n/LanguageSwitch';
 import './route-canvas.css';
 
 type Tab = 'place' | 'messages' | 'changes';
@@ -42,7 +44,7 @@ function useNarrow() {
 /** The route workspace: one persistent map, with places, messages and changes as views over it. */
 export default function RouteCanvas({ data, asset, onHome }: { data: Destination; asset: (file: string) => string; onHome: () => void }) {
   const [tab, setTab] = useState<Tab>('place');
-  const [lang, setLang] = useState<UiLang>('en');
+  const { lang } = useLanguage();
   const t = COPY[lang];
   const narrow = useNarrow();
   const tabsId = useId();
@@ -265,7 +267,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   }
   const selectedMarker = selection ? markers.find(marker => same(markerTarget(marker.id), selection))?.id ?? null : null;
   const highlight = selection?.kind === 'spot' ? walk.spots.find(spot => spot.id === selection.id)?.path ?? null : selection?.kind === 'stretch' ? data.stretches[selection.index]?.line.map(walk.project) ?? null : null;
-  const labels = useMemo(() => [...(walk.start ? [{ name: walk.start.name, at: walk.start.at, dy: 20 }] : []), { name: walk.target.name, at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name, at: l.at }))], [walk]);
+  const labels = useMemo(() => {
+    // The walk's two ends use their spot names, which exist in each interface language.
+    const endName = (name: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === name)?.name[lang] ?? name;
+    return [...(walk.start ? [{ name: endName(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: endName(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name, at: l.at }))];
+  }, [walk, lang, routeSpots]);
 
   // Words
   const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
@@ -369,7 +375,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
           {t.views[item]}{item === 'place' && left > 0 && <span className="route-count" aria-hidden="true">{left}</span>}
         </button>)}
       </div>
-      <div className="route-ui-lang" role="group" aria-label={t.ui}>{(['en', 'es'] as const).map(item => <button key={item} aria-pressed={lang === item} onClick={() => setLang(item)} lang={item}>{item.toUpperCase()}</button>)}</div>
+      <InterfaceLanguage className="route-ui-lang"/>
     </header>
     <div className="route-title">
       <h1>{DESTINATIONS[data.id].name}</h1>
