@@ -47,7 +47,7 @@ export default function Home({onOpen, onExample, onDestination, onImport, onUplo
   const showNew = !!term && !matches.length && !destinations.length && !showDemo;
   return <main className="welcome-shell site-home" aria-label="Mercature home">
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label="Photo credits">ⓘ</button></header>
-    <div className="welcome-atmosphere" aria-label="Prepared destinations">{covers.map((cover, i) => <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={`Explore ${cover.name} · ${cover.area}`} onClick={() => onDestination(cover.id)}><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}<small>{cover.area} · Prepared example</small></span></button>)}</div>
+    <div className="welcome-atmosphere" aria-label="Prepared destinations">{covers.map((cover, i) => <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={`Explore ${cover.name} · ${cover.area}`} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>)}</div>
     <section className="welcome-center">
       <h1>An editable spatial<br/>accessibility model</h1>
       <div className="home-discovery" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }} onKeyDown={event => { if(event.key === 'Escape') { search.current?.focus(); setExpanded(false); } }}>

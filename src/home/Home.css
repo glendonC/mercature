@@ -25,8 +25,15 @@
 .welcome-photo-frame { display: block; width: 100%; height: 100%; mask: url('../covers/photo-squircle-mask.png') center / 100% 100% no-repeat; }
 .welcome-photo img { width: 100%; height: 100%; object-fit: cover; opacity: .45; filter: saturate(.65); transition: opacity 220ms ease, filter 220ms ease; }
 .welcome-photo:hover img, .welcome-photo:focus-visible img { opacity: .88; filter: saturate(.9); }
-.welcome-place-label { position: absolute; inset: 52% auto auto 50%; translate: -50% -50%; display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 9px 15px; border: 1px solid #ffffff60; border-radius: 24px; background: linear-gradient(145deg, #f5f8f56b, #dae3df54); box-shadow: inset 0 1px 0 #ffffffad, 0 5px 18px #1f292b0a; backdrop-filter: blur(18px) saturate(135%); white-space: nowrap; font-size: 14px; font-weight: 400; }
-.welcome-place-label small { font-size: 10px; color: #546563; }
+.welcome-place-label { position: absolute; inset: 55% auto auto 50%; translate: -50% -50%; display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 5px 11px; border: 1px solid #ffffff4d; border-radius: 14px; background: #252b2b57; box-shadow: 0 4px 14px #1e272c14; color: #faf9f6f0; backdrop-filter: blur(18px) saturate(118%); white-space: nowrap; font-size: 12.5px; font-weight: 400; line-height: 1; }
+.welcome-photo-content { position: relative; display: block; width: 100%; height: 100%; }
+@keyframes place-drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(var(--drift-x, 6px), var(--drift-y, -7px)); } }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .welcome-photo-content { animation: place-drift 24s ease-in-out infinite; }
+  .welcome-photo-slot-2 .welcome-photo-content { --drift-x: -6px; --drift-y: 5px; animation-duration: 28s; animation-delay: -8s; }
+  .welcome-photo-slot-3 .welcome-photo-content { --drift-x: -4px; --drift-y: -6px; animation-duration: 26s; animation-delay: -16s; }
+  .welcome-photo:hover .welcome-photo-content, .welcome-photo:focus-within .welcome-photo-content { animation-play-state: paused; }
+}
 .welcome-center { position: relative; z-index: 3; margin: 0 auto; padding-top: clamp(235px, 36vh, 430px); width: min(900px, 92vw); text-align: center; pointer-events: none; }
 .welcome-center > * { pointer-events: auto; }
 .welcome-center h1 { margin: 0; font-size: clamp(44px, 5.5vw, 84px); font-weight: 300; letter-spacing: -.06em; line-height: 1.03; pointer-events: none; }
@@ -80,8 +87,7 @@
   .welcome-photo-slot-1 { top: 84px; left: -14px; width: 210px; }
   .welcome-photo-slot-3 { top: 100px; right: -30px; width: 205px; }
   .welcome-photo-slot-2 { bottom: 35px; right: 0; width: 290px; }
-  .welcome-place-label { font-size: 12px; padding: 7px 10px; }
-  .welcome-place-label small { font-size: 9px; }
+  .welcome-place-label { font-size: 11.5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .welcome-photo img, .place-search input, .search-circle { transition: none; }
