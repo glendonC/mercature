@@ -12,7 +12,8 @@ function offlineShell(): Plugin {
         "/index.html",
         "/manifest.webmanifest",
         ...Object.keys(bundle)
-          .filter((k) => !k.endsWith(".map"))
+          // The 11 MB inference runtime is stored with the model on request, not precached for every visitor.
+          .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm"))
           .map((k) => `/${k}`),
       ];
       const digest = createHash("sha256");
