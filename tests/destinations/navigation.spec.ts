@@ -19,7 +19,7 @@ test('background photos and search results open the same place, from its package
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
   await page.getByRole('button', {name:'Home', exact:true}).click();
-  await page.getByRole('button', {name:'Explore Narikala · Tbilisi', exact:true}).click();
-  await expect(page.getByRole('button', {name:'Try again', exact:true})).toBeVisible();
-  expect(requested.at(-1)).toBe('/routes/tbilisi-narikala/route.json');
+  // Without its local record Narikala is not offered, only kept as an unlabeled background photo.
+  expect(requested).toContain('/routes/tbilisi-narikala/route.json');
+  await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi', exact:true})).toHaveCount(0);
 });

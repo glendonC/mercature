@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import qorikancha from '../covers/qorikancha.webp';
 import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
 import { NOOR_FARM } from '../site/farm';
+import { PACKAGES, isDestinationId } from '../destinations/data';
 import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from '../icons';
 import './Home.css';
 export const covers = [
@@ -24,6 +25,24 @@ type Props = {
 /** Search ignores case, accents and apostrophe style, so "noor’s", "Noor's" and "finca" all match. */
 const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/[\u2018\u2019`]/g, "'").toLocaleLowerCase();
 const farmTerms = fold(`${NOOR_FARM.name.en} ${NOOR_FARM.name.es} ${NOOR_FARM.place} coffee café farm finca`);
+const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
+/** Places that open here: a published package on any host, a local record only where it answers on this device. */
+function useOpenable(): (id: string) => boolean {
+  const [local, setLocal] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    if (!LOOPBACK.includes(location.hostname)) return;
+    const controller = new AbortController();
+    for (const cover of covers) {
+      if (!isDestinationId(cover.id) || PACKAGES[cover.id]) continue;
+      fetch(`/routes/${cover.id}/route.json`, { signal: controller.signal, cache: 'no-store' }).then(response => {
+        if (response.ok && /json/i.test(response.headers.get('content-type') ?? '')) setLocal(previous => new Set(previous).add(cover.id));
+        void response.body?.cancel();
+      }).catch(() => undefined);
+    }
+    return () => controller.abort();
+  }, []);
+  return id => (isDestinationId(id) && !!PACKAGES[id]) || local.has(id);
+}
 /** The authored terrace drawn from its own scene records. */
 function FarmPlan() {
   const { bounds, obstacles, unknown } = NOOR_FARM.scene;
@@ -41,6 +60,7 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
   const credits = useRef<HTMLDialogElement>(null);
   const upload = useRef<HTMLDialogElement>(null);
   const search = useRef<HTMLInputElement>(null);
+  const openable = useOpenable();
   const results = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (!expanded) return;
@@ -53,13 +73,15 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
   }, [expanded]);
   const term = query.trim().toLocaleLowerCase();
   const matches = saved.filter(item => item.title.toLocaleLowerCase().includes(term));
-  const destinations = covers.filter(cover => fold(`${cover.name} ${cover.area} ${cover.aliases}`).includes(fold(term)));
+  const destinations = covers.filter(cover => openable(cover.id) && fold(`${cover.name} ${cover.area} ${cover.aliases}`).includes(fold(term)));
   const showFarm = !term || farmTerms.includes(fold(term));
   const showDemo = !term || 'visitor courtyard example editing demo'.includes(term);
   const showNew = !!term && !matches.length && !destinations.length && !showDemo && !showFarm;
   return <main className="welcome-shell site-home" aria-label="Mercature home">
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label="Photo credits"><InfoIcon/></button></header>
-    <div className="welcome-atmosphere" aria-label="Prepared destinations">{covers.map((cover, i) => <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={`Explore ${cover.name} · ${cover.area}`} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>)}</div>
+    <div className="welcome-atmosphere" aria-label="Prepared destinations">{covers.map((cover, i) => openable(cover.id)
+      ? <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={`Explore ${cover.name} · ${cover.area}`} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>
+      : <span key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1} is-ambient`} aria-hidden="true"><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span></span></span>)}</div>
     <section className="welcome-center">
       <h1>An editable spatial<br/>accessibility model</h1>
       <div className="home-discovery" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }} onKeyDown={event => { if(event.key === 'Escape') { search.current?.focus(); setExpanded(false); } }}>

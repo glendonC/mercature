@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Companion from '../components/Companion';
 import PlaceCanvas from '../components/PlaceCanvas';
 import SpatialView from '../spatial/SpatialView';
-import { modelState, modelStored, prepareModel, type ModelState } from '../language/understand';
+import { modelDownloadBytes, modelState, modelStored, prepareModel, type ModelState } from '../language/understand';
 import { NOOR_FARM } from '../site/farm';
 import { createScenario } from '../spatial/scenario';
 import { solveScene } from '../spatial/solver';
@@ -64,6 +64,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
+  const [downloadSize, setDownloadSize] = useState<number | null>(null);
 
   useEffect(() => {
     alive.current = true;
@@ -80,6 +81,13 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
     const timers = REVEAL.map((at, index) => window.setTimeout(() => setStep(current => Math.max(current, index + 1)), at));
     return () => { alive.current = false; timers.forEach(clearTimeout); };
   }, []);
+
+  useEffect(() => {
+    if (model.kind !== 'off' || model.stored) return;
+    let live = true;
+    void modelDownloadBytes().then(bytes => { if (live) setDownloadSize(bytes); });
+    return () => { live = false; };
+  }, [model]);
 
   useEffect(() => {
     if (step < 1 || project || error) return;
@@ -153,7 +161,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
       <ol className="farm-ready-steps" aria-label="Getting ready">{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
         <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
         {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
-        {row.id === 'model' && step >= 2 && model.kind === 'off' && <button className="step-action" onClick={download}>{model.failed && model.stored ? 'Try again' : 'Download model'}</button>}
+        {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <button className="step-action" onClick={download}>Try again</button> : !!downloadSize && <button className="step-action" onClick={download}>Download {megabytes(downloadSize)}</button>)}
       </li>)}</ol>
       {error && <p className="guide-error" role="alert">{error}</p>}
       <div className="canvas-actions"><button ref={enterButton} className={result || error ? 'primary' : undefined} onClick={error ? onHome : enter}>{error ? 'Return home' : 'Enter'}</button></div>
