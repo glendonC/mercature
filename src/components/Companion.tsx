@@ -1,3 +1,32 @@
-export default function Companion({children}:{children:React.ReactNode}) {
-  return <aside className="companion" aria-label="Place guide"><svg width="52" height="56" viewBox="0 0 70 70" aria-hidden="true"><ellipse cx="35" cy="62" rx="20" ry="4" fill="#252b2b16"/><path d="M15 43C7 27 20 12 35 14C52 8 62 26 56 44L51 57Q44 61 39 54L31 54Q22 62 17 55Z" fill="#c7e1bc" stroke="#658879" strokeWidth="1.5"/><path d="M23 14Q29 2 36 13" fill="#f3d58f" stroke="#658879" strokeWidth="1.5"/><ellipse cx="27" cy="32" rx="2" ry="3" fill="#334c45"/><ellipse cx="45" cy="32" rx="2" ry="3" fill="#334c45"/><path d="M31 41Q36 45 41 40" fill="none" stroke="#334c45" strokeWidth="1.5" strokeLinecap="round"/><ellipse cx="21" cy="38" rx="4" ry="2" fill="#f4b28d"/><ellipse cx="50" cy="38" rx="4" ry="2" fill="#f4b28d"/></svg><p>{children}</p></aside>;
+import { BotAvatar } from "bot-avatars";
+import type { ReactNode } from "react";
+export default function Companion({
+  children,
+  working = false,
+  tone = "guide",
+}: {
+  children: ReactNode;
+  working?: boolean;
+  tone?: "guide" | "evidence";
+}) {
+  return (
+    <aside className="companion" aria-label="Place guide">
+      <span aria-hidden="true">
+        <BotAvatar
+          type={tone === "evidence" ? "clover" : "blob"}
+          state={working ? "working" : "default"}
+          size={64}
+          color={tone === "evidence" ? "#b6cfa3" : "#a4c7d7"}
+          shading="plastic"
+          speed={0.4}
+          turn={0.25}
+          jumpEvery={0}
+          interactive={false}
+          saturation={1}
+          theme="light"
+        />
+      </span>
+      <p>{children}</p>
+    </aside>
+  );
 }

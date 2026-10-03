@@ -13,3 +13,5 @@ These are atmosphere, never evidence of assessed site geometry. Resized WebP cop
 Outfit is Copyright 2021 The Outfit Project Authors, licensed under the [SIL Open Font License 1.1](licenses/Outfit-OFL.txt).
 
 React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respectively; Playwright uses Apache-2.0. Exact versions and transitive dependencies are recorded in the lockfile; their distributions retain their licenses.
+
+The guide uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.

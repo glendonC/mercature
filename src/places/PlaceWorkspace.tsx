@@ -114,7 +114,7 @@ export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: 
       {addButton}
       <span className="place-local-caption">Files stay on this device · Add only files you may keep</span>
     </section>}
-    <footer className="place-guide"><Companion>{current ? 'Add another angle of the entrance.' : 'Start with a clear view from outside.'}</Companion>
+    <footer className="place-guide"><Companion working={busy} tone={place.evidence.length?'evidence':'guide'}>{current ? 'Add another angle of the entrance.' : 'Start with a clear view from outside.'}</Companion>
       <div className="place-notices" aria-live="polite">{status && <p role="status">{status}</p>}{error && <p role="alert" className="place-error">{error}</p>}</div>
     </footer>
     <dialog className="place-details" ref={details} aria-labelledby="place-details-title">
