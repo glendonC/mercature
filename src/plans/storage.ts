@@ -70,11 +70,11 @@ export function createPlanStore(providedStorage?: StorageLike) {
         // Other saved plans are written back exactly as stored, whether or not they still open.
         const plans = readRecords(); const index = plans.findIndex(p => p.id === validated.id);
         if (index < 0) {
-          if (plans.length >= MAX_SAVED_PLANS) throw new PlanValidationError('too-large', `At most ${MAX_SAVED_PLANS} plans can be saved locally. Delete one first.`);
+          if (plans.length >= MAX_SAVED_PLANS) throw new PlanValidationError('too-large', `At most ${MAX_SAVED_PLANS} plans can be saved on this device.`);
           plans.push(validated);
         } else {
           let previous: ImprovementPlan;
-          try { previous = open(plans[index]); } catch { throw new PlanValidationError('stale', 'The saved copy of this plan no longer opens. Delete it, then save again.'); }
+          try { previous = open(plans[index]); } catch { throw new PlanValidationError('stale', 'The saved copy of this plan no longer opens, so it was not replaced.'); }
           if (previous.createdAt !== validated.createdAt || contentHash(previous.origin) !== contentHash(validated.origin) || contentHash(previous.project.scene) !== contentHash(validated.project.scene)) throw new PlanValidationError('stale', 'A saved plan keeps its original concern and baseline. Save changed evidence as a new plan.');
           if (validated.updatedAt < previous.updatedAt) throw new PlanValidationError('stale', 'A newer revision of this plan is already saved');
           plans[index] = validated;

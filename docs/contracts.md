@@ -68,8 +68,10 @@ APIs. `exportPlan` / `importPlan` reject local evidence and restricted synthetic
 evidence; only explicitly exportable synthetic plans can cross that boundary.
 Closed record schemas reject undeclared fields throughout the plan and geometry
 so private sidecar metadata cannot leak through an export. There is no redaction
-shortcut and no conversion of real evidence into synthetic provenance. The UI
-must label typed concerns local-only and use the export API for downloads.
+shortcut and no conversion of real evidence into synthetic provenance. The farm
+canvas offers only a local backup: its download uses `serializePlan`, so the
+file keeps the visitor's words and is the operator's own copy, and opening a
+backup uses `parsePlan`. The interface offers no export for sharing.
 
 ## API
 
