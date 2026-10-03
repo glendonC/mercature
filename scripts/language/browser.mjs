@@ -18,6 +18,9 @@ import { loadMessages } from './data.mjs';
 
 const split = process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? 'dev';
 const fromHub = process.argv.includes('--hub');
+/** --throttle 6 slows the page's CPU sixfold, a rough stand-in for a mid-range phone; it is not a phone. */
+const throttleArg = process.argv.indexOf('--throttle');
+const throttle = throttleArg > 0 ? Number(process.argv[throttleArg + 1]) : 1;
 const port = process.env.MERCATURE_PORT ?? '4181';
 const origin = `http://127.0.0.1:${port}`;
 
@@ -51,12 +54,13 @@ async function open(offline) {
     });
   }
   const page = context.pages()[0] ?? await context.newPage();
+  if (throttle > 1) await (await context.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: throttle });
   return page;
 }
 
 const { messages } = await loadMessages();
 const chosen = messages.filter(message => message.split === split);
-const result = { split, source: fromHub ? 'huggingface.co' : 'local files via redirect', userAgent: '' };
+const result = { split, throttle, source: fromHub ? 'huggingface.co' : 'local files via redirect', userAgent: '' };
 try {
   let page = await open(false);
   await page.goto(origin);
@@ -121,6 +125,6 @@ if (nodeResults) {
   }).length;
   result.matchesNode = `${same}/${result.answers.length}`;
 }
-await writeFile(resolve(`.local/language/browser-${split}.json`), JSON.stringify(result, null, 2));
+await writeFile(resolve(`.local/language/browser-${split}${throttle > 1 ? `-throttle${throttle}` : ''}.json`), JSON.stringify(result, null, 2));
 const { answers, ...summary } = result;
 console.log(JSON.stringify(summary, null, 2));

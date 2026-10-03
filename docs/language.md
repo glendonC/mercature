@@ -144,16 +144,16 @@ The heads were trained only on farm messages. To see whether they carry over, 44
 
 On the development Mac (Apple M5 Max, one inference thread):
 
-| Step | Node | Chromium 145 |
-| --- | ---: | ---: |
-| Read, check and create the inference session | 0.5 s | |
-| Embed the farm's 17 features (`prepareSite`) | | 1.8 to 2.1 s |
-| Embed the 27 label passages and the 17 features | 2.3 s | |
-| One message, median | 26 ms | 29 ms |
-| One message, 95th percentile | 38 ms | |
-| First message after a cold restart, model stored (load, embed, answer) | | 2.7 to 2.9 s |
+| Step | Node | Chromium 145 | Chromium, CPU slowed 6× |
+| --- | ---: | ---: | ---: |
+| Read, check and create the inference session | 0.5 s | | |
+| Embed the farm's 17 features (`prepareSite`) | | 1.8 to 2.1 s | 13.6 s |
+| Embed the 27 label passages and the 17 features | 2.3 s | | |
+| One message, median | 26 ms | 29 ms | 185 ms |
+| One message, 95th percentile | 38 ms | | 255 ms |
+| First message after a cold restart, model stored (load, embed, answer) | | 2.7 to 2.9 s | 18.2 s |
 
-A phone will be several times slower; no phone has been measured. Feature embedding happens once per place and session, and `prepareSite` can do it before the first message.
+No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. Feature embedding happens once per place and session, and `prepareSite` can do it before the first message.
 
 ## Offline
 
