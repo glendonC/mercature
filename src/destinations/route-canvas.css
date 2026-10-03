@@ -172,8 +172,8 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .route-chip { justify-self: start; display: grid; gap: 2px; max-width: 300px; min-height: var(--tap); padding: 8px 14px; border: 1px solid var(--glass-border); border-radius: var(--radius-m); background: var(--glass-panel); box-shadow: var(--shadow-s); text-align: left; font-size: var(--text-label); }
 .route-chip .route-excerpt { -webkit-line-clamp: 1; }
 .route-chip small { font-size: var(--text-caption); color: var(--muted); }
-.route-guide { grid-column: 2; display: flex; align-items: center; gap: 10px; max-width: 560px; }
-.route-guide-avatar { flex: none; width: 40px; height: 40px; }
+.route-guide { grid-column: 2; display: flex; align-items: center; gap: 12px; max-width: 600px; }
+.route-guide-avatar { flex: none; width: 64px; height: 64px; }
 .route-guide p { margin: 0; font-size: var(--text-guide); line-height: 1.35; letter-spacing: -0.015em; text-wrap: balance; text-shadow: var(--halo); }
 .route-hints { grid-column: 3; justify-self: end; display: grid; justify-items: end; gap: 2px; max-width: 300px; text-align: right; }
 .route-hints small { font-size: 11px; line-height: 1.4; color: var(--muted); text-shadow: var(--halo); }
@@ -197,7 +197,7 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .route-guide, .route-hints { grid-column: 1; }
   .route-guide { justify-self: start; }
   .route-guide p { font-size: 16px; text-wrap: pretty; }
-  .route-guide-avatar { width: 32px; height: 32px; }
+  .route-guide-avatar { width: 48px; height: 48px; }
   .route-hints { justify-self: stretch; justify-items: start; text-align: left; grid-auto-flow: column; justify-content: space-between; align-items: center; gap: 12px; max-width: none; }
   .route-hints small, .route-task small, .route-photo figcaption, .route-chip small { font-size: var(--text-phone-min); }
   .route-canvas[data-sheet=true] .route-task, .route-canvas[data-sheet=true] .route-chip, .route-canvas[data-sheet=true] .route-hints { display: none; }

@@ -3,21 +3,21 @@ import { BotAvatar } from 'bot-avatars';
 import AIResultCard, { type AIResult } from '../components/AIResultCard';
 import { decide, loadReview, logMessage, saveReview, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
 import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand, type ModelState, type Understanding } from '../language/understand';
-import { QORIKANCHA_PLACE, type RoutePlace } from '../site/route';
+import { ROUTE_PLACES } from '../site/registry';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import RouteMap, { type MapHandle, type Marker } from './RouteMap';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot, type Walk } from './walk';
 import { useLanguage } from '../i18n';
+import { fromRecord } from '../i18n/records';
 import InterfaceLanguage from '../i18n/LanguageSwitch';
 import './route-canvas.css';
 
 type Tab = 'place' | 'messages' | 'changes';
 type Selection = { kind: 'spot'; id: string } | { kind: 'stretch'; index: number } | { kind: 'landmark'; id: string };
 const TABS: Tab[] = ['place', 'messages', 'changes'];
-const PLACES: Record<string, RoutePlace> = { [QORIKANCHA_PLACE.id]: QORIKANCHA_PLACE };
 /** Places whose walk has named spots, so messages can be read against them. */
-export const hasRouteCanvas = (data: Destination) => !!PLACES[data.id] && data.stretches.length > 0;
+export const hasRouteCanvas = (data: Destination) => !!ROUTE_PLACES[data.id] && data.stretches.length > 0;
 const VISITOR_LANGS: { id: VisitorLang; label: string }[] = [{ id: 'en', label: 'English' }, { id: 'es', label: 'Español' }, { id: 'ko', label: '한국어' }];
 const MESSAGE_LANGS = [...VISITOR_LANGS, { id: 'qu', label: 'Runasimi' }, { id: 'other', label: 'Other' }];
 const bare = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
@@ -49,7 +49,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const narrow = useNarrow();
   const tabsId = useId();
   const walk = useMemo(() => buildWalk(data), [data]);
-  const place = PLACES[data.id] ?? null;
+  const place = ROUTE_PLACES[data.id] ?? null;
   const routeSpots = place?.features ?? [];
   const views = useMemo(() => new Map(data.views.map(view => [view.id, view])), [data.views]);
   const photos = useMemo(() => new Map(data.photos.map(photo => [photo.id, photo])), [data.photos]);
@@ -113,7 +113,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
 
   // Names and positions
   const routeSpotFor = (stretches: readonly number[]) => routeSpots.find(spot => spot.stretches.length && spot.stretches[0] === stretches[0]);
-  const spotName = (spot: Spot) => { const named = routeSpotFor(spot.stretches); return named ? bare(named.name[lang]) : spot.kind === 'no-photos' ? t.noPhotos : spot.findings[0]?.label ?? t.range(Math.round(spot.from), Math.round(spot.to)); };
+  const spotName = (spot: Spot) => { const named = routeSpotFor(spot.stretches); return named ? bare(named.name[lang]) : spot.kind === 'no-photos' ? t.noPhotos : spot.findings[0] ? fromRecord(spot.findings[0].label, lang) : t.range(Math.round(spot.from), Math.round(spot.to)); };
   const spotOf = (index: number) => walk.spots.find(spot => spot.stretches.includes(index)) ?? null;
   function targetOf(id: string): Selection | null {
     const named = routeSpots.find(spot => spot.id === id);
@@ -192,7 +192,8 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (!map.current) return;
       const { height } = map.current.size(), sheetHeight = sheet.current?.offsetHeight ?? Math.round(height * 0.5);
-      map.current.frame(points, narrow ? { top: 150, right: 28, bottom: sheetHeight + 96, left: 28 } : { top: 150, right: 120, bottom: 120, left: 400 });
+      const guide = foot.current?.offsetHeight ?? 90;
+      map.current.frame(points, narrow ? { top: 150, right: 28, bottom: sheetHeight + guide + 16, left: 28 } : { top: 150, right: 120, bottom: guide + 30, left: 400 });
     }));
   }
   async function download() {
@@ -226,8 +227,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   function noteText(language: VisitorLang) {
     const lines = decided.filter(item => item.verdict !== 'not-barrier').map(({ spot, verdict }) => NOTE[verdict === 'barrier' ? 'barrier' : 'check'][language](subjectOf(spot.findings), whereOf(spot), Math.round(spot.from)));
     if (!lines.length) return '';
-    const ends = language === 'ko' ? ['아르마스 광장', '코리칸차 매표소'] : language === 'es' ? ['la Plaza de Armas', 'la boletería del Qorikancha'] : ['the Plaza de Armas', 'the Qorikancha ticket booth'];
-    const head = data.id === 'cusco-qorikancha' ? NOTE.title[language](ends[0], ends[1], Math.round(data.lengthMetres)) : data.title;
+    const end = (name: string) => {
+      const spot = routeSpots.find(item => !item.stretches.length && item.landmark === name);
+      return !spot ? name : language === 'ko' ? spot.aliases.ko?.[0] ?? spot.name.en : spot.name[language];
+    };
+    const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), Math.round(data.lengthMetres)) : data.title;
     const steps = decided.some(item => item.verdict === 'barrier' && subjectOf(item.spot.findings) === 'steps');
     return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), NOTE.basis[language]].join('\n');
   }
@@ -269,7 +273,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const highlight = selection?.kind === 'spot' ? walk.spots.find(spot => spot.id === selection.id)?.path ?? null : selection?.kind === 'stretch' ? data.stretches[selection.index]?.line.map(walk.project) ?? null : null;
   const labels = useMemo(() => {
     // The walk's two ends use their spot names, which exist in each interface language.
-    const endName = (name: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === name)?.name[lang] ?? name;
+    const endName = (name: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === name)?.name[lang] ?? fromRecord(name, lang);
     return [...(walk.start ? [{ name: endName(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: endName(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name, at: l.at }))];
   }, [walk, lang, routeSpots]);
 
@@ -349,6 +353,15 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const panel = tab === 'messages' ? messagesPanel : tab === 'changes' ? changesPanel : null;
   const sheetContent = narrow ? card ?? panel : null;
   const [sheetHeight, setSheetHeight] = useState(0);
+  const foot = useRef<HTMLElement>(null);
+  const [footHeight, setFootHeight] = useState(0);
+  useLayoutEffect(() => {
+    const element = foot.current; if (!element) return;
+    const measure = () => setFootHeight(element.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure); observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   useLayoutEffect(() => {
     const element = sheet.current, canvas = root.current;
     if (!canvas) return;
@@ -383,10 +396,10 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <p className="route-recorded">{t.recorded}</p>
     </div>
     <RouteMap ref={map} data={data} photoView={shownView ?? ''} photoAt={shownPhoto ? walk.project(shownPhoto.position) : null} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
-      onMap={tapMap} words={t.map} clearBottom={narrow ? sheetHeight + 110 : 90} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
+      onMap={tapMap} words={t.map} clearBottom={(narrow ? sheetHeight : 0) + footHeight + 12} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
     {!narrow && panel}
     {problem && <p className="route-problem" role="alert">{problem === 'unreadable' ? t.unreadable : t.notSaved}<button className="route-icon-button" aria-label={t.close} onClick={() => setProblem('')}><Close /></button></p>}
-    <footer className="route-foot">
+    <footer className="route-foot" ref={foot}>
       {tab === 'place' ? <div className="route-task" aria-label={t.task(left)}>
         <strong>{t.task(left)}</strong>
         <span className="route-progress" aria-hidden="true"><span style={{ width: `${flagged.length ? (flagged.length - left) / flagged.length * 100 : 0}%` }} /></span>
@@ -395,7 +408,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
         <span className="route-excerpt" lang={current.language === 'other' ? undefined : current.language}>{current.text}</span>
         <small>{current.spot ? t.linkedTo(nameOfKey(current.spot)) : t.notLinked}</small>
       </button>}
-      <Guide working={thinking || !!busy} text={line} />
+      <Guide working={thinking || !!busy} text={line} size={narrow ? 48 : 64} />
       <div className="route-hints">
         <small>{narrow ? t.creditsShort : t.credits}</small>
       </div>
@@ -416,10 +429,10 @@ function LanguageSwitch({ value, onChange, label }: { value: VisitorLang; onChan
 }
 
 /** The one line the guide says. It looks busy only while a real promise runs. */
-function Guide({ text, working }: { text: string; working: boolean }) {
+function Guide({ text, working, size }: { text: string; working: boolean; size: number }) {
   const [silver] = useState(() => getComputedStyle(document.documentElement).getPropertyValue('--field').trim() || 'gray');
   return <div className="route-guide">
-    <span className="route-guide-avatar" aria-hidden="true"><BotAvatar type="blob" state={working ? 'working' : 'default'} size={40} color={silver} shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" /></span>
+    <span className="route-guide-avatar" aria-hidden="true"><BotAvatar type="blob" state={working ? 'working' : 'default'} size={size} color={silver} shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" /></span>
     <p role="status" aria-live="polite">{text}</p>
   </div>;
 }
@@ -444,15 +457,15 @@ function SpotCard({ t, lang, selection, walk, data, review, views, photos, asset
     <button className="route-icon-button" aria-label={t.next} onClick={() => setPage((page + 1) % evidence.length)}><Chevron /></button>
   </div> : null;
   let figure: ReactNode = null;
-  if (shown?.viewId) figure = <Evidence key={shown.id} t={t} view={views.get(shown.viewId)!} finding={shown} photo={photos.get(views.get(shown.viewId)!.photoId)} asset={asset} lang={lang} alt={`${shown.label}, ${name}`} pager={pager} />;
-  else if (shown?.osm) figure = <div className="route-map-record"><strong>{shown.label}</strong><span>OpenStreetMap</span>{pager}</div>;
+  if (shown?.viewId) figure = <Evidence key={shown.id} t={t} view={views.get(shown.viewId)!} finding={shown} photo={photos.get(views.get(shown.viewId)!.photoId)} asset={asset} lang={lang} alt={`${fromRecord(shown.label, lang)}, ${name}`} pager={pager} />;
+  else if (shown?.osm) figure = <div className="route-map-record"><strong>{fromRecord(shown.label, lang)}</strong><span>OpenStreetMap</span>{pager}</div>;
   else if (plainView) figure = <Evidence key={plainView.id} t={t} view={plainView} finding={null} photo={photos.get(plainView.photoId)} asset={asset} lang={lang} alt={name} />;
   return <section className="route-card" aria-label={name}>
     <button className="route-icon-button route-card-close" aria-label={t.close} onClick={onClose}><Close /></button>
     {figure}
     <h2 ref={heading} tabIndex={-1}>{name}</h2>
     {range && <p className="route-card-line">{range}</p>}
-    {shown && <p className="route-card-quiet"><span className="route-mark" aria-hidden="true" />{shown.label}. {shown.viewId ? t.suggestion : t.mapRecord}</p>}
+    {shown && <p className="route-card-quiet"><span className="route-mark" aria-hidden="true" />{fromRecord(shown.label, lang)}. {shown.viewId ? t.suggestion : t.mapRecord}</p>}
     {spot?.kind === 'no-photos' && <p className="route-card-quiet">{t.noPhotos}</p>}
     {stretch && <p className="route-card-quiet">{t.noBarrier}</p>}
     {link && <div className="route-actions"><button className="route-primary" onClick={link}>{t.yes}</button></div>}

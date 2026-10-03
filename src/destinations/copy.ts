@@ -91,7 +91,7 @@ const SUBJECTS: Record<Subject, Where> = {
   path: { en: 'the path', es: 'el camino', ko: '길' },
 };
 export const NOTE = {
-  title: { en: (from: string, to: string, m: number) => `From ${from} to ${to}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `De ${from} a ${to}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
+  title: { en: (from: string, to: string, m: number) => `${from} to ${to}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${from} hasta ${to}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
   barrier: {
     en: (s: Subject, w: Where, m: number) => `${cap(SUBJECTS[s].en)} ${w.en}, about ${m} m along the walk.`,
     es: (s: Subject, w: Where, m: number) => `${cap(SUBJECTS[s].es)} ${w.es}, a unos ${m} m del inicio.`,

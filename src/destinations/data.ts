@@ -1,5 +1,6 @@
 /** Inspection adapter for the retained mercature-route/1 records and their published mercature-place/1 packages.
  * It never supplies accepted geometry to the synthetic access solver. */
+import { ROUTE_PLACES } from '../site/registry';
 export const DESTINATIONS = {
   'cusco-qorikancha': { name: 'Qorikancha', place: 'Cusco, Peru' },
   'tbilisi-narikala': { name: 'Narikala', place: 'Tbilisi, Georgia' },
@@ -31,7 +32,7 @@ const path = (value: unknown): string => { const name = text(value, 200); if (!/
 const unique = (items: { id: string }[]) => { if (new Set(items.map(item => item.id)).size !== items.length) fail('Prepared identifiers must be unique.'); };
 export function isDestinationId(value: string): value is DestinationId { return Object.hasOwn(DESTINATIONS, value); }
 /** Places with a published package under public/places, readable on any host. */
-export const PACKAGES: Partial<Record<DestinationId, string>> = { 'cusco-qorikancha': 'qorikancha' };
+export const PACKAGES: Partial<Record<DestinationId, string>> = Object.fromEntries(Object.values(ROUTE_PLACES).map(place => [place.id, place.folder]));
 const BASE = import.meta.env?.BASE_URL ?? '/';
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 export function localAsset(id: DestinationId, file: string, host = window.location): string {
