@@ -1,0 +1,70 @@
+import { test, expect } from '@playwright/test';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { QORIKANCHA_PLACE } from '../../src/site/route';
+import { metres, type Coordinate } from '../../src/destinations/data';
+
+const file = resolve('.local/routes/cusco-qorikancha/route.json');
+// The recorded walk is local-only; checks against it skip where it is absent, as in CI.
+const record = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
+const spots = QORIKANCHA_PLACE.features;
+type Point = [number, number];
+
+test('spot ids are stable and every spot keeps the agreed contract and wording limits', () => {
+  expect(QORIKANCHA_PLACE.id).toBe('cusco-qorikancha');
+  expect(spots.map(spot => spot.id)).toEqual([
+    'steps-0-10', 'kerb-80-100', 'steps-130-140', 'no-photos-150-170', 'steps-340-350', 'steps-590-594',
+    'plaza-de-armas', 'qorikancha-ticket-booth', 'catedral-del-cusco', 'iglesia-de-la-compania-de-jesus',
+    'calle-loreto', 'iglesia-de-santo-domingo', 'monasterio-de-santa-catalina-de-sena', 'portal-de-carrizos',
+  ]);
+  for (const spot of spots) {
+    expect(spot.name.en && spot.name.es && spot.landmark).toBeTruthy();
+    expect(spot.description).toMatch(/^[A-Z][^]*\.$/);
+    expect(spot.description).not.toMatch(/\.\s+\S/);
+    expect(Object.values(spot.aliases).flat().length).toBeLessThanOrEqual(16);
+  }
+  // Flagged stretches stay suggestions, and no spot states a width, height, slope or passability.
+  for (const spot of spots.filter(spot => spot.stretches.length)) expect(spot.description).toMatch(/not verified|none of it verified|nothing is known/);
+  expect(spots.map(spot => spot.description).join(' ')).not.toMatch(/\d\s?(cm|mm)\b|\bwide\b|width|height|slope|gradient|accessible|wheelchair|passable/i);
+});
+
+test('every flagged stretch belongs to exactly one spot, grouped as the record links them', () => {
+  test.skip(!record, 'The local route record is not available.');
+  const flagged = record.stretches.filter((stretch: { status: string }) => stretch.status !== 'clear').map((stretch: { index: number }) => stretch.index);
+  expect(spots.flatMap(spot => spot.stretches).sort((a, b) => a - b)).toEqual(flagged);
+  for (const spot of spots.filter(spot => spot.stretches.length)) {
+    const group = spot.stretches.map(index => record.stretches[index]);
+    expect(spot.stretches.every((index, i) => !i || index === spot.stretches[i - 1] + 1)).toBe(true);
+    expect(new Set(group.map((stretch: { status: string; findings: string[] }) => `${stretch.status}:${stretch.findings.join()}`)).size).toBe(1);
+    expect(spot.name.en).toContain(`(${Math.round(group[0].from_m)} to ${Math.round(group.at(-1).to_m)} m)`);
+  }
+});
+
+test('each landmark is a name from the record, close to its spot', () => {
+  test.skip(!record, 'The local route record is not available.');
+  const origin: Coordinate = record.route.frame.origin.slice(0, 2);
+  const local = (p: Coordinate): Point => metres(p, origin) as Point;
+  const segment = (p: Point, a: Point, b: Point) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+  };
+  const near = (line: Point[], parts: Point[][]) => Math.min(...parts.flatMap(part => part.flatMap((q, i) => [
+    ...line.map(p => i ? segment(p, part[i - 1], q) : Math.hypot(p[0] - q[0], p[1] - q[1])),
+    ...line.slice(1).map((p, j) => segment(q, line[j], p)),
+  ])));
+  const geometry = new Map<string, Point[][]>();
+  for (const feature of [...record.map_context.buildings.features, ...record.map_context.ways.features]) {
+    const { type, coordinates } = feature.geometry, name = feature.properties.name;
+    if (!name) continue;
+    const parts: Coordinate[][] = type === 'LineString' ? [coordinates] : coordinates;
+    geometry.set(name, [...(geometry.get(name) ?? []), ...parts.map(part => part.map(local))]);
+  }
+  const ends = new Map([[record.request.start.name, record.request.start.position], [record.request.destination.name, record.request.destination.position]]);
+  const route = record.route.line.map(local);
+  for (const spot of spots) {
+    const parts = geometry.get(spot.landmark) ?? (ends.has(spot.landmark) ? [[local(ends.get(spot.landmark))]] : undefined);
+    expect(parts, spot.landmark).toBeDefined();
+    const line = spot.stretches.length ? spot.stretches.flatMap(index => record.stretches[index].line.map(local)) : route;
+    expect(near(line, parts!), `${spot.id} to ${spot.landmark}`).toBeLessThan(40);
+  }
+});
