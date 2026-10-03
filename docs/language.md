@@ -75,7 +75,64 @@ Frozen before the held-out set was scored:
 - Model file `model_quantized.onnx` (see the size study below).
 - One run of `node scripts/language/evaluate.mjs test`, with fresh inference for every message.
 
+These were committed under the title "Freeze the understanding heads, thresholds and held-out protocol before evaluation" before the run; the results below were added afterwards without changing them.
+
 Reported: feature top-1 and top-3, both features of two-concern messages in the top three, kind and issue-type accuracy, place-or-not accuracy, confident answers and how many were right, and whether each case type got what a person should see (a right answer or *Not sure*, never a confident wrong one; praise, negations and resolved problems not reported as problems; vague complaints marked *Not sure*; messages about no place left without features). Everything is broken down by language, with the exact-alias baseline from `src/language/index.ts` alongside.
+
+## Held-out results
+
+One run on the 88 held-out messages, with the frozen heads and thresholds. "As expected" means a person sees a right answer or *Not sure*, never a confident wrong one; for praise, negations and resolved problems it means the message is not reported as a problem, and for messages about no place that no feature is offered.
+
+| Language | Top-1 | Top-3 | Kind | Issue type | Place or not | Confident and right | As expected | Alias baseline finds the feature |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| English | 15/16 | 16/16 | 19/22 | 7/12 | 19/20 | 7/10 | 20/22 | 15/16 |
+| Spanish | 16/16 | 16/16 | 19/22 | 8/12 | 20/20 | 5/6 | 21/22 | 15/16 |
+| Korean | 15/16 | 15/16 | 18/22 | 8/12 | 19/20 | 7/10 | 18/22 | 16/16 |
+| **English, Spanish, Korean** | **46/48** | **47/48** | **56/66** | **23/36** | **58/60** | **19/26** | **59/66** | 46/48 |
+| Quechua | 5/16 | 10/16 | 11/22 | 2/12 | 19/20 | 1/9 | 9/22 | 2/16 |
+
+| Case (English, Spanish, Korean) | As expected |
+| --- | ---: |
+| Direct problem | 15/18 |
+| Problem with the place described, not named | 5/6 |
+| Two concerns (both features in the top three: 3/3) | 3/3 |
+| Vague complaint | 5/6 |
+| Off-topic problem (price, taste, timing) | 3/3 |
+| Praise of a place | 6/6 |
+| General praise | 3/3 |
+| Negation | 6/6 |
+| Resolved problem | 3/3 |
+| Question about a place | 5/6 |
+| Question about no place | 5/6 |
+
+- **Ranking.** In English, Spanish and Korean the right feature came first for 46 of 48 messages that name one, and was in the top three for 47.
+- **Not sure.** Of the 66 English, Spanish and Korean messages, 26 got a confident answer, 11 were marked as about no place (10 rightly; one was praise of a place), and 29 got *Not sure* with candidates, mostly because the issue type was below its threshold. 11 of the 12 messages about no place were left without features.
+- **Confident errors.** 7 of the 26 confident answers were wrong, more than out-of-fold testing suggested. Two polite complaints that end with a request ("could it be kept off to the side?") were taken as questions. A Korean complaint that the sign is only in Spanish was taken as praise, and a Korean question about a step at the restroom as a problem. Tree roots were filed under a blocked path instead of steps or slope. A resolved complaint about the gate ranked the welcome sign first. A vague complaint about slippery ground got the muddy patch with confidence.
+- **Against exact aliases.** The alias baseline finds the right feature about as often (46 of 48), because the aliases cover these messages' words well. It cannot tell praise or a negation from a complaint: it would flag a place for all 15 praise, negation and resolved messages, where the model reported none of them as a problem.
+- **Quechua fails.** The model takes most Quechua messages for praise, ranks the right feature first for 5 of 16 and gives 9 confident answers, only 1 of them right. Its 9 of 22 "as expected" mostly come from praise and negations that it called praise anyway. This matches Quechua being outside the encoder's listed languages; today a Quechua message can get a confident wrong answer.
+
+The same run in Chromium (production build, same Mac) gave identical decisions for all 88 messages. With the shipped heads, `int8` and `uint8` would have scored 68 and 71 of 88 "as expected" against 68 for the shipped file, a difference within noise for 0.2% fewer bytes.
+
+## Speed
+
+On the development Mac (Apple M5 Max, one inference thread):
+
+| Step | Node | Chromium 145 |
+| --- | ---: | ---: |
+| Read, check and create the inference session | 0.5 s | |
+| Embed the farm's 17 features (`prepareSite`) | | 1.8 to 2.1 s |
+| Embed the 27 label passages and the 17 features | 2.3 s | |
+| One message, median | 26 ms | 29 ms |
+| One message, 95th percentile | 38 ms | |
+| First message after a cold restart, model stored (load, embed, answer) | | 2.7 to 2.9 s |
+
+A phone will be several times slower; no phone has been measured. Feature embedding happens once per place and session, and `prepareSite` can do it before the first message.
+
+## Offline
+
+`prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device.
+
+Checked with `scripts/language/browser.mjs` on a production build that uses the app's own service worker: after provisioning, Chromium was closed and reopened on the same profile with networking disabled. The page came from the service worker, the model state started `absent`, and a new message was understood with no network request. On iPhone, Safari deletes a site's stored data after seven days of browsing without a visit unless the site was added to the home screen, so the model would need downloading again.
 
 ## Size study
 
