@@ -5,6 +5,7 @@ import './SpatialView.css';
 
 export type SpatialViewProps = {
   scene: Scene;
+  evidenceScene?: Scene;
   result: Result;
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -18,23 +19,25 @@ const colors: Record<Status, string> = { reachable: '#c7e2cc', blocked: '#e9c5b8
 const statusText: Record<Status, string> = { reachable: 'Connected', blocked: 'Blocked', unknown: 'Unresolved' };
 
 /** Both projections use the same scene coordinates and shared feature selection. */
-export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace }: SpatialViewProps) {
+export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace, evidenceScene }: SpatialViewProps) {
   const [showAssessment, setShowAssessment] = useState(true);
   const [showPath, setShowPath] = useState(false);
   const [rotation, setRotation] = useState(0);
   const evidenceDialog = useRef<HTMLDialogElement>(null);
   const evidenceButton = useRef<HTMLButtonElement>(null);
   const evidenceTitleId = useId();
-  const selected = scene.obstacles.find(item => item.id === selectedId) ?? scene.supports.find(item => item.id === selectedId);
-  const unknown = scene.unknown.find(item => item.id === selectedId);
-  const destination = scene.destinations.find(item => item.id === selectedId);
+  const sourceScene = evidenceScene ?? scene;
+  const selected = sourceScene.obstacles.find(item => item.id === selectedId) ?? sourceScene.supports.find(item => item.id === selectedId);
+  const unknown = sourceScene.unknown.find(item => item.id === selectedId);
+  const destination = sourceScene.destinations.find(item => item.id === selectedId);
+  const removed = result.hypothetical && sourceScene.obstacles.some(item => item.id === selectedId) && !scene.obstacles.some(item => item.id === selectedId);
   const destinationResult = result.destinations.find(item => item.id === selectedId);
   const evidence = selected?.evidence ?? (unknown ? [unknown.reason] : destination ? ['Authored destination coordinate; no source photograph or site measurement.'] : []);
   const selectedBounds = selected?.bounds ?? unknown?.bounds;
   const pathNote = `${result.traversals[0]?.kind === 'complete' ? 'Checked cardinal path to the destination.' : result.traversals[0]?.kind === 'approach' ? 'Checked approach only. The line stops before unsupported continuation.' : 'No checked path is available under these requirements.'} A square-envelope illustration, not a prediction of individual passage.`;
   const evidenceContent = <div className="spatial-evidence" aria-live="polite">
       <div><span className="spatial-eyebrow">Linked evidence</span><h3>{selected?.label ?? unknown?.label ?? destination?.label ?? 'Select a feature to inspect'}</h3>
-        {selectedBounds && <p className="spatial-dimensions">{(selectedBounds.maxX - selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY - selectedBounds.minY).toFixed(2)} m footprint{'top' in (selected ?? {}) ? ` · ${((selected as Scene['obstacles'][number]).top - (selected as Scene['obstacles'][number]).bottom).toFixed(2)} m high` : ''}</p>}
+        {selectedBounds && <p className="spatial-dimensions">{evidenceScene ? 'Original footprint: ' : ''}{(selectedBounds.maxX - selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY - selectedBounds.minY).toFixed(2)} m{evidenceScene ? '' : ' footprint'}{'top' in (selected ?? {}) ? ` · ${((selected as Scene['obstacles'][number]).top - (selected as Scene['obstacles'][number]).bottom).toFixed(2)} m high` : ''}</p>}
         {destinationResult && <p className={`spatial-status spatial-status-${destinationResult.status}`}>{statusText[destinationResult.status]} · {destinationResult.reason}</p>}
       </div>
       <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose the bench, dividing walls, destination or unresolved corner in either view. Every dimension in this example is authored.</p>}</div>
@@ -60,6 +63,7 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
     {!compact && showPath && <p className="spatial-path-note">{pathNote}</p>}
     {compact ? <dialog ref={evidenceDialog} className="spatial-evidence-dialog" aria-labelledby={evidenceTitleId} onClose={() => evidenceButton.current?.focus()}>
       <header><h2 id={evidenceTitleId}>Evidence</h2><button type="button" aria-label="Close evidence" autoFocus onClick={() => evidenceDialog.current?.close()}>×</button></header>
+      {removed && <p className="spatial-path-note">Removed in this proposal.</p>}
       {evidenceContent}
       <div className="spatial-dialog-context">
         <p>Original authored records · synthetic example.</p>
