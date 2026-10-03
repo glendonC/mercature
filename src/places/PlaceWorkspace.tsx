@@ -48,6 +48,7 @@ export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [name, setName] = useState(initial.name);
   const [notes, setNotes] = useState(initial.notes);
   const [boundary, setBoundary] = useState(boundaryDraft(initial));
   const [detailError, setDetailError] = useState('');
@@ -56,7 +57,7 @@ export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: 
   const current = place.evidence.find(item => item.id === selected) ?? place.evidence[0];
 
   function openDetails() {
-    setNotes(place.notes); setBoundary(boundaryDraft(place)); setDetailError('');
+    setName(place.name); setNotes(place.notes); setBoundary(boundaryDraft(place)); setDetailError('');
     details.current?.showModal();
   }
   function saveDetails(event: React.FormEvent) {
@@ -68,7 +69,8 @@ export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: 
         bounds = { west: Number(boundary.west), south: Number(boundary.south), east: Number(boundary.east), north: Number(boundary.north) };
         validateBoundary(bounds);
       }
-      const next = { ...place, notes, boundary: bounds };
+      if (!name.trim()) throw new Error('Enter a name for this place.');
+      const next = { ...place, name: name.trim(), notes, boundary: bounds };
       savePlace(next); setPlace(next); onSaved(next);
       setError(''); setStatus('Details saved on this device.'); details.current?.close();
     } catch (e) { setDetailError(e instanceof Error ? e.message : 'Could not save these details.'); }
@@ -120,6 +122,7 @@ export default function PlaceWorkspace({ initial, onHome, onSaved }: { initial: 
     <dialog className="place-details" ref={details} aria-labelledby="place-details-title">
       <form onSubmit={saveDetails}>
         <div className="place-details-header"><h2 id="place-details-title">Place details</h2><button type="button" className="place-quiet-button" aria-label="Close details" onClick={() => details.current?.close()}>×</button></div>
+        <label className="place-notes-label">Place name<input value={name} maxLength={120} onChange={event => setName(event.target.value)} /></label>
         <label className="place-notes-label">Area and measurement notes<textarea value={notes} maxLength={20000} onChange={event => setNotes(event.target.value)} placeholder="Anything to remember about this entrance?" rows={4} /></label>
         <details className="place-boundary"><summary>Geographic boundary <span>Optional</span></summary><p>Coordinates describe the area; they do not measure it.</p><div className="place-coordinate-fields">{boundaryFields.map(field => <label key={field}>{field[0].toUpperCase() + field.slice(1)}<input type="number" step="any" value={boundary[field]} onChange={event => setBoundary({ ...boundary, [field]: event.target.value })} /></label>)}</div></details>
         <p className="place-detail-note">{place.evidence.length} saved view{place.evidence.length === 1 ? '' : 's'} · Up to 20 MB per file<br />Photos are for review. Measured-site analysis is not available yet.</p>

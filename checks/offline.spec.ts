@@ -38,8 +38,9 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     page = await open(true);
     const response = await page.goto("http://127.0.0.1:4173/");
     expect(response!.fromServiceWorker()).toBe(true);
+    await page.getByRole("textbox", { name: "Explore a place" }).fill("Visitor courtyard");
     await page
-      .getByRole("button", { name: "Explore the editing example ↗" })
+      .getByRole("button", { name: "Visitor courtyard · Authored editing demo" })
       .click();
     await page.getByRole("button", { name: "Add a visitor message" }).click();
     const text = `입구 옆 벤치 때문에 지나가기 어려웠어요. ${crypto.randomUUID()}`;
@@ -62,7 +63,7 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     page = await open(true);
     const reopened = await page.goto("http://127.0.0.1:4173/");
     expect(reopened!.fromServiceWorker()).toBe(true);
-    await page.getByRole("button", { name: "My places · 1" }).click();
+    await page.getByRole("button", { name: "Search places" }).click();
     await page
       .getByRole("button", { name: /Move reviewed movable bench/ })
       .click();

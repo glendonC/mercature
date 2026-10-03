@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
 async function openExample(page: import("@playwright/test").Page) {
   await page.goto("/");
+  await page.getByRole("textbox", { name: "Explore a place" }).fill("Visitor courtyard");
   await page
-    .getByRole("button", { name: "Explore the editing example ↗" })
+    .getByRole("button", { name: "Visitor courtyard · Authored editing demo" })
     .click();
 }
 async function makeProposal(page: import("@playwright/test").Page) {
@@ -30,11 +31,11 @@ test("one guided change is compared, saved once, reopened and undone", async ({
     .getByRole("dialog")
     .getByRole("button", { name: "Save improvement plan" })
     .click();
-  await page.getByRole("button", { name: "Back to my places →" }).click();
+  await page.getByRole("button", { name: "Back to home →" }).click();
   await expect(
-    page.getByRole("button", { name: "My places · 1" }),
+    page.getByRole("button", { name: "Search places" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "My places · 1" }).click();
+  await page.getByRole("button", { name: "Search places" }).click();
   await page
     .getByRole("button", { name: /Move reviewed movable bench/ })
     .click();
@@ -157,7 +158,7 @@ test("a damaged places list does not hide healthy plans or undo a successful sav
   await expect(page.getByRole("alert")).toContainText(
     "Saved places could not be read",
   );
-  await page.getByRole("button", { name: "My places · 1" }).click();
+  await page.getByRole("button", { name: "Search places" }).click();
   await page
     .getByRole("button", { name: /Move reviewed movable bench/ })
     .click();
@@ -173,7 +174,7 @@ test("a damaged places list does not hide healthy plans or undo a successful sav
     page.getByRole("heading", { name: "Plan saved." }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "My places · 1" }).click();
+  await page.getByRole("button", { name: "Search places" }).click();
   await page
     .getByRole("button", { name: /Move reviewed movable bench/ })
     .click();
@@ -197,12 +198,12 @@ test("a local backup restores its plan before the interface calls it saved", asy
   const restored = await context.newPage();
   try {
     await restored.goto("http://127.0.0.1:4173/");
-    await restored.locator("input[type=file]").setInputFiles(file!);
+    await restored.locator("input[type=file][accept*=json]").setInputFiles(file!);
     await expect(
       restored.getByRole("heading", { name: "Plan saved." }),
     ).toBeVisible();
     await restored.reload();
-    await restored.getByRole("button", { name: "My places · 1" }).click();
+    await restored.getByRole("button", { name: "Search places" }).click();
     await restored
       .getByRole("button", { name: /Move reviewed movable bench/ })
       .click();

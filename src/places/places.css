@@ -35,7 +35,7 @@
 .place-details-header h2{font-size:26px;font-weight:300;letter-spacing:-.035em;margin:0}
 .place-details-header button{font-size:26px;line-height:1;padding:5px 9px}
 .place-notes-label{font-size:13px;color:#53665a;display:block}
-.place-notes-label textarea{display:block;width:100%;font-size:14px;line-height:1.5;border:1px solid #ccd7cd;border-radius:8px;background:white;padding:12px;resize:vertical;margin:10px 0 24px}
+.place-notes-label input,.place-notes-label textarea{display:block;width:100%;font-size:14px;line-height:1.5;border:1px solid #ccd7cd;border-radius:8px;background:white;padding:12px;resize:vertical;margin:10px 0 24px}
 .place-boundary{border-top:1px solid #dce3dc;border-bottom:1px solid #dce3dc;padding:17px 0}
 .place-boundary summary{font-size:13px;cursor:pointer;color:#53665a}
 .place-boundary summary span{font-size:11px;color:#859087;margin-left:8px}

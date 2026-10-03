@@ -3,7 +3,7 @@ import Home, { type SavedEntry } from "./home/Home";
 import PlaceWorkspace from "./places/PlaceWorkspace";
 import Workspace from "./workspace/Workspace";
 import Companion from "./components/Companion";
-import { createPlace, listPlaces, savePlace, type Place } from "./places/store";
+import { createPlace, listPlaces, savePlace, putEvidence, type Place } from "./places/store";
 import {
   createPlanStore,
   parsePlan,
@@ -13,6 +13,7 @@ import {
 import { parseProject } from "./spatial/scenario";
 import { solveScene } from "./spatial/solver";
 import type { Project } from "./spatial/contracts";
+import DestinationWorkspace from "./destinations/DestinationWorkspace";
 const planStore = createPlanStore();
 function initialSaved() {
   const result = planStore.list();
@@ -31,7 +32,7 @@ function initialSaved() {
 }
 export default function App() {
   const [initial] = useState(initialSaved);
-  const [active, setActive] = useState<"home" | "place" | "spatial">("home");
+  const [active, setActive] = useState<"home" | "place" | "spatial" | "destination">("home");
   const [place, setPlace] = useState<Place | null>(null);
   const [places, setPlaces] = useState<Place[]>(initial.places);
   const [plans, setPlans] = useState<PlanSummary[]>(initial.plans);
@@ -44,6 +45,10 @@ export default function App() {
   const [error, setError] = useState(initial.error);
   const [loading, setLoading] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
+  const photoPicker = useRef<HTMLInputElement>(null);
+  const uploadName = useRef("");
+  const [destination, setDestination] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState("Opening your place…");
   function refresh() {
     const errors: string[] = [];
     try {
@@ -91,6 +96,7 @@ export default function App() {
   }
   async function importFile(file: File | undefined) {
     if (!file) return;
+    setLoadingMessage("Opening your place…");
     setLoading(true);
     setError("");
     try {
@@ -120,6 +126,32 @@ export default function App() {
       if (picker.current) picker.current.value = "";
     }
   }
+  async function uploadPhotos(files: FileList | null) {
+    if (!files?.length) return;
+    setLoading(true);
+    setError("");
+    let next = createPlace(uploadName.current || "Untitled place");
+    try {
+      if (files.length > 100) throw new Error("Choose up to 100 photos or videos at a time.");
+      for (const [index, file] of Array.from(files).entries()) {
+        setLoadingMessage(`Saving file ${index + 1} of ${files.length} on this device…`);
+        const evidence = await putEvidence(file);
+        const updated = { ...next, evidence: [...next.evidence, evidence] };
+        savePlace(updated);
+        next = updated;
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      if (next.evidence.length) {
+        setPlace(next);
+        setActive("place");
+        refresh();
+      }
+      setLoading(false);
+      if (photoPicker.current) photoPicker.current.value = "";
+    }
+  }
   const entries: SavedEntry[] = [
     ...plans.map((p) => ({ id: p.id, title: p.title, kind: "plan" as const })),
     ...places.map((p) => ({ id: p.id, title: p.name, kind: "place" as const })),
@@ -135,7 +167,9 @@ export default function App() {
                 setWorkspace({ key: crypto.randomUUID(), example: true });
               setActive("spatial");
             }}
+            onDestination={(id) => { setDestination(id); setActive("destination"); setError(""); }}
             onImport={() => picker.current?.click()}
+            onUpload={(name) => { uploadName.current = name; photoPicker.current?.click(); }}
             saved={entries}
             onOpenSaved={saved}
           />
@@ -166,6 +200,8 @@ export default function App() {
           />
         </div>
       )}
+      {active === "destination" && destination && <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />}
+      <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Upload photos or video" onChange={event => void uploadPhotos(event.target.files)} />
       <input
         type="file"
         hidden
@@ -175,7 +211,7 @@ export default function App() {
       />
       {loading && (
         <div className="loading-dialog" role="status">
-          <Companion working>Opening your place…</Companion>
+          <Companion working>{loadingMessage}</Companion>
         </div>
       )}
       {error && (

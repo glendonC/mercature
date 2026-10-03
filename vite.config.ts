@@ -1,4 +1,5 @@
 import { defineConfig, type Plugin } from "vite";
+import { localDestinations } from "./local-destinations.ts";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 function offlineShell(): Plugin {
@@ -34,4 +35,4 @@ self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(ev
     },
   };
 }
-export default defineConfig({ plugins: [offlineShell()] });
+export default defineConfig({ plugins: [localDestinations(), offlineShell()] });

@@ -616,7 +616,7 @@ export default function Workspace({
                   </button>
                 ) : (
                   <button className="primary" onClick={onHome}>
-                    Back to my places <span>→</span>
+                    Back to home <span>→</span>
                   </button>
                 )}
                 <button

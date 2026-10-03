@@ -2,7 +2,7 @@
 
 ## Cover photographs
 
-These are atmosphere, never evidence of assessed site geometry. Resized WebP copies are used; CSS masks, cropping, opacity and blur alter their presentation.
+These destination covers are navigation, never evidence of assessed site geometry. Resized WebP copies are used; CSS masks, cropping, opacity and desaturation alter their presentation.
 
 - [Qorikancha](https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg): Draceane, 2023, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The adapted photograph remains under this license.
 - [Narikala](https://commons.wikimedia.org/wiki/File:Looking_towards_Narikala_Fortress_from_the_cable_car_station.jpg): shankar s., 2016, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/).
@@ -15,3 +15,7 @@ Outfit is Copyright 2021 The Outfit Project Authors, licensed under the [SIL Ope
 React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respectively; Playwright uses Apache-2.0. Exact versions and transitive dependencies are recorded in the lockfile; their distributions retain their licenses.
 
 The guide uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
+
+## Local destination inspection
+
+Retained Mapillary route records and images are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
