@@ -1,6 +1,7 @@
 import { test, expect, chromium, type BrowserContext } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
+const origin = `http://127.0.0.1:${process.env.MERCATURE_PORT ?? "4173"}/`;
 test("a cold offline restart completes a fresh manual concern and reopens its checked plan", async () => {
   test.setTimeout(60000);
   const profile = await mkdtemp(path.resolve(".local/offline-browser-"));
@@ -15,7 +16,7 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
   };
   try {
     let page = await open(false);
-    await page.goto("http://127.0.0.1:4173/");
+    await page.goto(origin);
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
       if (!navigator.serviceWorker.controller)
@@ -36,7 +37,7 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
       .toBe(true);
     await context!.close();
     page = await open(true);
-    const response = await page.goto("http://127.0.0.1:4173/");
+    const response = await page.goto(origin);
     expect(response!.fromServiceWorker()).toBe(true);
     await page.getByRole("textbox", { name: "Explore a place" }).fill("Visitor courtyard");
     await page
@@ -63,7 +64,7 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     ).toBeVisible();
     await context!.close();
     page = await open(true);
-    const reopened = await page.goto("http://127.0.0.1:4173/");
+    const reopened = await page.goto(origin);
     expect(reopened!.fromServiceWorker()).toBe(true);
     await page.getByRole("button", { name: "Search places" }).click();
     await page
