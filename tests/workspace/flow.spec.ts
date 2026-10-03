@@ -236,8 +236,8 @@ test('the contextual guide follows selection and options preserve keyboard retur
   await expect(page.locator('.guide-header')).toHaveCount(0);
   await expect.poll(async () => {
     const bot = await page.locator('.contextual-guide').boundingBox();
-    const panel = await page.locator('.guide-dock').boundingBox();
-    return Math.abs(bot!.x - (panel!.x + 22));
+    const panel = await page.locator('.scene-dialogue').boundingBox();
+    return Math.abs(bot!.x - (panel!.x - 76));
   }).toBeLessThan(2);
   await page.screenshot({path:'.local/dialogue-start-1280.png'});
   await page.getByRole('button', {name:'Check the passage',exact:true}).click();
@@ -257,4 +257,54 @@ test('the contextual guide follows selection and options preserve keyboard retur
   await page.getByRole('button', {name:'Close evidence',exact:true}).click();
   await expect(page.getByRole('button', {name:'Scene options',exact:true})).toBeFocused();
   await page.screenshot({path:'.local/dialogue-inspection-1280.png'});
+});
+
+for (const size of [{width:1280,height:720},{width:390,height:844}]) {
+  test(`scene, narration and actions stay distinct through review at ${size.width}`, async ({page}) => {
+    await page.setViewportSize(size);
+    await openExample(page);
+    const initialScene = await page.locator('.guide-scene').boundingBox();
+    await page.getByRole('button', {name:'Add a visitor message',exact:true}).click();
+    await page.getByLabel('Original visitor message').fill('The bench makes the entrance hard to pass.');
+    const withForm = await page.locator('.guide-scene').boundingBox();
+    expect(withForm!.width).toBeCloseTo(initialScene!.width,0);
+    expect(withForm!.height).toBeCloseTo(initialScene!.height,0);
+    await expect(page.getByRole('region',{name:'Guide dialogue'}).getByRole('button')).toHaveCount(0);
+    await page.getByRole('button', {name:'Find the feature',exact:true}).click();
+    await page.getByText('Feature details',{exact:true}).click();
+    await expect(page.locator('.feature-facts')).toContainText('0.70 × 1.20');
+    expect((await page.locator('.guide-scene').boundingBox())!.height).toBeCloseTo(initialScene!.height,0);
+    await page.getByText('Feature details',{exact:true}).click();
+    await page.getByRole('button', {name:'Yes, this feature',exact:true}).click();
+    await page.getByRole('button', {name:'Move bench',exact:true}).click();
+    await page.getByRole('button', {name:'Try the open corner',exact:true}).click();
+    await expect(page.getByRole('region', {name:'Passage result'})).toContainText('Connected');
+    await expect(page.getByRole('region', {name:'Next action'})).not.toContainText('Blocked');
+    await expect(page.getByRole('region', {name:'Guide dialogue'})).toContainText('opens a route');
+    await page.getByRole('button', {name:'Before',exact:true}).click();
+    await expect(page.getByRole('button', {name:'Before',exact:true})).toHaveAttribute('aria-pressed','true');
+    await page.getByRole('button', {name:'After',exact:true}).click();
+    const scene = await page.locator('.guide-scene').boundingBox();
+    const context = await page.locator('.context-panel').boundingBox();
+    if (size.width > 700) expect(scene!.x + scene!.width).toBeLessThan(context!.x);
+    else expect(scene!.y + scene!.height).toBeLessThan(context!.y);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
+    await page.screenshot({path:`.local/scene-review-${size.width}.png`,fullPage:true});
+  });
+}
+
+test('a blocked proposal prioritizes another change and can still be saved for review', async ({page}) => {
+  await openExample(page);
+  await page.getByRole('button',{name:'Check the passage',exact:true}).click();
+  await page.getByRole('button',{name:'Yes, this feature',exact:true}).click();
+  await page.getByRole('button',{name:'Move bench',exact:true}).click();
+  await page.getByRole('button',{name:'Enter a position',exact:true}).click();
+  await page.getByLabel('X (m)',{exact:true}).fill('5.4');
+  await page.getByLabel('Y (m)',{exact:true}).fill('3');
+  await page.getByRole('button',{name:'Preview move',exact:true}).click();
+  await expect(page.getByRole('region',{name:'Guide dialogue'})).toContainText('still blocked');
+  await expect(page.locator('.context-panel .primary')).toHaveText('Try another change');
+  await expect(page.getByRole('region',{name:'Passage result'})).toContainText('Blocked');
+  await page.getByRole('button',{name:'Save for review',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Plan saved.',exact:true})).toBeVisible();
 });

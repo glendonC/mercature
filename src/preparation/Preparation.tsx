@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { ThinkingOrb } from 'thinking-orbs';
+import SceneFrame from '../components/SceneFrame';
+import SceneProgress from '../components/SceneProgress';
 import Companion from '../components/Companion';
 import SpatialView from '../spatial/SpatialView';
 import { DEFAULT_PROFILE, SYNTHETIC_SCENE } from '../spatial/fixtures';
@@ -30,20 +32,27 @@ export function Preparation({optionsContent, title, provenance, sourceLabel = "V
   const optionsRef = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus({preventScroll: true}); }, [stage]);
-  return <main className="preparation">
-    <h1 className="sr-only">{title}</h1>
-    <ol className="preparation-steps sr-only" aria-label="Preparation steps"><li aria-current={stage === 'views' ? 'step' : undefined}>{sourceLabel}</li><li aria-current={stage === 'scene' ? 'step' : undefined}>Scene</li></ol>
-    <section className="preparation-stage" aria-label="Preparation preview">{children}</section>
-    <footer className="preparation-guide">
-      <button className="dialogue-options preparation-options" popoverTarget={optionsId} aria-label="Scene options">•••</button>
-      <span className="preparation-announcement" role="status">{message}</span>
-      <div className="preparation-guide-copy">{busy ? <span className="preparation-orb" aria-hidden="true"><ThinkingOrb state="connecting" size={64} theme="light" /></span> : <Companion working={busy} tone={stage === 'views' ? 'evidence' : 'guide'}><span className="preparation-announcement">{message}</span></Companion>}<div><h2 className={busy ? "is-processing" : undefined} ref={heading} tabIndex={-1}>{message}</h2>{detail && <p>{detail}</p>}{error && <p role="alert" className="preparation-error">{error}</p>}</div></div>
-      {action && <button className="preparation-action" disabled={busy} onClick={onAction}>{action}<span aria-hidden="true">↗</span></button>}
-    </footer>
+  return <SceneFrame className="preparation" label={`Prepare ${title}`} step={stage}
+    progress={<SceneProgress title="Prepare the scene" items={[
+      {id:'views',label:sourceLabel,state:stage === 'views' ? 'current' : 'complete'},
+      {id:'scene',label:'Open scene',state:stage === 'scene' ? 'current' : 'upcoming'},
+    ]}/>}
+    scene={<section className="preparation-stage" aria-label="Preparation preview">{children}</section>}
+    context={<>
+      <div className="context-panel-head"><span className="scene-caption">{provenance}</span><button className="dialogue-options" popoverTarget={optionsId} aria-label="Scene options">•••</button></div>
+      <div className="preparation-task"><h1>{title}</h1>{detail && <p className="context-description">{detail}</p>}
+      {error && <p role="alert" className="preparation-error">{error}</p>}
+      {action && <button className="primary" disabled={busy} onClick={onAction}>{action}</button>}
+      </div>
+    </>}
+    dialogue={<><span className="preparation-announcement" role="status">{message}</span>
+      <div className="preparation-speaker">{busy ? <ThinkingOrb state="connecting" size={64} theme="light" /> : <Companion tone={stage === 'views' ? 'evidence' : 'guide'}><span className="sr-only">Preparation guide</span></Companion>}</div>
+      <h2 className={busy ? "is-processing" : undefined} ref={heading} tabIndex={-1}>{message}</h2>
+    </>}>
     <div popover="auto" id={optionsId} ref={optionsRef} className="scene-options" onClick={event => {
       if ((event.target as HTMLElement).closest('button')) optionsRef.current?.hidePopover();
     }}><p>{title}<span>{provenance}</span></p>{optionsContent}<div className="scene-options-links"><button onClick={onHome} aria-label="Home">Return home</button><button onClick={onSkip}>Skip walkthrough</button></div></div>
-  </main>;
+  </SceneFrame>;
 }
 
 export type AuthoredViewState = {selectedId: string | null; rotation: number};

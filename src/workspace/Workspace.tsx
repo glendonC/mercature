@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import SpatialView from "../spatial/SpatialView";
+import SceneFrame from "../components/SceneFrame";
+import SceneProgress from "../components/SceneProgress";
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
@@ -69,6 +71,7 @@ export default function Workspace({
   );
   const [rotation, setRotation] = useState(initialViewState?.rotation ?? 0);
   const [view, setView] = useState<"map" | "3d" | "split">("3d");
+  const viewBeforePlacement = useRef<"map" | "3d" | "split">("3d");
   const [comparison, setComparison] = useState<"original" | "proposed">(
     "proposed",
   );
@@ -233,6 +236,7 @@ export default function Workspace({
       setTitle(
         `${operation.kind === "move" ? "Move" : "Remove"} ${feature!.label.toLocaleLowerCase()}`,
       );
+      if (placing) setView(viewBeforePlacement.current);
       setPlacing(false);
       setStep("compare");
       setError("");
@@ -305,24 +309,46 @@ export default function Workspace({
     setPlacing(false);
     materialDirty();
   }
-  const cue =
-    step === "start"
-      ? "Choose where to begin."
-      : step === "message"
-        ? "Keep the visitor’s own words."
-        : step === "confirm"
-          ? "Tap a feature to inspect it."
-          : placing
-            ? "Tap a clear spot on the map."
-            : step === "edit"
-              ? "Preview a change."
-              : step === "compare"
-                ? "Here’s what the change would do."
-                : "Saved on this device.";
+  const afterStatus = proposed.destinations[0]?.status ?? "unknown";
+  const connected = afterStatus === "reachable";
+  const cue = step === "start" ? "Let’s see what’s getting in the way."
+    : step === "message" ? "Keep the visitor’s own words. We’ll connect them to a spot."
+    : step === "confirm" ? "Select the object you want to work on."
+    : placing ? "Tap a clear spot to preview the move."
+    : step === "edit" ? editable ? `Try moving the ${actionName} out of the passage.` : "This feature needs a closer review."
+    : step === "compare" ? connected ? `This proposal opens a route to ${destination.toLocaleLowerCase()}.`
+      : afterStatus === "blocked" ? "The passage is still blocked. Try another position."
+      : "There isn’t enough information to confirm this route."
+    : plan ? "Your plan is saved on this device." : "Save your changes when you’re ready.";
+  const progressIndex = step === "start" || step === "message" || step === "confirm" ? 0 : step === "edit" ? 1 : 2;
+  const selectedRecord = selectedFeature && 'evidence' in selectedFeature ? selectedFeature.evidence : [];
+  const selectedBounds = selectedFeature && 'bounds' in selectedFeature ? selectedFeature.bounds : null;
+  function retryChange() {
+    setScenario(createScenario(scene, profile));
+    setStep("edit"); setPlacing(false); setSelected(target); setComparison("proposed"); materialDirty();
+  }
   return (
-    <main className="guided-workspace" aria-label="Visitor courtyard editing demo">
-      <div className="guide-scene" ref={stageRef}>
-        <SpatialView
+    <SceneFrame className="guided-workspace" step={step} label="Visitor courtyard editing demo"
+      sceneRef={stageRef} dialogueRef={dockRef}
+      progress={<SceneProgress title="Open the passage" items={[
+        {id:'identify',label:'Choose a feature',state:progressIndex === 0 ? 'current' : 'complete'},
+        {id:'try',label:'Preview a change',state:progressIndex === 1 ? 'current' : progressIndex > 1 && scenario.operations.length > 0 ? 'complete' : 'upcoming'},
+        {id:'save',label:'Review and save',state:plan ? 'complete' : progressIndex === 2 ? 'current' : 'upcoming'},
+      ]}>
+        {(step === "compare" || step === "done") && <section className="result-panel" aria-label="Passage result">
+          <h2>{destination}</h2>
+          <div className="compact-comparison" aria-label="Before and after comparison">
+            <div><span>Before</span><strong className={`result-${baseline.destinations[0]?.status}`}>{outcome(baseline.destinations[0]?.status ?? "unknown")}</strong></div>
+            <div><span>After</span><strong className={`result-${afterStatus}`}>{outcome(afterStatus)}</strong></div>
+          </div>
+          <p>Modelled proposal</p>
+          <div className="result-switch" aria-label="Compare scene">
+            <button aria-pressed={comparison === 'original'} onClick={() => setComparison('original')}>Before</button>
+            <button aria-pressed={comparison === 'proposed'} onClick={() => setComparison('proposed')}>After</button>
+          </div>
+        </section>}
+      </SceneProgress>}
+      scene={<SpatialView
           controlsTarget={controlsTarget}
           returnFocus={() => optionsButton.current?.focus()}
           rotation={rotation}
@@ -339,14 +365,9 @@ export default function Workspace({
               ? (point) => edit({ kind: "move", objectId: target!, to: point })
               : undefined
           }
-        />
-      </div>
-      <ContextualGuide stageRef={stageRef} dockRef={dockRef}
-        selectedId={step === "confirm" || step === "edit" ? selected : null}
-        revision={`${step}:${view}:${rotation}:${scenario.operations.length}:${comparison}:${placing}`}
-        tone={step === "confirm" ? "evidence" : step === "compare" || step === "done" ? "review" : "guide"} />
-      <section className="guide-dock" ref={dockRef} aria-label="Next action">
-        <div className="dialogue-meta"><span>{step === "confirm" ? "Inspect" : step === "compare" || step === "done" ? "Review" : "Guide"}<i />{step === "start" ? "Courtyard demo" : cue}</span>
+        />}
+      context={<>
+        <div className="context-panel-head"><span className="scene-caption">{step === "start" ? "Get started" : step === "message" ? "Visitor message" : step === "confirm" ? "Selected feature" : step === "edit" ? "Preview" : step === "compare" ? "Next step" : "Your plan"}</span>
           <button ref={optionsButton} className="dialogue-options" popoverTarget={optionsId} aria-label="Scene options" title="Scene options">•••</button>
         </div>
         {(step === "message" || step === "confirm") && analysisResult && <AIResultCard
@@ -357,7 +378,7 @@ export default function Workspace({
         <div className="guide-action" key={step} ref={actionCard} tabIndex={-1}>
           {step === "start" && (
             <>
-              <h2>Let’s open up the passage.</h2>
+              <h2>What needs attention?</h2>
               <div className="action-row">
                 <button className="primary" onClick={() => begin("proactive")}>
                   Check the passage <span>→</span>
@@ -420,6 +441,11 @@ export default function Workspace({
           {step === "confirm" && (
             <>
               <h2>{selectedFeature?.label ?? "Select a feature"}</h2>
+              {selectedFeature && <details className="feature-facts"><summary>Feature details</summary>
+                {selectedBounds && <p>{(selectedBounds.maxX-selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY-selectedBounds.minY).toFixed(2)} m footprint</p>}
+                {selectedRecord.map((text, index) => <p key={index}>{text}</p>)}
+                {selectedRecord.length === 0 && <p>{'reason' in selectedFeature ? selectedFeature.reason : 'Authored feature in the example scene.'}</p>}
+              </details>}
               <div className="action-row">
                 <button
                   className="primary"
@@ -468,6 +494,7 @@ export default function Workspace({
                       className="primary"
                       onClick={() => {
                         setSelected(target);
+                        viewBeforePlacement.current = view;
                         setPlacing(true);
                         setView("map");
                         setComparison("proposed");
@@ -536,47 +563,11 @@ export default function Workspace({
           )}
           {step === "compare" && (
             <>
-              <div
-                className="compact-comparison"
-                aria-label="Before and after comparison"
-              >
-                <div>
-                  <span>Before</span>
-                  <strong
-                    className={`result-${baseline.destinations[0]?.status}`}
-                  >
-                    {outcome(baseline.destinations[0]?.status ?? "unknown")}
-                  </strong>
-                </div>
-                <span aria-hidden="true">→</span>
-                <div>
-                  <span>After</span>
-                  <strong
-                    className={`result-${proposed.destinations[0]?.status}`}
-                  >
-                    {outcome(proposed.destinations[0]?.status ?? "unknown")}
-                  </strong>
-                </div>
-              </div>
-              <p className="subtle-line">
-                {destination} · Modeled result, not a change made on site.
-              </p>
+              <h2>{connected ? "Keep this proposal?" : afterStatus === "blocked" ? "The route is still blocked." : "The route is unresolved."}</h2>
+              <p className="context-description">{connected ? "Save it for review before making a change on site." : "Try a different placement, or keep this proposal for review."}</p>
               <div className="action-row">
-                <button className="primary" onClick={save}>
-                  Save improvement plan <span>→</span>
-                </button>
-                <button
-                  className="quiet-button"
-                  onClick={() => {
-                    setScenario(createScenario(scene, profile));
-                    setStep("edit");
-                    setPlacing(false);
-                    setSelected(target);
-                    materialDirty();
-                  }}
-                >
-                  Try another change
-                </button>
+                {connected ? <><button className="primary" onClick={save}>Save improvement plan</button><button onClick={retryChange}>Try another change</button></>
+                  : <><button className="primary" onClick={retryChange}>Try another change</button><button onClick={save}>Save for review</button></>}
               </div>
             </>
           )}
@@ -625,7 +616,12 @@ export default function Workspace({
             {notice}
           </p>
         )}
-      </section>
+      </>}
+      dialogue={<p role="status">{cue}</p>}>
+      <ContextualGuide stageRef={stageRef} dockRef={dockRef}
+        selectedId={step === "confirm" || step === "edit" ? selected : null}
+        revision={`${step}:${view}:${rotation}:${scenario.operations.length}:${comparison}:${placing}`}
+        tone={step === "confirm" ? "evidence" : step === "compare" || step === "done" ? "review" : "guide"} />
       <div popover="auto" id={optionsId} ref={options} className="scene-options" onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) options.current?.hidePopover();
       }}>
@@ -646,20 +642,6 @@ export default function Workspace({
         </div>
         {scenario.operations.length > 0 && (
           <div className="scenario-tools">
-            <div className="segmented" aria-label="Scenario comparison">
-              <button
-                aria-pressed={comparison === "original"}
-                onClick={() => setComparison("original")}
-              >
-                Before
-              </button>
-              <button
-                aria-pressed={comparison === "proposed"}
-                onClick={() => setComparison("proposed")}
-              >
-                After
-              </button>
-            </div>
             <button className="quiet-button" onClick={undo}>
               ↶ Undo
             </button>
@@ -882,6 +864,6 @@ export default function Workspace({
           Preview move
         </button>
       </dialog>
-    </main>
+    </SceneFrame>
   );
 }

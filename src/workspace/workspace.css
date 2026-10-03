@@ -110,57 +110,6 @@
   color: #254b3a;
   box-shadow: 0 1px 4px #273a2612;
 }
-/* One scene, one conversation. Secondary controls live in the dialogue menu. */
-.guided-workspace {
-  position: relative; isolation: isolate; min-height: 100svh; display: flex; flex-direction: column;
-  padding: 28px 24px 28px; color: #293336;
-  background: radial-gradient(ellipse at 20% 24%, #dce8ed88, transparent 55%), radial-gradient(ellipse at 83% 82%, #dfe6de88, transparent 55%), #f5f6f3;
-}
-.guide-scene { width: min(1050px, 100%); margin: auto; flex: 1; min-height: 270px; display: grid; align-items: center; }
-.guided-workspace .spatial-view { border: 0; background: transparent; overflow: visible; }
-.guided-workspace .spatial-canvases { background: transparent; height: clamp(290px, 59svh, 740px); min-height: 0; }
-.guided-workspace .spatial-projection { height: 100%; min-height: 0; }
-.guided-workspace .spatial-projection svg { height: 100%; min-height: 0; padding: 0 20px; }
-.guided-workspace .spatial-split .spatial-projection svg { min-height: 0; }
-.guide-dock {
-  position: relative; width: min(720px, 100%); margin: 34px auto 0; padding: 16px 25px 19px;
-  border: 1px solid #ffffffb8; border-radius: 25px;
-  background: linear-gradient(115deg, #ffffff73, #d7e0e04d);
-  box-shadow: inset 0 1px 0 #ffffffd9, 0 12px 45px #26393b0b, 0 0 0 1px #35434b0a;
-  backdrop-filter: blur(24px) saturate(125%);
-}
-.dialogue-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; margin-bottom: 9px; }
-.dialogue-meta > span { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #647275; line-height: 1.4; }
-.dialogue-meta i { width: 3px; height: 3px; border-radius: 50%; background: #859291; flex-shrink: 0; }
-.dialogue-options { flex-shrink: 0; border: 0; border-radius: 50%; background: #3949480b; width: 36px; height: 32px; color: #596769; letter-spacing: 2px; font-size: 11px; }
-.dialogue-options:hover { background: #39494818; }
-.guide-action:focus { outline: none; }
-.guide-action h2 { margin: 0 0 13px; font-size: clamp(23px, 2.4vw, 30px); font-weight: 400; letter-spacing: -.045em; line-height: 1.15; }
-.action-row { display: flex; align-items: center; flex-wrap: wrap; column-gap: 18px; row-gap: 2px; }
-.action-row button, .feature-picker summary { display: flex; align-items: center; min-height: 42px; padding: 8px 0; border: 0; border-radius: 0; background: none; color: #6c7679; font-size: 13px; text-align: left; cursor: pointer; }
-.action-row button:hover, .feature-picker summary:hover { color: #171e21; }
-.action-row .primary { color: #232d30; font-weight: 500; }
-.action-row .primary::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 12px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .18s; }
-.action-row .primary:hover::before { transform: translateX(3px) rotate(-45deg); }
-.action-row .primary span { display: none; }
-.action-row button:disabled { opacity: .4; cursor: default; }
-.guide-action textarea { display: block; width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #7e94952a; border-radius: 12px; background: #ffffff38; color: #293336; resize: vertical; max-height: 130px; }
-.action-row select { max-width: 100%; padding: 8px; font-size: 12px; background: #ffffff55; border: 1px solid #7e949533; border-radius: 9px; color: #49585b; }
-.feature-picker { position: relative; }
-.feature-picker select { display: block; }
-.subtle-line { font-size: 11px; color: #6b7778; line-height: 1.5; margin: 7px 0; }
-.compact-comparison { display: flex; gap: 25px; align-items: center; }
-.compact-comparison > div { display: flex; flex-direction: column; gap: 4px; }
-.compact-comparison > div > span { font-size: 11px; color: #6b7778; }
-.compact-comparison strong { font-size: 25px; font-weight: 400; letter-spacing: -.035em; }
-.compact-comparison > span { color: #879291; }
-.result-blocked { color: #916c5c; }.result-reachable { color: #436a59; }.result-unknown { color: #8d7540; }
-.guide-error { color: #8e473b; background: #f3ddd56b; padding: 9px 12px; border-radius: 10px; font-size: 12px; }
-.guide-notice { color: #647577; font-size: 11px; margin: 6px 0 0; }
-.contextual-guide { position: absolute; z-index: 3; width: 64px; height: 64px; pointer-events: none; transition: left .55s cubic-bezier(.2,.7,.2,1), top .55s cubic-bezier(.2,.7,.2,1); }
-.contextual-guide .companion { border: 0; margin: 0; padding: 0; gap: 0; background: none; }
-.contextual-guide .companion > p { margin: 0; }
-.contextual-guide.at-feature::after { content: ''; display: block; width: 18px; height: 1px; transform: rotate(-40deg); background: #6d8b854d; margin: -4px 0 0 -4px; }
 .scene-options { position: fixed; inset: auto 24px 24px auto; width: min(340px, calc(100vw - 32px)); max-height: calc(100svh - 48px); margin: 0; padding: 20px; overflow: auto; border: 1px solid #ffffffc9; border-radius: 23px; background: #e7eeedeb; backdrop-filter: blur(28px); color: #293336; box-shadow: 0 15px 65px #293a3d24; }
 .scene-options > p { font-size: 14px; margin: 0 0 16px; }.scene-options > p span { display: block; font-size: 11px; color: #788382; margin-top: 4px; }
 .scene-options .spatial-tools { padding: 14px 0; border-bottom: 1px solid #78838225; }.scene-options .spatial-authored { display: none; }
@@ -175,16 +124,3 @@
 .ai-result-card p { font-size: 12px; color: #687775; }.ai-result-spots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .ai-result-spots button { border: 1px solid #7a909027; background: #ffffff38; color: #465859; border-radius: 99px; padding: 10px 13px; font-size: 12px; min-height: 40px; }
 .ai-result-spots button[aria-pressed=true] { background: #303c3e; color: #f5f7f5; }
-.guided-workspace button:focus-visible, .guided-workspace summary:focus-visible { outline: 2px solid #5f7a87; outline-offset: 4px; }
-@media(max-width:600px) {
-  .guided-workspace { padding: 18px 12px 18px; }
-  .guide-scene { min-height: 240px; }
-  .guided-workspace .spatial-canvases { height: clamp(240px, 48svh, 480px); }
-  .guided-workspace .spatial-projection svg { padding: 0; }
-  .guide-dock { margin-top: 40px; padding: 14px 18px; border-radius: 22px; }
-  .dialogue-meta { margin-bottom: 8px; }.dialogue-meta > span { font-size: 10px; gap: 6px; }
-  .action-row { column-gap: 15px; }.action-row button, .feature-picker summary { min-height: 44px; }
-  .scene-options { inset: auto 12px 12px; width: auto; }
-  .ai-result-card dl { gap: 10px; flex-wrap: wrap; }
-}
-@media(prefers-reduced-motion:reduce) { .contextual-guide, .action-row .primary::before { transition: none; } }

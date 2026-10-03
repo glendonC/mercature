@@ -18,11 +18,11 @@ export default function ContextualGuide({stageRef, dockRef, selectedId, revision
       const panel = dock.getBoundingClientRect();
       const feature = selectedId ? stage.querySelector(`[data-feature-id="${CSS.escape(selectedId)}"]`) : null;
       const bounds = feature?.getBoundingClientRect();
-      const candidateLeft = bounds ? bounds.right + 8 : panel.left + 22;
-      const candidateTop = bounds ? bounds.top - 65 : panel.top - 52;
+      const candidateLeft = bounds ? bounds.right + 8 : panel.left - 76;
+      const candidateTop = bounds ? bounds.top - 65 : panel.top - 5;
       setAnchor(previous => ({
         left: Math.max(12, Math.min(parent.width - 80, candidateLeft - parent.left)),
-        top: Math.max(12, Math.min(panel.top - parent.top - 72, candidateTop - parent.top)),
+        top: Math.max(12, Math.min(bounds ? panel.top - parent.top - 72 : parent.height - 76, candidateTop - parent.top)),
         contextual: !!bounds, ready: true, animate: previous.ready,
       }));
     };
