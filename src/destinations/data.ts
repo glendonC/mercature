@@ -84,8 +84,11 @@ export function parseDestination(value: unknown, expectedId: DestinationId): Des
   }
   const context = record(root.map_context);
   const findings = list(root.findings, 3000).filter(raw => record(raw).view_id != null).map(raw => {
-    const f = record(raw), viewId = text(f.view_id); if (!viewIds.has(viewId)) fail('Finding references an unknown source.');
-    return { id: idText(f.id), viewId, label: text(f.label), outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, 20000), number(p[1], 0, 20000)] as Coordinate; }), verified: f.verified === true };
+    const f = record(raw), viewId = text(f.view_id), source = allViews.find(view => view.id === viewId);
+    if (!source) throw new Error('Finding references an unknown source.');
+    if (f.photo_id !== source.photo_id) fail('Finding photograph does not match its source view.');
+    const width = count(source.width, 20000), height = count(source.height, 20000);
+    return { id: idText(f.id), viewId, label: text(f.label), outline: f.outline == null ? [] : list(f.outline, 20000).map(raw => { const p = list(raw, 2); if (p.length !== 2) fail('Invalid outline.'); return [number(p[0], 0, width), number(p[1], 0, height)] as Coordinate; }), verified: f.verified === true };
   });
   return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: true, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line: list(route.line, 20000).map(coordinate), target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, pieces, findings, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }

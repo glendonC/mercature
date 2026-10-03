@@ -41,3 +41,19 @@ test('binary geometry rejects nonfinite points, broken source bindings and trunc
  const invalid=bytes.slice();new DataView(invalid.buffer).setFloat32(at,NaN,true);expect(()=>decodeCloud(invalid.buffer,expected)).toThrow();
  const index=bytes.slice();new DataView(index.buffer).setUint16(at+24,1,true);expect(()=>decodeCloud(index.buffer,expected)).toThrow(/source/);
 });
+
+
+test('photo findings stay bound to their source photograph and image dimensions',()=>{
+ const finding={id:'finding-1',view_id:'v1',photo_id:'p1',label:'Recorded outline',outline:[[0,0],[100,0],[100,100]],verified:false};
+ const source=contract();
+ const valid={...source,findings:[finding]};
+ expect(parseDestination(valid,'cusco-qorikancha').findings[0].outline).toEqual(finding.outline);
+ const secondPhoto={...source.photos[0],id:'p2',thumb:'thumbs/p2.jpg'};
+ const secondView={...source.views[0],id:'v2',photo_id:'p2',file:'views/v2.jpg'};
+ expect(()=>parseDestination({...valid,photos:[...source.photos,secondPhoto],views:[...source.views,secondView],findings:[{...finding,view_id:'v2'}]},'cusco-qorikancha')).toThrow(/photograph does not match/);
+ for(const point of [[100.01,20],[20,100.01],[-.01,20],[20,-.01]]) {
+  expect(()=>parseDestination({...valid,findings:[{...finding,outline:[point,[20,20],[30,30]]}]},'cusco-qorikancha')).toThrow();
+ }
+ // Bounds still apply to a source view whose image is not retained.
+ expect(()=>parseDestination({...valid,views:[{...source.views[0],file:null}],findings:[{...finding,outline:[[101,20]]}]},'cusco-qorikancha')).toThrow();
+});
