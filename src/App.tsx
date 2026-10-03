@@ -18,6 +18,7 @@ import AuthoredPreparation, { type AuthoredViewState } from "./preparation/Prepa
 import FarmReady from "./preparation/FarmReady";
 import RecordedReveal from "./preparation/RecordedReveal";
 import { isDestinationId } from "./destinations/data";
+import { getLang, translate, useLanguage } from "./i18n";
 const planStore = createPlanStore();
 function initialSaved() {
   const result = planStore.list();
@@ -26,7 +27,7 @@ function initialSaved() {
   try {
     places = listPlaces();
   } catch (e) {
-    errors.push(`Saved places could not be read: ${(e as Error).message}`);
+    errors.push(translate(getLang(), "error.placesUnreadable", { reason: (e as Error).message }));
   }
   return {
     places,
@@ -35,6 +36,7 @@ function initialSaved() {
   };
 }
 export default function App() {
+  const { t } = useLanguage();
   const [initial] = useState(initialSaved);
   const [active, setActive] = useState<"home" | "place" | "spatial" | "destination" | "prepare" | "farm">("home");
   const [place, setPlace] = useState<Place | null>(null);
@@ -54,13 +56,13 @@ export default function App() {
   const photoPicker = useRef<HTMLInputElement>(null);
   const uploadName = useRef("");
   const [destination, setDestination] = useState<string | null>(null);
-  const [loadingMessage, setLoadingMessage] = useState("Opening your place…");
+  const [loadingMessage, setLoadingMessage] = useState(() => t("app.opening"));
   function refresh() {
     const errors: string[] = [];
     try {
       setPlaces(listPlaces());
     } catch (e) {
-      errors.push(`Saved places could not be read: ${(e as Error).message}`);
+      errors.push(t("error.placesUnreadable", { reason: (e as Error).message }));
     }
     const result = planStore.list();
     if (result.ok) setPlans(result.value);
@@ -86,7 +88,7 @@ export default function App() {
     try {
       if (entry.kind === "place") {
         const next = places.find((p) => p.id === entry.id);
-        if (!next) throw new Error("This place could not be found.");
+        if (!next) throw new Error(t("error.placeMissing"));
         setPlace(next);
         setActive("place");
       } else {
@@ -102,14 +104,12 @@ export default function App() {
   }
   async function importFile(file: File | undefined) {
     if (!file) return;
-    setLoadingMessage("Opening your place…");
+    setLoadingMessage(t("app.opening"));
     setLoading(true);
     setError("");
     try {
       if (file.size > 2000000)
-        throw new Error(
-          "Use a Mercature JSON plan or spatial project under 2 MB.",
-        );
+        throw new Error(t("error.fileTooLarge"));
       const text = await file.text();
       const value = JSON.parse(text);
       if (value.schemaVersion === "mercature-plan-v1") {
@@ -126,7 +126,7 @@ export default function App() {
       }
       setActive("spatial");
     } catch (e) {
-      setError(`Could not open this file: ${(e as Error).message}`);
+      setError(t("error.fileOpen", { reason: (e as Error).message }));
     } finally {
       setLoading(false);
       if (picker.current) picker.current.value = "";
@@ -136,11 +136,11 @@ export default function App() {
     if (!files?.length) return;
     setLoading(true);
     setError("");
-    let next = createPlace(uploadName.current || "Untitled place");
+    let next = createPlace(uploadName.current || t("app.untitled"));
     try {
-      if (files.length > 100) throw new Error("Choose up to 100 photos or videos at a time.");
+      if (files.length > 100) throw new Error(t("error.tooManyFiles"));
       for (const [index, file] of Array.from(files).entries()) {
-        setLoadingMessage(`Saving file ${index + 1} of ${files.length} on this device…`);
+        setLoadingMessage(t("app.savingFile", { n: index + 1, total: files.length }));
         const evidence = await putEvidence(file);
         const updated = { ...next, evidence: [...next.evidence, evidence] };
         savePlace(updated);
@@ -212,7 +212,7 @@ export default function App() {
       {active === "prepare" && <AuthoredPreparation onHome={() => setActive("home")} onReady={(initialViewState) => { setWorkspace({key: crypto.randomUUID(), example: true, initialViewState}); setActive("spatial"); }} />}
       {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
       {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />)}
-      <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Upload photos or video" onChange={event => void uploadPhotos(event.target.files)} />
+      <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label={t("app.uploadInput")} onChange={event => void uploadPhotos(event.target.files)} />
       <input
         type="file"
         hidden
@@ -228,7 +228,7 @@ export default function App() {
       {error && (
         <div className="app-error" role="alert">
           {error}
-          <button onClick={() => setError("")} aria-label="Dismiss error">
+          <button onClick={() => setError("")} aria-label={t("app.dismissError")}>
             ×
           </button>
         </div>
