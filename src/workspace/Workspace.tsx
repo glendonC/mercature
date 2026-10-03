@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import SpatialView from "../spatial/SpatialView";
-import Companion from "../components/Companion";
+import AIResultCard, { type AIResult } from "../components/AIResultCard";
+import ContextualGuide from "../components/ContextualGuide";
 import {
   DEFAULT_PROFILE,
   SYNTHETIC_SCENE,
@@ -26,6 +27,7 @@ import {
 import "./workspace.css";
 export type WorkspaceProps = {
   initialPlan?: ImprovementPlan;
+  analysisResult?: AIResult;
   initialViewState?: {selectedId: string | null; rotation: number};
   initialProject?: Project;
   onHome: () => void;
@@ -40,6 +42,7 @@ const outcome = (status: string) =>
       : "Not yet known";
 export default function Workspace({
   initialPlan,
+  analysisResult,
   initialViewState,
   initialProject,
   onHome,
@@ -118,6 +121,12 @@ export default function Workspace({
     x: BENCH_CLEAR_POSITION.x.toString(),
     y: BENCH_CLEAR_POSITION.y.toString(),
   });
+  const optionsId = useId();
+  const options = useRef<HTMLDivElement>(null);
+  const optionsButton = useRef<HTMLButtonElement>(null);
+  const [controlsTarget, setControlsTarget] = useState<HTMLDivElement | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLElement>(null);
   const actionCard = useRef<HTMLDivElement>(null);
   useEffect(() => {
     actionCard.current?.focus({ preventScroll: true });
@@ -298,74 +307,24 @@ export default function Workspace({
   }
   const cue =
     step === "start"
-      ? "Let’s make the next visit easier."
+      ? "Choose where to begin."
       : step === "message"
         ? "Keep the visitor’s own words."
         : step === "confirm"
-          ? "Choose the feature in the scene, then confirm."
+          ? "Tap a feature to inspect it."
           : placing
             ? "Tap a clear spot on the map."
             : step === "edit"
-              ? "Try a change. You can always undo it."
+              ? "Preview a change."
               : step === "compare"
                 ? "Here’s what the change would do."
-                : "Your plan is saved for the next visit.";
+                : "Saved on this device.";
   return (
-    <main className="guided-workspace">
-      <header className="guide-header">
-        <button className="quiet-button" onClick={onHome} aria-label="Home">
-          ←
-        </button>
-        <div className="guide-place">
-          <h1>{scene.title}</h1>
-          <span>Prepared example · synthetic</span>
-        </div>
-        <button
-          className="quiet-button"
-          onClick={() => details.current?.showModal()}
-        >
-          Details
-        </button>
-      </header>
-      <div className="guide-tools">
-        <div className="segmented" aria-label="Workspace view">
-          {(["map", "3d", "split"] as const).map((v) => (
-            <button
-              key={v}
-              aria-pressed={view === v}
-              onClick={() => {
-                setView(v);
-                if (v !== "map") setPlacing(false);
-              }}
-            >
-              {v === "map" ? "Map" : v === "3d" ? "3D" : "Split"}
-            </button>
-          ))}
-        </div>
-        {scenario.operations.length > 0 && (
-          <div className="scenario-tools">
-            <div className="segmented" aria-label="Scenario comparison">
-              <button
-                aria-pressed={comparison === "original"}
-                onClick={() => setComparison("original")}
-              >
-                Before
-              </button>
-              <button
-                aria-pressed={comparison === "proposed"}
-                onClick={() => setComparison("proposed")}
-              >
-                After
-              </button>
-            </div>
-            <button className="quiet-button" onClick={undo}>
-              ↶ Undo
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="guide-scene">
+    <main className="guided-workspace" aria-label="Visitor courtyard editing demo">
+      <div className="guide-scene" ref={stageRef}>
         <SpatialView
+          controlsTarget={controlsTarget}
+          returnFocus={() => optionsButton.current?.focus()}
           rotation={rotation}
           onRotationChange={setRotation}
           scene={comparison === "original" ? scene : applied}
@@ -382,14 +341,23 @@ export default function Workspace({
           }
         />
       </div>
-      <section className="guide-dock" aria-label="Next action">
-        <Companion tone={step === "confirm" ? "evidence" : "guide"}>
-          {cue}
-        </Companion>
+      <ContextualGuide stageRef={stageRef} dockRef={dockRef}
+        selectedId={step === "confirm" || step === "edit" ? selected : null}
+        revision={`${step}:${view}:${rotation}:${scenario.operations.length}:${comparison}:${placing}`}
+        tone={step === "confirm" ? "evidence" : step === "compare" || step === "done" ? "review" : "guide"} />
+      <section className="guide-dock" ref={dockRef} aria-label="Next action">
+        <div className="dialogue-meta"><span>{step === "confirm" ? "Inspect" : step === "compare" || step === "done" ? "Review" : "Guide"}<i />{step === "start" ? "Courtyard demo" : cue}</span>
+          <button ref={optionsButton} className="dialogue-options" popoverTarget={optionsId} aria-label="Scene options" title="Scene options">•••</button>
+        </div>
+        {(step === "message" || step === "confirm") && analysisResult && <AIResultCard
+          result={{...analysisResult, spots: analysisResult.spots.filter(spot => inventory.some(item => item.id === spot.id))}}
+          selectedId={selected}
+          onSpot={id => { setSelected(id); setStep("confirm"); }}
+          onNotSure={() => { setSelected(null); setStep("confirm"); }} />}
         <div className="guide-action" key={step} ref={actionCard} tabIndex={-1}>
           {step === "start" && (
             <>
-              <h2>What could work better here?</h2>
+              <h2>Let’s open up the passage.</h2>
               <div className="action-row">
                 <button className="primary" onClick={() => begin("proactive")}>
                   Check the passage <span>→</span>
@@ -445,7 +413,7 @@ export default function Workspace({
                 </button>
               </div>
               <p className="subtle-line">
-                Choose it yourself for now. AI matching is unavailable.
+                Select the feature in the scene next.
               </p>
             </>
           )}
@@ -460,6 +428,7 @@ export default function Workspace({
                 >
                   Yes, this feature <span>→</span>
                 </button>
+                <details className="feature-picker"><summary>Choose another feature</summary>
                 <label className="sr-only" htmlFor="feature-choice">
                   Affected feature
                 </label>
@@ -473,7 +442,7 @@ export default function Workspace({
                       {item.label}
                     </option>
                   ))}
-                </select>
+                </select></details>
                 <button
                   className="quiet-button"
                   onClick={() => setStep("start")}
@@ -657,7 +626,50 @@ export default function Workspace({
           </p>
         )}
       </section>
-      <dialog ref={details} className="guide-dialog" aria-label="Plan details">
+      <div popover="auto" id={optionsId} ref={options} className="scene-options" onClick={(event) => {
+        if ((event.target as HTMLElement).closest("button")) options.current?.hidePopover();
+      }}>
+        <p>Courtyard demo <span>Authored geometry</span></p>
+        <div className="segmented" aria-label="Workspace view">
+          {(["map", "3d", "split"] as const).map((v) => (
+            <button
+              key={v}
+              aria-pressed={view === v}
+              onClick={() => {
+                setView(v);
+                if (v !== "map") setPlacing(false);
+              }}
+            >
+              {v === "map" ? "Map" : v === "3d" ? "3D" : "Split"}
+            </button>
+          ))}
+        </div>
+        {scenario.operations.length > 0 && (
+          <div className="scenario-tools">
+            <div className="segmented" aria-label="Scenario comparison">
+              <button
+                aria-pressed={comparison === "original"}
+                onClick={() => setComparison("original")}
+              >
+                Before
+              </button>
+              <button
+                aria-pressed={comparison === "proposed"}
+                onClick={() => setComparison("proposed")}
+              >
+                After
+              </button>
+            </div>
+            <button className="quiet-button" onClick={undo}>
+              ↶ Undo
+            </button>
+          </div>
+        )}
+
+        <div ref={setControlsTarget} />
+        <div className="scene-options-links"><button onClick={() => details.current?.showModal()}>Details</button><button onClick={onHome} aria-label="Home">Return home</button></div>
+      </div>
+      <dialog onClose={() => optionsButton.current?.focus()} ref={details} className="guide-dialog" aria-label="Plan details">
         <header>
           <h2>Plan details</h2>
           <button

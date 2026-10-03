@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import type { Rect, Result, Scene, Status } from './contracts';
@@ -11,6 +12,9 @@ export type SpatialViewProps = {
   onSelect: (id: string) => void;
   view: 'map' | '3d' | 'split';
   compact?: boolean;
+  /** Undefined keeps inline controls; null hides them until a contextual host mounts. */
+  controlsTarget?: HTMLElement | null;
+  returnFocus?: () => void;
   rotation?: number;
   onRotationChange?: (rotation: number) => void;
   onPlace?: (point: { x: number; y: number }) => void;
@@ -21,7 +25,7 @@ const colors: Record<Status, string> = { reachable: '#c7e2cc', blocked: '#e9c5b8
 const statusText: Record<Status, string> = { reachable: 'Connected', blocked: 'Blocked', unknown: 'Unresolved' };
 
 /** Both projections use the same scene coordinates and shared feature selection. */
-export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace, evidenceScene, rotation: controlledRotation, onRotationChange }: SpatialViewProps) {
+export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, controlsTarget, returnFocus, onPlace, evidenceScene, rotation: controlledRotation, onRotationChange }: SpatialViewProps) {
   const [showAssessment, setShowAssessment] = useState(true);
   const [showPath, setShowPath] = useState(false);
   const [localRotation, setLocalRotation] = useState(0);
@@ -45,16 +49,18 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
       </div>
       <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose the bench, dividing walls, destination or unresolved corner in either view. Every dimension in this example is authored.</p>}</div>
     </div>;
-  return <section className={`spatial-view${compact ? ' spatial-view-compact' : ''}`} aria-label="Spatial model">
-    <div className="spatial-tools">
+  const iconControls = compact && controlsTarget === undefined;
+  const controls = <div className="spatial-tools">
       <span className="spatial-authored">{compact ? 'Synthetic example' : <><span aria-hidden="true">◇</span> Authored courtyard <small>· synthetic</small></>}</span>
       <div className="spatial-layer-controls">
-        <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}>{compact ? <span aria-hidden="true">◫</span> : 'Check overlay'}</button>
-        <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}>{compact ? <span aria-hidden="true">⌁</span> : 'Checked path'}</button>
-        {view !== 'map' && <button type="button" onClick={() => { const next = (rotation + 1) % 4; if (onRotationChange) onRotationChange(next); else setLocalRotation(next); }} aria-label="Rotate 3D view" title="Rotate 3D view">{compact ? <span aria-hidden="true">↻</span> : '↻ Rotate'}</button>}
+        <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}>{iconControls ? <span aria-hidden="true">◫</span> : 'Check overlay'}</button>
+        <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}>{iconControls ? <span aria-hidden="true">⌁</span> : 'Checked path'}</button>
+        {view !== 'map' && <button type="button" onClick={() => { const next = (rotation + 1) % 4; if (onRotationChange) onRotationChange(next); else setLocalRotation(next); }} aria-label="Rotate 3D view" title="Rotate 3D view">{iconControls ? <span aria-hidden="true">↻</span> : '↻ Rotate'}</button>}
         {compact && <button type="button" ref={evidenceButton} className="spatial-evidence-trigger" onClick={() => evidenceDialog.current?.showModal()}>Evidence</button>}
       </div>
-    </div>
+    </div>;
+  return <section className={`spatial-view${compact ? ' spatial-view-compact' : ''}`} aria-label="Spatial model">
+    {controlsTarget === undefined ? controls : controlsTarget ? createPortal(controls, controlsTarget) : null}
     <div className={`spatial-canvases ${view === 'split' ? 'spatial-split' : ''}`}>
       {(view === 'map' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, compact, onPlace, rotation: 0 }} mode="map" />}
       {(view === '3d' || view === 'split') && <Projection {...{ scene, result, selectedId, onSelect, showAssessment, showPath, compact, onPlace, rotation }} mode="3d" />}
@@ -64,7 +70,12 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
       <span className="spatial-legend-note">Under the selected requirements</span>
     </div>}
     {!compact && showPath && <p className="spatial-path-note">{pathNote}</p>}
-    {compact ? <dialog ref={evidenceDialog} className="spatial-evidence-dialog" aria-labelledby={evidenceTitleId} onClose={() => evidenceButton.current?.focus()}>
+    {compact ? <dialog ref={evidenceDialog} className="spatial-evidence-dialog" aria-labelledby={evidenceTitleId} onClose={() => {
+      if (returnFocus) return returnFocus();
+      const popover = controlsTarget?.closest('[popover]');
+      if (popover?.id) document.querySelector<HTMLButtonElement>(`[popovertarget="${CSS.escape(popover.id)}"]`)?.focus();
+      else evidenceButton.current?.focus();
+    }}>
       <header><h2 id={evidenceTitleId}>Evidence</h2><button type="button" aria-label="Close evidence" autoFocus onClick={() => evidenceDialog.current?.close()}>×</button></header>
       {removed && <p className="spatial-path-note">Removed in this proposal.</p>}
       {evidenceContent}
@@ -118,7 +129,7 @@ function Projection({ scene, result, selectedId, onSelect, mode, rotation, showA
   const activate = (event: KeyboardEvent<SVGGElement>, featureId: string) => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(featureId); }
   };
-  const interaction = (featureId: string, label: string) => ({ role: 'button', tabIndex: 0, 'aria-label': `Inspect ${label}`, 'aria-pressed': selectedId === featureId, onClick: () => onSelect(featureId), onKeyDown: (event: KeyboardEvent<SVGGElement>) => activate(event, featureId), className: `spatial-feature ${selectedId === featureId ? 'is-selected' : ''}` });
+  const interaction = (featureId: string, label: string) => ({ role: 'button', 'data-feature-id': featureId, tabIndex: 0, 'aria-label': `Inspect ${label}`, 'aria-pressed': selectedId === featureId, onClick: () => onSelect(featureId), onKeyDown: (event: KeyboardEvent<SVGGElement>) => activate(event, featureId), className: `spatial-feature ${selectedId === featureId ? 'is-selected' : ''}` });
   const obstacles = [...scene.obstacles].sort((a, b) => project({ x: (a.bounds.minX + a.bounds.maxX) / 2, y: (a.bounds.minY + a.bounds.maxY) / 2 }).y - project({ x: (b.bounds.minX + b.bounds.maxX) / 2, y: (b.bounds.minY + b.bounds.maxY) / 2 }).y);
   const start = project(scene.start, .08);
   return <figure className={`spatial-projection spatial-projection-${mode}`}>

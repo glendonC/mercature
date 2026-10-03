@@ -48,16 +48,16 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     const text = `입구 옆 벤치 때문에 지나가기 어려웠어요. ${crypto.randomUUID()}`;
     await page.getByLabel("Original visitor message").fill(text);
     await page.getByLabel("Message language").selectOption("ko");
-    await page.getByRole("button", { name: "Find the feature →" }).click();
-    await page.getByRole("button", { name: "Yes, this feature →" }).click();
-    await page.getByRole("button", { name: "Move bench →" }).click();
-    await page.getByRole("button", { name: "Try the open corner →" }).click();
+    await page.getByRole("button", { name: "Find the feature" }).click();
+    await page.getByRole("button", { name: "Yes, this feature" }).click();
+    await page.getByRole("button", { name: "Move bench", exact: true }).click();
+    await page.getByRole("button", { name: "Try the open corner" }).click();
     await expect(page.locator(".compact-comparison")).toContainText("Blocked");
     await expect(page.locator(".compact-comparison")).toContainText(
       "Connected",
     );
     await page.screenshot({ path: ".local/guide-desktop.png" });
-    await page.getByRole("button", { name: "Save improvement plan →" }).click();
+    await page.getByRole("button", { name: "Save improvement plan" }).click();
     await expect(
       page.getByRole("heading", { name: "Plan saved." }),
     ).toBeVisible();
@@ -69,17 +69,21 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     await page
       .getByRole("button", { name: /Move reviewed movable bench/ })
       .click();
+  await page.getByRole("button", {name: "Scene options", exact: true}).click();
     await page.getByRole("button", { name: "Details", exact: true }).click();
     await page.getByText("Original visitor message", { exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText(text);
     await page.getByRole("button", { name: "Close details" }).click();
     await page.getByRole("button", { name: "Inspect Garden entrance" }).click();
+  await page.getByRole("button", {name: "Scene options", exact: true}).click();
     await page.getByRole("button", { name: "Evidence", exact: true }).click();
     await expect(
       page.getByRole("dialog", { name: "Evidence", exact: true }),
     ).toContainText("Connected");
     await page.getByRole("button", { name: "Close evidence" }).click();
+  await page.getByRole("button", {name: "Scene options", exact: true}).click();
     await page.getByRole("button", { name: "↶ Undo" }).click();
+  await page.getByRole("button", {name: "Scene options", exact: true}).click();
     await page.getByRole("button", { name: "Evidence", exact: true }).click();
     await expect(
       page.getByRole("dialog", { name: "Evidence", exact: true }),

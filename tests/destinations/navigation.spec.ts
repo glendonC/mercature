@@ -12,12 +12,14 @@ test('background photos and search open the same destination records without sub
     await expect(page.getByRole('heading', {name,exact:true})).toBeVisible();
     await expect(page.getByRole('button', {name:'Try again',exact:true})).toBeVisible();
     expect(requested.at(-1)).toBe(`/routes/${id}/route.json`);
-    await expect(page.getByRole('button', {name:'Check the passage →'})).toHaveCount(0);
+    await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
+    await page.getByRole('button', {name:'Scene options',exact:true}).click();
     await page.getByRole('button', {name:'Home',exact:true}).click();
     await page.getByRole('textbox', {name:'Explore a place'}).fill(name);
     await page.getByRole('button', {name:`${name} ${area}`,exact:true}).click();
     await expect(page.getByRole('button', {name:'Try again',exact:true})).toBeVisible();
     expect(requested.at(-1)).toBe(`/routes/${id}/route.json`);
+    await page.getByRole('button', {name:'Scene options',exact:true}).click();
     await page.getByRole('button', {name:'Home',exact:true}).click();
   }
   expect(requested).toHaveLength(6);

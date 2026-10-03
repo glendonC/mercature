@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { ThinkingOrb } from 'thinking-orbs';
 import Companion from '../components/Companion';
 import SpatialView from '../spatial/SpatialView';
 import { DEFAULT_PROFILE, SYNTHETIC_SCENE } from '../spatial/fixtures';
@@ -8,6 +9,7 @@ import type { Result } from '../spatial/contracts';
 import './preparation.css';
 
 type PreparationProps = {
+  optionsContent?: ReactNode;
   title: string;
   provenance: string;
   sourceLabel?: string;
@@ -23,22 +25,30 @@ type PreparationProps = {
   error?: string;
 };
 /** A presentation of real preparation state. Stage changes never stand in for processing. */
-export function Preparation({title, provenance, sourceLabel = "Views", stage, busy, message, detail, children, action, onAction, onHome, onSkip, error}: PreparationProps) {
+export function Preparation({optionsContent, title, provenance, sourceLabel = "Views", stage, busy, message, detail, children, action, onAction, onHome, onSkip, error}: PreparationProps) {
+  const optionsId = useId();
+  const optionsRef = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus({preventScroll: true}); }, [stage]);
   return <main className="preparation">
-    <header className="preparation-header"><button onClick={onHome} aria-label="Home">←</button><div><h1>{title}</h1><span>{provenance}</span></div><button className="preparation-skip" onClick={onSkip}>Skip walkthrough</button></header>
-    <ol className="preparation-steps" aria-label="Preparation steps"><li aria-current={stage === 'views' ? 'step' : undefined}>{sourceLabel}</li><li aria-hidden="true">·</li><li aria-current={stage === 'scene' ? 'step' : undefined}>Scene</li></ol>
+    <h1 className="sr-only">{title}</h1>
+    <ol className="preparation-steps sr-only" aria-label="Preparation steps"><li aria-current={stage === 'views' ? 'step' : undefined}>{sourceLabel}</li><li aria-current={stage === 'scene' ? 'step' : undefined}>Scene</li></ol>
     <section className="preparation-stage" aria-label="Preparation preview">{children}</section>
     <footer className="preparation-guide">
-      <div className="preparation-guide-copy"><Companion working={busy} tone={stage === 'views' ? 'evidence' : 'guide'}><span className="preparation-announcement" role="status">{message}</span></Companion><div><h2 ref={heading} tabIndex={-1}>{message}</h2>{detail && <p>{detail}</p>}{error && <p role="alert" className="preparation-error">{error}</p>}</div></div>
+      <button className="dialogue-options preparation-options" popoverTarget={optionsId} aria-label="Scene options">•••</button>
+      <span className="preparation-announcement" role="status">{message}</span>
+      <div className="preparation-guide-copy">{busy ? <span className="preparation-orb" aria-hidden="true"><ThinkingOrb state="connecting" size={64} theme="light" /></span> : <Companion working={busy} tone={stage === 'views' ? 'evidence' : 'guide'}><span className="preparation-announcement">{message}</span></Companion>}<div><h2 className={busy ? "is-processing" : undefined} ref={heading} tabIndex={-1}>{message}</h2>{detail && <p>{detail}</p>}{error && <p role="alert" className="preparation-error">{error}</p>}</div></div>
       {action && <button className="preparation-action" disabled={busy} onClick={onAction}>{action}<span aria-hidden="true">↗</span></button>}
     </footer>
+    <div popover="auto" id={optionsId} ref={optionsRef} className="scene-options" onClick={event => {
+      if ((event.target as HTMLElement).closest('button')) optionsRef.current?.hidePopover();
+    }}><p>{title}<span>{provenance}</span></p>{optionsContent}<div className="scene-options-links"><button onClick={onHome} aria-label="Home">Return home</button><button onClick={onSkip}>Skip walkthrough</button></div></div>
   </main>;
 }
 
 export type AuthoredViewState = {selectedId: string | null; rotation: number};
 export default function AuthoredPreparation({onHome, onReady}: {onHome: () => void; onReady: (state: AuthoredViewState) => void}) {
+  const [controlsTarget, setControlsTarget] = useState<HTMLDivElement | null>(null);
   const [stage, setStage] = useState<'views' | 'scene'>('views');
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState('');
@@ -57,11 +67,11 @@ export default function AuthoredPreparation({onHome, onReady}: {onHome: () => vo
     });
     return () => { cancelled = true; cancelAnimationFrame(frame); };
   }, [stage]);
-  return <Preparation title="Visitor courtyard" provenance="Authored example" sourceLabel="Layout" stage={stage} busy={stage === 'scene' && !result && !error} onHome={onHome} onSkip={enter}
+  return <Preparation optionsContent={<div ref={setControlsTarget}/>} title="Visitor courtyard" provenance="Authored example" sourceLabel="Layout" stage={stage} busy={stage === 'scene' && !result && !error} onHome={onHome} onSkip={enter}
     message={stage === 'views' ? 'Start with the layout.' : error ? 'The layout needs attention.' : result ? 'Your scene is ready.' : 'Checking the layout…'}
     detail={stage === 'views' ? 'A dimensioned example with one movable bench.' : result ? 'Explore the bench, then preview a change.' : undefined}
     action={stage === 'views' ? 'Load scene' : result ? 'Enter scene' : undefined} onAction={stage === 'views' ? () => setStage('scene') : enter} error={error}>
-    {result ? <div className="preparation-authored-scene"><SpatialView rotation={rotation} onRotationChange={setRotation} scene={SYNTHETIC_SCENE} result={result} selectedId={selected} onSelect={setSelected} view="3d" compact /></div> : <Layout/>}
+    {result ? <div className="preparation-authored-scene"><SpatialView controlsTarget={controlsTarget} rotation={rotation} onRotationChange={setRotation} scene={SYNTHETIC_SCENE} result={result} selectedId={selected} onSelect={setSelected} view="3d" compact /></div> : <Layout/>}
   </Preparation>;
 }
 function Layout() {
