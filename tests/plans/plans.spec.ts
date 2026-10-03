@@ -171,14 +171,26 @@ test('destination confirmation binds its position and supporting evidence withou
   expect(() => confirmTargets({ origin: p.origin, scene: ambiguous, targetIds: ['bench'], reviewer: 'Operator', interpretation: 'Ambiguous ID', now })).toThrow(/unique/);
 });
 
-test('stale and altered individual records can still be deleted locally', () => {
+test('a stale record is listed as unreadable, never blocks the other plans and can still be deleted', () => {
   const backend = memory(), store = createPlanStore(backend), p = plan(); store.save(p);
+  const other = { ...plan(), id: 'plan-2', title: 'Second plan' }; expect(store.save(other).ok).toBe(true);
   const saved = JSON.parse(backend.data.get(PLAN_STORAGE_KEY)!);
   saved.plans[0].evaluation.proposedResultHash = contentHash('outdated result');
+  const stale = JSON.stringify(saved.plans[0]);
   backend.data.set(PLAN_STORAGE_KEY, JSON.stringify(saved));
   expect(store.load(p.id)).toMatchObject({ ok: false, error: { code: 'stale' } });
+  expect(store.list()).toMatchObject({ ok: true, value: [{ id: 'plan-2', title: 'Second plan' }, { id: p.id, title: p.title, problem: { code: 'stale' } }] });
+  expect(store.load('plan-2')).toEqual({ ok: true, value: other });
+  expect(store.save({ ...plan(), id: 'plan-3' }).ok).toBe(true);
+  expect(JSON.stringify(JSON.parse(backend.data.get(PLAN_STORAGE_KEY)!).plans[0])).toBe(stale);
+  expect(store.save(p)).toMatchObject({ ok: false, error: { code: 'stale' } });
   expect(store.delete(p.id).ok).toBe(true);
-  expect(store.list()).toEqual({ ok: true, value: [] });
+  expect(store.list()).toMatchObject({ ok: true, value: [{ id: 'plan-2' }, { id: 'plan-3' }] });
+});
+
+test('a write the device does not keep is reported instead of saved', () => {
+  const backend = memory(), store = createPlanStore({ ...backend, setItem: () => {} });
+  expect(store.save(plan())).toMatchObject({ ok: false, error: { code: 'unavailable' } });
 });
 
 test('invalid geometry returns a structured invalid error from local storage', () => {

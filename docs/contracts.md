@@ -52,10 +52,14 @@ denied storage access can be reported without preventing the manual workflow.
 
 The collection uses one atomic localStorage write, has at most 20 plans and is
 bounded to 4 MB of UTF-8 JSON. Each plan is bounded to 1 MB. A failed write leaves
-the previous collection intact. Malformed collections are preserved rather than
-silently reset. Stale or invalid individual records with intact IDs can still
-be deleted. Replacing a saved plan cannot rewrite its original source, baseline
-or creation timestamp. Changed original evidence requires a new plan ID. This
+the previous collection intact, and `save` reads its write back, so a write the
+device drops is an error rather than a saved plan. Malformed collections are
+preserved rather than silently reset. Each saved plan is opened on its own:
+`list` returns the plans that open, newest first, then any plan that no longer
+opens (for example after the place or the path check changed) with its problem.
+Such a plan never blocks listing, opening or saving the others, is written back
+unchanged, and can still be deleted. Replacing a saved plan cannot rewrite its
+original source, baseline or creation timestamp. Changed original evidence requires a new plan ID. This
 is browser-local persistence, not encrypted storage, remote backup or a
 multi-user transactional database.
 

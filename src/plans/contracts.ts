@@ -30,10 +30,14 @@ export type PlanInput = {
   decision?: ImprovementPlan['decision']; notes?: string; now?: string;
 };
 export type PlanEvaluation = { baseline: Result; proposed: Result };
-export type PlanSummary = Pick<ImprovementPlan, 'id' | 'title' | 'createdAt' | 'updatedAt' | 'decision'> & {
-  originKind: Origin['kind']; language: string | null; exportable: boolean;
-};
 export type PlanErrorCode = 'invalid' | 'stale' | 'too-large' | 'restricted-export' | 'not-found' | 'unavailable' | 'quota' | 'corrupt';
 export type PlanError = { code: PlanErrorCode; message: string };
+/** A saved plan that opens. */
+export type OpenablePlan = Pick<ImprovementPlan, 'id' | 'title' | 'createdAt' | 'updatedAt' | 'decision'> & {
+  originKind: Origin['kind']; language: string | null; exportable: boolean; problem?: undefined;
+};
+/** A saved plan that no longer opens, for example after its place or the path check changed. It stays listed until deleted. */
+export type UnreadablePlan = { id: string; title: string; problem: PlanError };
+export type PlanSummary = OpenablePlan | UnreadablePlan;
 export type Outcome<T> = { ok: true; value: T } | { ok: false; error: PlanError };
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
