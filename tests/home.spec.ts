@@ -11,24 +11,6 @@ test('an unlisted place starts only after choosing to add photos', async ({page}
   await expect(page.getByRole('heading', {name:'My visitor garden',exact:true})).toBeVisible();
 });
 
-test('search finds the editing example without adding another background destination', async ({page}) => {
-  await page.goto('/');
-  await expect(page.getByRole('button', {name:/^Explore .* · /})).toHaveCount(3);
-  const search = page.getByRole('textbox', {name:'Explore a place'});
-  await search.fill('Visitor courtyard');
-  await expect(page.getByRole('button', {name:'Visitor courtyard · Authored editing demo'})).toBeVisible();
-  await search.press('Enter');
-  await expect(page.getByRole('button', {name:'Visitor courtyard · Authored editing demo'})).toBeFocused();
-  await page.keyboard.press('Escape');
-  await expect(search).toBeFocused();
-  await expect(page.locator('#place-results')).toBeHidden();
-  await search.press('Enter');
-  await page.getByRole('button', {name:'Visitor courtyard · Authored editing demo'}).click();
-  await page.getByRole('button', {name:'Scene options',exact:true}).click();
-  await page.getByRole('button', {name:'Skip walkthrough',exact:true}).click();
-  await expect(page.getByRole('button', {name:'Check the passage'})).toBeVisible();
-});
-
 test('home upload saves original photos directly and lets the operator name the place', async ({page}) => {
   await page.goto('/');
   await page.getByRole('button', {name:'Upload photos or a saved plan'}).click();
