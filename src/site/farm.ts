@@ -4,13 +4,13 @@ import { FARM_FEATURES, type FarmFeatureId } from './inventory';
 
 const label = (id: FarmFeatureId) => FARM_FEATURES.find(feature => feature.id === id)!.name.en;
 const box = (minX: number, minY: number, maxX: number, maxY: number): Rect => ({ minX, minY, maxX, maxY });
-const metres = (value: number) => `${value.toFixed(2)} m`;
+const metreText = (value: number) => `${value.toFixed(2)} m`;
 
 function obstacle(id: FarmFeatureId, bounds: Rect, top: number, movable: boolean, ...notes: string[]): Obstacle {
-  const footprint = `${metres(bounds.maxX - bounds.minX)} × ${metres(bounds.maxY - bounds.minY)}`;
+  const footprint = `${metreText(bounds.maxX - bounds.minX)} × ${metreText(bounds.maxY - bounds.minY)}`;
   return {
     id, label: label(id), bounds, bottom: 0, top, uncertainty: 0, reviewed: true, movable,
-    evidence: [`Authored box: ${footprint} footprint, ${metres(top)} high. Every dimension is authored; nothing was measured.`, ...notes],
+    evidence: [`Authored box: ${footprint} footprint, ${metreText(top)} high. Every dimension is authored; nothing was measured.`, ...notes],
   };
 }
 function unknown(id: FarmFeatureId, bounds: Rect, reason: string): UnknownRegion {
