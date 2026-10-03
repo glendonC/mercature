@@ -15,6 +15,10 @@ test('the published Qorikancha package parses, credits every photo and ships eve
   expect(place.stretches).toHaveLength(60);
   expect(place.findings.every((finding: Finding) => finding.verified === false)).toBe(true);
   expect(place.route_spots.map((spot: { id: string }) => spot.id)).toEqual(QORIKANCHA_PLACE.features.map(spot => spot.id));
+  // Every retained photo is a credited record; only the shipped views carry images.
+  expect(place.photos).toHaveLength(403);
+  expect(new Set(place.photos.map((photo: Photo) => photo.id)).size).toBe(403);
+  for (const photo of place.photos as Photo[]) expect(photo.creator.username && photo.licence === 'CC-BY-SA-4.0' && photo.link, photo.id).toBeTruthy();
   const shipped = new Set(place.views.map((view: View) => view.id));
   for (const view of place.views as View[]) {
     expect(existsSync(join(folder, view.file)), view.file).toBe(true);

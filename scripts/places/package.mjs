@@ -49,7 +49,6 @@ const findings = record.findings.map(f => ({
   photo_id: f.photo_id, view_id: f.view_id, stretches: f.stretches, position: position(f.position),
   box: f.box, outline: f.outline?.map(([x, y]) => [round(x, 1), round(y, 1)]) ?? null, osm: f.osm,
 }));
-const photoIds = new Set([...[...shipped.keys()].map(id => views.get(id).photo_id), ...findings.map(f => f.photo_id).filter(Boolean)]);
 const place = {
   schema: 'mercature-place/1', id: record.id, title: record.title, place: record.place, synthetic: false, local_only: false,
   built_from: { schema: record.schema, built_at: record.built_at },
@@ -69,7 +68,8 @@ const place = {
     return { id, photo_id: view.photo_id, kind: view.kind, faces: view.faces ?? null, role: file.role, file: `views/${id}.jpg`, width: view.width, height: view.height, file_width: file.width, file_height: file.height,
       cut: view.cut ? { yaw_deg: view.cut.yaw_deg, pitch_deg: view.cut.pitch_deg, hfov_deg: view.cut.hfov_deg } : null, stretches: view.stretches ?? [] };
   }),
-  photos: record.photos.filter(p => photoIds.has(p.id)).map(p => ({
+  // Every retained photo as a credited record, so a hosted build can place all camera points; only the views above ship images.
+  photos: record.photos.map(p => ({
     id: p.id, provider: p.provider, position: position(p.position), computed_position: position(p.computed_position), heading: p.heading ?? null, computed_heading: p.computed_heading ?? null,
     captured_at: p.captured_at, is_360: p.is_360 === true, creator: { username: p.creator?.username ?? 'Mapillary contributor' }, licence: p.licence, link: p.link,
   })),
