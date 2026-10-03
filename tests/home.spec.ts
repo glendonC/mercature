@@ -24,6 +24,7 @@ test('search finds the editing example without adding another background destina
   await expect(page.locator('#place-results')).toBeHidden();
   await search.press('Enter');
   await page.getByRole('button', {name:'Visitor courtyard · Authored editing demo'}).click();
+  await page.getByRole('button', {name:'Skip walkthrough',exact:true}).click();
   await expect(page.getByRole('button', {name:'Check the passage →'})).toBeVisible();
 });
 

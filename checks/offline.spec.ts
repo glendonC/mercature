@@ -42,6 +42,8 @@ test("a cold offline restart completes a fresh manual concern and reopens its ch
     await page
       .getByRole("button", { name: "Visitor courtyard · Authored editing demo" })
       .click();
+    await page.getByRole("button", {name: "Load scene", exact: true}).click();
+    await page.getByRole("button", {name: "Enter scene", exact: true}).click();
     await page.getByRole("button", { name: "Add a visitor message" }).click();
     const text = `입구 옆 벤치 때문에 지나가기 어려웠어요. ${crypto.randomUUID()}`;
     await page.getByLabel("Original visitor message").fill(text);

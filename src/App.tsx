@@ -14,6 +14,7 @@ import { parseProject } from "./spatial/scenario";
 import { solveScene } from "./spatial/solver";
 import type { Project } from "./spatial/contracts";
 import DestinationWorkspace from "./destinations/DestinationWorkspace";
+import AuthoredPreparation, { type AuthoredViewState } from "./preparation/Preparation";
 const planStore = createPlanStore();
 function initialSaved() {
   const result = planStore.list();
@@ -32,7 +33,7 @@ function initialSaved() {
 }
 export default function App() {
   const [initial] = useState(initialSaved);
-  const [active, setActive] = useState<"home" | "place" | "spatial" | "destination">("home");
+  const [active, setActive] = useState<"home" | "place" | "spatial" | "destination" | "prepare">("home");
   const [place, setPlace] = useState<Place | null>(null);
   const [places, setPlaces] = useState<Place[]>(initial.places);
   const [plans, setPlans] = useState<PlanSummary[]>(initial.plans);
@@ -41,6 +42,7 @@ export default function App() {
     plan?: ImprovementPlan;
     project?: Project;
     example?: boolean;
+    initialViewState?: AuthoredViewState;
   } | null>(null);
   const [error, setError] = useState(initial.error);
   const [loading, setLoading] = useState(false);
@@ -163,9 +165,7 @@ export default function App() {
           <Home
             onOpen={open}
             onExample={() => {
-              if (!workspace?.example)
-                setWorkspace({ key: crypto.randomUUID(), example: true });
-              setActive("spatial");
+              setActive(workspace?.example ? "spatial" : "prepare");
             }}
             onDestination={(id) => { setDestination(id); setActive("destination"); setError(""); }}
             onImport={() => picker.current?.click()}
@@ -189,6 +189,7 @@ export default function App() {
         <div hidden={active !== "spatial"}>
           <Workspace
             key={workspace.key}
+            initialViewState={workspace.initialViewState}
             initialPlan={workspace.plan}
             initialProject={workspace.project}
             onHome={() => setActive("home")}
@@ -200,6 +201,7 @@ export default function App() {
           />
         </div>
       )}
+      {active === "prepare" && <AuthoredPreparation onHome={() => setActive("home")} onReady={(initialViewState) => { setWorkspace({key: crypto.randomUUID(), example: true, initialViewState}); setActive("spatial"); }} />}
       {active === "destination" && destination && <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />}
       <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Upload photos or video" onChange={event => void uploadPhotos(event.target.files)} />
       <input

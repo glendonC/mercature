@@ -8,7 +8,9 @@ Home uses a shared catalogue for clickable destination photographs and search re
 
 Unlisted places have a photo-first workspace. Uploaded originals stay in IndexedDB; metadata and notes stay in local storage. Local evidence is not automatically converted to a spatial model. The optional geographic rectangle records scope only. File reading and persistence drive actual busy states; no animation stands in for reconstruction or AI inference.
 
-The intended future preparation sequence is location and boundary, eligible source views, known camera positions and associations, then available scene artifacts. Counters, scan effects and connecting lines must be driven by actual records or jobs. Retained preparation must be identified as such and skippable. Returning operators should reopen their working scene directly.
+Preparation is a skippable two-stage entry into existing workspaces. Captured destinations first load and validate their local records, display actual camera positions and source previews, then read and decode a retained point piece. The scene-ready action appears only after a canvas draw completes. Missing geometry stays on the photo/map path; fetch or rendering errors do not become readiness. Counters describe source records, and previews show their actual loading or missing-file state. No artificial progress delays or fresh-reconstruction claim is made.
+
+The authored courtyard starts with its dimensioned layout, validates that same scene, runs its baseline solver, then opens the existing editing workspace. Returning to an in-progress authored workspace or reopening a saved plan bypasses preparation and preserves its state. Recorded photo processing, reconstruction from new inputs and richer preparation animation remain later work.
 
 ## Retained destinations
 

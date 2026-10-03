@@ -5,6 +5,8 @@ async function openExample(page: import("@playwright/test").Page) {
   await page
     .getByRole("button", { name: "Visitor courtyard · Authored editing demo" })
     .click();
+  await page.getByRole("button", {name: "Load scene", exact: true}).click();
+  await page.getByRole("button", {name: "Enter scene", exact: true}).click();
 }
 async function makeProposal(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Check the passage →" }).click();

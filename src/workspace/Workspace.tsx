@@ -26,6 +26,7 @@ import {
 import "./workspace.css";
 export type WorkspaceProps = {
   initialPlan?: ImprovementPlan;
+  initialViewState?: {selectedId: string | null; rotation: number};
   initialProject?: Project;
   onHome: () => void;
   onSave: (plan: ImprovementPlan) => void;
@@ -39,6 +40,7 @@ const outcome = (status: string) =>
       : "Not yet known";
 export default function Workspace({
   initialPlan,
+  initialViewState,
   initialProject,
   onHome,
   onSave,
@@ -62,12 +64,14 @@ export default function Workspace({
   const [scenario, setScenario] = useState(() =>
     structuredClone(initial?.scenario ?? createScenario(scene, profile)),
   );
+  const [rotation, setRotation] = useState(initialViewState?.rotation ?? 0);
   const [view, setView] = useState<"map" | "3d" | "split">("3d");
   const [comparison, setComparison] = useState<"original" | "proposed">(
     "proposed",
   );
   const [selected, setSelected] = useState<string | null>(
     initialPlan?.confirmation.targets[0]?.id ??
+      initialViewState?.selectedId ??
       scene.obstacles.find((o) => o.movable)?.id ??
       inventory[0]?.id ??
       null,
@@ -362,6 +366,8 @@ export default function Workspace({
       </div>
       <div className="guide-scene">
         <SpatialView
+          rotation={rotation}
+          onRotationChange={setRotation}
           scene={comparison === "original" ? scene : applied}
           result={comparison === "original" ? baseline : proposed}
           selectedId={selected}

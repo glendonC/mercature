@@ -2,7 +2,7 @@
 
 Turn a visitor concern or a site check into a reviewed improvement plan.
 
-Search for **Visitor courtyard**, open the authored editing demo, choose the affected feature, preview a move or removal, compare the result and save. The scene stays central; the guide offers one next action at a time. Evidence, movement requirements and plan details remain available on demand.
+Search for **Visitor courtyard**, open the authored editing demo, load its scene, then choose the affected feature, preview a move or removal, compare the result and save. The scene stays central; the guide offers one next action at a time. Evidence, movement requirements and plan details remain available on demand.
 
 ## Run locally
 
@@ -37,9 +37,9 @@ Search covers the prepared catalogue and work saved in this browser. Online plac
 
 ## Prepared destinations
 
-The three background photographs open Qorikancha, Narikala and Swayambhu. Their original capture files are intentionally excluded from the repository and build. For a local installation, place the retained `routes` directory at `.local/routes` (a local symbolic link also works). Only the loopback development/preview server can serve it; public hosting has no capture files. Source records and images retain their existing local-only restrictions. Qorikancha and Narikala have partial point reconstructions; Swayambhu has photographs without usable 3D.
+The three background photographs open Qorikancha, Narikala and Swayambhu. Each opens a skippable recorded-preparation view with source cameras and photo previews, then loads available retained geometry before entering the same inspection workspace. Their original capture files are intentionally excluded from the repository and build. For a local installation, place the retained `routes` directory at `.local/routes` (a local symbolic link also works). Only the loopback development/preview server can serve it; public hosting has no capture files. Source records and images retain their existing local-only restrictions. Qorikancha and Narikala have partial point reconstructions; Swayambhu has photographs without usable 3D.
 
-For the editing demonstration, type **Visitor courtyard** into search and choose **Authored editing demo**. It is available in a fresh checkout and after offline provisioning. No account or server database is required; “On this device” lists browser-local work. The three captured examples are inspection cases and are not interchangeable with the authored editing model.
+For the editing demonstration, type **Visitor courtyard** into search and choose **Authored editing demo**. Its layout-to-scene preparation leads into the same edit/check/save workflow. It is available in a fresh checkout and after offline provisioning. No account or server database is required; “On this device” lists browser-local work. The three captured examples are inspection cases and are not interchangeable with the authored editing model.
 
 ## Checks
 

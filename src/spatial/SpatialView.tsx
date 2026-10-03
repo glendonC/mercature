@@ -11,6 +11,8 @@ export type SpatialViewProps = {
   onSelect: (id: string) => void;
   view: 'map' | '3d' | 'split';
   compact?: boolean;
+  rotation?: number;
+  onRotationChange?: (rotation: number) => void;
   onPlace?: (point: { x: number; y: number }) => void;
 };
 type Point = { x: number; y: number };
@@ -19,10 +21,11 @@ const colors: Record<Status, string> = { reachable: '#c7e2cc', blocked: '#e9c5b8
 const statusText: Record<Status, string> = { reachable: 'Connected', blocked: 'Blocked', unknown: 'Unresolved' };
 
 /** Both projections use the same scene coordinates and shared feature selection. */
-export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace, evidenceScene }: SpatialViewProps) {
+export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, onPlace, evidenceScene, rotation: controlledRotation, onRotationChange }: SpatialViewProps) {
   const [showAssessment, setShowAssessment] = useState(true);
   const [showPath, setShowPath] = useState(false);
-  const [rotation, setRotation] = useState(0);
+  const [localRotation, setLocalRotation] = useState(0);
+  const rotation = controlledRotation ?? localRotation;
   const evidenceDialog = useRef<HTMLDialogElement>(null);
   const evidenceButton = useRef<HTMLButtonElement>(null);
   const evidenceTitleId = useId();
@@ -48,7 +51,7 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
       <div className="spatial-layer-controls">
         <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}>{compact ? <span aria-hidden="true">◫</span> : 'Check overlay'}</button>
         <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}>{compact ? <span aria-hidden="true">⌁</span> : 'Checked path'}</button>
-        {view !== 'map' && <button type="button" onClick={() => setRotation(value => (value + 1) % 4)} aria-label="Rotate 3D view" title="Rotate 3D view">{compact ? <span aria-hidden="true">↻</span> : '↻ Rotate'}</button>}
+        {view !== 'map' && <button type="button" onClick={() => { const next = (rotation + 1) % 4; if (onRotationChange) onRotationChange(next); else setLocalRotation(next); }} aria-label="Rotate 3D view" title="Rotate 3D view">{compact ? <span aria-hidden="true">↻</span> : '↻ Rotate'}</button>}
         {compact && <button type="button" ref={evidenceButton} className="spatial-evidence-trigger" onClick={() => evidenceDialog.current?.showModal()}>Evidence</button>}
       </div>
     </div>
