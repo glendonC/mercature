@@ -91,8 +91,8 @@ Set `MERCATURE_PORT` to use a port other than 4173.
 
 Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on every photo; this
 repository ships 27 credited crops of the route in `public/places/qorikancha`. Places and paths are
-from OpenStreetMap (ODbL), the walking route from Valhalla, outlines from SAM 3 and partial 3D from
-VGGT. Test messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources
+from OpenStreetMap (ODbL), the walking route from Valhalla, outlines from SAM 3. Partial 3D from VGGT
+exists only in a local install; the published package has no points. Test messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources
 behind every figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses
 are in [attribution](ATTRIBUTION.md).
 
