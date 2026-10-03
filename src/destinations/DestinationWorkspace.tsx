@@ -4,6 +4,7 @@ import Companion from '../components/Companion';
 import { Preparation } from '../preparation/Preparation';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, isDestinationId, loadDestination, type Cloud, type Destination, type DestinationId, type View } from './data';
 import GeographicMap from './GeographicMap';
+import RouteCanvas, { hasRouteCanvas } from './RouteCanvas';
 import { CloseIcon, ExternalIcon, TargetIcon } from '../icons';
 import './destinations.css';
 /** initial: records already read and replayed, so the inspection opens directly on the same map. */
@@ -53,6 +54,7 @@ function Session({ id, onHome, initial }: {id:DestinationId;onHome:()=>void;init
       </> : <div className="preparation-empty"><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="m8 16 16-6 16 8 16-6v38l-16 6-16-8-16 6zM24 10v38m16-30v38" stroke="currentColor" strokeWidth="1.3"/></svg></div>}
     </Preparation>;
   }
+  if (data && hasRouteCanvas(data)) return <RouteCanvas data={data} asset={file => assetUrl(data, file)} onHome={onHome}/>;
   return <main className="destination-workspace">
     <header className="destination-header"><button onClick={onHome} aria-label="Home">←</button><div><h1>{DESTINATIONS[id].name}</h1><span>{DESTINATIONS[id].place} · Recorded</span></div><button onClick={() => credits.current?.showModal()}>Sources</button></header>
     {!data ? <section className="destination-loading" aria-live="polite"><Companion working={!error}>{error || 'Reading the prepared route and its source records…'}</Companion>{error && <button onClick={() => setRetry(r => r + 1)}>Try again</button>}</section> : <>
