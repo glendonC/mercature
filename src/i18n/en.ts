@@ -152,6 +152,16 @@ export const en = {
   'reveal.credit': 'Street photos: Mapillary contributors, CC BY-SA 4.0 · Map © OpenStreetMap',
   'reveal.creditShort': 'Mapillary, CC BY-SA 4.0 · © OpenStreetMap',
 
+  // Text in the published place records
+  'record.kerbBeside': 'Kerb beside the route',
+  'record.kerbToCross': 'Kerb to cross, no ramp found',
+  'record.steps': 'Steps',
+  'record.osmSteps': '5 steps, no handrail, no ramp',
+  'record.ticketBooth': 'Qorikancha ticket booth',
+  'record.cusco': 'Cusco, Peru',
+  'record.tbilisi': 'Tbilisi, Georgia',
+  'record.kathmandu': 'Kathmandu, Nepal',
+
   // Recorded destination
   'dest.notInCatalogue': 'This prepared destination is not in the local catalogue.',
   'dest.provenance': 'Recorded preparation',

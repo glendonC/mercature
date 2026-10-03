@@ -5,6 +5,8 @@ import swayambhu from '../covers/swayambhu.webp';
 import { NOOR_FARM } from '../site/farm';
 import { PACKAGES, isDestinationId } from '../destinations/data';
 import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from '../icons';
+import { useLanguage } from '../i18n';
+import LanguageSwitch from '../i18n/LanguageSwitch';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -25,6 +27,7 @@ type Props = {
 /** Search ignores case, accents and apostrophe style, so "noor’s", "Noor's" and "finca" all match. */
 const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/[\u2018\u2019`]/g, "'").toLocaleLowerCase();
 const farmTerms = fold(`${NOOR_FARM.name.en} ${NOOR_FARM.name.es} ${NOOR_FARM.place} coffee café farm finca`);
+const demoTerms = 'visitor courtyard example editing demo patio de visitantes ejemplo';
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 /** Places that open here: a published package on any host, a local record only where it answers on this device. */
 function useOpenable(): (id: string) => boolean {
@@ -55,6 +58,7 @@ function FarmPlan() {
   </svg>;
 }
 export default function Home({onOpen, onExample, onFarm, onDestination, onImport, onUpload, saved = [], onOpenSaved}: Props) {
+  const { t, rich, lang } = useLanguage();
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState(false);
   const credits = useRef<HTMLDialogElement>(null);
@@ -75,37 +79,37 @@ export default function Home({onOpen, onExample, onFarm, onDestination, onImport
   const matches = saved.filter(item => item.title.toLocaleLowerCase().includes(term));
   const destinations = covers.filter(cover => openable(cover.id) && fold(`${cover.name} ${cover.area} ${cover.aliases}`).includes(fold(term)));
   const showFarm = !term || farmTerms.includes(fold(term));
-  const showDemo = !term || 'visitor courtyard example editing demo'.includes(term);
+  const showDemo = !term || demoTerms.includes(fold(term));
   const showNew = !!term && !matches.length && !destinations.length && !showDemo && !showFarm;
-  return <main className="welcome-shell site-home" aria-label="Mercature home">
-    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label="Photo credits"><InfoIcon/></button></header>
-    <div className="welcome-atmosphere" aria-label="Prepared destinations">{covers.map((cover, i) => openable(cover.id)
-      ? <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={`Explore ${cover.name} · ${cover.area}`} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>
+  return <main className="welcome-shell site-home" aria-label={t('home.label')}>
+    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><div className="welcome-tools"><LanguageSwitch/><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label={t('home.credits')}><InfoIcon/></button></div></header>
+    <div className="welcome-atmosphere" aria-label={t('home.prepared')}>{covers.map((cover, i) => openable(cover.id)
+      ? <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={t('home.explore', { name: cover.name, area: cover.area })} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>
       : <span key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1} is-ambient`} aria-hidden="true"><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span></span></span>)}</div>
     <section className="welcome-center">
-      <h1>An editable spatial<br/>accessibility model</h1>
+      <h1>{rich('home.title', { br: <br/> })}</h1>
       <div className="home-discovery" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }} onKeyDown={event => { if(event.key === 'Escape') { search.current?.focus(); setExpanded(false); } }}>
         <form className="place-search" role="search" onSubmit={event => { event.preventDefault(); setExpanded(true); requestAnimationFrame(() => results.current?.querySelector<HTMLButtonElement>('button')?.focus()); }}>
-          <button type="button" className="search-circle upload-circle" aria-label="Upload photos or a saved plan" title="Upload photos or a saved plan" onClick={() => upload.current?.showModal()}><UploadIcon/></button>
-          <input ref={search} aria-label="Explore a place" aria-controls="place-results" aria-expanded={expanded} placeholder="Explore a place" value={query} onFocus={() => setExpanded(true)} onChange={event => { setQuery(event.target.value); setExpanded(true); }} maxLength={120}/>
-          <button className="search-circle search-submit" aria-label="Search places" title="Search places"><SearchIcon/></button>
+          <button type="button" className="search-circle upload-circle" aria-label={t('home.upload')} title={t('home.upload')} onClick={() => upload.current?.showModal()}><UploadIcon/></button>
+          <input ref={search} aria-label={t('home.search')} aria-controls="place-results" aria-expanded={expanded} placeholder={t('home.search')} value={query} onFocus={() => setExpanded(true)} onChange={event => { setQuery(event.target.value); setExpanded(true); }} maxLength={120}/>
+          <button className="search-circle search-submit" aria-label={t('home.searchSubmit')} title={t('home.searchSubmit')}><SearchIcon/></button>
         </form>
-        <div id="place-results" ref={results} className="home-results" hidden={!expanded} aria-label="Places">
+        <div id="place-results" ref={results} className="home-results" hidden={!expanded} aria-label={t('home.results')}>
           {(showFarm || destinations.length>0 || showDemo) && <div className="home-prepared">
-            {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name.en}</strong><small>{NOOR_FARM.place}</small></span><span className="badge">Example</span></button>}
-            {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span><span className="badge">Recorded</span></button>)}
-            {showDemo && <button onClick={onExample}><span className="result-scene-icon"><SceneIcon/></span><span><strong>Visitor courtyard</strong></span><span className="badge">Example</span></button>}
+            {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span></button>}
+            {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span><span className="badge">{t('common.recorded')}</span></button>)}
+            {showDemo && <button onClick={onExample}><span className="result-scene-icon"><SceneIcon/></span><span><strong>{t('home.courtyard')}</strong></span><span className="badge">{t('common.example')}</span></button>}
           </div>}
-          {expanded && matches.length>0 && <div className="home-saved"><p>On this device</p>{matches.map(item => <button key={item.id} onClick={() => onOpenSaved(item)}><span>{item.title}</span><small>{item.kind === 'plan' ? 'Improvement plan' : 'Photos & notes'}</small></button>)}</div>}
-          {expanded && showNew && <div className="home-new"><p>No prepared scene for “{query.trim()}” yet.</p><button onClick={() => onOpen(query.trim())}>Add your own photos<span>Start “{query.trim()}”</span></button></div>}
+          {expanded && matches.length>0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{matches.map(item => <button key={item.id} onClick={() => onOpenSaved(item)}><span>{item.title}</span><small>{t(item.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small></button>)}</div>}
+          {expanded && showNew && <div className="home-new"><p>{t('home.noScene', { query: query.trim() })}</p><button onClick={() => onOpen(query.trim())}>{t('home.addOwn')}<span>{t('home.start', { query: query.trim() })}</span></button></div>}
         </div>
       </div>
     </section>
     <dialog ref={upload} className="welcome-dialog" aria-labelledby="upload-title">
-      <header><h2 id="upload-title">Add to Mercature</h2><button onClick={() => upload.current?.close()} aria-label="Close upload"><CloseIcon/></button></header>
-      <div className="upload-choices"><button onClick={() => { upload.current?.close(); onUpload(query.trim()); }}><strong>Photos or video</strong><span>Start with views of your place</span></button><button onClick={() => { upload.current?.close(); onImport(); }}><strong>Saved Mercature plan</strong><span>Continue from a backup</span></button></div>
-      <p className="upload-local">Files stay on this device. Add only files you may keep.</p>
+      <header><h2 id="upload-title">{t('home.uploadTitle')}</h2><button onClick={() => upload.current?.close()} aria-label={t('home.closeUpload')}><CloseIcon/></button></header>
+      <div className="upload-choices"><button onClick={() => { upload.current?.close(); onUpload(query.trim()); }}><strong>{t('home.uploadPhotos')}</strong><span>{t('home.uploadPhotosHint')}</span></button><button onClick={() => { upload.current?.close(); onImport(); }}><strong>{t('home.uploadPlan')}</strong><span>{t('home.uploadPlanHint')}</span></button></div>
+      <p className="upload-local">{t('home.uploadLocal')}</p>
     </dialog>
-    <dialog ref={credits} className="welcome-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">Photo credits</h2><button onClick={() => credits.current?.close()} aria-label="Close photo credits"><CloseIcon/></button></header><p>Destination covers from Wikimedia Commons. Resized to WebP and masked for display; separate from each example’s source evidence.</p><ul>{covers.map(cover => <li key={cover.name}><a href={cover.source}>{cover.name}</a><br/>{cover.author}, {cover.year} · <a href={cover.licenseUrl}>{cover.license}</a></li>)}</ul></dialog>
+    <dialog ref={credits} className="welcome-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">{t('home.credits')}</h2><button onClick={() => credits.current?.close()} aria-label={t('home.closeCredits')}><CloseIcon/></button></header><p>{t('home.creditsNote')}</p><ul>{covers.map(cover => <li key={cover.name}><a href={cover.source}>{cover.name}</a><br/>{cover.author}, {cover.year} · <a href={cover.licenseUrl}>{cover.license}</a></li>)}</ul></dialog>
   </main>;
 }

@@ -155,6 +155,16 @@ export const es = {
   'reveal.credit': 'Fotos de calle: colaboradores de Mapillary, CC BY-SA 4.0 · Mapa © OpenStreetMap',
   'reveal.creditShort': 'Mapillary, CC BY-SA 4.0 · © OpenStreetMap',
 
+  // Text in the published place records
+  'record.kerbBeside': 'Bordillo junto a la ruta',
+  'record.kerbToCross': 'Bordillo por cruzar, no se encontró rampa',
+  'record.steps': 'Escalones',
+  'record.osmSteps': '5 escalones, sin pasamanos ni rampa',
+  'record.ticketBooth': 'Boletería del Qorikancha',
+  'record.cusco': 'Cusco, Perú',
+  'record.tbilisi': 'Tiflis, Georgia',
+  'record.kathmandu': 'Katmandú, Nepal',
+
   // Recorded destination
   'dest.notInCatalogue': 'Este destino preparado no está en el catálogo local.',
   'dest.provenance': 'Preparación registrada',

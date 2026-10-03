@@ -17,6 +17,8 @@ export const STORAGE_KEY = 'mercature.language.v1';
 /** The {name} placeholders in a template. */
 type Params<S extends string> = S extends `${string}{${infer P}}${infer Rest}` ? P | Params<Rest> : never;
 export type Values<K extends Key> = Record<Params<(typeof en)[K]>, string | number>;
+/** Keys whose text has no placeholders. */
+export type PlainKey = { [K in Key]: [Params<(typeof en)[K]>] extends [never] ? K : never }[Key];
 /** Keys without placeholders take no values; keys with placeholders require all of them. */
 export type Args<K extends Key> = [Params<(typeof en)[K]>] extends [never] ? [] : [values: Values<K>];
 

@@ -15,6 +15,7 @@
 }
 .welcome-chrome { position: absolute; z-index: 10; inset: 30px 4vw auto; display: flex; align-items: center; justify-content: space-between; }
 .welcome-brand { font-size: 20px; letter-spacing: -.05em; font-weight: 400; }
+.welcome-tools { display: flex; align-items: center; gap: 2px; }
 .welcome-tool { display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; color: var(--muted); background: transparent; }
 .welcome-tool svg, .welcome-dialog header button svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .welcome-tool:hover { background: #fff8; }

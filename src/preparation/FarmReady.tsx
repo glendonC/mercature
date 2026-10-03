@@ -8,6 +8,7 @@ import { createScenario } from '../spatial/scenario';
 import { solveScene } from '../spatial/solver';
 import type { Project, Result } from '../spatial/contracts';
 import type { AuthoredViewState } from './Preparation';
+import { useLanguage } from '../i18n';
 import './farm-ready.css';
 
 /** When each row starts its work, so a person can follow it. The work itself is real and unpadded. */
@@ -25,7 +26,6 @@ type Model =
   | { kind: 'off'; stored: boolean; failed: boolean };
 type RowState = 'waiting' | 'working' | 'done' | 'off' | 'error';
 
-const megabytes = (bytes: number) => `${Math.round(bytes / 1e6)} MB`;
 const { bounds } = NOOR_FARM.scene;
 const size = `${bounds.maxX - bounds.minX} × ${bounds.maxY - bounds.minY} m`;
 
@@ -51,6 +51,9 @@ function Mark() {
 
 /** Opens Noor's authored farm with real steps, then hands the same project to the workspace. */
 export default function FarmReady({ onHome, onReady }: { onHome: () => void; onReady: (project: Project, view: AuthoredViewState) => void }) {
+  const { t, lang } = useLanguage();
+  const megabytes = (bytes: number) => t('common.megabytes', { mb: Math.round(bytes / 1e6) });
+  const name = NOOR_FARM.name[lang];
   const started = useRef(performance.now());
   const alive = useRef(true);
   const stored = useRef(false);
@@ -139,32 +142,32 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
 
   const reachable = result?.destinations.filter(destination => destination.status === 'reachable').length ?? 0;
   const modelRow: { state: RowState; value: string } =
-    model.kind === 'ready' ? { state: 'done', value: 'Ready' }
-    : model.kind === 'off' ? { state: 'off', value: 'Use without AI' }
-    : model.kind === 'downloading' ? { state: 'working', value: model.total ? `${Math.floor(model.loaded / model.total * 100)}% of ${megabytes(model.total)}` : 'Starting' }
-    : { state: 'working', value: model.kind === 'loading' ? 'Loading' : 'Checking' };
+    model.kind === 'ready' ? { state: 'done', value: t('common.ready') }
+    : model.kind === 'off' ? { state: 'off', value: t('farm.useWithoutAi') }
+    : model.kind === 'downloading' ? { state: 'working', value: model.total ? t('farm.percentOf', { percent: Math.floor(model.loaded / model.total * 100), size: megabytes(model.total) }) : t('common.starting') }
+    : { state: 'working', value: t(model.kind === 'loading' ? 'common.loading' : 'common.checking') };
   const rows: { id: string; label: string; state: RowState; value: string }[] = [
-    { id: 'site', label: 'Site', state: step < 1 ? 'waiting' : project ? 'done' : error ? 'error' : 'working', value: project ? size : '' },
-    { id: 'model', label: 'Language model', state: step < 2 ? 'waiting' : modelRow.state, value: step < 2 ? '' : modelRow.value },
-    { id: 'spots', label: 'Spots', state: step < 3 ? 'waiting' : 'done', value: step < 3 ? '' : `${NOOR_FARM.features.length} listed` },
-    { id: 'paths', label: 'Paths', state: step < 4 ? 'waiting' : result ? 'done' : error ? 'error' : 'working', value: result ? `${reachable} of ${result.destinations.length} reachable` : step < 4 ? '' : 'Checking' },
+    { id: 'site', label: t('farm.site'), state: step < 1 ? 'waiting' : project ? 'done' : error ? 'error' : 'working', value: project ? size : '' },
+    { id: 'model', label: t('farm.model'), state: step < 2 ? 'waiting' : modelRow.state, value: step < 2 ? '' : modelRow.value },
+    { id: 'spots', label: t('farm.spots'), state: step < 3 ? 'waiting' : 'done', value: step < 3 ? '' : t('farm.listed', { count: NOOR_FARM.features.length }) },
+    { id: 'paths', label: t('farm.paths'), state: step < 4 ? 'waiting' : result ? 'done' : error ? 'error' : 'working', value: result ? t('farm.reachable', { count: reachable, total: result.destinations.length }) : step < 4 ? '' : t('common.checking') },
   ];
-  const line = error ? 'The site needs attention.' : result ? `${NOOR_FARM.name.en} is ready.` : `Getting ${NOOR_FARM.name.en} ready.`;
+  const line = error ? t('farm.attention') : result ? t('farm.ready', { name }) : t('farm.getting', { name });
   const stage_ = !project ? 'empty' : result ? 'paths' : 'site';
 
-  return <PlaceCanvas title={NOOR_FARM.name.en} view="place" onView={() => undefined} onHome={onHome} sceneRef={stage} dialogueRef={dock}
+  return <PlaceCanvas title={name} view="place" onView={() => undefined} onHome={onHome} sceneRef={stage} dialogueRef={dock}
     scene={<div className={`farm-ready-scene${leaving ? ' is-leaving' : ''}`} data-stage={stage_}>{project && <SpatialView controlsTarget={null} rotation={0} scene={project.scene} result={result ?? unchecked(project)} selectedId={selected} onSelect={setSelected} view="3d" compact />}</div>}
     overview={<div className={`farm-ready${leaving ? ' is-leaving' : ''}`}>
-      <span className="place-kicker">Getting ready</span>
-      <h1>{NOOR_FARM.name.en}</h1>
-      <p className="place-copy">{NOOR_FARM.place}</p>
-      <ol className="farm-ready-steps" aria-label="Getting ready">{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
+      <span className="place-kicker">{t('farm.kicker')}</span>
+      <h1>{name}</h1>
+      <p className="place-copy">{t('farm.place')}</p>
+      <ol className="farm-ready-steps" aria-label={t('farm.kicker')}>{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
         <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
         {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
-        {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <button className="step-action" onClick={download}>Try again</button> : !!downloadSize && <button className="step-action" onClick={download}>Download {megabytes(downloadSize)}</button>)}
+        {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <button className="step-action" onClick={download}>{t('common.tryAgain')}</button> : !!downloadSize && <button className="step-action" onClick={download}>{t('farm.download', { size: megabytes(downloadSize) })}</button>)}
       </li>)}</ol>
       {error && <p className="guide-error" role="alert">{error}</p>}
-      <div className="canvas-actions"><button ref={enterButton} className={result || error ? 'primary' : undefined} onClick={error ? onHome : enter}>{error ? 'Return home' : 'Enter'}</button></div>
+      <div className="canvas-actions"><button ref={enterButton} className={result || error ? 'primary' : undefined} onClick={error ? onHome : enter}>{t(error ? 'common.returnHome' : 'common.enter')}</button></div>
     </div>}
-    dialogue={<><div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">Guide</span></Companion></div><p role="status">{line}</p></>}/>;
+    dialogue={<><div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">{t('common.guide')}</span></Companion></div><p role="status">{line}</p></>}/>;
 }
