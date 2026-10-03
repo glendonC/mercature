@@ -2,11 +2,23 @@ import { test, expect } from '@playwright/test';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { QORIKANCHA_PLACE } from '../../src/site/route';
+import { ROUTE_PLACES } from '../../src/site/registry';
 
-const folder = resolve('public/places/qorikancha');
+const folder = resolve('public/places', QORIKANCHA_PLACE.folder);
 type View = { id: string; photo_id: string; file: string };
 type Photo = { id: string; creator: { username: string }; licence: string; link: string };
 type Finding = { view_id: string | null; stretches: number[]; verified: boolean };
+
+test('every registered place ships a package built from its current spots', () => {
+  for (const [id, place] of Object.entries(ROUTE_PLACES)) {
+    expect(place.id).toBe(id);
+    const file = resolve('public/places', place.folder, 'place.json');
+    expect(existsSync(file), `${file}: run node scripts/places/package.mjs ${id}`).toBe(true);
+    const published = JSON.parse(readFileSync(file, 'utf8'));
+    expect(published).toMatchObject({ schema: 'mercature-place/1', id, synthetic: false, local_only: false });
+    expect(published.route_spots, `${id}: spots changed since its package was built`).toEqual(place.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })));
+  }
+});
 
 test('the published Qorikancha package parses, credits every photo and ships every image it references', () => {
   const place = JSON.parse(readFileSync(join(folder, 'place.json'), 'utf8'));

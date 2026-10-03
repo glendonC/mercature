@@ -1,21 +1,28 @@
 #!/usr/bin/env node
-// Builds public/places/qorikancha from the local record in .local/routes. No network; the same input gives the same bytes.
+// Builds public/places/<folder> for one place in ROUTE_PLACES from its local record in .local/routes/<id>.
+// Usage: node scripts/places/package.mjs <id>. No network; the same input gives the same bytes.
 // Point clouds stay local. Images are byte copies of the finding views and sips resizes of the reveal views (macOS).
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { QORIKANCHA_PLACE } from '../../src/site/route.ts';
+import { ROUTE_PLACES } from '../../src/site/registry.ts';
 
+const id = process.argv[2];
+if (!id || !Object.hasOwn(ROUTE_PLACES, id)) {
+  console.error(`Usage: node scripts/places/package.mjs <id>, where <id> is one of: ${Object.keys(ROUTE_PLACES).join(', ')}.`);
+  process.exit(1);
+}
+const routePlace = ROUTE_PLACES[id];
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const source = join(root, '.local/routes/cusco-qorikancha');
-const target = join(root, 'public/places/qorikancha');
+const source = join(root, '.local/routes', id);
+const target = join(root, 'public/places', routePlace.folder);
 const REVEAL = { count: 20, every: 3, size: 480, quality: 72 };
 const SOURCES = ['mapillary', 'openstreetmap', 'valhalla', 'sam3'];
 
 if (!existsSync(join(source, 'route.json'))) throw new Error(`Missing ${join(source, 'route.json')}; link .local/routes first.`);
 const record = JSON.parse(readFileSync(join(source, 'route.json'), 'utf8'));
-if (record.schema !== 'mercature-route/1' || record.id !== 'cusco-qorikancha' || record.synthetic !== false) throw new Error('Unexpected route record.');
+if (record.schema !== 'mercature-route/1' || record.id !== id || record.synthetic !== false) throw new Error('Unexpected route record.');
 
 const round = (value, places) => Math.round(value * 10 ** places) / 10 ** places;
 const position = point => point == null ? null : [round(point[0], 7), round(point[1], 7)];
@@ -74,7 +81,7 @@ const place = {
     captured_at: p.captured_at, is_360: p.is_360 === true, creator: { username: p.creator?.username ?? 'Mapillary contributor' }, licence: p.licence, link: p.link,
   })),
   map_context: record.map_context,
-  route_spots: QORIKANCHA_PLACE.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })),
+  route_spots: routePlace.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })),
 };
 for (const view of place.views) if (!place.photos.some(photo => photo.id === view.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`View ${view.id} has no credited photo.`);
 writeFileSync(join(target, 'place.json'), `${JSON.stringify(place)}\n`);

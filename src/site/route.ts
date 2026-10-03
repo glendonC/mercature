@@ -6,8 +6,8 @@ import type { Site, SiteFeature } from './contracts';
  * landmark is the OpenStreetMap name the spot is near or is, or the record's own name for either end of the walk.
  */
 export type RouteSpot = SiteFeature & { readonly stretches: readonly number[]; readonly landmark: string };
-/** Usable wherever Pick<Site, 'id' | 'features'> is expected. */
-export type RoutePlace = Pick<Site, 'id'> & { readonly features: readonly RouteSpot[] };
+/** Usable wherever Pick<Site, 'id' | 'features'> is expected. folder names its published package under public/places. */
+export type RoutePlace = Pick<Site, 'id'> & { readonly folder: string; readonly features: readonly RouteSpot[] };
 
 /**
  * The words visitors use for this walk, authored from the local record cusco-qorikancha (mercature-route/1).
@@ -16,6 +16,7 @@ export type RoutePlace = Pick<Site, 'id'> & { readonly features: readonly RouteS
  */
 export const QORIKANCHA_PLACE: RoutePlace = {
   id: 'cusco-qorikancha',
+  folder: 'qorikancha',
   features: [
     {
       id: 'steps-0-10', stretches: [0], landmark: 'Hauqaypata',
