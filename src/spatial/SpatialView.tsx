@@ -33,12 +33,10 @@ const ICONS = {
   unknown: 'M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6M12 16.9v.1',
 };
 const Icon = ({ name }: { name: keyof typeof ICONS }) => <svg className="spatial-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={ICONS[name]} /></svg>;
-const Legend = ({ note }: { note?: boolean }) => <div className="spatial-legend" aria-label="Assessment legend">
+const Legend = ({ note }: { note?: boolean }) => <div className="spatial-legend" aria-label="Path check legend">
   {STATUSES.map(status => <span key={status}><i className={`spatial-swatch is-${status}`} />{statusText[status]}</span>)}
   {note && <span className="spatial-legend-note">Under the selected requirements</span>}
 </div>;
-/** Accessible name of the projected site; the courtyard keeps its established short name. */
-const siteName = (scene: Scene) => scene.id === 'synthetic-courtyard' ? 'synthetic courtyard' : scene.title;
 
 /** Both projections use the same scene coordinates and shared feature selection. */
 export default function SpatialView({ scene, result, selectedId, onSelect, view, compact = false, controlsTarget, returnFocus, onPlace, evidenceScene, rotation: controlledRotation, onRotationChange }: SpatialViewProps) {
@@ -56,20 +54,20 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
   const destination = sourceScene.destinations.find(item => item.id === selectedId);
   const removed = result.hypothetical && sourceScene.obstacles.some(item => item.id === selectedId) && !scene.obstacles.some(item => item.id === selectedId);
   const destinationResult = result.destinations.find(item => item.id === selectedId);
-  const evidence = selected?.evidence ?? (unknown ? [unknown.reason] : destination ? ['Authored destination coordinate; no source photograph or site measurement.'] : []);
+  const evidence = selected?.evidence ?? (unknown ? [unknown.reason] : destination ? ['Example position; no photo or measurement.'] : []);
   const selectedBounds = selected?.bounds ?? unknown?.bounds;
   const traversal = result.traversals.find(path => path.destinationId === selectedId);
   const pathNote = `${!traversal ? 'Solid lines reach connected destinations; dashed lines stop at the last checked position.' : traversal.kind === 'complete' ? 'Checked cardinal path to the destination.' : traversal.kind === 'approach' ? 'Checked approach only. The line stops before unsupported continuation.' : 'No checked path is available under these requirements.'} A square-envelope illustration, not a prediction of individual passage.`;
   const evidenceContent = <div className="spatial-evidence" aria-live="polite">
-      <div><span className="spatial-eyebrow">Linked evidence</span><h3>{selected?.label ?? unknown?.label ?? destination?.label ?? 'Select a feature to inspect'}</h3>
+      <div><span className="spatial-eyebrow">Linked evidence</span><h3>{selected?.label ?? unknown?.label ?? destination?.label ?? 'Select a spot'}</h3>
         {selectedBounds && <p className="spatial-dimensions">{evidenceScene ? 'Original footprint: ' : ''}{(selectedBounds.maxX - selectedBounds.minX).toFixed(2)} × {(selectedBounds.maxY - selectedBounds.minY).toFixed(2)} m{evidenceScene ? '' : ' footprint'}{'top' in (selected ?? {}) ? ` · ${((selected as Obstacle).top - (selected as Obstacle).bottom).toFixed(2)} m high` : ''}</p>}
         {destinationResult && <p className={`spatial-status spatial-status-${destinationResult.status}`}>{statusText[destinationResult.status]} · {destinationResult.reason}</p>}
       </div>
-      <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose a feature, destination or unknown area in either view. Every dimension in this example is authored.</p>}</div>
+      <div>{evidence.length ? <ul>{evidence.map(text => <li key={text}>{text}</li>)}</ul> : <p>Choose a spot in either view. Nothing in this example was measured.</p>}</div>
     </div>;
   const iconControls = compact && controlsTarget === undefined;
   const controls = <div className="spatial-tools">
-      <span className="spatial-authored">{compact ? 'Synthetic example' : <><Icon name="authored" />{scene.title} <small>· authored, synthetic</small></>}</span>
+      <span className="spatial-authored">{compact ? 'Example' : <><Icon name="authored" />{scene.title} <small>· Example</small></>}</span>
       <div className="spatial-layer-controls">
         <button type="button" aria-label="Check overlay" title="Check overlay" aria-pressed={showAssessment} onClick={() => setShowAssessment(value => !value)}><Icon name="overlay" />{!iconControls && <span>Check overlay</span>}</button>
         <button type="button" aria-label="Checked path" title="Checked path" aria-pressed={showPath} onClick={() => setShowPath(value => !value)}><Icon name="path" />{!iconControls && <span>Checked path</span>}</button>
@@ -78,7 +76,7 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
       </div>
     </div>;
   const shared = { scene, evidenceScene, result, selectedId, onSelect, showAssessment, showPath, compact, onPlace };
-  return <section className={`spatial-view${compact ? ' spatial-view-compact' : ''}`} aria-label="Spatial model">
+  return <section className={`spatial-view${compact ? ' spatial-view-compact' : ''}`} aria-label="Path check">
     {controlsTarget === undefined ? controls : controlsTarget ? createPortal(controls, controlsTarget) : null}
     <div className={`spatial-canvases ${view === 'split' ? 'spatial-split' : ''}`}>
       {(view === 'map' || view === 'split') && <Projection {...shared} mode="map" quarter={0} />}
@@ -96,7 +94,7 @@ export default function SpatialView({ scene, result, selectedId, onSelect, view,
       {removed && <p className="spatial-path-note">Removed in this proposal.</p>}
       {evidenceContent}
       <div className="spatial-dialog-context">
-        <p>Original authored records · synthetic example.</p>
+        <p>Example. Nothing here was measured.</p>
         {showAssessment && <Legend />}
         {showPath && <p>{pathNote}</p>}
       </div>
@@ -266,7 +264,7 @@ function Projection({ scene, evidenceScene, result, selectedId, onSelect, mode, 
     <figcaption><span>{compact ? (mode === 'map' ? 'Map' : '3D') : (mode === 'map' ? 'Plan view' : 'Spatial view')}</span>{!compact && <small>{mode === 'map' ? 'Metric geometry · metres' : 'Projected geometry · rotate to inspect'}</small>}</figcaption>
     <svg ref={svgRef} viewBox={`${frame.minX} ${frame.minY} ${frame.maxX - frame.minX} ${frame.maxY - frame.minY}`} onClickCapture={placeAt} onPointerMove={placing ? preview : undefined} onPointerLeave={placing ? preview : undefined}
       className={placing ? 'spatial-placing' : undefined} aria-description={placing ? 'Choose where the centre of the object goes. Coordinates snap to 0.1 metres; the proposed placement will be validated.' : undefined}
-      aria-label={`${mode === 'map' ? 'Map' : '3D'} of ${siteName(scene)}`} role="group">
+      aria-label={`${mode === 'map' ? 'Map' : '3D'} of ${scene.title}`} role="group">
       <polygon className="spatial-base" points={flat(scene.bounds, -.14)} transform={`translate(0 ${6 * unit})`} />
       <defs><pattern id={`${id}-unknown`} width={7 * unit} height={7 * unit} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect className="spatial-hatch-ground" width={7 * unit} height={7 * unit} /><line className="spatial-hatch-line" x1="0" y1="0" x2="0" y2={7 * unit} strokeWidth={1.4 * unit} /></pattern></defs>
       {scene.supports.map(support => <g key={support.id} {...interaction(support.id, support.label)}><polygon className="spatial-ground" points={flat(support.bounds, support.elevation)} /><title>{support.evidence.join(' ')}</title>{outline(corners(support.bounds).map(p => project(p, support.elevation)))}</g>)}
