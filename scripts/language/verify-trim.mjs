@@ -8,12 +8,13 @@ import { resolve } from 'node:path';
 import { Tokenizer } from '@huggingface/tokenizers';
 import * as ort from 'onnxruntime-web/wasm';
 import { createEmbedder } from '../../src/language/embedding.ts';
+import { TRIMMED_ENCODER } from '../../src/language/model.ts';
 import { passageTexts, queryText } from '../../src/language/policy.ts';
 import { FARM_FEATURES } from '../../src/site/inventory.ts';
 import { CATEGORY_PROTOTYPES, KIND_PROTOTYPES } from './labels.mjs';
 import { loadMessages } from './data.mjs';
 
-const trimmedDir = resolve(process.argv[2] ?? 'public/models/multilingual-e5-small-latin-hangul');
+const trimmedDir = resolve(process.argv[2] ?? resolve('public', TRIMMED_ENCODER.directory));
 ort.env.wasm.wasmBinary = await readFile('node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm');
 ort.env.wasm.numThreads = 1;
 async function encoder(dir) {

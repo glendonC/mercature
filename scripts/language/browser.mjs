@@ -22,9 +22,12 @@ const fromHub = process.argv.includes('--hub');
 const throttleArg = process.argv.indexOf('--throttle');
 const throttle = throttleArg > 0 ? Number(process.argv[throttleArg + 1]) : 1;
 const port = process.env.MERCATURE_PORT ?? '4181';
-const origin = `http://127.0.0.1:${port}`;
+/** --base /mercature/ checks a build made with the same --base, as on a sub-path deploy. */
+const baseArg = process.argv.indexOf('--base');
+const base = baseArg > 0 ? process.argv[baseArg + 1] : '/';
+const origin = `http://127.0.0.1:${port}${base}`;
 
-const preview = spawn('node', ['node_modules/vite/bin/vite.js', 'preview', '--config', 'scripts/language/harness/vite.config.ts', '--host', '127.0.0.1', '--port', port, '--strictPort'], { stdio: 'ignore' });
+const preview = spawn('node', ['node_modules/vite/bin/vite.js', 'preview', '--config', 'scripts/language/harness/vite.config.ts', '--host', '127.0.0.1', '--port', port, '--strictPort', '--base', base], { stdio: 'ignore' });
 const files = http.createServer((request, response) => {
   const file = resolve(MODEL_DIR, `.${decodeURIComponent(new URL(request.url, 'http://local').pathname)}`);
   const headers = { 'access-control-allow-origin': '*' };
@@ -73,6 +76,7 @@ try {
     if (!navigator.serviceWorker.controller) await new Promise(done => navigator.serviceWorker.addEventListener('controllerchange', () => done(), { once: true }));
   });
   result.userAgent = await page.evaluate(() => navigator.userAgent);
+  result.downloadBytesBefore = await page.evaluate(() => window.languageCheck.modelDownloadBytes());
   const prepared = await page.evaluate(async () => {
     const states = [];
     const started = performance.now();
@@ -83,6 +87,7 @@ try {
     return { final, ms: performance.now() - started, progressEvents: states.length, first: states[0], last: states.at(-1) };
   });
   result.provision = prepared;
+  result.downloadBytesAfter = await page.evaluate(() => window.languageCheck.modelDownloadBytes());
   result.prepareSite = [
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),

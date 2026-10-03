@@ -21,7 +21,7 @@ type Download = { readonly file: PinnedFile; readonly key: string; readonly sour
 export type ModelSet = { readonly name: 'latin-hangul' | 'full'; readonly modelBytes: number; readonly downloads: readonly Download[] };
 
 const runtime: Download = { file: RUNTIME_WASM, key: runtimeKey, source: runtimeSource };
-const sameOrigin = (path: string) => new URL(`${TRIMMED_ENCODER.directory}${path}`, location.origin).href;
+const sameOrigin = (path: string) => new URL(`${import.meta.env.BASE_URL}${TRIMMED_ENCODER.directory}${path}`, location.origin).href;
 const sets: readonly ModelSet[] = [
   {
     name: 'latin-hangul',
@@ -101,6 +101,15 @@ async function chooseSet(cache: Cache): Promise<ModelSet> {
   } catch {
     return full;
   }
+}
+
+/** Bytes provision() would download now: the chosen set's files not yet stored, 0 when a set is complete. */
+export async function downloadBytes(): Promise<number> {
+  const cache = await openCache();
+  if (await storedSet(cache)) return 0;
+  const set = await chooseSet(cache);
+  const stored = await Promise.all(set.downloads.map(item => storedBytes(cache, item)));
+  return set.downloads.reduce((sum, item, i) => sum + (stored[i] ? 0 : item.file.bytes), 0);
 }
 
 /** Downloads missing files in order; completed files survive an interrupted provisioning. */

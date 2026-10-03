@@ -28,7 +28,7 @@ export const VARIANTS = {
   uint8: { path: 'onnx/model_uint8.onnx', bytes: 118054630, sha256: 'ee13574a23e4384619a172d4c0c8c6b825528fde30258c56130d5e3efcc9c8f1' },
 };
 
-const TRIMMED_DIR = resolve(`public${TRIMMED_ENCODER.directory}`);
+const TRIMMED_DIR = resolve('public', TRIMMED_ENCODER.directory);
 
 /** Without a variant, the pinned Hub files; 'latin-hangul' is the trimmed set the app serves itself. */
 export async function loadEncoder(variant) {

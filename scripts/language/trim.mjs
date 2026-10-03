@@ -9,9 +9,10 @@
 import { execFileSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { TRIMMED_ENCODER } from '../../src/language/model.ts';
 
 const source = resolve(process.argv[2] ?? '.local/language/model');
-const target = resolve(process.argv[3] ?? 'public/models/multilingual-e5-small-latin-hangul');
+const target = resolve(process.argv[3] ?? resolve('public', TRIMMED_ENCODER.directory));
 const keptPath = resolve('.local/language/kept-ids.json');
 const tokenizer = JSON.parse(await readFile(resolve(source, 'tokenizer.json'), 'utf8'));
 if (tokenizer.model.type !== 'Unigram' || tokenizer.model.byte_fallback) throw new Error('Expected a Unigram tokenizer without byte fallback.');

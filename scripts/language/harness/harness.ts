@@ -1,7 +1,7 @@
 import { prepareOffline } from '../../../src/offline';
 import { FARM_FEATURES } from '../../../src/site/inventory';
 import { QORIKANCHA_PLACE } from '../../../src/site/route';
-import { modelState, modelStored, prepareModel, prepareSite, understand } from '../../../src/language/understand';
+import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand } from '../../../src/language/understand';
 
 /** Exposes the language module to the measurement script; the page has no other behavior. */
 const places = { farm: { id: 'noor-farm', features: FARM_FEATURES }, route: QORIKANCHA_PLACE };
@@ -11,6 +11,7 @@ Object.assign(window, {
   languageCheck: {
     modelState,
     modelStored,
+    modelDownloadBytes,
     prepare: () => prepareModel(state => log(JSON.stringify(state))),
     prepareSite: async (place: PlaceName = 'farm') => {
       const ticks: number[] = [];

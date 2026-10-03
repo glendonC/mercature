@@ -160,7 +160,7 @@ No phone has been measured. The last column uses Chromium's CPU throttling (`bro
 
 ## Offline
 
-`prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device.
+`prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device, and `modelDownloadBytes()` how many bytes `prepareModel()` would download from this origin (0 once stored). The trimmed files are looked up under the app's base path, so a deploy under a sub-path serves them too.
 
 The embeddings of the label passages and of each place's spots are stored too, keyed by model files, revision, place and a hash of the exact passages, so any change to a spot's names, description or aliases means they are computed again. Message embeddings and answers are never stored: every message runs through the model. With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
 

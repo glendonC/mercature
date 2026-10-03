@@ -89,6 +89,19 @@ export async function modelStored(): Promise<boolean> {
   }
 }
 
+/**
+ * Bytes prepareModel() would download from here: the smaller files when this origin serves them,
+ * otherwise the Hub files, minus anything already stored; 0 when the model is on the device.
+ * Null where it cannot be told, such as a browser without Cache Storage.
+ */
+export async function modelDownloadBytes(): Promise<number | null> {
+  try {
+    return await (await import('./encoder')).downloadBytes();
+  } catch {
+    return null;
+  }
+}
+
 /** Reads the stored model into memory. Never downloads. */
 function load(): Promise<Loaded> {
   loading ??= (async () => {

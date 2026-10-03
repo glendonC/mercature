@@ -32,7 +32,8 @@ export const RUNTIME_WASM: PinnedFile & { readonly version: string } = Object.fr
  */
 export const TRIMMED_ENCODER = Object.freeze({
   name: 'latin-hangul',
-  directory: '/models/multilingual-e5-small-latin-hangul/',
+  /** Relative to the app's base path in the browser and to public/ on disk. */
+  directory: 'models/multilingual-e5-small-latin-hangul/',
   files: Object.freeze<PinnedFile[]>([
     { path: 'tokenizer_config.json', bytes: 443, sha256: 'a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b' },
     { path: 'tokenizer.json', bytes: 4273447, sha256: 'c6af844f876b7a3e4e851acf5376055abee70157e660116afafbfb46a02bf53b' },

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
 import { FARM_FEATURES } from '../../src/site/inventory';
 import { LANGUAGE_LIMITS } from '../../src/language';
-import { modelState, prepareModel, prepareSite, understand } from '../../src/language/understand';
+import { modelDownloadBytes, modelState, prepareModel, prepareSite, understand } from '../../src/language/understand';
 import { buildIndex, decide, looksSupported, prepareHeads, queryText, score, type Heads } from '../../src/language/policy';
 
 const farm = { id: 'noor-farm', features: FARM_FEATURES };
@@ -23,6 +23,7 @@ test('without a stored model the manual workflow continues and nothing is downlo
   try {
     expect(modelState().status).not.toBe('ready');
     expect(await understand('The wheelbarrow blocked the path.', farm)).toEqual({ status: 'unavailable', kind: null, category: null, candidates: [], reason: 'model-missing' });
+    expect(await modelDownloadBytes()).toBeNull();
     expect(calls).toBe(0);
   } finally { globalThis.fetch = originalFetch; }
 });
