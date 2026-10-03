@@ -50,7 +50,23 @@ for (const size of [{width:1280,height:720},{width:390,height:844}]) {
     expect(submit!.x + submit!.width).toBeLessThanOrEqual(size.width);
     await page.screenshot({path:`.local/home-${size.width}.png`});
     await page.getByRole('textbox', {name:'Explore a place'}).fill('Narikala');
-    await expect(page.getByRole('button', {name:'Narikala Tbilisi',exact:true})).toBeVisible();
+    await expect(page.getByRole('button', {name:'Narikala Tbilisi Recorded',exact:true})).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
   });
 }
+
+test('farm search terms find Noor\'s farm first and its getting-ready steps hand the farm to the workspace', async ({page}) => {
+  test.setTimeout(20000);
+  await page.goto('/');
+  const search = page.getByRole('textbox', {name:'Explore a place'});
+  for (const term of ['Noor', 'farm', 'finca']) {
+    await search.fill(term);
+    await expect(page.locator('#place-results button').first()).toHaveAccessibleName(/^Noor's farm .*Authored site$/);
+  }
+  await page.locator('#place-results button').first().click();
+  await expect(page.locator('li[data-step=paths]')).toContainText('3 of 4 reachable');
+  await expect(page.locator('li[data-step=model]')).toContainText(/Ready|Loading|Use without AI/);
+  await expect(page.getByRole('status').filter({hasText:"Noor's farm is ready."})).toBeVisible();
+  await expect(page.locator('.farm-ready')).toHaveCount(0, {timeout: 8000});
+  await expect(page.getByRole('button', {name:'Scene options', exact:true})).toBeVisible();
+});

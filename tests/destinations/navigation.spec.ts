@@ -16,7 +16,7 @@ test('background photos and search open the same destination records without sub
     await page.getByRole('button', {name:'Scene options',exact:true}).click();
     await page.getByRole('button', {name:'Home',exact:true}).click();
     await page.getByRole('textbox', {name:'Explore a place'}).fill(name);
-    await page.getByRole('button', {name:`${name} ${area}`,exact:true}).click();
+    await page.getByRole('button', {name:`${name} ${area} Recorded`,exact:true}).click();
     await expect(page.getByRole('button', {name:'Try again',exact:true})).toBeVisible();
     expect(requested.at(-1)).toBe(`/routes/${id}/route.json`);
     await page.getByRole('button', {name:'Scene options',exact:true}).click();

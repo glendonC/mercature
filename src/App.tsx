@@ -15,6 +15,7 @@ import { solveScene } from "./spatial/solver";
 import type { Project } from "./spatial/contracts";
 import DestinationWorkspace from "./destinations/DestinationWorkspace";
 import AuthoredPreparation, { type AuthoredViewState } from "./preparation/Preparation";
+import FarmReady from "./preparation/FarmReady";
 const planStore = createPlanStore();
 function initialSaved() {
   const result = planStore.list();
@@ -33,7 +34,7 @@ function initialSaved() {
 }
 export default function App() {
   const [initial] = useState(initialSaved);
-  const [active, setActive] = useState<"home" | "place" | "spatial" | "destination" | "prepare">("home");
+  const [active, setActive] = useState<"home" | "place" | "spatial" | "destination" | "prepare" | "farm">("home");
   const [place, setPlace] = useState<Place | null>(null);
   const [places, setPlaces] = useState<Place[]>(initial.places);
   const [plans, setPlans] = useState<PlanSummary[]>(initial.plans);
@@ -42,6 +43,7 @@ export default function App() {
     plan?: ImprovementPlan;
     project?: Project;
     example?: boolean;
+    site?: string;
     initialViewState?: AuthoredViewState;
   } | null>(null);
   const [error, setError] = useState(initial.error);
@@ -167,6 +169,10 @@ export default function App() {
             onExample={() => {
               setActive(workspace?.example ? "spatial" : "prepare");
             }}
+            onFarm={() => {
+              setActive(workspace?.site === "noor-farm" ? "spatial" : "farm");
+              setError("");
+            }}
             onDestination={(id) => { setDestination(id); setActive("destination"); setError(""); }}
             onImport={() => picker.current?.click()}
             onUpload={(name) => { uploadName.current = name; photoPicker.current?.click(); }}
@@ -202,6 +208,7 @@ export default function App() {
         </div>
       )}
       {active === "prepare" && <AuthoredPreparation onHome={() => setActive("home")} onReady={(initialViewState) => { setWorkspace({key: crypto.randomUUID(), example: true, initialViewState}); setActive("spatial"); }} />}
+      {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
       {active === "destination" && destination && <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />}
       <input type="file" hidden multiple ref={photoPicker} accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" aria-label="Upload photos or video" onChange={event => void uploadPhotos(event.target.files)} />
       <input
