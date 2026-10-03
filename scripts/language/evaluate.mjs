@@ -8,7 +8,7 @@ import os from 'node:os';
 import { resolve } from 'node:path';
 import { aliasBaseline } from '../../src/language/index.ts';
 import { RUNTIME_WASM } from '../../src/language/model.ts';
-import { buildIndex, decide, prepareHeads, queryText, score } from '../../src/language/policy.ts';
+import { buildIndex, decide, looksSupported, prepareHeads, queryText, score } from '../../src/language/policy.ts';
 import { FARM_FEATURES, HEADS_PATH, VARIANT, categoryLabels, concernsPlace, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
 
 const split = process.argv.slice(2).find(arg => ['train', 'dev', 'test'].includes(arg)) ?? 'dev';
@@ -31,7 +31,7 @@ for (const message of messages) {
   const started = performance.now();
   const query = await encoder.embed(queryText(message.text));
   const scores = score(query, index, prepared);
-  const decision = decide(scores, heads);
+  const decision = decide(scores, heads, looksSupported(message.text));
   const ms = performance.now() - started;
   const baseline = aliasBaseline(message.text, inventory).suggestions.map(item => item.id);
   rows.push({ message, scores, decision, ms, baseline });

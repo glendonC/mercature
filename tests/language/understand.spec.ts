@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { FARM_FEATURES } from '../../src/site/inventory';
 import { LANGUAGE_LIMITS } from '../../src/language';
 import { modelState, prepareModel, prepareSite, understand } from '../../src/language/understand';
-import { buildIndex, decide, prepareHeads, queryText, score, type Heads } from '../../src/language/policy';
+import { buildIndex, decide, looksSupported, prepareHeads, queryText, score, type Heads } from '../../src/language/policy';
 
 const farm = { id: 'noor-farm', features: FARM_FEATURES };
 const modelProvisioned = existsSync('.local/language/model/onnx/model_quantized.onnx');
@@ -25,6 +25,15 @@ test('without a stored model the manual workflow continues and nothing is downlo
     expect(await understand('The wheelbarrow blocked the path.', farm)).toEqual({ status: 'unavailable', kind: null, category: null, candidates: [], reason: 'model-missing' });
     expect(calls).toBe(0);
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('only messages that look like English, Spanish or Korean can get a confident answer', () => {
+  for (const text of ['The gate was locked when we arrived.', 'No había jabón en el baño.', '벤치가 부서져 있었어요.', 'Stairs were too steep for grandma, honestly']) {
+    expect(looksSupported(text)).toBe(true);
+  }
+  for (const text of ['Punkuqa wichqasqam karqan, manam yaykuyta atirqaykuchu.', 'Die Treppe war zu steil für meine Oma.', '入口の看板が読めませんでした。']) {
+    expect(looksSupported(text)).toBe(false);
+  }
 });
 
 test('preparing a site without a loaded model does nothing and reports unavailable', async () => {

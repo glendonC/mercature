@@ -24,7 +24,7 @@ The app shell gains about 125 KB, precached by the service worker: the language 
 ## How a message is answered
 
 1. The message and every feature are embedded. A feature is one passage (its names, its description and all its aliases) plus one short word list per language for English, Spanish and Korean. Its score averages the passage's cosine with its best word list's cosine. Only the order is used, never the value.
-2. **Kind.** If the most likely kind is below 0.76, the answer is *Not sure* (`unclear-kind`).
+2. **Kind.** If the most likely kind is below 0.76, or the message does not look like English, Spanish or Korean (see the language check below), the answer is *Not sure* (`unclear-kind`).
 3. **Issue type**, for problems. Below 0.55, *Not sure* (`unclear-kind`); the place candidates are still offered.
 4. **Place or not.** Below 0.58, the message is about no place, such as price, booking or taste (`no-place`), and no features are offered.
 5. **Which place.** If the top two features' scores are within 0.005, *Not sure* (`unclear-place`), with the three best offered in order. Otherwise the answer is ready.
@@ -112,6 +112,14 @@ One run on the 88 held-out messages, with the frozen heads and thresholds. "As e
 - **Quechua fails.** The model takes most Quechua messages for praise, ranks the right feature first for 5 of 16 and gives 9 confident answers, only 1 of them right. Its 9 of 22 "as expected" mostly come from praise and negations that it called praise anyway. This matches Quechua being outside the encoder's listed languages; today a Quechua message can get a confident wrong answer.
 
 The same run in Chromium (production build, same Mac) gave identical decisions for all 88 messages. With the shipped heads, `int8` and `uint8` would have scored 68 and 71 of 88 "as expected" against 68 for the shipped file, a difference within noise for 0.2% fewer bytes.
+
+### Language check, added after the held-out run
+
+Because a Quechua message could get a confident wrong answer, a check was added after the held-out run; it is not part of the preregistered results above. A message that has no Korean script and fewer than one common English or Spanish function word per ten words (`looksSupported` in `src/language/policy.ts`) gets *Not sure*, with candidates still offered in order when the message seems to be about a place.
+
+- On the 315 train, dev and extra-training messages it flagged none. A first version with one function word per seven flagged one ("Muddy patch was super slippery, nearly fell"), so the ratio was set on that data.
+- Re-running the held-out set with it: no English, Spanish or Korean answer changed, and all 22 Quechua messages now get *Not sure*, where 9 had received confident answers, 1 of them right.
+- This shows only that the tool now abstains on Quechua. It says nothing about understanding Quechua, and very short English or Spanish messages without function words ("Excelente tour!") also get *Not sure*.
 
 ## Speed
 

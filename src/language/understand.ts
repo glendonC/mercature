@@ -4,7 +4,7 @@ import type { IssueCategory, MessageKind, Site } from '../site/contracts';
 export type Place = Pick<Site, 'id' | 'features'>;
 import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
 import { ENCODER, ENCODER_BYTES } from './model';
-import { buildIndex, decide, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
+import { buildIndex, decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
 
 /** Identity of the model that produced a result, so a saved decision can name its source. */
 export type ModelInfo = { readonly id: string; readonly revision: string; readonly bytes: number };
@@ -21,7 +21,8 @@ export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place';
 /**
  * ready: the model answered from its fixed lists.
  * unsure: it answered, but a person must decide; candidates may still be offered.
- *   unclear-kind: the message kind, or a problem's issue type, is unclear (that field is null).
+ *   unclear-kind: the message kind, or a problem's issue type, is unclear (that field is null),
+ *     or the message does not look like English, Spanish or Korean.
  *   no-place: the message is not about a part of the site (price, booking, taste); no candidates.
  *   unclear-place: the top features are too close to call; candidates are offered in order.
  * unavailable: no usable model on this device; the manual workflow continues.
@@ -188,7 +189,7 @@ export async function understand(message: string, site: Place): Promise<Understa
     const loaded = await load();
     const index = await siteIndex(site, loaded).promise;
     const query = await loaded.embed(queryText(message));
-    const decision = decide(score(query, index, loaded.heads), loaded.heads);
+    const decision = decide(score(query, index, loaded.heads), loaded.heads, looksSupported(message));
     return { ...decision, model: loaded.model, elapsedMs: Math.round(performance.now() - started) };
   } catch (error) {
     if (state.status !== 'ready') publish({ status: 'failed', error: errorText(error) });

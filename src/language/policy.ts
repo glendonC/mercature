@@ -179,14 +179,43 @@ export function score(query: ArrayLike<number>, index: FeatureIndex, heads: Prep
 
 const argmax = (values: readonly number[]) => values.reduce((best, value, i) => (value > values[best] ? i : best), 0);
 
+const FUNCTION_WORDS = new Set([
+  // English
+  'a', 'about', 'after', 'all', 'also', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'been', 'before', 'but', 'by', 'can', 'could',
+  'did', 'do', 'does', 'for', 'from', 'had', 'has', 'have', 'he', 'her', 'here', 'his', 'how', 'i', 'if', 'in', 'into', 'is', 'it',
+  'its', 'just', 'me', 'more', 'much', 'my', 'no', 'not', 'of', 'on', 'or', 'our', 'out', 'over', 'really', 'she', 'so', 'some',
+  'than', 'that', 'the', 'their', 'them', 'there', 'they', 'this', 'to', 'too', 'up', 'us', 'very', 'was', 'we', 'were', 'what',
+  'when', 'where', 'which', 'who', 'why', 'will', 'with', 'would', 'you', 'your',
+  // Spanish
+  'al', 'algo', 'bien', 'como', 'con', 'cuando', 'cuánto', 'de', 'del', 'donde', 'dónde', 'el', 'en', 'era', 'eran', 'es', 'esa',
+  'ese', 'eso', 'esta', 'estaba', 'estaban', 'este', 'esto', 'está', 'fue', 'hay', 'había', 'la', 'las', 'le', 'les', 'lo', 'los',
+  'mi', 'mis', 'mucho', 'muy', 'más', 'nada', 'nos', 'nuestra', 'nuestro', 'o', 'para', 'pero', 'poco', 'por', 'porque', 'que',
+  'qué', 'se', 'si', 'sin', 'son', 'su', 'sus', 'sí', 'también', 'tan', 'todo', 'un', 'una', 'unas', 'unos', 'y', 'ya',
+]);
+
+/**
+ * Whether a message looks like a visitor language the model was evaluated on: Korean, or English
+ * or Spanish with enough common function words. Anything else gets "Not sure", whatever the heads
+ * say, because the model's answers in other languages are unreliable.
+ */
+export function looksSupported(message: string): boolean {
+  const text = message.normalize('NFKC').toLocaleLowerCase('en');
+  const letters = text.match(/\p{L}/gu) ?? [];
+  const hangul = letters.filter(letter => /\p{Script=Hangul}/u.test(letter)).length;
+  if (hangul && hangul >= letters.length * 0.3) return true;
+  const words = text.match(/[\p{L}']+/gu) ?? [];
+  const common = words.filter(word => FUNCTION_WORDS.has(word)).length;
+  return common >= 1 && common >= words.length * 0.1;
+}
+
 /** Kind is decided first, then whether a place is meant, then which place. */
-export function decide(scores: Scores, heads: Heads): Decision {
+export function decide(scores: Scores, heads: Heads, supported = true): Decision {
   const { thresholds } = heads;
   const top = scores.ranked.slice(0, 3).map(item => item.id);
   const concernsPlace = scores.place >= thresholds.place;
   const candidates = concernsPlace ? top : [];
   const k = argmax(scores.kind);
-  if (scores.kind[k] < thresholds.kind) {
+  if (!supported || scores.kind[k] < thresholds.kind) {
     return { status: 'unsure', kind: null, category: null, candidates, reason: 'unclear-kind' };
   }
   const kind = heads.kind.labels[k];
