@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState, useLayoutEffect, type CSSProperti
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
 import { addSpot, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteOf, saveEdits, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
-import { EDIT_WORDS, recordDate } from '../edits/words';
+import { recordDate } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
 import { useLanguage } from '../i18n';
+import { useEditWords } from '../i18n/edit';
 import { fromRecord } from '../i18n/records';
 import InterfaceLanguage from '../i18n/LanguageSwitch';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
@@ -51,6 +52,7 @@ function useNarrow() {
 /** The route screen: visitors' messages placed on the walk and answered in their language, on a map she can edit. */
 export default function RouteInbox({ data, asset, onHome }: { data: Destination; asset: (file: string) => string; onHome: () => void }) {
   const { lang } = useLanguage();
+  const editWords = useEditWords();
   const t = COPY[lang], w = t.inbox;
   const narrow = useNarrow();
   const walk = useMemo(() => buildWalk(data), [data]);
@@ -80,7 +82,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   const place = useMemo(() => authored ? withEdits(authored, edits, locate) : null, [authored, edits]); // eslint-disable-line react-hooks/exhaustive-deps
   function edit(change: (edits: Edits) => Edits) {
     const next = change(latestEdits.current); latestEdits.current = next; setEdits(next);
-    if (!saveEdits(next)) setProblem(EDIT_WORDS.notSaved);
+    if (!saveEdits(next)) setProblem(editWords.notSaved);
     // The model reads her added spots too; only what changed is embedded again.
     if (authored) void prepareSite(withEdits(authored, next, locate));
   }
@@ -292,11 +294,11 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   const markers: Marker[] = walk.spots.map(spot => {
     const target: Target = { kind: 'spot', id: spot.id }, fix = isFixed(edits, spot.stretches), count = filedCounts.get(keyOf(target)) ?? 0;
     const state = fix ? 'fixed' : spotState(spot, review) === 'not-barrier' ? 'not-barrier' : spot.kind === 'no-photos' ? 'no-photos' : 'open';
-    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag: fix ? EDIT_WORDS.fixedOn(recordDate(fix.at, lang)) : undefined, label: named(spotName(spot), count) };
+    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag: fix ? editWords.fixedOn(recordDate(fix.at, lang)) : undefined, label: named(spotName(spot), count) };
   });
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
-    if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count, tag: fix ? EDIT_WORDS.fixedOn(recordDate(fix.at, lang)) : EDIT_WORDS.addedBy, label: named(addedName(spot.id), count) });
+    if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count, tag: fix ? editWords.fixedOn(recordDate(fix.at, lang)) : editWords.addedBy, label: named(addedName(spot.id), count) });
   }
   const extra: Target[] = [...ranked.map(targetOf).filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch')), ...(selected && (selected.kind === 'landmark' || selected.kind === 'stretch') ? [selected] : [])];
   for (const target of extra) {
@@ -481,23 +483,23 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     return <>
       <Back onClick={home} label={w.back} />
       <h2 className="ri-title">{name}</h2>
-      <p className="ri-row-meta">{mine && <em>{EDIT_WORDS.addedBy}</em>}{fix && <em>{EDIT_WORDS.fixedOn(recordDate(fix.at, lang))}</em>}{gone && <em>{w.removed}</em>}{clear && w.clearHere}{spot?.kind === 'no-photos' && t.noPhotos}</p>
+      <p className="ri-row-meta">{mine && <em>{editWords.addedBy}</em>}{fix && <em>{editWords.fixedOn(recordDate(fix.at, lang))}</em>}{gone && <em>{w.removed}</em>}{clear && w.clearHere}{spot?.kind === 'no-photos' && t.noPhotos}</p>
       {view && <PhotoWithMarks view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={outlines} lead={shown} t={t}
         pager={evidence.length > 1 ? { at: Math.min(page, evidence.length - 1), total: evidence.length, go: setPage } : null} />}
       {shown?.osm && !shown.viewId && <p className="ri-row-meta">{fromRecord(shown.label, lang)} · {t.mapRecord}</p>}
       {view && outlines.length > 0 && <ul className="ri-legend">{[...new Map([...outlines].sort((a, b) => Number(b.barrier) - Number(a.barrier)).map(f => [f.concept, f])).values()].map(f => <li key={f.concept}><span className={`ri-swatch${f.barrier ? '' : ' is-quiet'}`} aria-hidden="true" />{fromRecord(f.label, lang)}</li>)}<li className="ri-meta">{w.suggestion}</li></ul>}
       <h2 className="ri-heading">{w.visitors(filed.length)}</h2>
       {filed.length > 0 && <ul className="ri-list">{filed.map(message => <li key={message.id}><button className="ri-row" onClick={() => void read(message.id, message.text, message.language)}><span className="ri-lang">{message.language.toUpperCase()}</span><span className="ri-row-main"><span className="ri-excerpt" lang={message.language === 'other' ? undefined : message.language}>{message.text}</span></span></button></li>)}</ul>}
-      {own?.text && editing !== 'note' && <p className="ri-own"><span className="ri-meta">{EDIT_WORDS.yourNote}</span> {own.text}</p>}
-      {editing === 'add' && clear ? <AddSpot where={locate(target.index).landmark} range={{ from: Math.round(data.stretches[target.index].from), to: Math.round(data.stretches[target.index].to) }} guess={noteLanguage}
+      {own?.text && editing !== 'note' && <p className="ri-own"><span className="ri-meta">{editWords.yourNote}</span> {own.text}</p>}
+      {editing === 'add' && clear ? <AddSpot words={editWords} where={locate(target.index).landmark} range={{ from: Math.round(data.stretches[target.index].from), to: Math.round(data.stretches[target.index].to) }} guess={noteLanguage}
           onAdd={(kind, text) => { const next = addSpot(latestEdits.current, target.index, kind, text); edit(() => next); setEditing(null); const id = next.added[next.added.length - 1]?.id; if (id) openSpot({ kind: 'added', id }, false); }} onCancel={() => setEditing(null)} />
-        : editing === 'fix' ? <MarkFixed spot={name} date={recordDate(new Date().toISOString(), lang)} guess={noteLanguage} onFix={text => { edit(edits => markFixed(edits, stretches, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
-        : editing === 'note' ? <OwnNoteEditor value={own ?? undefined} guess={noteLanguage} onSave={text => { edit(edits => setNote(edits, key, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
+        : editing === 'fix' ? <MarkFixed words={editWords} spot={name} date={recordDate(new Date().toISOString(), lang)} guess={noteLanguage} onFix={text => { edit(edits => markFixed(edits, stretches, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
+        : editing === 'note' ? <OwnNoteEditor words={editWords} value={own ?? undefined} guess={noteLanguage} onSave={text => { edit(edits => setNote(edits, key, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
         : <div className="ri-tools">
           {clear && <button className="ri-text" onClick={() => setEditing('add')}>+ {w.addHere}</button>}
-          {(flagged || mine) && !fix && !gone && <button className="ri-text" onClick={() => setEditing('fix')}>{EDIT_WORDS.fix}</button>}
-          {fix && <button className="ri-text ri-muted" onClick={() => edit(edits => clearFixed(edits, stretches))}>{EDIT_WORDS.undoFix}</button>}
-          {!clear && <button className="ri-text" onClick={() => setEditing('note')}>{EDIT_WORDS.yourNote}</button>}
+          {(flagged || mine) && !fix && !gone && <button className="ri-text" onClick={() => setEditing('fix')}>{editWords.fix}</button>}
+          {fix && <button className="ri-text ri-muted" onClick={() => edit(edits => clearFixed(edits, stretches))}>{editWords.undoFix}</button>}
+          {!clear && <button className="ri-text" onClick={() => setEditing('note')}>{editWords.yourNote}</button>}
           {flagged && !fix && <button className="ri-text ri-muted" onClick={() => commit(review => decide(review, stretches, gone ? null : 'not-barrier'))}>{gone ? w.restore : w.remove}</button>}
         </div>}
     </>;
