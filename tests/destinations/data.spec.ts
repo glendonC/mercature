@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
-import {decodeCloud,localAsset,metres,parseDestination,type Piece} from '../../src/destinations/data';
+import {readFileSync} from 'node:fs';
+import {decodeCloud,localAsset,metres,parseDestination,parsePlace,type Piece} from '../../src/destinations/data';
 import {parseReview} from '../../src/decisions/store';
 
 /** Invented contract records for parser tests only; never shipped as a destination. */
@@ -65,4 +66,13 @@ test('a stored answer keeps a first spot remembered from past links, and older a
   expect(parseReview(record(older),'cusco-qorikancha').messages[0].answer).toEqual(older);
   expect(parseReview(record({...older,remembered:true}),'cusco-qorikancha').messages[0].answer).toEqual({...older,remembered:true});
   expect(() => parseReview(record({...older,remembered:'yes'}),'cusco-qorikancha')).toThrow('remembered');
+});
+
+test('the published place exposes every SAM 3 mark and every finding on the walk', () => {
+ const place=parsePlace(JSON.parse(readFileSync('public/places/qorikancha/place.json','utf8')),'cusco-qorikancha');
+ expect(place.walkFindings).toHaveLength(52);expect(place.walkFindings.filter(f=>f.barrier)).toHaveLength(8);expect(place.walkFindings.filter(f=>!f.position).map(f=>f.concept)).toEqual(['highway=steps']);
+ expect(place.marks.filter(m=>m.flagged)).toHaveLength(7);expect(place.marks.every(m=>m.outline.length?place.views.some(v=>v.id===m.viewId):m.position)).toBe(true);
+ for(const mark of place.marks.filter(m=>m.finding))expect(mark.position).toEqual(place.walkFindings.find(f=>f.id===mark.finding)!.position);
+ expect(place.scan?.kinds.filter(k=>k.surface).every(k=>!k.barrier)).toBe(true);expect(place.scan?.leftOut.map(k=>k.concept)).toEqual(['pothole']);
+ const local=parseDestination(contract(),'cusco-qorikancha');expect(local.marks).toEqual([]);expect(local.scan).toBeNull();
 });
