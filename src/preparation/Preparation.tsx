@@ -51,6 +51,3 @@ export function Preparation({optionsContent, title, provenance, sourceLabel, sta
     }}><p>{title}<span>{provenance}</span></p>{optionsContent}<div className="scene-options-links"><button onClick={onHome} aria-label={t('common.home')}>{t('common.returnHome')}</button><button onClick={onSkip}>{t('prep.skip')}</button></div></div>
   </SceneFrame>;
 }
-
-/** Where the spatial workspace opens: the selected feature and the view's rotation. */
-export type AuthoredViewState = {selectedId: string | null; rotation: number};

@@ -7,12 +7,13 @@ import { NOOR_FARM } from '../site/farm';
 import { createScenario } from '../spatial/scenario';
 import { solveScene } from '../spatial/solver';
 import type { Project, Result } from '../spatial/contracts';
-import type { AuthoredViewState } from './Preparation';
 import { useLanguage } from '../i18n';
 import { PrimaryAction, TextButton } from '../ui';
 import { DownloadIcon, EnterIcon, HomeIcon, RotateIcon } from '../ui/icons';
 import './farm-ready.css';
 
+/** Where the spatial workspace opens: the selected feature and the view's rotation. */
+export type AuthoredViewState = {selectedId: string | null; rotation: number};
 /** When each row starts its work, so a person can follow it. The work itself is real and unpadded. */
 const REVEAL = [350, 850, 1400, 1950];
 /** Continue on its own at most this long after opening, leaving room for the exit fade. */
