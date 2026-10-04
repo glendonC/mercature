@@ -76,3 +76,11 @@ test('the published place exposes every SAM 3 mark and every finding on the walk
  expect(place.scan?.kinds.filter(k=>k.surface).every(k=>!k.barrier)).toBe(true);expect(place.scan?.leftOut.map(k=>k.concept)).toEqual(['pothole']);
  const local=parseDestination(contract(),'cusco-qorikancha');expect(local.marks).toEqual([]);expect(local.scan).toBeNull();
 });
+
+test('a published place reads what OpenStreetMap says along it, kind by kind, on its own stretches',()=>{
+ for(const [folder,id] of [['qorikancha','cusco-qorikancha'],['narikala','tbilisi-narikala']] as const){
+  const raw=JSON.parse(readFileSync(`public/places/${folder}/place.json`,'utf8')),place=parsePlace(raw,id);
+  expect(place.access).toHaveLength(raw.osm.findings.length);
+  for(const tag of place.access!)expect(tag.stretches.every(index=>index<place.stretches.length)&&tag.label.startsWith('OpenStreetMap says: ')).toBe(true);
+ }
+});

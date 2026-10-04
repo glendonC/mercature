@@ -3,6 +3,7 @@
 import { ROUTE_PLACES } from '../site/registry';
 import { readWayAround } from '../routes/around';
 import type { WayAround } from '../routes/shape';
+import { ACCESS_KINDS, type AccessFinding } from '../osm/access';
 export const DESTINATIONS = {
   'cusco-qorikancha': { name: 'Qorikancha', place: 'Cusco, Peru' },
   'tbilisi-narikala': { name: 'Narikala', place: 'Tbilisi, Georgia' },
@@ -19,6 +20,8 @@ export type MapFeature = { id: string; name: string; kind: string; points: Coord
 export type Finding = { id: string; viewId: string | null; photoId: string | null; label: string; concept: string; score: number | null; outline: Coordinate[]; verified: boolean; barrier: boolean; osm: Record<string, string> | null; position: Coordinate | null; stretches: number[] };
 /** Every finding the place records, its photo shipped or not, as a place on the walk (a tag has no position, only its stretches). */
 export type WalkFinding = Pick<Finding, 'id' | 'concept' | 'label' | 'barrier' | 'position' | 'stretches'>;
+/** One thing OpenStreetMap says along the walk, as src/osm/access.ts placed it: its kind and value on its stretches. Nobody has checked it on site. */
+export type AccessTag = Pick<AccessFinding, 'id' | 'kind' | 'value' | 'concept' | 'label' | 'barrier' | 'position' | 'stretches'>;
 /** One thing SAM 3 outlined in one photo view; nobody has checked it. barrier: its kind can be a barrier (steps, kerb, broken pavement), drawn in clay.
  * flagged: one of the route's possible barriers (its finding says so). finding: the finding it is, or null.
  * outline: view pixels when its view ships, else empty. position and stretches: where it lies when near the route, else null and []. */
@@ -31,7 +34,9 @@ export type Scan = { views: number; nearMetres: number; kinds: ScanKind[]; leftO
 export type Stretch = { index: number; from: number; to: number; status: 'clear' | 'barrier' | 'no-photos'; line: Coordinate[]; findings: string[]; views: string[] };
 export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; stretches: Stretch[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; walkFindings: WalkFinding[]; marks: ScanMark[]; scan: Scan | null; sources: { name: string; credit: string; licence: string; link: string | null }[];
   /** The way around the walk's mapped steps that OpenStreetMap's router suggests, prepared with the package; null or absent when it has none, as for a walk built on this device. */
-  wayAround?: WayAround | null };
+  wayAround?: WayAround | null;
+  /** What OpenStreetMap says along the walk, kind by kind, from the record's osm.findings; absent when it has none. */
+  access?: AccessTag[] };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : fail('The prepared record is malformed.');
@@ -152,10 +157,20 @@ function parseRecord(value: unknown, expectedId: DestinationId, published: boole
     kinds: list(scanRoot.kinds, 100).map(raw => { const k = record(raw); return { concept: text(k.concept, 100), label: text(k.label, 200), barrier: k.barrier === true, surface: k.surface === true, marks: whole(k.marks), views: whole(k.views), nearRoute: whole(k.near_route) }; }),
     leftOut: list(scanRoot.left_out ?? [], 100).map(raw => { const k = record(raw); return { concept: text(k.concept, 100), label: text(k.label, 200), marks: whole(k.marks), views: whole(k.views), reason: text(k.reason) }; }),
   };
+  // What OpenStreetMap says along the walk, kind by kind. A tag this reader does not know is left out rather than failing the place.
+  const kinds = new Set<string>(ACCESS_KINDS.map(item => item.kind));
+  const access: AccessTag[] = root.osm == null ? [] : list(record(root.osm).findings ?? [], 3000).flatMap(raw => {
+    try {
+      const f = record(raw), kind = text(f.kind, 40);
+      if (!kinds.has(kind)) return [];
+      return [{ id: idText(f.id), kind: kind as AccessTag['kind'], value: typeof f.value === 'string' ? f.value.slice(0, 100) : '', concept: text(f.concept, 100), label: text(f.label), barrier: f.barrier === true,
+        position: f.position == null ? null : coordinate(f.position), stretches: inWalk(list(f.stretches ?? [], 200).map(index => whole(index, 1999))) }];
+    } catch { return []; }
+  });
   const line = list(route.line, 20000).map(coordinate);
   const start = request.start == null ? null : record(request.start);
   const walked = line.slice(1).reduce((sum, point, i) => sum + Math.hypot(...metres(point, line[i])), 0);
-  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, stretches, pieces, findings, walkFindings, marks, scan, wayAround: root.way_around == null ? null : readWayAround(root.way_around), buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
+  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, stretches, pieces, findings, walkFindings, marks, scan, access, wayAround: root.way_around == null ? null : readWayAround(root.way_around), buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }
 export function parseDestination(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, false); }
 export function parsePlace(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, true); }
