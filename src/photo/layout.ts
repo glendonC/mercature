@@ -8,7 +8,7 @@ export type Placed = { id: string; box: Box; anchor: Point | null };
 
 const GAP = 6, MARGIN = 4;
 /** A chip's 44 px target reaches 10 px above and below its 24 px pill and 4 px to each side, so neighbours keep that far apart. */
-const REACH_X = 4, REACH_Y = 10;
+export const REACH_X = 4, REACH_Y = 10;
 const clear = (a: Box, b: Box) => a.x >= b.x + b.w + REACH_X * 2 || b.x >= a.x + a.w + REACH_X * 2 || a.y >= b.y + b.h + REACH_Y * 2 || b.y >= a.y + a.h + REACH_Y * 2;
 
 export function boundsOf(points: readonly Point[]): Box {
@@ -89,13 +89,12 @@ export function placeLabels(items: readonly LabelIn[], frame: { w: number; h: nu
     if (!overlaps(b, view) || item.points.length < 3 || (!item.force && free >= budget)) { hidden.push(item.id); continue; }
     const small = b.w * b.h < item.w * item.h * 6;
     let best: { box: Box; inner: boolean } | null = null, bestCost = Infinity;
-    // Near spots with clear targets first, then spots further out; a mark that matters may then sit closer to a neighbour.
-    const tries: [number, (a: Box, b: Box) => boolean][] = [[GAP, clear], [GAP * 5, clear], ...(weighty.has(item.id) ? [[GAP, (a: Box, c: Box) => !overlaps(a, c, MARGIN)] as [number, (a: Box, b: Box) => boolean]] : [])];
-    for (const [reach, apart] of tries) {
+    // Near spots first, then spots further out; either way no chip's target overlaps another's.
+    for (const reach of [GAP, GAP * 5]) {
       for (const raw of candidates(item.points, b, item.w, item.h, reach)) {
         const box = { ...raw, x: Math.min(frame.w - raw.w - MARGIN, Math.max(MARGIN, raw.x)), y: Math.min(frame.h - raw.h - MARGIN, Math.max(MARGIN, raw.y)) };
         if (box.x < 0 || box.y < 0) continue;
-        if (placed.some(p => !apart(p.box, box)) || avoid.some(a => !clear(a, box)) || coversOutline(box, item.points)) continue;
+        if (placed.some(p => !clear(p.box, box)) || avoid.some(a => !clear(a, box)) || coversOutline(box, item.points)) continue;
         const centre: Point = [box.x + box.w / 2, box.y + box.h / 2], inner = within(centre, item.points);
         if (inner && small) continue;
         let cost = inner ? 4 : gapTo(nearestOn(item.points, centre), box);

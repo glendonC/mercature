@@ -7,7 +7,7 @@ import { markOf } from '../ui/kinds';
 import '../ui/ui.css';
 import { PHOTO_WORDS, reviewLine, type Review } from './copy';
 import { GROUND, KindIcon, kindOf } from './kinds';
-import { autoBudget, boundsOf, placeLabels, type Box, type Point } from './layout';
+import { autoBudget, boundsOf, placeLabels, REACH_X, REACH_Y, type Box, type Point } from './layout';
 import { drawOrder, labelOrder, type MarkAnswer, type PhotoMark } from './marks';
 import './photo.css';
 
@@ -162,8 +162,9 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
     void fontsReady;
     const first = ranked.filter(m => m.id === selected), last = ranked.filter(m => m.id === focused && m.id !== selected);
     const order = [...first, ...ranked.filter(m => m.id !== selected && m.id !== focused), ...last];
-    const avoid: Box[] = [{ x: size.w - 56, y: size.h - 36 - strip, w: 52, h: 32 }];
-    if (zoomed) avoid.push({ x: size.w - 48, y: 4, w: 44, h: 44 });
+    // The 44 px boxes of "+N" at the lower right and of the reset button at the upper right.
+    const avoid: Box[] = [{ x: size.w - 60, y: size.h - 44 - strip, w: 56, h: 44 }];
+    if (zoomed) avoid.push({ x: size.w - 46, y: 2, w: 44, h: 44 });
     if (strip) avoid.push({ x: 0, y: size.h - strip, w: size.w, h: strip });
     const weighty = new Set(marks.filter(m => m.barrier || m.flagged || m.id === selected).map(m => m.id));
     return placeLabels(order.map(m => ({ id: m.id, points: projected.get(m.id) ?? [], w: Math.ceil(textWidth(nameOf(m))) + CHIP_EXTRA, h: CHIP_H, force: m.id === selected || m.id === focused })), size, budget, avoid, weighty);
@@ -316,23 +317,24 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
       </svg>}
       {!failed && layout && ranked.map(m => {
         const spot = spots.get(m.id), b = spot ? null : boundsOf(projected?.get(m.id) ?? [[0, 0]]);
-        const style = spot ? { ...at(m.id), left: spot.box.x, top: spot.box.y } : { left: Math.max(0, b!.x + b!.w / 2), top: Math.max(0, b!.y + b!.h / 2) };
+        // The button is the chip's 44 px target; its pill sits REACH_X and REACH_Y inside it, on the spot the layout chose.
+        const style = spot ? { ...at(m.id), left: spot.box.x - REACH_X, top: spot.box.y - REACH_Y } : { left: Math.max(0, b!.x + b!.w / 2), top: Math.max(0, b!.y + b!.h / 2) };
         return <button key={m.id} type="button" className="lp-chip" data-mark-id={m.id} data-mark={kindOf(m.concept)} data-barrier={m.barrier || undefined} data-flagged={badged(m) || undefined} data-answer={answerOf(m)}
           data-selected={m.id === selected || undefined} data-hidden={spot ? undefined : true} aria-pressed={m.id === selected} aria-label={spoken(m)} title={fromRecord(m.label, lang)}
           style={style} onFocus={() => setFocused(m.id)} onBlur={() => setFocused(id => id === m.id ? null : id)}>
-          {glyph(m)}<span className="lp-name">{nameOf(m)}</span><span className="lp-badge" aria-hidden="true" />
+          <span className="lp-pill">{glyph(m)}<span className="lp-name">{nameOf(m)}</span><span className="lp-badge" aria-hidden="true" /></span>
         </button>;
       })}
       {!failed && hidden.length > 0 && <>
-        <button type="button" className="lp-more" aria-expanded={listOpen} aria-label={words.more(hidden.length)} onClick={() => setListOpen(open => !open)}>+{hidden.length}</button>
+        <button type="button" className="lp-more" aria-expanded={listOpen} aria-label={words.more(hidden.length)} onClick={() => setListOpen(open => !open)}><span className="lp-pill">+{hidden.length}</span></button>
         {listOpen && <div className="lp-list" role="group" aria-label={words.marks}>
           {hidden.map(m => <button key={m.id} type="button" data-mark-id={m.id} data-mark={kindOf(m.concept)} data-flagged={badged(m) || undefined} data-answer={answerOf(m)} aria-label={spoken(m)}>{glyph(m)}{nameOf(m)}<span className="lp-badge" aria-hidden="true" /></button>)}
         </div>}
       </>}
-      {zoomable && zoomed && <button type="button" className="lp-reset" aria-label={words.whole} title={words.whole} onClick={() => base && size && animateTo(bound(REST, base, size))}><FitIcon size={18} /></button>}
+      {zoomable && zoomed && <button type="button" className="lp-reset" aria-label={words.whole} title={words.whole} onClick={() => base && size && animateTo(bound(REST, base, size))}><span className="lp-pill"><FitIcon size={18} /></span></button>}
     </div>
     <figcaption ref={creditRef} className="lp-credit">
-      <span>{photo.creator}{date ? `, ${date}` : ''} · {/BY-SA-4\.0/i.test(photo.licence) ? <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{licenceName(photo.licence)}</a> : licenceName(photo.licence)} · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</span>
+      <span>{photo.creator}{date ? `, ${date}` : ''} <span className="lp-links">· {/BY-SA-4\.0/i.test(photo.licence) ? <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{licenceName(photo.licence)}</a> : licenceName(photo.licence)} · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</span></span>
       {marks.length > 0 && <span className="lp-note" data-review={review?.state ?? 'unchecked'}>{reviewLine(review, lang)}</span>}
     </figcaption>
   </figure>;

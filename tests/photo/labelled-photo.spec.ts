@@ -27,17 +27,26 @@ test('the labelled photo names each outline on the photo, selects by tap or key,
   await page.goto('/?ui=photo');
   const photo = page.locator('.pd-guide .lp'), chips = photo.locator('.lp-chip:not([data-hidden])');
   await expect(chips.first()).toBeVisible();
+  // Every target is a 44 px box, and no two of them overlap.
   const shown = await boxes(chips);
   expect(shown.length).toBeGreaterThan(2);
-  // 44 px targets: neighbours keep 20 px apart above and below, 8 px to the sides.
-  for (const a of shown) for (const b of shown) if (a !== b) expect(overlaps({ ...a, x: a.x - 4, y: a.y - 10, w: a.w + 8, h: a.h + 20 }, { ...b, x: b.x - 4, y: b.y - 10, w: b.w + 8, h: b.h + 20 })).toBe(false);
+  for (const a of shown) {
+    expect(a.h).toBeGreaterThanOrEqual(44);
+    for (const b of shown) if (a !== b) expect(overlaps(a, b)).toBe(false);
+  }
   await expect(photo.locator('.lp-more')).toHaveText(/^\+\d+$/);
+  const [more] = await boxes(photo.locator('.lp-more'));
+  expect(more.h).toBeGreaterThanOrEqual(44);
+  for (const a of shown) expect(overlaps(a, more)).toBe(false);
 
   // The credit stays readable: contributor, date, licence and a Mapillary link at 13 px or more.
   const creditLine = photo.locator('.lp-credit');
   await expect(creditLine).toContainText(/, \w{3} \d{4} · CC BY-SA 4\.0 · Mapillary/);
   await expect(creditLine.getByRole('link', { name: 'Mapillary' })).toHaveAttribute('href', /mapillary\.com/);
   expect(parseFloat(await creditLine.evaluate(el => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(13);
+  // Its links are 44 px boxes that stay off the photo above them.
+  const [frameBox] = await boxes(photo.locator('.lp-frame'));
+  for (const link of await boxes(creditLine.getByRole('link'))) { expect(link.h).toBeGreaterThanOrEqual(44); expect(link.y).toBeGreaterThanOrEqual(frameBox.y + frameBox.h); }
 
   // A tap on an outline selects it; Tab and Enter select a chip.
   const target = await photo.locator('.lp-mark:not([data-selected])').evaluateAll(marks => {
