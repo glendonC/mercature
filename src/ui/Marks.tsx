@@ -27,6 +27,7 @@ export function Kbd({ children, decorative }: { children: ReactNode; decorative?
  * route, the walk in blue; possible, a possible barrier in clay; added, a spot she added; fixed, recorded as open;
  * removed, dismissed in grey; no-photos, a stretch without photos; landmark; outline, a model outline on a photo;
  * mark, any other mark on a photo; selected, the ink outline with a white halo.
+ * The outlines on a photo itself, with their chips, are drawn by LabelledPhoto in src/photo.
  */
 export type SwatchKind = 'route' | 'possible' | 'added' | 'fixed' | 'removed' | 'no-photos' | 'landmark' | 'outline' | 'mark' | 'selected';
 export function Swatch({ kind, mark, barrier, className }: { kind: SwatchKind; mark?: MarkKind; barrier?: boolean; className?: string }) {
