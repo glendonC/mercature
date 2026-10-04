@@ -22,7 +22,7 @@ import './reveal.css';
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
 const BUILD_FROM = 300, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
 /** Photo cards follow the build, then the hand-off; retained 3D areas, read only on this device, may hold it back a little. */
-const CARD_GAP = 300, CARD_SETTLE = 650, HANDOFF_WAIT = 1300, MAX_CARDS = 4;
+const CARD_GAP = 300, CARD_SETTLE = 1150, HANDOFF_WAIT = 1300, MAX_CARDS = 4;
 /** The landing on the inspection map, then the fade that uncovers it; on a leaned route map the replay only fades, since the canvas behind shares its framing. */
 const LAND_FOR = 720, FADE_FOR = 220, FADE_LEANED = 380;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
