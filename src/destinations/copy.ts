@@ -270,11 +270,12 @@ export function enPlace(name: string): string {
 }
 
 /** Where a spot is, phrased per language from its landmark. */
-export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string }): Where {
+export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string; /** Street names as they are, without "Calle", for a walk outside a Spanish-speaking city. */ plain?: boolean }): Where {
   if (!landmark) return { en: 'on the walk', es: 'en el recorrido', ko: '경로' };
   const { name, kind } = landmark;
   if (kind === 'start') return { en: `at the ${name}`, es: `en la ${name}`, ko: name === 'Plaza de Armas' ? '아르마스 광장' : name };
   if (kind === 'target') return { en: `near the ${name}`, es: `cerca de ${name === names.target && /ticket booth/i.test(name) ? 'la boletería del Qorikancha' : name}`, ko: /ticket booth/i.test(name) ? '코리칸차 매표소' : name };
+  if (kind === 'street' && names.plain) return { en: `on ${name}`, es: `en ${name}`, ko: name };
   if (kind === 'street') {
     const street = /^calle /i.test(name) ? name : `Calle ${name}`;
     return { en: `on ${street}`, es: `en la ${street.replace(/^Calle/, 'calle')}`, ko: street };

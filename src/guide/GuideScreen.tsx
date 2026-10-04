@@ -19,9 +19,9 @@ import { addStreet, buildStreet, loadLines, mapPaths, saveLines, setCheck, wayAr
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { ChevronIcon, NoteIcon, iconFor } from '../ui/icons';
-import { Composer, CopyBox, Dialogue, GlassButton, MARK_ORDER, Segmented, Tag, kindOf, markOf, type MarkKind } from '../ui';
-import { LabelledPhoto, photoOf } from '../photo';
+import { BackIcon, ChevronIcon, NoteIcon, SkipIcon, iconFor } from '../ui/icons';
+import { Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Segmented, TextButton, Tag, kindOf, markOf, type MarkKind } from '../ui';
+import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
 import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, about, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
@@ -229,7 +229,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // Names and positions
   const routeSpots = place?.features ?? [];
   const routeSpotFor = (stretches: readonly number[]) => routeSpots.find(spot => spot.stretches.length && spot.stretches[0] === stretches[0] && !spot.id.startsWith('added-'));
-  const names = { start: walk.start?.name ?? '', target: walk.target.name };
+  // "Calle" goes before a street's name only where the place's own spots name its streets that way, as in Cusco.
+  const calle = routeSpots.some(spot => /\bcalle\b/i.test(spot.name.es ?? ''));
+  const names = { start: walk.start?.name ?? '', target: walk.target.name, plain: !calle };
   function whereOf(spot: Spot): Where {
     const fallback = where(spot.near, names), named = routeSpotFor(spot.stretches);
     if (!named) return fallback;
@@ -353,6 +355,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     edit(edits => setAnswer(edits, item.key, { question, answer: choice, stretch }));
     const said = (s.check.said[question] as Record<string, (slots: ItemSlots) => string>)[choice];
+    if (resume) { const paused = resume; setResume(null); go(paused, said(slotsOf(item, at))); return; }
     go(nextCheck(at), said(slotsOf(item, at)));
   }
   /** Something else is on a stretch no photo shows, or where a model outlined something: her own spot, of the kind she picks. */
@@ -383,7 +386,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (resume) { const paused = resume; setResume(null); history.current.push(step); setStep(paused); setAck(''); }
   }
   function back() { const previous = history.current.pop(); if (previous) { setStep(previous); setAck(''); setSaid(''); } }
-  const nextCheck = (at: number): Step => at + 1 < items.length ? { id: 'check', at: at + 1 } : { id: 'checkEnd' };
+  const takenOff = (one: Item) => 'spot' in one && (removed(one.spot.stretches) || ['notThere', 'gone'].includes(answerOf(latestEdits.current, one.key)?.answer ?? ''));
+  const nextCheck = (at: number): Step => { const next = items.findIndex((one, i) => i > at && !takenOff(one)); return next >= 0 ? { id: 'check', at: next } : { id: 'checkEnd' }; };
   const nextMessage = (at: number): Step => at + 1 < rows.length ? { id: 'message', at: at + 1 } : { id: 'insights' };
 
   // Reading: a visitor's message through the model on this device.
@@ -629,7 +633,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     : selected && (selected.kind === 'stretch' || selected.kind === 'added') ? stretchesOf(selected).flatMap(index => data.stretches[index].line.map(walk.project)) : null;
   const labels = useMemo(() => {
     const name = (landmark: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === landmark)?.name[lang] ?? fromRecord(landmark, lang);
-    return [...(walk.start ? [{ name: name(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: name(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: routeSpots.find(spot => !spot.stretches.length && spot.landmark === l.name)?.name[lang] ?? (l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name), at: l.at }))];
+    return [...(walk.start ? [{ name: name(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: name(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: routeSpots.find(spot => !spot.stretches.length && spot.landmark === l.name)?.name[lang] ?? (l.kind === 'street' && calle && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name), at: l.at }))];
   }, [walk, lang, routeSpots]);
 
   // The map keeps clear of the dialogue docked below it, and frames what the step is about once the dialogue has settled.
@@ -681,7 +685,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = ack ? [ack] : [];
-  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '';
+  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null;
   const kindChips = (pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => EDIT_KINDS.map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
   const helloChips: Chip[] = [
     ...(items.length ? [{ id: 'check', label: s.hello.chips.check, primary: step.id === 'hello', onClick: () => go({ id: 'check', at: 0 }) }] : []),
@@ -705,16 +709,18 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     } else {
       const about = !('spot' in item) ? s.check.kind({ n: slots.n, total: slots.total, what: slots.what, count: item.count })
         : item.access === 'unseen' ? s.check.noPhotos(slots) : !data.views.length ? s.check.osm(slots) : slots.when ? s.check.sawWhen(slots) : s.check.saw(slots);
-      lines.push(about, ...(slots.osm ? [s.check.osmToo(slots)] : []), s.check.ask[question](slots));
+      // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
+      const earlier = chosen && (s.check.answers[question] as Record<string, string>)[chosen.answer];
+      lines.push(about, ...(slots.osm ? [s.check.osmToo(slots)] : []), earlier ? s.select.answered({ answer: earlier }) : s.check.ask[question](slots));
       chips = (QUESTIONS[question] as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[question] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, question, choice) }));
       if (around?.status === 'found' && 'spot' in item && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index))))
         chips.push({ id: 'around', label: s.around.chips.show, onClick: () => go({ id: 'around', at: step.at }) });
-      chips.push({ id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } });
+      quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
     }
     words = hear;
     above = <CheckCard key={item.key} data={data} progress={s.check.progress({ n: step.at + 1, total: items.length })} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
-      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} />;
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -757,7 +763,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
           chips.push({ id: 'noSpot', label: s.messages.chips.noSpot, onClick: () => file(step.at, null) });
         }
       }
-      chips.push({ id: 'skip', label: s.messages.chips.skip, onClick: () => go(nextMessage(step.at)) });
+      quiet = { id: 'skip', label: s.messages.chips.skip, onClick: () => go(nextMessage(step.at)) };
       above = <section className="gs-card gs-quote" data-tone="dark" aria-label={language}>
         <p className="gs-card-meta"><Tag tone="solid" lang={row.language === 'other' ? undefined : row.language}>{row.language.toUpperCase()}</Tag>{row.example && <Tag tone="example">{s.messages.example}</Tag>}{row.translated && <Tag tone="example">{s.messages.translated}</Tag>}<span>{t.pageOf(step.at + 1, rows.length)}</span></p>
         <blockquote lang={row.language === 'other' ? undefined : row.language}>{row.text}</blockquote>
@@ -834,7 +840,16 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
 
   // While a step waits behind an edit, going back to it is always one choice away.
-  if (resume && !(step.id === 'note' && step.clearing)) chips = [...chips, { id: 'resume', label: s.edit.chips.back, onClick: () => { const paused = resume; setResume(null); history.current.push(step); setStep(paused); setAck(''); } }];
+
+  /** What her answer for a spot means for its outlines on a photo: fixed or gone, taken off, or still there. Unanswered gives nothing. */
+  function answerAt(stretches: readonly number[]): MarkAnswer | null {
+    const spot = walk.spots.find(one => one.stretches.some(index => stretches.includes(index)));
+    if (!spot) return null;
+    const said = answerOf(edits, spot.id)?.answer;
+    if (isFixed(edits, spot.stretches) || said === 'repaired' || said === 'gone') return 'fixed';
+    if (said === 'notThere' || removed(spot.stretches)) return 'not-barrier';
+    return said && said !== 'unknown' ? 'still-there' : null;
+  }
 
   /** A tap on an outline in the photo moves the check to the spot it belongs to. */
   function pickFinding(at: number, id: string) {
@@ -905,13 +920,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
       <div key={turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}
-        {(chips.length > 0 || history.current.length > 0) && <div className="gs-actions">
+        {chips.length > 0 && <div className="gs-actions">
           <Options chips={chips} />
-          {history.current.length > 0 && <button type="button" className="gs-back" onClick={back}>{s.back}</button>}
         </div>}
       </div>
     </div>
-    <Dialogue key={`line ${turn}`} say={lines} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} advanceAfter={1400} label={t.workspace} lang={lang}
+    <Dialogue key={`line ${turn}`} say={lines} back={history.current.length > 0 ? <GlassCircle label={s.back} onClick={back}><BackIcon /></GlassCircle> : undefined}
+      actions={quiet ? <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} advanceAfter={1400} label={t.workspace} lang={lang}
       working={busy === 'reading'} workingLabel={s.model.reading}
       composer={words ? <Composer label={s.input.placeholder} sendLabel={s.input.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
       {progress && <p className="gs-progress">{progress}</p>}
@@ -924,12 +939,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
  * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the walk
  * has 3D, she can turn to it and tap spots there as on the map. It lives outside the screen so a new line never rebuilds the photo.
  */
-function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, height, lang, words }: {
+function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, height, lang, words, answerAt }: {
   data: Destination; progress: string; title: string; affects: string; empty: string;
   /** The findings a photo shows, one page each; none for another kind near the walk, which shows viewId instead. */
   evidence: readonly { id: string; viewId?: string | null }[]; viewId: string | null;
   stretches: readonly number[]; markers: Marker[]; onMarker: (id: string) => void; onPick: (findingId: string) => void;
   /** The photo's height on a phone, which leaves a strip of map above the card; a wide screen shows the whole photo. */
+  /** Her answer for the spot an outline lies on, so the photo shows it; left out, the photo shows the walk before her changes. */
+  answerAt?: (stretches: readonly number[]) => MarkAnswer | null;
   height?: number; lang: 'en' | 'es'; words: { photo: (s: { n: number; total: number }) => string; previous: string; next: string } }) {
   const [page, setPage] = useState(0);
   const at = Math.min(page, Math.max(0, evidence.length - 1)), lead = evidence[at] ?? null;
@@ -947,7 +964,8 @@ function CheckCard({ data, progress, title, affects, empty, evidence, viewId, st
         onPointerUp={event => { const from = swipe.current; swipe.current = null; if (!from || evidence.length < 2) return; const dx = event.clientX - from.x;
           if (Math.abs(dx) > 48 && Math.abs(dx) > 2 * Math.abs(event.clientY - from.y)) { swiped.current = true; turn(dx < 0 ? 1 : -1); } }}
         onClickCapture={event => { if (swiped.current) { swiped.current = false; event.stopPropagation(); event.preventDefault(); } }}>
-        <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={onPick} lang={lang} height={height} fit={height ? 'cover' : 'contain'} />
+        <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={onPick} lang={lang} height={height} fit={height ? 'cover' : 'contain'}
+          answers={answerAt ? Object.fromEntries(shown.marks.flatMap(mark => { const said = answerAt(mark.stretches ?? []); return said ? [[mark.id, said]] : []; })) : undefined} />
       </div>
     </PhotoOr3D>
       : <p className="gs-empty">{empty}</p>}

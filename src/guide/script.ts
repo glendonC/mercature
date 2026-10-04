@@ -122,7 +122,10 @@ export type Script = {
     chips: { check: string; messages: string; missed: string; note: string };
   };
   /** Whatever she selects becomes the subject: the walk as a whole, a spot, an outline on a photo, a street. next says what she can do. */
-  select: { overview: (s: WalkSlots) => string; spot: (s: ItemSlots) => string; outline: (s: ItemSlots) => string; street: (s: { street: string }) => string; next: string };
+  select: {
+    /** A spot she answered before, opened again: her answer, as the chip she tapped. */
+    answered: (s: { answer: string }) => string;
+    overview: (s: WalkSlots) => string; spot: (s: ItemSlots) => string; outline: (s: ItemSlots) => string; street: (s: { street: string }) => string; next: string };
   check: {
     progress: (s: { n: number; total: number }) => string;
     /** Which photo of a spot shows, when more than one does. */
@@ -247,7 +250,10 @@ export type Script = {
   /** One tap away on every step: what she wants to change on her map, while the step she was on waits for her. */
   /** Her map before her changes and now, side by side in time; the said lines come when she turns between them. */
   compare: { label: string; before: string; now: string; saidBefore: string; saidNow: string };
-  edit: { chip: string; ask: string; addSpot: string; changeSpot: string; note: string; noteSaved: string; chips: { addSpot: string; changeSpot: string; addStreet: string; note: string; back: string } };
+  edit: { chip: string; ask: string; addSpot: string; changeSpot: string; note: string; noteSaved: string; chips: { addSpot: string; changeSpot: string; addStreet: string; note: string; back: string; changes: string } };
+  /** Every change she made, one row each, with Undo. A row about a spot starts with its marker's label, such as "Steps · 340 m". */
+  changes: { intro: string; none: string; undo: string; undone: string; note: string; added: (s: { kind: string; at: string }) => string; street: (s: { street: string }) => string;
+    takenOff: (s: { tag: string }) => string; around: { works: string; notWorks: string } };
   /** The screen reader's name for the mark that turns to the next page of a line. */
   more: string;
   notSaved: string;
@@ -333,6 +339,7 @@ const en: Script = {
     chips: { check: 'Go through the walk', messages: 'Read messages', missed: 'Add something I know', note: 'See the route note' },
   },
   select: {
+    answered: s => `You said: ${s.answer}. Change it?`,
     overview: () => 'Your whole walk. Tap any spot or street to look closer.',
     spot: s => `${cap(s.what)} ${s.where}, ${s.metres < 10 ? 'right at the start' : `about ${about(s.metres)} m in`}.`,
     outline: s => `That looks like ${s.what}${yearOf(s.when) ? `, in a ${yearOf(s.when)} photo` : ''}.`,
@@ -514,7 +521,11 @@ const en: Script = {
   edit: {
     chip: 'Edit', ask: 'What would you like to change?', addSpot: 'Tap where it is, or tell me in your own words.', changeSpot: 'Tap the spot you want to change.',
     note: 'What should your note say? Write it in your own words.', noteSaved: 'Saved. Visitors will see it in your words.',
-    chips: { addSpot: 'Add a spot', changeSpot: 'Change a spot', addStreet: 'Add a street', note: 'Change my note', back: 'Back to where I was' },
+    chips: { addSpot: 'Add a spot', changeSpot: 'Change a spot', addStreet: 'Add a street', note: 'Change my note', back: 'Back to where I was', changes: 'Your changes' },
+  },
+  changes: {
+    intro: 'Here’s what you changed. Tap one to see it.', none: 'You haven’t changed anything yet.', undo: 'Undo', undone: 'Undone. Your map is back as it was.', note: 'Your note',
+    added: s => `Added ${s.kind} · ${s.at}`, street: s => `Added street · ${s.street}`, takenOff: s => `${s.tag}: taken off your map`, around: { works: 'Way around: works', notWorks: 'Way around: doesn’t work' },
   },
   more: 'More',
   notSaved: 'That change didn’t save on this device.',
@@ -577,6 +588,7 @@ const es: Script = {
     chips: { check: 'Revisar el recorrido', messages: 'Leer mensajes', missed: 'Agregar algo que sé', note: 'Ver la nota de la ruta' },
   },
   select: {
+    answered: s => `Dijiste: ${s.answer}. ¿Lo cambias?`,
     overview: () => 'Todo tu recorrido. Toca un punto o una calle para verlo de cerca.',
     spot: s => `${cap(s.what)} ${s.where}, ${s.metres < 10 ? 'justo al inicio' : `a unos ${about(s.metres)} m de la salida`}.`,
     outline: s => yearOf(s.when) ? `En esta foto de ${yearOf(s.when)}, parece que hay ${s.what}.` : `Parece que hay ${s.what}.`,
@@ -758,7 +770,11 @@ const es: Script = {
   edit: {
     chip: 'Editar', ask: '¿Qué quieres cambiar?', addSpot: 'Toca dónde está o cuéntamelo con tus palabras.', changeSpot: 'Toca el punto que quieres cambiar.',
     note: '¿Qué debería decir tu nota? Escríbela con tus palabras.', noteSaved: 'Guardado. Los visitantes la verán con tus palabras.',
-    chips: { addSpot: 'Agregar un punto', changeSpot: 'Cambiar un punto', addStreet: 'Agregar una calle', note: 'Cambiar mi nota', back: 'Volver a donde estaba' },
+    chips: { addSpot: 'Agregar un punto', changeSpot: 'Cambiar un punto', addStreet: 'Agregar una calle', note: 'Cambiar mi nota', back: 'Volver a donde estaba', changes: 'Tus cambios' },
+  },
+  changes: {
+    intro: 'Esto es lo que cambiaste. Toca uno para verlo.', none: 'Aún no has cambiado nada.', undo: 'Deshacer', undone: 'Deshecho. Tu mapa quedó como antes.', note: 'Tu nota',
+    added: s => `Agregaste ${s.kind} · ${s.at}`, street: s => `Calle agregada · ${s.street}`, takenOff: s => `${s.tag}: quitado de tu mapa`, around: { works: 'Otro camino: sirve', notWorks: 'Otro camino: no sirve' },
   },
   more: 'Más',
   notSaved: 'Ese cambio no se guardó en este dispositivo.',
