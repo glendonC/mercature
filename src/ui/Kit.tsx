@@ -191,6 +191,10 @@ export default function Kit() {
         </Panel>)}</div>
       </Specimen>
 
+      <Specimen title="Notice" note="A plain error, on a small charcoal surface.">
+        <div className="app-error kit-static" role="presentation">This device could not keep your change.<button type="button" aria-label="Dismiss">×</button></div>
+      </Specimen>
+
       <Specimen title="Tokens">
         <dl className="kit-tokens">
           <div><dt>Radius</dt><dd>6 tag · 8 button · 12 photo, card · 14 panel · 16 sheet</dd></div>
