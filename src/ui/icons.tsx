@@ -42,8 +42,6 @@ export const PhotoIcon = make('PhotoIcon', <>{camera}<circle cx="12" cy="13" r="
 export const NoPhotosIcon = make('NoPhotosIcon', <>{camera}<circle cx="12" cy="13" r="3.2" /><path d="m3.5 3.5 17 17" /></>);
 export const MessageIcon = make('MessageIcon', <path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V16h-.5A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5Z" />);
 export const NoteIcon = make('NoteIcon', <path d="M4.5 19.5 5.5 15 15.8 4.7a2 2 0 0 1 2.9 2.9L8.4 17.9ZM13.8 6.7l3.5 3.5" />);
-/** Go and look: the operator's check on site. */
-export const LookIcon = make('LookIcon', <><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /></>);
 export const RemoveIcon = make('RemoveIcon', <><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></>);
 
 /* What a visitor wrote */
