@@ -266,7 +266,8 @@ const count_en = (n: number, one: string, many: string) => `${n_en(n)} ${n === 1
 /** How often the photos show something, without reading out a count. */
 const places_en = (n: number) => n === 1 ? 'in one place' : n <= 4 ? 'in a few places' : n <= 15 ? 'in quite a few places' : 'in lots of places';
 const ONES_ES = ['ningún', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
-const count_es = (n: number, one: string, many: string) => `${n <= 10 ? ONES_ES[n] : n} ${n === 1 ? one : many}`;
+const ONES_ES_F = ['ninguna', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+const count_es = (n: number, one: string, many: string, feminine = false) => `${n <= 10 ? (feminine ? ONES_ES_F : ONES_ES)[n] : n} ${n === 1 ? one : many}`;
 const places_es = (n: number) => n === 1 ? 'en un lugar' : n <= 4 ? 'en algunos lugares' : n <= 15 ? 'en varios lugares' : 'en muchos lugares';
 /** "de" before a slot that starts with "el" contracts to "del": habla del bordillo, never de el bordillo. */
 const de = (x: string) => /^el /.test(x) ? `del ${x.slice(3)}` : `de ${x}`;
@@ -316,7 +317,7 @@ const en: Script = {
   },
   reveal: {
     hello: s => `Hi. Here’s your walk to ${s.target}.`,
-    photos: s => s.photos ? 'First, the street photos people shared along it.' : 'Nobody has shared street photos of it yet.',
+    photos: s => s.photos ? 'First, the street photos people shared along it.' : 'This walk comes from the map.',
     walk: s => `This is the way you walk, about ${about(s.metres)} m.`,
     reading: () => 'And this is what the photos show.',
     areas: () => 'And here’s the street around it, in 3D.',
@@ -325,7 +326,7 @@ const en: Script = {
   hello: {
     greet: () => 'Let’s go through your walk together.',
     walk: s => s.spots === 0 ? `It’s about ${about(s.metres)} m, and nothing looks like a problem.` : `It’s about ${about(s.metres)} m, with ${count_en(s.spots, 'spot', 'spots')} that might give visitors trouble.`,
-    mapOnly: s => `About ${about(s.metres)} m, no street photos yet. OpenStreetMap shows ${s.osm === 1 ? 'one thing' : 'a few things'} to check.`,
+    mapOnly: s => s.osm ? `It’s about ${about(s.metres)} m on foot. OpenStreetMap shows ${count_en(s.osm, 'thing', 'things')} to check.` : `It’s about ${about(s.metres)} m on foot. Tell me what visitors meet on the way.`,
     altitude: s => `It’s about ${s.metres.toLocaleString('en')} m up here, so walking tires visitors faster.`,
     chips: { check: 'Go through the walk', messages: 'Read messages', missed: 'Add something I know', note: 'See the route note' },
   },
@@ -345,7 +346,7 @@ const en: Script = {
     kind: s => `The photos also show ${s.what}.`,
     osm: s => `OpenStreetMap shows ${s.what} here, ${s.where}.`,
     osmToo: s => `OpenStreetMap adds: ${s.osm}.`,
-    noStreetPhotos: 'No street photo here yet.',
+    noStreetPhotos: 'From the map',
     ask: {
       getPast: () => 'How do your visitors get past these steps?',
       lowered: () => 'Is there a lowered kerb or a ramp nearby?',
@@ -432,7 +433,7 @@ const en: Script = {
     start: 'Tap where the street starts.',
     end: 'Now tap where it ends.',
     routing: 'Finding the way on foot…',
-    found: s => `About ${about(s.metres)} m on foot, no street photos yet. Keep it?`,
+    found: s => `About ${about(s.metres)} m on foot, from the map. Keep it?`,
     kept: s => `Added ${s.street}. We’ll check it with the rest.`,
     failed: 'I couldn’t find a way on foot there. Try other points.',
     offline: 'I need internet to add a street.',
@@ -559,7 +560,7 @@ const es: Script = {
   },
   reveal: {
     hello: s => `¡Hola! Este es tu recorrido hasta ${s.target}.`,
-    photos: s => s.photos ? 'Primero, las fotos de la calle que la gente compartió a lo largo del camino.' : 'Todavía nadie compartió fotos de la calle de aquí.',
+    photos: s => s.photos ? 'Primero, las fotos de la calle que la gente compartió a lo largo del camino.' : 'Este recorrido viene del mapa.',
     walk: s => `Este es tu camino, unos ${about(s.metres)} m.`,
     reading: () => 'Y esto es lo que se ve en las fotos del camino.',
     areas: () => 'Y aquí está la calle a su alrededor, en 3D.',
@@ -568,7 +569,7 @@ const es: Script = {
   hello: {
     greet: () => 'Revisemos juntos tu recorrido.',
     walk: s => s.spots === 0 ? `Son unos ${about(s.metres)} m y nada parece un problema.` : `Son unos ${about(s.metres)} m, con ${count_es(s.spots, 'punto', 'puntos')} que podrían complicar a los visitantes.`,
-    mapOnly: s => `Unos ${about(s.metres)} m, aún sin fotos. Según OpenStreetMap, hay ${s.osm === 1 ? 'una cosa' : 'algunas cosas'} por revisar.`,
+    mapOnly: s => s.osm ? `Son unos ${about(s.metres)} m a pie. Según OpenStreetMap, hay ${count_es(s.osm, 'cosa', 'cosas', true)} por revisar.` : `Son unos ${about(s.metres)} m a pie. Cuéntame qué encuentran los visitantes en el camino.`,
     altitude: s => `Aquí estamos a unos ${s.metres.toLocaleString('es')} m de altura, así que caminar cansa más.`,
     chips: { check: 'Revisar el recorrido', messages: 'Leer mensajes', missed: 'Agregar algo que sé', note: 'Ver la nota de la ruta' },
   },
@@ -588,7 +589,7 @@ const es: Script = {
     kind: s => `Las fotos también muestran ${s.what}.`,
     osm: s => `Según OpenStreetMap, aquí hay ${s.what}, ${s.where}.`,
     osmToo: s => `Además, según OpenStreetMap: ${s.osm}.`,
-    noStreetPhotos: 'Todavía no hay foto de la calle aquí.',
+    noStreetPhotos: 'Del mapa',
     ask: {
       getPast: () => '¿Cómo pasa por aquí quien no puede subir escalones?',
       lowered: () => '¿Hay un bordillo rebajado o una rampa cerca?',
@@ -675,7 +676,7 @@ const es: Script = {
     start: 'Toca dónde empieza la calle.',
     end: 'Ahora toca dónde termina.',
     routing: 'Buscando el camino a pie…',
-    found: s => `Unos ${about(s.metres)} m a pie, aún sin fotos. ¿La guardo?`,
+    found: s => `Unos ${about(s.metres)} m a pie, del mapa. ¿La guardo?`,
     kept: s => `Agregué ${s.street}. La revisamos con lo demás.`,
     failed: 'No encontré un camino a pie ahí. Prueba con otros puntos.',
     offline: 'Necesito internet para agregar una calle.',
