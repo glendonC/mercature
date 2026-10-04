@@ -9,7 +9,11 @@
 .ui-dialogue-text { display: grid; gap: 4px; }
 .ui-dialogue-text p { margin: 0; text-wrap: pretty; }
 /* Paged words: the part not typed yet keeps its room, so the box never changes size while a page types */
-.ui-dialogue-line[data-paged] { position: relative; padding-inline-end: 40px; }
+.ui-dialogue-line[data-paged] { position: relative; }
+/* Room for the continue mark only while another page follows; otherwise the padding is even on both sides */
+.ui-dialogue-line[data-more] { padding-inline-end: 44px; }
+/* A page is as wide as its widest line; when the box's 280 px floor makes it wider, the words sit in its middle */
+.ui-dialogue-text .ui-dialogue-page { max-width: 100%; margin-inline: auto; text-wrap: wrap; }
 .ui-dialogue-line[data-advance] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-untyped { color: transparent; }
 /* The field's row: Back at its left, the field filling the rest */

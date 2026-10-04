@@ -50,15 +50,18 @@ const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-
 function sentencesOf(text: string) {
   return (text.match(/[^.!?。！？]+(?:[.!?。！？]+["”’')\]]*|$)/g) ?? [text]).map(part => part.trim()).filter(Boolean);
 }
-/** How many lines words take at a width, wrapped between words as the browser does. */
-function linesOf(text: string, width: number, measure: (s: string) => number) {
-  let lines = 1, line = '';
+/** The lines words wrap into at a width, between words as the browser does. */
+function wrapped(text: string, width: number, measure: (s: string) => number) {
+  const lines: string[] = [];
+  let line = '';
   for (const word of text.split(/\s+/)) {
     const next = line ? `${line} ${word}` : word;
-    if (line && measure(next) > width) { lines++; line = word; } else line = next;
+    if (line && measure(next) > width) { lines.push(line); line = word; } else line = next;
   }
+  lines.push(line);
   return lines;
 }
+const linesOf = (text: string, width: number, measure: (s: string) => number) => wrapped(text, width, measure).length;
 /** Pages of at most two lines at a width: whole sentences where they fit, a long sentence cut between words. */
 export function paginate(say: string | readonly string[], width: number, measure: (s: string) => number, most = LINES): string[] {
   const pages: string[] = [];
@@ -83,21 +86,25 @@ export function paginate(say: string | readonly string[], width: number, measure
   return pages.length ? pages : [''];
 }
 
-/** The pages of words for the dialogue's current width, measured in its own font. */
+/** The pages of words for the dialogue's current width, measured in its own font, and each page's widest line, so the box fits its words exactly. */
 function usePages(say: string | readonly string[] | undefined, box: RefObject<HTMLElement | null>) {
   const key = say === undefined ? '' : typeof say === 'string' ? say : say.join('\n');
-  const [pages, setPages] = useState<string[]>([]);
+  const [laid, setLaid] = useState<{ pages: string[]; widths: number[] }>({ pages: [], widths: [] });
   useLayoutEffect(() => {
     if (say === undefined) return;
     const context = document.createElement('canvas').getContext('2d');
     const run = () => {
       const element = box.current;
-      if (!element || !context) { setPages(typeof say === 'string' ? [say] : [...say]); return; }
+      if (!element || !context) { setLaid({ pages: typeof say === 'string' ? [say] : [...say], widths: [] }); return; }
       const style = getComputedStyle(element), narrow = matchMedia('(max-width: 640px)').matches;
       context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const measure = (text: string) => context.measureText(text).width;
       const outer = narrow ? innerWidth - 32 : Math.min(640, innerWidth - 48);
-      const width = outer - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 4;
-      setPages(previous => { const next = paginate(say, width, text => context.measureText(text).width); return previous.join('\u0000') === next.join('\u0000') ? previous : next; });
+      // Room for the words: the box less its padding at both ends and the continue mark's room
+      const width = outer - 2 * parseFloat(style.paddingLeft) - 26 - 4;
+      const pages = paginate(say, width, measure);
+      const widths = pages.map(page => Math.ceil(Math.max(...wrapped(page, width, measure).map(measure))) + 2);
+      setLaid(previous => previous.pages.join('\u0000') === pages.join('\u0000') && previous.widths.join() === widths.join() ? previous : { pages, widths });
     };
     run();
     document.fonts?.ready.then(run).catch(() => undefined);
@@ -105,13 +112,13 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
     return () => removeEventListener('resize', run);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-  return pages;
+  return laid;
 }
 
 /** The bottom dialogue: always in the same place, centred, as wide as its words between 280 and 640 px, clear of the home indicator and a landscape notch. */
 export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, children, meta, composer, back, actions, working, workingLabel, label, lang, className }: DialogueProps) {
   const line = useRef<HTMLDivElement>(null);
-  const pages = usePages(say, line);
+  const { pages, widths } = usePages(say, line);
   const [at, setAt] = useState(0);
   const [shown, setShown] = useState(0);
   const page = pages[Math.min(at, pages.length - 1)] ?? '';
@@ -157,13 +164,13 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
   }, [paged, typing, more]);
   return <section className={cx('ui-dialogue', className)} aria-label={label} data-tone="dark">
     <div ref={line} className="ui-dialogue-line" lang={lang} aria-live="polite" data-working={working || undefined} data-paged={paged || undefined}
-      data-advance={typing || more || undefined} onClick={paged ? next : undefined}>
+      data-more={more || undefined} data-advance={typing || more || undefined} onClick={paged ? next : undefined}>
       {working
         ? <span className="ui-typing" role={workingLabel ? 'img' : undefined} aria-label={workingLabel} aria-hidden={workingLabel ? undefined : true}><i /><i /><i /></span>
         : <>
           {meta != null && meta !== false && <p className="ui-dialogue-meta">{meta}</p>}
           <div className="ui-dialogue-text">
-            {paged && <p className="ui-dialogue-page"><span aria-hidden="true">{page.slice(0, shown)}<span className="ui-untyped">{page.slice(shown)}</span></span><span className="sr-only">{page}</span></p>}
+            {paged && <p className="ui-dialogue-page" style={widths[at] ? { width: widths[at] } : undefined}><span aria-hidden="true">{page.slice(0, shown)}<span className="ui-untyped">{page.slice(shown)}</span></span><span className="sr-only">{page}</span></p>}
             {children}
           </div>
           {actions && !more && <div className="ui-dialogue-actions" onClick={event => event.stopPropagation()}>{actions}</div>}
