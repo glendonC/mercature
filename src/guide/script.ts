@@ -10,7 +10,7 @@ import type { MarkKind } from '../ui/kinds';
  */
 
 /** The conversation's steps, in the order a first visit meets them. */
-export const STEPS = ['hello', 'check', 'checkEnd', 'messages', 'message', 'reply', 'missed', 'note'] as const;
+export const STEPS = ['hello', 'check', 'checkEnd', 'messages', 'message', 'reply', 'insights', 'missed', 'note'] as const;
 export type StepId = (typeof STEPS)[number];
 
 /** Her answers about one item of the walk check. The labels are here; what each does to her map is the engine's. */
@@ -36,6 +36,8 @@ export type WalkSlots = {
   spots: number;
   /** Visitor messages waiting. */
   messages: number;
+  /** Things OpenStreetMap lists along a walk no street photo was read for. */
+  osm: number;
 };
 /** One item of the walk check: a flagged spot, or a stretch with no photos. */
 export type ItemSlots = {
@@ -53,6 +55,8 @@ export type ItemSlots = {
 };
 /** Another kind a model marked near the walk, counted, such as "45 kerbs" from words.marks. */
 export type KindSlots = { n: number; total: number; what: string; count: number };
+/** What visitors keep raising at one spot, from the model's reading of their messages: the spot, how many, and what is there, such as "steps". */
+export type InsightSlots = { spot: string; count: number; kind: string };
 /** Her answers once the check is through. */
 export type TallySlots = { total: number; still: number; fixed: number; removed: number; skipped: number };
 /** A visitor message. language is a name from words.languages. */
@@ -79,6 +83,8 @@ export type Script = {
     greet: (s: WalkSlots) => string;
     /** The walk in one or two lines: its length, its photos, what was found, how much might stop someone. */
     walk: (s: WalkSlots) => string;
+    /** The same for a walk built from OpenStreetMap alone, before any street photo is read. */
+    mapOnly: (s: WalkSlots) => string;
     chips: { check: string; messages: string; missed: string; note: string };
   };
   check: {
@@ -89,8 +95,15 @@ export type Script = {
     noPhotos: (s: ItemSlots) => string;
     /** Another kind near the walk. */
     kind: (s: KindSlots) => string;
+    /** On a walk with no street photos read: what OpenStreetMap records there, what being an OpenStreetMap kind from words. */
+    osm: (s: ItemSlots) => string;
+    /** Where the photo would be, on such a walk. */
+    noStreetPhotos: string;
     ask: (s: ItemSlots) => string;
     chips: Record<CheckChoice, string> & { next: string; skip: string };
+    /** Her own words about the item, read by the model, offered back as a note on the spot it found. */
+    words: (s: SpotSlots) => string;
+    noted: (s: SpotSlots) => string;
     /** Her answer said back once her map shows it. other asks what it is; the kind chips follow. */
     done: Record<CheckChoice, (s: ItemSlots) => string>;
     end: (s: TallySlots) => string;
@@ -109,12 +122,27 @@ export type Script = {
     unplaced: string;
     tap: string;
     filed: (s: SpotSlots) => string;
-    chips: { yes: string; another: string; noSpot: string; next: string; skip: string };
+    /** Tags on a message that is not a real visitor's, or not in its writer's words. */
+    example: string;
+    translated: string;
+    /** Pasting a message that just came in. */
+    paste: string;
+    read: string;
+    chips: { yes: string; another: string; noSpot: string; next: string; skip: string; paste: string };
   };
   reply: {
     say: (s: MessageSlots) => string;
     copy: string;
     copied: string;
+  };
+  /** After the messages: what visitors keep returning to, wish had been different, or praise, spot by spot. */
+  insights: {
+    intro: string;
+    problem: (s: InsightSlots) => string;
+    praise: (s: InsightSlots) => string;
+    question: (s: InsightSlots) => string;
+    none: string;
+    chips: { open: string; next: string };
   };
   model: {
     /** The model is not on this device yet: one download, then it works offline. */
@@ -133,6 +161,8 @@ export type Script = {
     /** What she said, read by the model, offered back before it goes on her map. */
     propose: (s: ProposeSlots) => string;
     kindAsk: string;
+    /** She tapped a spot on the map: what is there? The kind chips follow. */
+    here: (s: SpotSlots) => string;
     notFound: string;
     added: (s: ProposeSlots) => string;
     chips: { yes: string; no: string; done: string };
@@ -144,6 +174,8 @@ export type Script = {
     copied: string;
   };
   input: { placeholder: string; send: string };
+  /** Clearing everything she did on this place, after she confirms. */
+  restart: { chip: string; ask: string; yes: string; no: string };
   back: string;
   notSaved: string;
 };
@@ -166,6 +198,7 @@ const en: Script = {
   hello: {
     greet: () => 'Hi. I can help you check this walk and answer visitors.',
     walk: s => `It runs ${s.metres} m from ${s.start} to ${s.target}, in ${s.photos} street photos. ${cap(plural(s.barriers, 'thing', 'things'))} in them might stop someone, at ${plural(s.spots, 'spot', 'spots')}.`,
+    mapOnly: s => `It runs ${s.metres} m from ${s.start} to ${s.target}. No street photos were read yet; OpenStreetMap lists ${plural(s.osm, 'thing', 'things')} to check.`,
     chips: { check: 'Check the walk', messages: 'Visitor messages', missed: 'Add what the photos missed', note: 'Route note' },
   },
   check: {
@@ -173,8 +206,12 @@ const en: Script = {
     saw: s => `When the walk was recorded, a model outlined ${s.what} here, ${s.where}.`,
     noPhotos: s => `No street photo shows this stretch, ${s.where}.`,
     kind: s => `A model also marked ${s.what} near the walk.`,
+    osm: s => `OpenStreetMap says there are ${s.what} here, ${s.where}.`,
+    noStreetPhotos: 'No street photos were read here yet.',
     ask: () => 'What is there now?',
     chips: { still: 'Still there', fixed: 'Fixed', notBarrier: 'Not a barrier', other: 'Something else', next: 'Next', skip: 'Skip' },
+    words: s => `Add your words to ${s.spot}?`,
+    noted: s => `Your words are on ${s.spot}.`,
     done: {
       still: () => 'Kept on your map as a possible barrier.',
       fixed: () => 'Marked fixed. Replies and the route note will say so.',
@@ -194,12 +231,24 @@ const en: Script = {
     unplaced: 'Not sure. Tap the spot on the map, or ask the visitor.',
     tap: 'Tap the spot on the map.',
     filed: s => `Filed on ${s.spot}.`,
-    chips: { yes: 'Yes, that spot', another: 'Another spot', noSpot: 'Not about a spot', next: 'Next message', skip: 'Skip' },
+    example: 'Example',
+    translated: 'Machine-translated',
+    paste: 'Paste what the visitor wrote',
+    read: 'Read it',
+    chips: { yes: 'Yes, that spot', another: 'Another spot', noSpot: 'Not about a spot', next: 'Next message', skip: 'Skip', paste: 'Paste a message' },
   },
   reply: {
     say: s => `Here is a reply in ${s.language}, from what your map says.`,
     copy: 'Copy',
     copied: 'Copied',
+  },
+  insights: {
+    intro: 'Here is what visitors keep raising.',
+    problem: s => `${plural(s.count, 'message', 'messages')} about ${s.kind} at ${s.spot}.`,
+    praise: s => `${s.count === 1 ? '1 visitor' : `${s.count} visitors`} praised ${s.spot}.`,
+    question: s => `${plural(s.count, 'question', 'questions')} about ${s.spot}.`,
+    none: 'Nothing comes up more than once yet.',
+    chips: { open: 'Show me', next: 'Next' },
   },
   model: {
     download: s => `I read messages on this device. That needs one download of ${s.mb} MB, then it works offline.`,
@@ -216,6 +265,7 @@ const en: Script = {
     ask: 'Did the photos miss anything? Tap its spot on the map, or tell me in your words.',
     propose: s => `Add ${s.kind} ${s.where} to your map?`,
     kindAsk: 'What is there?',
+    here: s => `What is at ${s.spot}?`,
     notFound: 'I could not tell where. Tap the spot on the map.',
     added: s => `Added ${s.kind} ${s.where}.`,
     chips: { yes: 'Add it', no: 'Not quite', done: 'Nothing else' },
@@ -227,6 +277,7 @@ const en: Script = {
     copied: 'Copied',
   },
   input: { placeholder: 'In your words', send: 'Send' },
+  restart: { chip: 'Start over', ask: 'Clear everything you did on this place?', yes: 'Clear', no: 'Keep' },
   back: 'Back',
   notSaved: 'This device did not keep the last change.',
 };
@@ -246,6 +297,7 @@ const es: Script = {
   hello: {
     greet: () => 'Hola. Puedo ayudarte a revisar este recorrido y responder a los visitantes.',
     walk: s => `Va de ${s.start} a ${s.target}, ${s.metres} m, en ${s.photos} fotos de la calle. ${cap(plural(s.barriers, 'cosa', 'cosas'))} en ellas podrían impedir el paso, en ${plural(s.spots, 'punto', 'puntos')}.`,
+    mapOnly: s => `Va de ${s.start} a ${s.target}, ${s.metres} m. Aún no se leyeron fotos de la calle; OpenStreetMap registra ${plural(s.osm, 'cosa', 'cosas')} para revisar.`,
     chips: { check: 'Revisar el recorrido', messages: 'Mensajes de visitantes', missed: 'Agregar lo que faltó en las fotos', note: 'Nota de la ruta' },
   },
   check: {
@@ -253,8 +305,12 @@ const es: Script = {
     saw: s => `Al registrar el recorrido, un modelo marcó ${s.what} aquí, ${s.where}.`,
     noPhotos: s => `Ninguna foto de la calle muestra este tramo, ${s.where}.`,
     kind: s => `Un modelo también marcó ${s.what} cerca del recorrido.`,
+    osm: s => `OpenStreetMap dice que hay ${s.what} aquí, ${s.where}.`,
+    noStreetPhotos: 'Aún no se leyeron fotos de la calle aquí.',
     ask: () => '¿Qué hay ahora?',
     chips: { still: 'Sigue ahí', fixed: 'Arreglado', notBarrier: 'No es una barrera', other: 'Otra cosa', next: 'Siguiente', skip: 'Saltar' },
+    words: s => `¿Agrego tus palabras a ${s.spot}?`,
+    noted: s => `Tus palabras están en ${s.spot}.`,
     done: {
       still: () => 'Queda en tu mapa como posible barrera.',
       fixed: () => 'Marcado como arreglado. Las respuestas y la nota de la ruta lo dirán.',
@@ -274,12 +330,24 @@ const es: Script = {
     unplaced: 'Sin certeza. Toca el punto en el mapa o pregunta al visitante.',
     tap: 'Toca el punto en el mapa.',
     filed: s => `Ubicado en ${s.spot}.`,
-    chips: { yes: 'Sí, ese punto', another: 'Otro punto', noSpot: 'No es un punto', next: 'Siguiente mensaje', skip: 'Saltar' },
+    example: 'Ejemplo',
+    translated: 'Traducción automática',
+    paste: 'Pega lo que escribió el visitante',
+    read: 'Leerlo',
+    chips: { yes: 'Sí, ese punto', another: 'Otro punto', noSpot: 'No es un punto', next: 'Siguiente mensaje', skip: 'Saltar', paste: 'Pegar un mensaje' },
   },
   reply: {
     say: s => `Esta es una respuesta en ${s.language}, según lo que dice tu mapa.`,
     copy: 'Copiar',
     copied: 'Copiado',
+  },
+  insights: {
+    intro: 'Esto es lo que los visitantes mencionan una y otra vez.',
+    problem: s => `${plural(s.count, 'mensaje', 'mensajes')} sobre ${s.kind} en ${s.spot}.`,
+    praise: s => `${s.count === 1 ? '1 visitante elogió' : `${s.count} visitantes elogiaron`} ${s.spot}.`,
+    question: s => `${plural(s.count, 'pregunta', 'preguntas')} sobre ${s.spot}.`,
+    none: 'Todavía nada se repite.',
+    chips: { open: 'Mostrar', next: 'Siguiente' },
   },
   model: {
     download: s => `Leo los mensajes en este dispositivo. Hace falta una descarga de ${s.mb} MB y luego funciona sin conexión.`,
@@ -296,6 +364,7 @@ const es: Script = {
     ask: '¿Faltó algo en las fotos? Toca su punto en el mapa o cuéntamelo con tus palabras.',
     propose: s => `¿Agrego ${s.kind} ${s.where} a tu mapa?`,
     kindAsk: '¿Qué hay ahí?',
+    here: s => `¿Qué hay en ${s.spot}?`,
     notFound: 'No pude saber dónde. Toca el punto en el mapa.',
     added: s => `Agregué ${s.kind} ${s.where}.`,
     chips: { yes: 'Agregar', no: 'No exactamente', done: 'Nada más' },
@@ -307,6 +376,7 @@ const es: Script = {
     copied: 'Copiado',
   },
   input: { placeholder: 'Con tus palabras', send: 'Enviar' },
+  restart: { chip: 'Empezar de nuevo', ask: '¿Borrar todo lo que hiciste en este lugar?', yes: 'Borrar', no: 'Conservar' },
   back: 'Atrás',
   notSaved: 'Este dispositivo no guardó el último cambio.',
 };
