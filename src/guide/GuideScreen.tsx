@@ -375,10 +375,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 
   // The conversation
   const [step, setStep] = useState<Step>({ id: 'hello' });
+  /** The check item whose card she picked a place from in 3D: it stays open, in 3D, until the new spot is on her map. */
+  const [card3d, setCard3d] = useState<number | null>(null);
   const [ack, setAck] = useState('');
   const history = useRef<Step[]>([]);
   const [said, setSaid] = useState('');
-  function go(next: Step, line = '') { setView('now'); history.current.push(step); setStep(next); setAck(line); setSaid(''); }
+  function go(next: Step, line = '') { setView('now'); if (next.id !== 'missed' && next.id !== 'propose') setCard3d(null); history.current.push(step); setStep(next); setAck(line); setSaid(''); }
   // The Edit pill pauses whatever step she is on; "Back to where I was" returns to it.
   const [resume, setResume] = useState<Step | null>(null);
   function openEdit() {
@@ -471,7 +473,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const id = next.added[next.added.length - 1]?.id;
     if (id && proposal.text && authored) void remember(proposal.text, withEdits(authored, next, locate), id);
     history.current.push(step);
-    setStep(proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from);
+    setStep(card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from);
     setAck(s.missed.added({ kind: s.words.added[proposal.kind], where: whereWords(proposal.target) }));
   }
 
@@ -515,6 +517,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   /** A tap in the 3D view on the street or a wall near the walk works as a tap on the map there; a marker tap arrives through onMarker. */
   function pick3d(pick: { lonLat: readonly [number, number] | LonLat; spotId?: string }) {
     if (pick.spotId) return;
+    if (step.id === 'check') setCard3d(step.at);
     const index = nearestStretch(data, walk, walk.project([pick.lonLat[0], pick.lonLat[1]]));
     if (index === null) return;
     if (step.id === 'check' && step.tapping) { select({ kind: 'stretch', index }); return; }
@@ -698,6 +701,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return () => clearTimeout(aimTimer.current);
   }, [aimKey, narrow, settledDock]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** The check card for one item; a card she picked a place from in 3D stays open while she says what is there. */
+  const cardOf = (item: Item, at: number) => <CheckCard key={item.key} data={data} progress={s.check.progress({ n: at + 1, total: items.length })} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
+      empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null;
@@ -733,9 +740,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
     }
     words = hear;
-    above = <CheckCard key={item.key} data={data} progress={s.check.progress({ n: step.at + 1, total: items.length })} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
-      empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
-      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
+    above = cardOf(item, step.at);
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -816,6 +821,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const here = step.here;
       lines.push(s.missed.here({ spot: spotWords(here) }));
       chips = kindChips(kind => go({ id: 'propose', proposal: { mode: 'add', text: '', target: here, kind, from: { id: 'missed' } } }));
+      if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
     } else {
       lines.push(s.missed.ask);
       chips = [{ id: 'done', label: s.missed.chips.done, primary: true, onClick: () => go({ id: 'note' }) }, { id: 'street', label: s.street.chips.add, onClick: () => go({ id: 'street' }) }];
@@ -833,6 +839,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     else { lines.push(s.missed.propose({ kind: s.words.added[proposal.kind], where: whereWords(proposal.target) })); chips = kindChips(kind => setStep({ id: 'propose', proposal: { ...proposal, kind } }), proposal.kind); }
     chips = [{ id: 'yes', label: s.missed.chips.yes, primary: true, onClick: () => confirm(proposal) }, ...chips, { id: 'no', label: s.missed.chips.no, onClick: back }];
     if (proposal.text) above = <section className="gs-card gs-quote" data-tone="dark"><blockquote>{proposal.text}</blockquote></section>;
+    else if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
   } else if (step.id === 'edit') {
     lines.push(step.mode === 'add' ? s.edit.addSpot : step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask);
     if (!step.mode) chips = [{ id: 'add', label: s.edit.chips.addSpot, onClick: () => go({ id: 'edit', mode: 'add' }) }, { id: 'change', label: s.edit.chips.changeSpot, onClick: () => go({ id: 'edit', mode: 'change' }) },
@@ -979,7 +986,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     </div>
     <Bot ref={bot} working={working} talk={talk} />
     <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
-      <div key={turn} className="gs-turn">
+      <div key={card3d !== null ? `card ${card3d}` : turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}
         {chips.length > 0 && <div className="gs-actions">
           <Options chips={chips} />
