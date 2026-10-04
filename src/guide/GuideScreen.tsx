@@ -21,7 +21,7 @@ import { addStreet, buildStreet, loadLines, mapPaths, removeStreet, saveLines, s
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { BackIcon, ChevronIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
+import { BackIcon, ChevronIcon, MessageIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
 import { ChangeRow, Composer, CopyBox, Dialogue, EditToggle, GlassButton, GlassCircle, PAGE_BREAK, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
@@ -517,6 +517,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   useLayoutEffect(() => { shows3d.current = !!screen.current?.querySelector('.gs-photo .space3d-frame'); });
   const [ack, setAck] = useState('');
   const history = useRef<Step[]>([]);
+  /** The check item she left for the messages, where the check picks up again. */
+  const leftCheck = useRef<number | null>(null);
   const [said, setSaid] = useState('');
   /** A line of good news said on the way to a step, such as her change saved: the bot smiles while it is the line shown. */
   const [cheer, setCheer] = useState('');
@@ -900,13 +902,15 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const payoff = result ? editResult(result.said) : [], lines: string[] = result ? [...payoff] : ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null, good = false;
+  /** A second quiet action: on the check, the way out to the messages, so a long route never keeps her from the model. */
+  let away: Chip | null = null;
   let field = { label: s.input.placeholder, send: s.input.send };
   const pasteChip: Chip = { id: 'paste', label: s.messages.chips.paste, onClick: () => go({ id: 'paste' }) };
   // What something is, in two turns of at most four: in the way or a help, then the kind.
   const groupChips = (pick: (group: KindGroup) => void): Chip[] => (Object.keys(KIND_GROUPS) as KindGroup[]).map(group => ({ id: `group-${group}`, label: s.words.groups[group], onClick: () => pick(group) }));
   const kindChips = (group: KindGroup, pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => KIND_GROUPS[group].map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
   const helloChips: Chip[] = [
-    ...(items.length ? [{ id: 'check', label: s.hello.chips.check, primary: step.id === 'hello', onClick: () => go({ id: 'check', at: 0 }) }] : []),
+    ...(items.length ? [{ id: 'check', label: s.hello.chips.check, primary: step.id === 'hello', onClick: () => { const at = leftCheck.current ?? 0; leftCheck.current = null; go({ id: 'check', at }); } }] : []),
     ...(rows.length ? [{ id: 'messages', label: s.hello.chips.messages, primary: step.id === 'checkEnd', onClick: () => go({ id: 'message', at: 0 }) }] : []),
     { id: 'missed', label: s.hello.chips.missed, onClick: () => go({ id: 'missed' }) },
     { id: 'note', label: s.hello.chips.note, onClick: () => go({ id: 'note' }) },
@@ -922,6 +926,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   } else if (step.id === 'check' && item) {
     const slots = slotsOf(item, step.at), question = questionOf(item), chosen = answerOf(edits, item.key);
     const skip: Chip = { id: 'skip', label: s.check.chips.skip, onClick: () => { if (editing) { finish(); return; } setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
+    // Straight to the messages from any spot; the check picks up at this spot when she comes back.
+    if (rows.length && !editing) away = { id: 'messages', label: s.hello.chips.messages, onClick: () => { leftCheck.current = step.at; go({ id: 'message', at: 0 }); } };
     // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
     const earlier = chosen ? saidLabel(item.key) : null;
     if (step.extras && !step.tapping && !step.kind && !step.around && !step.follow) lines.push(s.check.extras);
@@ -1036,7 +1042,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const kind = spot?.kind === 'flagged' ? s.words.access[accessOfSpot(spot)] : target.kind === 'added' ? s.words.added[added(target.id)?.kind ?? 'other'] : '';
       return <li key={`${group.key} ${group.kind}`}><span>{s.insights[group.kind]({ spot: spotWords(target), count: group.count, kind })}</span><button type="button" className="gs-inline" onClick={() => select(target)}>{s.insights.chips.open}</button></li>;
     })}</ul>;
-    chips = [{ id: 'next', label: s.insights.chips.next, primary: true, onClick: () => go({ id: 'missed' }) }];
+    // Back to the spot she left the check at, if she came to the messages from it.
+    chips = [{ id: 'next', label: s.insights.chips.next, primary: true, onClick: () => { const at = leftCheck.current; leftCheck.current = null; go(at !== null ? { id: 'check', at } : { id: 'missed' }); } }];
   } else if (step.id === 'street') {
     const trouble = step.trouble === 'busy' ? s.street.busy : step.trouble === 'too-far' ? s.street.tooFar : step.trouble === 'too-long' ? s.street.tooLong : step.trouble === 'offline' ? s.street.offline : step.trouble ? s.street.failed : null;
     const cancel: Chip = { id: 'cancel', label: s.street.chips.cancel, onClick: () => { routing.current?.abort(); setBusy(null); back(); } };
@@ -1277,7 +1284,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       </div>
     </div>
     <Dialogue key={`line ${turn}`} say={lines} back={history.current.length > 0 ? <GlassCircle label={s.back} onClick={back}><BackIcon /></GlassCircle> : undefined}
-      actions={quiet ? <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} label={t.workspace} lang={lang}
+      actions={quiet || away ? <>{quiet && <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton>}{away && <TextButton muted icon={<MessageIcon />} onClick={away.onClick}>{away.label}</TextButton>}</> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} label={t.workspace} lang={lang}
       working={busy === 'reading'} workingLabel={s.model.reading}
       composer={words ? <Composer label={field.label} sendLabel={field.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
       {progress && <p className="gs-progress">{progress}</p>}
