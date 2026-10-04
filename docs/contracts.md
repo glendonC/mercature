@@ -70,8 +70,8 @@ Closed record schemas reject undeclared fields throughout the plan and geometry
 so private sidecar metadata cannot leak through an export. There is no redaction
 shortcut and no conversion of real evidence into synthetic provenance. The farm
 canvas offers only a local backup: its download uses `serializePlan`, so the
-file keeps the visitor's words and is the operator's own copy, and opening a
-backup uses `parsePlan`. The interface offers no export for sharing.
+file keeps the visitor's words and is the operator's own copy. The interface
+does not open backup files and offers no export for sharing.
 
 ## API
 

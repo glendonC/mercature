@@ -13,9 +13,8 @@ Mercature runs entirely in the browser. There is no server: the app, the publish
 | `src/decisions/store.ts` | What a person decided for each stretch, and the visitor messages they linked, kept on the device. |
 | `src/language/` | The on-device model. `understand.ts` is its whole interface. |
 | `src/workspace/`, `src/spatial/`, `src/plans/` | Noor's farm: its canvas, the path check (Connected, Blocked, Unknown) and saved fix plans. |
-| `src/home/`, `src/preparation/`, `src/App.tsx` | Home search, the reveal before a place opens, and the app shell. |
+| `src/home/`, `src/preparation/`, `src/App.tsx` | Home, which draws the walk and lists the places that open on this device, the reveal before a place opens, and the app shell. |
 | `src/i18n/` | Interface text in English (`en.ts`) and Spanish (`es.ts`), and the switch between them. |
-| `src/places/` | Photos and notes for a place that has no recording yet, kept in the browser. |
 | `src/components/` | Pieces shared by the canvases. |
 
 ## From a recorded walk to a decision
@@ -35,7 +34,7 @@ Noor's farm is the Example with geometry. `NOOR_FARM` in `src/site/farm.ts` has 
 1. **Record the walk** into `.local/routes/<id>/route.json`, in the same `mercature-route/1` shape as `cusco-qorikancha`.
 2. **Write its spots** as a `RoutePlace`, like `QORIKANCHA_PLACE` in `src/site/route.ts`: one spot for each group of flagged stretches and for each landmark people name, with the stretches it covers, its nearest landmark, names in English and Spanish, one plain sentence, and the words visitors use in each language. Give it the folder for its package and add it to `ROUTE_PLACES` in `src/site/registry.ts`. `tests/site/route.spec.ts` then checks every registered place: every flagged stretch in exactly one spot, landmarks taken from the record and near their spot, no measurements in the text.
 3. **Package it** with `node scripts/places/package.mjs <id>` (Node 22.18 or newer, on macOS, which resizes views with `sips`), and commit `public/places/<folder>/`. `tests/site/package.spec.ts` fails if a registered place has no package, or if its package no longer matches its spots.
-4. **Register it** in `src/destinations/data.ts`: its name and city in `DESTINATIONS`. The package folder and the route canvas come from `ROUTE_PLACES`. To show it as a photo on Home, add a cover and its credit to `covers` in `src/home/Home.tsx`.
+4. **Register it** in `src/destinations/data.ts`: its name and city in `DESTINATIONS`. The package folder and the route canvas come from `ROUTE_PLACES`. To list it on Home, add a cover and its credit to `covers` in `src/home/Home.tsx`.
 5. **Check the model**, as below.
 
 ## What the model needs for a new place
@@ -56,7 +55,6 @@ The interface says place, spot, message, fix, plan and path check. Some code nam
 | `Destination`, `src/destinations/` | A recorded place, as loaded from its package |
 | `Scene.destinations` in `src/spatial/` | Where the farm's path check tries to reach |
 | `ImprovementPlan`, `src/plans/` | A plan: a fix on the farm and its path check |
-| `src/places/` and its `Place` | Photos and notes for a place with no recording yet |
 
 ## Checks
 
