@@ -44,7 +44,10 @@ type Step =
    */
   | { id: 'check'; at: number; follow?: true; kind?: KindGroup; tapping?: Answer; around?: 'match' | 'offer'; /** The first thing after the spots, said with check.extras. */ extras?: true }
   | { id: 'checkEnd' }
-  | { id: 'message'; at: number; another?: boolean }
+  /** pasted: a message she just pasted, brought without the count of visitors. */
+  | { id: 'message'; at: number; another?: boolean; pasted?: true }
+  /** A message that just came in: she pastes what the visitor wrote, and it is brought like the others. */
+  | { id: 'paste' }
   /** ask: nobody could place the message, so the reply asks the visitor where it was. */
   | { id: 'reply'; at: number; ask?: true }
   | { id: 'insights' }
@@ -850,6 +853,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = result ? editResult(result.said) : ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null, good = false;
+  let field = { label: s.input.placeholder, send: s.input.send };
+  const pasteChip: Chip = { id: 'paste', label: s.messages.chips.paste, onClick: () => go({ id: 'paste' }) };
   // What something is, in two turns of at most four: in the way or a help, then the kind.
   const groupChips = (pick: (group: KindGroup) => void): Chip[] => (Object.keys(KIND_GROUPS) as KindGroup[]).map(group => ({ id: `group-${group}`, label: s.words.groups[group], onClick: () => pick(group) }));
   const kindChips = (group: KindGroup, pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => KIND_GROUPS[group].map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
@@ -913,10 +918,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
   } else if (step.id === 'message' || step.id === 'reply') {
     const row = rows[step.at];
-    if (!row) { lines.push(s.messages.none); chips = helloChips.filter(chip => chip.id !== 'messages'); }
+    if (!row) { lines.push(s.messages.none); chips = [pasteChip, ...helloChips.filter(chip => chip.id !== 'messages' && chip.id !== 'missed')]; }
     else if (step.id === 'message') {
       const message = current, answer = message?.answer ?? null, language = s.words.languages[row.language] ?? row.language;
-      if (step.at === 0 && !ack) lines.push(s.messages.intro({ total: rows.length }));
+      if (step.at === 0 && !ack && !step.pasted) lines.push(s.messages.intro({ total: rows.length }));
       lines.push(s.messages.arrived({ n: step.at + 1, total: rows.length, language }));
       const first = answer?.candidates.map(targetOf).find((target): target is Target => !!target) ?? null;
       if (busy === 'download') { if (model.status === 'downloading') progress = s.model.downloading({ done: Math.round(model.loadedBytes / 1e6), total: Math.round(model.totalBytes / 1e6) }); else lines.push(s.model.reading); }
@@ -957,8 +962,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       good = !!message;
       lines.push(s.reply.say({ n: step.at + 1, total: rows.length, language: s.words.languages[replyIn] ?? replyIn }));
       if (message) { const text = replyText(message, replyIn, step.ask); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={s.reply.copy} copiedLabel={s.reply.copied} />; }
-      chips = [{ id: 'next', label: step.at + 1 < rows.length ? s.messages.chips.next : s.check.chips.next, primary: true, onClick: () => go(nextMessage(step.at)) }];
+      chips = [{ id: 'next', label: step.at + 1 < rows.length ? s.messages.chips.next : s.check.chips.next, primary: true, onClick: () => go(nextMessage(step.at)) }, pasteChip];
     }
+  } else if (step.id === 'paste') {
+    // Logged first among hers, so it is row 0; the model reads it as it reads the others, and a person files it.
+    lines.push(s.messages.paste);
+    field = { label: s.messages.paste, send: s.messages.read };
+    words = text => { commit(review => logMessage(review, { text, language: guessLanguage(text), answer: null, spot: null }, `pasted-${Date.now().toString(36)}`)); setReplyLang(null); go({ id: 'message', at: 0, pasted: true }); };
   } else if (step.id === 'insights') {
     lines.push(insights.length ? s.insights.intro : s.insights.none);
     if (insights.length) above = <ul className="gs-card gs-insights" data-tone="dark">{insights.map(group => {
@@ -1206,7 +1216,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     <Dialogue key={`line ${turn}`} say={lines} back={history.current.length > 0 ? <GlassCircle label={s.back} onClick={back}><BackIcon /></GlassCircle> : undefined}
       actions={quiet ? <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} advanceAfter={1400} label={t.workspace} lang={lang}
       working={busy === 'reading'} workingLabel={s.model.reading}
-      composer={words ? <Composer label={s.input.placeholder} sendLabel={s.input.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
+      composer={words ? <Composer label={field.label} sendLabel={field.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
       {progress && <p className="gs-progress">{progress}</p>}
       {problem && <p className="gs-problem" role="alert">{problem}</p>}
     </Dialogue>
