@@ -21,6 +21,8 @@ type DialogueProps = {
   onDone?: () => void;
   /** The continue mark's name for screen readers, such as "More". */
   continueLabel?: string;
+  /** Turn pages by themselves, this many ms after each is whole, for a screen that runs on its own timer. A tap still turns at once. */
+  advanceAfter?: number;
   /** Anything after the words, such as a plain error line. */
   children?: ReactNode;
   /** One short muted line above the words, such as "2 of 8". */
@@ -103,7 +105,7 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
 }
 
 /** The bottom dialogue: always in the same place, centred, as wide as its words between 280 and 640 px, clear of the home indicator and a landscape notch. */
-export function Dialogue({ say, onTalking, onDone, continueLabel, children, meta, composer, working, workingLabel, label, lang, className }: DialogueProps) {
+export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, children, meta, composer, working, workingLabel, label, lang, className }: DialogueProps) {
   const line = useRef<HTMLDivElement>(null);
   const pages = usePages(say, line);
   const [at, setAt] = useState(0);
@@ -131,6 +133,11 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, children, meta
   useEffect(() => () => talk.current?.(false), []);
   useEffect(() => { if (paged && !typing && !more && page) done.current?.(); }, [paged, typing, more, page]);
   const next = () => { if (typing) setShown(page.length); else if (more) setAt(index => index + 1); };
+  useEffect(() => {
+    if (advanceAfter === undefined || typing || !more) return;
+    const turn = window.setTimeout(() => setAt(index => index + 1), advanceAfter);
+    return () => clearTimeout(turn);
+  }, [advanceAfter, typing, more, at]);
   const nextRef = useRef(next); nextRef.current = next;
   useEffect(() => {
     if (!paged || (!typing && !more)) return;
