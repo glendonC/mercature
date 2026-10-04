@@ -274,13 +274,17 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     return { points: [...reach, ...near.flatMap(path => path.points)], key: near.map(path => `${path.id}:${path.points.length}`).join(' ') };
   }, [reach, drawn]);
   /** The flat fit and the free box it fills, from the insets or the free part of the screen given. */
-  const fitFlat = useCallback((width: number, height: number, i: Insets = insetsRef.current) => {
+  const fitFlat = useCallback((width: number, height: number, given: Insets = insetsRef.current) => {
     const { minX, minY, maxX, maxY } = walk.extent;
+    // Panels that leave almost no map, as one measures before the map while the window resizes, are set aside: the whole screen frames.
+    const i = width - given.left - given.right < 60 || height - given.top - given.bottom < 60 ? { top: 0, right: 0, bottom: 0, left: 0 } : given;
     const w = Math.max(1, width - i.left - i.right), h = Math.max(1, height - i.top - i.bottom);
     const k = Math.min(w / Math.max(maxX - minX, 40), h / Math.max(maxY - minY, 40)) * 0.9;
     const sx = i.left + w / 2, sy = i.top + h / 2;
     const flat: View = { k, x: (minX + maxX) / 2 - (sx - width / 2) / k, y: (minY + maxY) / 2 - (sy - height / 2) / k, lean: 0 };
-    const free: Box = { left: i.left + w * 0.05, top: i.top + h * 0.05, right: width - i.right - w * 0.05, bottom: height - i.bottom - h * 0.05 };
+    // Insets larger than the screen, as a panel measures before the map while the window resizes, leave a sliver, never less.
+    const left = Math.min(i.left + w * 0.05, width - 1), top = Math.min(i.top + h * 0.05, height - 1);
+    const free: Box = { left, top, right: Math.max(left + 1, width - i.right - w * 0.05), bottom: Math.max(top + 1, height - i.bottom - h * 0.05) };
     return { flat, free, key: [width, height, i.top, i.right, i.bottom, i.left].join(' ') };
   }, [walk]);
   /** The lean for a screen, turned to lay the walk across or stand it upright, whichever shows it larger in the free box the screen
@@ -347,6 +351,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   };
   const run = useCallback(() => { if (!frame.current) frame.current = requestAnimationFrame(time => step.current(time)); }, []);
   const go = useCallback((aim: View, animate = true) => {
+    // A view that cannot be drawn is never taken; the camera stays where it is.
+    if (!(aim.k > 0) || ![aim.x, aim.y, aim.turn ?? 0].every(Number.isFinite)) return;
     const from = live.current;
     // The map turns the shorter way round.
     const target = from ? { ...aim, turn: (from.turn ?? 0) + folded((aim.turn ?? 0) - (from.turn ?? 0)) } : aim;

@@ -102,7 +102,8 @@ export function turnToward(heading: number, tilt: Tilt, current = 0, within = 15
 /** The view at one lean that centres the points in a screen box and fills it, within zoom limits. */
 export function framing(points: Point[], box: Box, lean: number, tilt: Tilt, width: number, height: number, start: View, limits = { min: 0, max: Infinity }): View {
   let view: View = { ...start, lean };
-  if (!points.length) return view;
+  // No points, or no room to show them (a panel taller than the screen while it resizes): keep the view as it is.
+  if (!points.length || box.right - box.left < 1 || box.bottom - box.top < 1) return view;
   for (let i = 0; i < 24; i++) {
     const l = lens(view, tilt, width, height), seen = points.map(p => l.at(p));
     const xs = seen.map(p => p[0]), ys = seen.map(p => p[1]);
@@ -111,6 +112,7 @@ export function framing(points: Point[], box: Box, lean: number, tilt: Tilt, wid
     const from = l.ground([(minX + maxX) / 2, (minY + maxY) / 2]), to = l.ground([(box.left + box.right) / 2, (box.top + box.bottom) / 2]);
     const k = Math.max(limits.min, Math.min(limits.max, view.k * ratio));
     const next = { ...view, x: view.x + from[0] - to[0], y: view.y + from[1] - to[1], k };
+    if (!(k > 0) || !Number.isFinite(next.x) || !Number.isFinite(next.y)) break;
     const settled = Math.abs(k / view.k - 1) < 1e-4 && Math.hypot(next.x - view.x, next.y - view.y) * k < 0.05;
     view = next;
     if (settled) break;
