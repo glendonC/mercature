@@ -187,6 +187,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const around = wayAroundOf(data, ways);
   /** How much longer the way around is than the walk, in whole metres. */
   const aroundMetres = around ? Math.max(0, Math.round((around.lengthMetres ?? around.walkMetres) - around.walkMetres)) : 0;
+  /** A way around no operator would offer, more than about 400 m longer or longer than the route itself, is never offered or drawn unasked. */
+  const shortAround = around?.status === 'found' && aroundMetres <= 400 && aroundMetres <= data.lengthMetres;
   // The way around shows on the map when she asks for it, while the guide asks about it, and once she says it works.
   const [showAround, setShowAround] = useState(false);
   const [problem, setProblem] = useState('');
@@ -385,8 +387,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (resume) { const paused = resume; setResume(null); go(paused, line); return; }
     go(nextCheck(at), line);
   }
-  /** Whether OpenStreetMap suggests a way around the steps this item is about. */
-  const aroundAt = (item: Item | undefined): boolean => !!item && 'spot' in item && around?.status === 'found' && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index)));
+  /** Whether OpenStreetMap suggests a way around the steps this item is about, and whether it is short enough to offer. */
+  const avoidsAt = (item: Item | undefined): boolean => !!item && 'spot' in item && around?.status === 'found' && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index)));
+  const aroundAt = (item: Item | undefined): boolean => shortAround && avoidsAt(item);
+  /** Her answer said back, and where the only way around is too long, that the map shows no short one. */
+  const withLong = (item: Item, said: string) => avoidsAt(item) && !shortAround ? `${said} ${s.around.long}` : said;
   /** Her core answer about a spot, is it still there; "Still there" goes on to the follow-up where the kind has one. */
   function answerCore(at: number, choice: CoreAnswer) {
     const item = items[at];
@@ -401,7 +406,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const said = choice === 'unknown' ? c.unknown : choice === 'repaired' ? c.repaired : choice === 'nothing' ? c.nothing
       : group === 'helpful' ? (choice === 'gone' ? c.goneHelpful : c.stillHelpful) : choice === 'gone' ? (group === 'condition' ? c.notAnymore : c.gone) : c.stillPresence;
     if (choice === 'unknown' && aroundAt(item)) { go({ id: 'check', at, around: 'offer' }, said); return; }
-    onward(at, said);
+    onward(at, choice === 'unknown' ? withLong(item, said) : said);
   }
   /** Her follow-up answer, or her one answer about a kind along the walk. A place she names is a tap on the map. */
   function answer(at: number, question: QuestionId, choice: Answer, stretch?: number) {
@@ -411,7 +416,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     record(at, question, choice, stretch);
     const said = (s.check.said[question] as Record<string, (slots: ItemSlots) => string>)[choice](slotsOf(item, at));
     if (choice === 'noWay' && aroundAt(item)) { go({ id: 'check', at, around: 'offer' }, said); return; }
-    onward(at, said);
+    onward(at, choice === 'noWay' ? withLong(item, said) : said);
   }
   /** Her word on the way around the steps OpenStreetMap suggests. That it works makes it her way around, so the note never says there is none. */
   function checkAround(at: number, works: boolean | null, line: string) {
@@ -1113,7 +1118,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         <GlassButton className="gs-edit" icon={<NoteIcon />} pressed={step.id === 'edit'} onClick={openEdit}>{s.edit.chip}</GlassButton>
         {changed && <Segmented className="gs-compare" surface="glass" label={s.compare.label} value={before ? 'before' : 'now'} options={[{ value: 'before', label: s.compare.before }, { value: 'now', label: s.compare.now }]}
           onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); }} />}
-        {around?.status === 'found' && !before && <GlassButton className="gs-around" icon={<PathIcon />} pressed={showAround || !!ways.check?.works} onClick={() => setShowAround(shown => !shown)}>{s.around.mapToggle}</GlassButton>}
+        {(shortAround || !!ways.check?.works) && !before && <GlassButton className="gs-around" icon={<PathIcon />} pressed={showAround || !!ways.check?.works} onClick={() => setShowAround(shown => !shown)}>{s.around.mapToggle}</GlassButton>}
       </div>
       <Menu onHome={onHome} current={shownPlace} onPlace={next => { if (next !== shownPlace) (onPlace ?? onHome)(next); }} />
     </header>

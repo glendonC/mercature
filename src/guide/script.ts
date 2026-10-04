@@ -215,7 +215,9 @@ export type Script = {
     /** After "No way around" or "I'm not sure" there: offer, then these. */
     offerChips: { show: string; notNow: string };
     /** The map control that shows or hides the way around; not an answer. */
-    mapToggle: string };
+    mapToggle: string;
+    /** After "No way around" or "I'm not sure" at steps whose only way around is too long to offer. */
+    long: string };
   /** Another street she adds: she taps its start and end, and it is routed on foot. */
   street: { offer: string; start: string; end: string; routing: string; found: (s: { metres: number; osm: number }) => string; kept: (s: { street: string }) => string; failed: string; offline: string;
     busy: string; tooFar: string; tooLong: string; removed: (s: { street: string }) => string;
@@ -529,6 +531,7 @@ const en: Script = {
     isThisIt: 'Is it this one, the way OpenStreetMap suggests?', isThisItChips: { yes: 'Yes, that one', no: 'No, another way' },
     offerChips: { show: 'Show me', notNow: 'Not now' },
     mapToggle: 'Way around',
+    long: 'OpenStreetMap doesn’t show a short way around these steps.',
   },
   street: {
     offer: 'Do visitors use other streets too? You can add one.',
@@ -810,6 +813,7 @@ const es: Script = {
     isThisIt: '¿Es este, el que sugiere OpenStreetMap?', isThisItChips: { yes: 'Sí, ese', no: 'No, otro camino' },
     offerChips: { show: 'Muéstramelo', notNow: 'Ahora no' },
     mapToggle: 'Otro camino',
+    long: 'OpenStreetMap no muestra un camino corto que evite estos escalones.',
   },
   street: {
     offer: '¿Tus visitantes usan otras calles? Puedes agregar una.',

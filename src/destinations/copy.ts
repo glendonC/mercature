@@ -231,6 +231,12 @@ export const KIND_NOTE = {
   cobblestones: { en: 'Cobblestones on parts of the route.', es: 'Empedrado en partes del recorrido.', ko: '경로 일부 구간이 돌길입니다.' },
   crossing: { en: 'The route crosses roads in places.', es: 'El recorrido cruza calles en algunos puntos.', ko: '경로 중간에 차도를 건너는 곳이 있습니다.' },
   kerb: { en: 'Kerbs along parts of the route.', es: 'Bordillos en partes del recorrido.', ko: '경로 일부 구간에 연석이 있습니다.' },
+  bollard: { en: 'Watch for posts or bollards on the route.', es: 'Atención a los postes o bolardos en el recorrido.', ko: '경로에 있는 기둥이나 볼라드에 주의하세요.' },
+  broken: { en: 'Watch for broken paving on the route.', es: 'Atención a la acera rota en el recorrido.', ko: '경로의 깨진 보도에 주의하세요.' },
+  steps: { en: 'The route has steps.', es: 'El recorrido tiene escalones.', ko: '경로에 계단이 있습니다.' },
+  works: { en: 'Watch for roadworks on the route.', es: 'Atención a las obras en el recorrido.', ko: '경로의 공사 구간에 주의하세요.' },
+  ramp: { en: 'The route has ramps.', es: 'El recorrido tiene rampas.', ko: '경로에 경사로가 있습니다.' },
+  handrail: { en: 'Some steps have handrails.', es: 'Algunos escalones tienen pasamanos.', ko: '일부 계단에는 난간이 있습니다.' },
 };
 
 /** The way around the mapped steps, once she says it works. extra: metres longer than the walk, rounded. */
