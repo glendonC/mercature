@@ -65,6 +65,9 @@
 .ri-select { flex: 1; min-width: 0; }
 .ri-select select { width: 100%; }
 .ri-panel section[class*=edit] { margin-top: 10px; }
+/* A new pane, or an editor she opens, settles in rather than appearing at once. */
+.ri-pane, .ri-panel section[class*=edit] { animation: ri-pane-in var(--motion-panel) var(--ease-out) backwards; }
+@keyframes ri-pane-in { from { opacity: 0; translate: 0 4px; } }
 
 /* A hovered marker's spot on the panel's glass; the panel's own content keeps its place, size and scroll, unseen, until the pointer leaves */
 .ri-panel[data-preview] > :not(.ri-preview) { visibility: hidden; }
@@ -105,4 +108,5 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .ri-preview { animation: none; }
   .ri-spark[data-working] { animation: none; }
   .ri-photo-image, .ri-panel { transition: none; }
+  .ri-pane, .ri-panel section[class*=edit] { animation: none; }
 }

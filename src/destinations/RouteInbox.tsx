@@ -673,7 +673,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       onClickCapture={event => { if (swiped.current) { swiped.current = false; event.stopPropagation(); event.preventDefault(); } }}
       onFocus={event => { if (peeking && (event.target as HTMLElement).matches(':focus-visible')) lift(true); }}>
       {narrow && pane.kind === 'inbox' && <button className="ri-handle" aria-label={w.messages} aria-expanded={!peeking} onClick={() => lift(peeking)} />}
-      {content}
+      <div key={pane.kind === 'message' ? `message ${pane.id}` : pane.kind === 'spot' ? `spot ${keyOf(pane.target)}` : pane.kind} className="ri-pane">{content}</div>
       {problem && <p className="ri-problem" role="alert">{problem}</p>}
       {previewing && <div className="ri-preview" inert style={{ top: sheet.current?.scrollTop ?? 0 }}>{previewOf(previewing)}</div>}
     </Panel>
