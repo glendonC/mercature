@@ -43,15 +43,24 @@ for (const place of Object.values(ROUTE_PLACES)) {
     expect(spots.map(spot => spot.description).join(' ')).not.toMatch(/\d\s?(cm|mm)\b|\bwide\b|width|height|slope|gradient|accessible|wheelchair|passable/i);
   });
 
-  test(`${place.id}: every flagged stretch belongs to exactly one spot, grouped as the record links them`, () => {
+  test(`${place.id}: every flagged stretch belongs to exactly one spot, grouped as the map draws them`, () => {
     test.skip(!record, 'The local route record is not available.');
-    const flagged = record.stretches.filter((stretch: { status: string }) => stretch.status !== 'clear').map((stretch: { index: number }) => stretch.index);
-    expect(spots.flatMap(spot => spot.stretches).sort((a, b) => a - b)).toEqual(flagged);
+    type RecordStretch = { index: number; status: string; findings: string[]; from_m: number; to_m: number };
+    // The map's own rule (buildWalk in src/destinations/walk.ts): a run without photos, or flagged stretches in a row
+    // that share a possible barrier with the run, is one marker, and the route screen names each marker by its first stretch.
+    const barrier = new Set(record.findings.filter((finding: { barrier: boolean }) => finding.barrier).map((finding: { id: string }) => finding.id));
+    const runs: { stretches: number[]; status: string; findings: Set<string> }[] = [];
+    for (const stretch of record.stretches as RecordStretch[]) {
+      if (stretch.status === 'clear') continue;
+      const last = runs.at(-1), findings = stretch.status === 'no_photos' ? [] : stretch.findings.filter(id => barrier.has(id));
+      if (last && last.status === stretch.status && last.stretches.at(-1) === stretch.index - 1 && (stretch.status === 'no_photos' || findings.some(id => last.findings.has(id)))) {
+        last.stretches.push(stretch.index); for (const id of findings) last.findings.add(id);
+      } else runs.push({ stretches: [stretch.index], status: stretch.status, findings: new Set(findings) });
+    }
+    expect(spots.filter(spot => spot.stretches.length).map(spot => spot.stretches).sort((a, b) => a[0] - b[0])).toEqual(runs.map(run => run.stretches));
     for (const spot of spots.filter(spot => spot.stretches.length)) {
-      const group = spot.stretches.map(index => record.stretches[index]);
-      expect(spot.stretches.every((index, i) => !i || index === spot.stretches[i - 1] + 1)).toBe(true);
-      expect(new Set(group.map((stretch: { status: string; findings: string[] }) => `${stretch.status}:${stretch.findings.join()}`)).size).toBe(1);
-      expect(spot.name.en).toContain(`(${Math.round(group[0].from_m)} to ${Math.round(group.at(-1).to_m)} m)`);
+      const group = spot.stretches.map(index => record.stretches[index] as RecordStretch);
+      expect(spot.name.en).toContain(`(${Math.round(group[0].from_m)} to ${Math.round(group.at(-1)!.to_m)} m)`);
     }
   });
 
