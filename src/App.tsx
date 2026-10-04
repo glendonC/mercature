@@ -8,9 +8,17 @@ import type { AuthoredViewState } from "./preparation/Preparation";
 import FarmReady from "./preparation/FarmReady";
 import RecordedReveal from "./preparation/RecordedReveal";
 import { isDestinationId } from "./destinations/data";
-import type { MenuPlace } from "./home/Menu";
 import { useLanguage } from "./i18n";
 const planStore = createPlanStore();
+/** Nothing links here: ?place=farm opens the farm example getting ready, as Home's farm card once did. Read once, then dropped from the address. */
+const farmAsked = (() => {
+  const query = new URLSearchParams(location.search);
+  if (query.get("place") !== "farm") return false;
+  query.delete("place");
+  const rest = query.toString();
+  history.replaceState(history.state, "", `${location.pathname}${rest ? `?${rest}` : ""}${location.hash}`);
+  return true;
+})();
 function initialSaved() {
   const result = planStore.list();
   return { plans: result.ok ? result.value : [], error: result.ok ? "" : result.error.message };
@@ -18,7 +26,7 @@ function initialSaved() {
 export default function App() {
   const { t } = useLanguage();
   const [initial] = useState(initialSaved);
-  const [active, setActive] = useState<"home" | "spatial" | "destination" | "farm">("home");
+  const [active, setActive] = useState<"home" | "spatial" | "destination" | "farm">(farmAsked ? "farm" : "home");
   const [plans, setPlans] = useState<PlanSummary[]>(initial.plans);
   const [workspace, setWorkspace] = useState<{
     key: string;
@@ -51,7 +59,6 @@ export default function App() {
     setActive("destination");
     setError("");
   }
-  const openPlace = (place: MenuPlace) => place === "noor-farm" ? openFarm() : openDestination(place);
   return (
     <>
       <div hidden={active !== "home"}>
@@ -81,7 +88,7 @@ export default function App() {
         </div>
       )}
       {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
-      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openPlace} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} onPlace={openPlace} />)}
+      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} onPlace={openDestination} />)}
       {error && (
         <div className="app-error" role="alert">
           {error}
