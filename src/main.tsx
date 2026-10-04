@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './style.css';
 import {prepareOffline} from './offline';
+import { reloadForUpdate } from './language/reload';
+// A page that outlived its build asks for code files the server no longer has; loading it again gets the current build, once.
+window.addEventListener('vite:preloadError', event => { if (reloadForUpdate()) event.preventDefault(); });
 void prepareOffline().catch(()=>{/* The workspace remains usable if offline provisioning is unavailable. */});
 /** ?ui=kit shows the shared primitives for review and ?ui=photo the labelled photo; each loads only when asked for. */
 const Kit = lazy(() => import('./ui/Kit'));

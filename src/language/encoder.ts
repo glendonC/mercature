@@ -46,7 +46,7 @@ async function storedBytes(cache: Cache, item: Download): Promise<number> {
   return response && response.headers.get('x-mercature-sha256') === item.file.sha256 ? item.file.bytes : 0;
 }
 
-async function storedSet(cache: Cache): Promise<ModelSet | null> {
+async function listedSet(cache: Cache): Promise<ModelSet | null> {
   for (const set of sets) {
     const stored = await Promise.all(set.downloads.map(item => storedBytes(cache, item)));
     if (stored.every(bytes => bytes > 0)) return set;
@@ -54,13 +54,60 @@ async function storedSet(cache: Cache): Promise<ModelSet | null> {
   return null;
 }
 
+const hex = (buffer: ArrayBuffer) => Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join('');
+
+/** A stored file read back: its body's length, and with whole its pinned hash as well. */
+async function intact(cache: Cache, item: Download, whole: boolean): Promise<boolean> {
+  try {
+    const response = await cache.match(item.key);
+    if (!response || response.headers.get('x-mercature-sha256') !== item.file.sha256) return false;
+    if (!whole) return (await response.blob()).size === item.file.bytes;
+    const data = await response.arrayBuffer();
+    return data.byteLength === item.file.bytes && hex(await crypto.subtle.digest('SHA-256', data)) === item.file.sha256;
+  } catch {
+    return false;
+  }
+}
+
+/** Files read back and found broken this session, so a load that fails can say the model needs downloading again. */
+let repaired = false;
+let checked: Promise<ModelSet | null> | null = null;
+/**
+ * The stored set, its files' lengths read back once per session, and with whole every hash too. A browser can keep
+ * a file's record after a quit while its body did not survive, so the record alone is not proof. Broken files are
+ * deleted, which makes the set incomplete and offers the download again; files that read back intact are kept.
+ */
+function storedSet(cache: Cache, whole = false): Promise<ModelSet | null> {
+  checked ??= (async () => {
+    const set = await listedSet(cache);
+    if (!set) return null;
+    const broken: Download[] = [];
+    for (const item of set.downloads) if (!(await intact(cache, item, whole))) broken.push(item);
+    if (!broken.length) return set;
+    for (const item of broken) await cache.delete(item.key).catch(() => false);
+    repaired = true;
+    return null;
+  })().catch(error => {
+    checked = null;
+    throw error;
+  });
+  return checked;
+}
+
+/** Reads every stored file back whole after a load that failed, hashes included. True when broken files were found and deleted. */
+export async function repairStored(): Promise<boolean> {
+  if (typeof caches === 'undefined' || !(await caches.has(MODEL_CACHE))) return false;
+  checked = null;
+  repaired = false;
+  await storedSet(await openCache(), true);
+  return repaired;
+}
+
 /** True when every file of one model set is already stored and verified on this device. */
 export async function isProvisioned(): Promise<boolean> {
   if (typeof caches === 'undefined' || !(await caches.has(MODEL_CACHE))) return false;
   return (await storedSet(await openCache())) !== null;
 }
-
-const hex = (buffer: ArrayBuffer) => Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join('');
 
 async function fetchVerified(item: Download, onBytes: (received: number) => void): Promise<Uint8Array<ArrayBuffer>> {
   const response = await fetch(item.source, { cache: 'no-store', credentials: 'omit' });
@@ -133,6 +180,9 @@ export async function provision(onProgress: (loadedBytes: number, totalBytes: nu
     await store(cache, item, data);
     completed += item.file.bytes;
   }
+  // Every file was checked as it arrived, so this session needs no read-back.
+  checked = Promise.resolve(set);
+  repaired = false;
   keepStored();
 }
 

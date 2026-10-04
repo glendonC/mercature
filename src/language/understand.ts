@@ -5,6 +5,7 @@ export type Place = Pick<Site, 'id' | 'features'>;
 import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
 import type { StoredExample } from './encoder';
 import { recall, remembered, sketch } from './memory';
+import { reloadForUpdate } from './reload';
 import { ENCODER } from './model';
 import { decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
 
@@ -15,7 +16,9 @@ export type ModelState =
   | { readonly status: 'absent' }
   | { readonly status: 'downloading'; readonly loadedBytes: number; readonly totalBytes: number }
   | { readonly status: 'ready'; readonly model: ModelInfo }
-  | { readonly status: 'failed'; readonly error: string };
+  | { readonly status: 'failed'; readonly error: string }
+  /** This page's code is older than the app on the server, so the model's code cannot load until the page loads again. The stored model is fine. */
+  | { readonly status: 'outdated' };
 
 /** Why a person has to decide. */
 export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place' | 'remembered';
@@ -89,6 +92,28 @@ function publish(next: ModelState) {
 
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+/**
+ * A piece of the model's code, loaded on first use and asked for once more if that fails. When both fail, the page
+ * outlived its build: it loads again once (reload.ts), or else the model is 'outdated', never 'absent'.
+ */
+async function code<T>(load: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      // A cancelled preload error, while the page loads again, gives undefined rather than the module.
+      const module = await load();
+      if (module) return module;
+      throw new Error('The model code did not load.');
+    } catch (error) {
+      // Without Cache Storage the model cannot be kept here at all, so its code not loading says nothing about the build.
+      if (typeof caches === 'undefined') throw error;
+      if (attempt === 0) continue;
+      if (!reloadForUpdate()) publish({ status: 'outdated' });
+      throw error;
+    }
+  }
+}
+const encoderCode = () => code(() => import('./encoder'));
+
 export function modelState(): ModelState {
   return state;
 }
@@ -96,7 +121,7 @@ export function modelState(): ModelState {
 /** True when the model is already stored on this device, so preparing it needs no connection. */
 export async function modelStored(): Promise<boolean> {
   try {
-    return await (await import('./encoder')).isProvisioned();
+    return await (await encoderCode()).isProvisioned();
   } catch {
     return false;
   }
@@ -109,7 +134,7 @@ export async function modelStored(): Promise<boolean> {
  */
 export async function modelDownloadBytes(): Promise<number | null> {
   try {
-    return await (await import('./encoder')).downloadBytes();
+    return await (await encoderCode()).downloadBytes();
   } catch {
     return null;
   }
@@ -118,7 +143,7 @@ export async function modelDownloadBytes(): Promise<number | null> {
 /** Reads the stored model into memory. Never downloads. */
 function load(): Promise<Loaded> {
   loading ??= (async () => {
-    const [encoder, heads] = await Promise.all([import('./encoder'), import('./heads.json')]);
+    const [encoder, heads] = await Promise.all([encoderCode(), code(() => import('./heads.json'))]);
     const { embed, set } = await encoder.loadEncoder();
     const weights = heads.default as unknown as Heads;
     const scope = `${set.name}:${ENCODER.revision}`;
@@ -146,6 +171,19 @@ function load(): Promise<Loaded> {
   return loading;
 }
 
+/**
+ * After a load that failed: when reading the stored files back finds broken ones, they are gone and the model is
+ * absent again, so she is offered the download instead of an error she cannot leave. Otherwise the failure stands.
+ */
+async function settleFailure(error: unknown): Promise<void> {
+  if (state.status === 'outdated') return;
+  const repaired = await encoderCode().then(encoder => encoder.repairStored()).catch(() => false);
+  // Loading the code for the repair can itself find the page outdated.
+  if (modelState().status === 'outdated') return;
+  if (repaired) publish({ status: 'absent' });
+  else publish({ status: 'failed', error: errorText(error) });
+}
+
 /** Downloads and caches the model once; later calls work offline. */
 export async function prepareModel(onProgress?: (state: ModelState) => void): Promise<ModelState> {
   if (onProgress) listeners.add(onProgress);
@@ -156,13 +194,13 @@ export async function prepareModel(onProgress?: (state: ModelState) => void): Pr
     }
     preparing ??= (async () => {
       try {
-        const encoder = await import('./encoder');
+        const encoder = await encoderCode();
         if (!(await encoder.isProvisioned())) {
           await encoder.provision((loadedBytes, totalBytes) => publish({ status: 'downloading', loadedBytes, totalBytes }));
         }
         await load();
       } catch (error) {
-        publish({ status: 'failed', error: errorText(error) });
+        await settleFailure(error);
       } finally {
         preparing = null;
       }
@@ -280,7 +318,7 @@ export async function understand(message: string, site: Place): Promise<Understa
   }
   const started = performance.now();
   if (state.status !== 'ready' && !(await modelStored())) {
-    return { status: 'unavailable', kind: null, category: null, candidates: [], reason: 'model-missing' };
+    return { status: 'unavailable', kind: null, category: null, candidates: [], reason: state.status === 'outdated' ? 'model-failed' : 'model-missing' };
   }
   try {
     const loaded = await load();
@@ -298,8 +336,8 @@ export async function understand(message: string, site: Place): Promise<Understa
     }
     return { ...decision, model: loaded.model, elapsedMs: Math.round(performance.now() - started) };
   } catch (error) {
-    if (state.status !== 'ready') publish({ status: 'failed', error: errorText(error) });
-    return { status: 'unavailable', kind: null, category: null, candidates: [], reason: 'model-failed' };
+    if (state.status !== 'ready') await settleFailure(error);
+    return { status: 'unavailable', kind: null, category: null, candidates: [], reason: state.status === 'absent' ? 'model-missing' : 'model-failed' };
   }
 }
 
@@ -356,7 +394,7 @@ export async function remember(message: string, place: Place, spotId: string): P
 export async function forgetPlace(placeId: string): Promise<void> {
   await queued(async () => {
     try {
-      await (await import('./encoder')).deleteExamples(placeId);
+      await (await encoderCode()).deleteExamples(placeId);
     } finally {
       // After the stored copy is gone, so no read in between can bring it back.
       for (const key of memories.keys()) if (key.endsWith(`:memory:${placeId}`)) memories.delete(key);
@@ -369,7 +407,7 @@ export async function rememberedCount(placeId: string): Promise<number> {
   try {
     await memoryQueue;
     if (loading && state.status === 'ready') return (await examplesOf(await loading, placeId)).length;
-    const encoder = await import('./encoder');
+    const encoder = await encoderCode();
     const set = await encoder.storedSetName();
     return set ? (await encoder.readExamples(memoryKey(`${set}:${ENCODER.revision}`, placeId))).length : 0;
   } catch {
