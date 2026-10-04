@@ -32,7 +32,7 @@ export const EDIT_WORDS = {
   cancel: 'Cancel',
   remove: 'Remove',
   fixTitle: 'Mark this fixed',
-  fixAsk: 'Record that this is fixed today?',
+  fixOn: (date: string) => `Your record, ${date}`,
   fixNoteLabel: 'What changed',
   fix: 'Mark fixed',
   undoFix: 'Not fixed',
