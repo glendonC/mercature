@@ -1,0 +1,82 @@
+/* The 3D view: a charcoal glass window onto the areas built from the photos. */
+.space3d {
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 90% at 50% 35%, rgb(46 52 58 / 0.96), rgb(22 25 28 / 0.98) 70%),
+    #16191c;
+  color: #e9edf0;
+  isolation: isolate;
+}
+.space3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+.space3d[data-ready] .space3d-canvas { opacity: 1; }
+.space3d-canvas:active { cursor: grabbing; }
+.space3d-canvas:focus-visible { box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.85); }
+.space3d-label,
+.space3d-loading,
+.space3d-credit {
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
+  font-size: var(--font-xs);
+  line-height: var(--leading-tight);
+  letter-spacing: 0.01em;
+}
+.space3d-label {
+  top: 12px;
+  left: 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.14), inset 0 0 0 0.5px rgb(255 255 255 / 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: rgb(240 243 245 / 0.92);
+  font-weight: 500;
+}
+.space3d-loading {
+  top: 14px;
+  right: 14px;
+  color: rgb(240 243 245 / 0.6);
+}
+.space3d-credit {
+  left: 12px;
+  right: 64px;
+  bottom: 10px;
+  color: rgb(240 243 245 / 0.62);
+  text-wrap: pretty;
+}
+.space3d-controls {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-m);
+  background: rgb(255 255 255 / 0.07);
+  box-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.12), inset 0 0 0 0.5px rgb(255 255 255 / 0.07);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.space3d-controls .ui-icon-button { color: rgb(240 243 245 / 0.9); padding: 0; }
+.space3d-controls .ui-icon-button::before { inset: 0; }
+.space3d-controls .ui-icon-button:hover::before { background: rgb(255 255 255 / 0.1); }
+.space3d-controls .ui-icon-button:active::before { background: rgb(255 255 255 / 0.16); }
+.space3d-controls .ui-icon-button:focus-visible { outline: 2px solid rgb(255 255 255 / 0.85); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) {
+  .space3d-canvas { transition: none; }
+}
