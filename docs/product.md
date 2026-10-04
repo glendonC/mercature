@@ -1,6 +1,6 @@
 # Product
 
-Mercature helps a small tour operator act on what visitors tell her about a place, in languages she cannot read. A small model on her phone reads a visitor's message and points to the spots on her route it most likely means. She checks each one on a real street photo and decides. After one download it works offline.
+Mercature helps a small tour operator act on what visitors tell her about a place, in languages she cannot read. A small model on her phone reads a visitor's message and points to the spots on her route it most likely means. She checks each one on a real street photo and decides. After one download it works offline. The interface is in English and Spanish.
 
 It answers the tourism challenge of the World Bank Small AI for Development brief (Annex C): a small operator who cannot read every visitor's language and has no simple way to turn feedback into an improvement.
 

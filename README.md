@@ -13,7 +13,8 @@
   <a href="#get-started">Get started</a> ·
   <a href="docs/product.md">Product</a> ·
   <a href="docs/language.md">Model</a> ·
-  <a href="docs/evidence.md">Evidence</a>
+  <a href="docs/evidence.md">Evidence</a> ·
+  <a href="docs/architecture.md">Architecture</a>
 </p>
 
 <p align="center">
@@ -50,7 +51,7 @@ obstruction can be moved and the path rechecked.
 
 [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) (MIT), int8 and
 trimmed to Latin and Korean script, with three small trained heads, runs in the browser with ONNX
-Runtime Web. It downloads once (83,783,194 bytes) and then works with no connection. It answers only
+Runtime Web. It downloads once and then works with no connection: 83,783,194 bytes stored on the device, about 52 MB over the network because GitHub Pages compresses it. It answers only
 from fixed lists and says Not sure when unsure. On 48 held-out English, Spanish and Korean messages
 about the farm it put the right spot first 46 times; moved to the Qorikancha walk with no new
 training, 28 of 31. It failed on Quechua, so messages that do not look like English, Spanish or
@@ -60,7 +61,9 @@ evaluation](docs/language.md).
 
 ## Get started
 
-Requires Node.js 22.12 or newer.
+Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). Open it once online to download the model, then it works offline. Interface in English and Spanish.
+
+To run it locally, you need Node.js 22.12 or newer.
 
 ```sh
 npm ci
