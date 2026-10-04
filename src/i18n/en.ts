@@ -20,7 +20,6 @@ export const en = {
   'common.skip': 'Skip',
   'common.enter': 'Enter',
   'common.example': 'Example',
-  'common.recorded': 'Recorded',
   'common.map': 'Map',
   'common.3d': '3D',
   'common.split': 'Split',

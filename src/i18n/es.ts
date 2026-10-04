@@ -4,7 +4,7 @@ import type { Key } from './en';
  * Neutral Latin American Spanish, informal "tú" for the person running the place.
  * Glossary: place lugar, spot punto, message mensaje, fix arreglo, plan plan, path check revisión de caminos,
  * model modelo (only the AI), Connected Conectado, Blocked Bloqueado, Unknown Desconocido,
- * Not sure Sin certeza, Example Ejemplo, Recorded Registrado.
+ * Not sure Sin certeza, Example Ejemplo.
  */
 export const es = {
   // Language switch
@@ -23,7 +23,6 @@ export const es = {
   'common.skip': 'Omitir',
   'common.enter': 'Entrar',
   'common.example': 'Ejemplo',
-  'common.recorded': 'Registrado',
   'common.map': 'Mapa',
   'common.3d': '3D',
   'common.split': 'Ambas',
