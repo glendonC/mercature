@@ -109,7 +109,7 @@ export type Script = {
   /** On Home, before a place is open. */
   home: { greet: string; search: string; open: (s: { place: string }) => string };
   /** While the walk's records replay: a greeting, then one line per beat. */
-  reveal: { hello: (s: WalkSlots) => string; photos: (s: WalkSlots) => string; walk: (s: WalkSlots) => string; reading: (s: WalkSlots) => string; marks: (s: WalkSlots) => string };
+  reveal: { hello: (s: WalkSlots) => string; photos: (s: WalkSlots) => string; areas: (s: WalkSlots) => string; walk: (s: WalkSlots) => string; reading: (s: WalkSlots) => string; marks: (s: WalkSlots) => string };
   hello: {
     greet: (s: WalkSlots) => string;
     /** The walk in one or two lines: its length, its photos, what was found, how much might stop someone. */
@@ -310,6 +310,7 @@ const en: Script = {
     photos: s => s.photos ? 'First, the street photos people shared along it.' : 'Nobody has shared street photos of it yet.',
     walk: s => `This is the way you walk, about ${about(s.metres)} m.`,
     reading: () => 'And this is what the photos show.',
+    areas: () => 'And here’s the street around it, in 3D.',
     marks: s => s.spots === 0 ? 'Nothing in the photos looks like a problem.' : `${cap(count_en(s.spots, 'spot', 'spots'))} might be a problem for some visitors.`,
   },
   hello: {
@@ -542,6 +543,7 @@ const es: Script = {
     photos: s => s.photos ? 'Primero, las fotos de la calle que la gente compartió a lo largo del camino.' : 'Todavía nadie compartió fotos de la calle de aquí.',
     walk: s => `Este es tu camino, unos ${about(s.metres)} m.`,
     reading: () => 'Y esto es lo que se ve en las fotos del camino.',
+    areas: () => 'Y aquí está la calle a su alrededor, en 3D.',
     marks: s => s.spots === 0 ? 'Nada en las fotos parece un problema.' : `${cap(count_es(s.spots, 'punto podría', 'puntos podrían'))} ser un problema para algunos visitantes.`,
   },
   hello: {
