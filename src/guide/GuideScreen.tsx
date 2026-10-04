@@ -797,7 +797,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   ];
 
   if (step.id === 'hello') {
-    lines.push(...(settled ? [] : [s.hello.greet(walkSlots)]), data.views.length ? s.hello.walk(walkSlots) : s.hello.mapOnly(walkSlots));
+    // Once she has checked a spot, the walk is said as what is left to check; "I'm not sure" leaves a spot to check.
+    const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
+    const checked = flagged.filter(spot => { const said = answerOf(edits, spot.id)?.answer; return (!!said && said !== 'unknown') || removed(spot.stretches) || !!isFixed(edits, spot.stretches); }).length;
+    lines.push(...(settled ? [] : [s.hello.greet(walkSlots)]), checked ? s.hello.checked({ metres: walkSlots.metres, left: flagged.length - checked, total: flagged.length }) : data.views.length ? s.hello.walk(walkSlots) : s.hello.mapOnly(walkSlots));
     chips = helloChips;
     words = hear;
   } else if (step.id === 'check' && item) {
