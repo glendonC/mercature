@@ -13,7 +13,7 @@ export const COPY = {
     map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' },
     pageOf: (n: number, total: number) => `${n} of ${total}`, previous: 'Previous', next: 'Next', whole: 'Show the whole photo', closer: 'Show the marked part',
     message: 'Visitor message', messagePlaceholder: 'Paste or type what the visitor wrote', language: 'Message language',
-    withoutAi: 'Use without AI', download: (mb: number) => `Download ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} of ${total} MB`, downloading: 'Downloading the model…',
+    withoutAi: 'Use without AI', noModel: 'The model could not load here. You can still file it yourself.', download: (mb: number) => `Download ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} of ${total} MB`, downloading: 'Downloading the model…',
     kinds: { problem: 'Problem', praise: 'Praise', question: 'Question' } as Record<MessageKind, string>, maybe: (kind: string) => `${kind}?`,
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
@@ -37,7 +37,7 @@ export const COPY = {
     map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' },
     pageOf: (n: number, total: number) => `${n} de ${total}`, previous: 'Anterior', next: 'Siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
     message: 'Mensaje del visitante', messagePlaceholder: 'Pega o escribe lo que escribió el visitante', language: 'Idioma del mensaje',
-    withoutAi: 'Usar sin IA', download: (mb: number) => `Descargar ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, downloading: 'Descargando el modelo…',
+    withoutAi: 'Usar sin IA', noModel: 'El modelo no pudo cargar aquí. Aún puedes ubicarlo tú.', download: (mb: number) => `Descargar ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, downloading: 'Descargando el modelo…',
     kinds: { problem: 'Problema', praise: 'Elogio', question: 'Pregunta' } as Record<MessageKind, string>, maybe: (kind: string) => `¿${kind}?`,
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {

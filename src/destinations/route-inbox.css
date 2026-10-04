@@ -49,6 +49,7 @@
 .ri-own { margin: 8px 0 0; font-size: var(--font-xs); }
 .ri-filedline { margin: 4px 0 0; }
 .ri-said { font-size: var(--font-xs); color: var(--ui-muted); }
+.ri-no-model { margin: 6px 0 0; }
 .ri-problem { margin: 8px 0 0; font-size: var(--font-xs); color: var(--ui-error); }
 
 /* Actions: one slim primary, icon and label secondaries, muted reset and remove */

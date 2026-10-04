@@ -102,7 +102,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [model, setModel] = useState<ModelState>(() => modelState());
   const [stored, setStored] = useState(false);
   const [busy, setBusy] = useState<'download' | 'warm' | 'reading' | null>(null);
-  const [downloadBytes, setDownloadBytes] = useState<number | null>(null);
+  const [downloadBytes, setDownloadBytes] = useState<number | null | undefined>(undefined);
   const ticket = useRef(0);
   useEffect(() => {
     if (!place) return;
@@ -256,7 +256,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [draft, setDraft] = useState('');
   const [draftLang, setDraftLang] = useState('en');
   const [replyLang, setReplyLang] = useState<VisitorLang | null>(null);
-  const [noteLang, setNoteLang] = useState<VisitorLang>('en');
+  const [noteLang, setNoteLang] = useState<VisitorLang>(lang);
+  useEffect(() => setNoteLang(lang), [lang]);
   const [said, setSaid] = useState('');
   const [clearing, setClearing] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -279,10 +280,15 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (move) fly(target);
   }
   function home() { setPane({ kind: 'inbox' }); setEditing(null); setSaid(''); setLine(''); map.current?.fit(true); }
-  // An editor opened low in the panel scrolls into view, so a phone shows it above the fold.
+  // An editor opened low in the panel scrolls into view, so a phone shows it above the fold, and stays in view as it grows
+  // (typing adds the row for the note's language).
   useEffect(() => {
-    if (!editing) return;
-    sheet.current?.querySelector('section[class*=edit]')?.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
+    const editor = editing ? sheet.current?.querySelector('section[class*=edit]') : null;
+    if (!editor) return;
+    const show = () => editor.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
+    const observer = new ResizeObserver(show);
+    observer.observe(editor);
+    return () => observer.disconnect();
   }, [editing]);
   // Focus follows the panel: into a pane when it opens, back to the row or the marker that opened it on return.
   const lastRow = useRef<string | null>(null);
@@ -593,6 +599,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <Back onClick={home} label={w.back} />
       <p className="ri-row-meta">{isExample && <Tag tone="example">{w.example}</Tag>}<Tag tone="solid">{language.toUpperCase()}</Tag>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : t.maybe(t.kinds[answer.kind])}</>}{earlier && <> · {w.readEarlier}</>}</p>
       <Quote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</Quote>
+      {!message && !ai && (downloadBytes === null || model.status === 'failed') && <p className="ri-meta ri-no-model">{t.noModel}</p>}
       {!message && !ai && <div className="ri-actions">
         {(downloadBytes || model.status === 'downloading') ? <PrimaryAction icon={<DownloadIcon />} disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</PrimaryAction> : null}
         <TextButton icon={<PointerIcon />} onClick={() => withoutAi(shown.id, shown.text, language)}>{t.withoutAi}</TextButton>
