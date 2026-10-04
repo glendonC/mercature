@@ -41,10 +41,9 @@ test("a cold offline restart links a fresh Korean message by hand and reopens it
       .toBe(true);
 
     page = await start(true);
-    await page.getByRole("textbox", { name: "Explore a place" }).fill("Visitor courtyard");
-    await page.getByRole("button", { name: /^Visitor courtyard/ }).click();
-    await page.getByRole("button", { name: "Load scene", exact: true }).click();
-    await page.getByRole("button", { name: "Enter scene", exact: true }).click();
+    await page.getByRole("textbox", { name: "Explore a place" }).fill("Noor's farm");
+    await page.locator("#place-results").getByRole("button", { name: /^Noor's farm/ }).click();
+    await page.getByRole("button", { name: "Enter", exact: true }).click();
     await page.getByRole("tab", { name: "Messages", exact: true }).click();
     const text = `커피 자루 때문에 시음 테이블로 가기 어려웠어요. ${crypto.randomUUID()}`;
     await page.getByLabel("Original visitor message").fill(text);

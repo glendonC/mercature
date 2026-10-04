@@ -2,10 +2,9 @@ import {test, expect, type Page} from '@playwright/test';
 
 async function openCanvas(page: Page) {
   await page.goto('/');
-  await page.getByRole('textbox', {name:'Explore a place'}).fill('Visitor courtyard');
-  await page.getByRole('button', {name:/^Visitor courtyard/}).click();
-  await page.getByRole('button', {name:'Load scene',exact:true}).click();
-  await page.getByRole('button', {name:'Enter scene',exact:true}).click();
+  await page.getByRole('textbox', {name:'Explore a place'}).fill("Noor's farm");
+  await page.locator('#place-results').getByRole('button', {name:/^Noor's farm/}).click();
+  await page.getByRole('button', {name:'Enter',exact:true}).click();
   await expect(page.getByRole('tab', {name:'Place',exact:true})).toHaveAttribute('aria-selected','true');
 }
 async function linkMessage(page: Page) {

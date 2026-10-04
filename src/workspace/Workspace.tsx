@@ -4,7 +4,7 @@ import PlaceCanvas, {type PlaceView} from "../components/PlaceCanvas";
 import ScenePins from "../components/ScenePins";
 import {NOOR_FARM} from "../site/farm";
 import type {Site} from "../site/contracts";
-import {understand, prepareModel, modelState, type Understanding, type ModelState} from "../language/understand";
+import {understand, prepareModel, modelState, modelDownloadBytes, type Understanding, type ModelState} from "../language/understand";
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
@@ -31,7 +31,6 @@ import { useLanguage } from "../i18n";
 import "./workspace.css";
 export type WorkspaceProps = {
   initialPlan?: ImprovementPlan;
-  analysisResult?: AIResult;
   initialViewState?: {selectedId: string | null; rotation: number};
   initialProject?: Project;
   onHome: () => void;
@@ -40,7 +39,6 @@ export type WorkspaceProps = {
 type Step = "start" | "message" | "confirm" | "edit" | "compare" | "done";
 export default function Workspace({
   initialPlan,
-  analysisResult,
   initialViewState,
   initialProject,
   onHome,
@@ -83,6 +81,14 @@ export default function Workspace({
   const [thinking, setThinking] = useState(false);
   const [model, setModel] = useState<ModelState>(() => modelState());
   const [preparingModel, setPreparingModel] = useState(false);
+  /** What a download would really cost here; nothing is offered when it is stored or cannot be told. */
+  const [downloadBytes, setDownloadBytes] = useState<number | null>(null);
+  useEffect(() => {
+    if (model.status === 'ready') return;
+    let alive = true;
+    void modelDownloadBytes().then(bytes => { if (alive) setDownloadBytes(bytes); });
+    return () => { alive = false; };
+  }, [model.status]);
   const request = useRef(0);
   useEffect(() => () => {request.current++;}, []);
   const [step, setStep] = useState<Step>(initialPlan ? "done" : "start");
@@ -154,8 +160,6 @@ export default function Workspace({
   const feature = scene.obstacles.find((o) => o.id === target);
   const selectedFeature = inventory.find((o) => o.id === selected);
   const editable = !!confirmation && !!feature?.movable && !!feature.reviewed;
-  const actionName =
-    feature?.label.replace(/^Reviewed movable /, "") ?? "object";
   const destination = scene.destinations[0]?.label ?? "Destination";
   const dirty = () => {
     setPlan(null);
@@ -321,13 +325,13 @@ export default function Workspace({
   const reviewed = step === "compare" || step === "done";
   const selectedRecord = selectedFeature && 'evidence' in selectedFeature ? selectedFeature.evidence : [];
   const selectedBounds = selectedFeature && 'bounds' in selectedFeature ? selectedFeature.bounds : null;
-  const candidateSpots = useMemo(() => (understanding?.candidates ?? analysisResult?.spots.map(item => item.id) ?? [])
-    .filter(id => inventory.some(item => item.id === id)).slice(0, 3).map(id => ({id, label: site.features.find(item => item.id === id)?.name[lang] ?? id})), [understanding, analysisResult, inventory, site, lang]);
+  const candidateSpots = useMemo(() => (understanding?.candidates ?? [])
+    .filter(id => inventory.some(item => item.id === id)).slice(0, 3).map(id => ({id, label: site.features.find(item => item.id === id)?.name[lang] ?? id})), [understanding, inventory, site, lang]);
   const resultCard: AIResult | undefined = understanding && (understanding.status === 'ready' || understanding.status === 'unsure') ? {
     messageType: understanding.kind ? t(`kind.${understanding.kind}`) : t('common.notSure'),
     issueType: understanding.category ? t(`issue.${understanding.category}`) : '',
     state: understanding.status === 'ready' ? 'matched' : 'not-sure', spots: candidateSpots,
-  } : analysisResult;
+  } : undefined;
   const pins = useMemo(() => section === 'messages' ? candidateSpots : confirmation ? confirmation.targets.map(item => ({id: item.id, label: site.features.find(spot => spot.id === item.id)?.name[lang] ?? item.id})) : [], [section, candidateSpots, confirmation, site, lang]);
   const cue = t(thinking ? "ws.cue.reading"
     : section === 'place' ? selected ? "ws.cue.linkable" : "ws.cue.select"
@@ -377,7 +381,7 @@ export default function Workspace({
     <select id="message-language" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">{t('common.otherLanguage')}</option></select>
     <div className="canvas-actions"><button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{t(thinking ? 'ws.readingMessage' : 'ws.find')}</button></div>
     <p className="canvas-note">{t('ws.kept')}</p>
-    {model.status !== 'ready' && <details className="feature-facts"><summary>{t('ws.useAi')}</summary><p>{t('ws.prepareOnce')}</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? t('ws.progress', { loaded: Math.round(model.loadedBytes / 1_000_000), total: Math.round(model.totalBytes / 1_000_000) }) : t('ws.preparingAi') : t('ws.downloadAi', { mb: 147 })}</button></div></details>}
+    {model.status !== 'ready' && (preparingModel || !!downloadBytes) && <details className="feature-facts"><summary>{t('ws.useAi')}</summary><p>{t('ws.prepareOnce')}</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? t('ws.progress', { loaded: Math.round(model.loadedBytes / 1_000_000), total: Math.round(model.totalBytes / 1_000_000) }) : t('ws.preparingAi') : t('ws.downloadAi', { mb: Math.max(1, Math.round((downloadBytes ?? 0) / 1e6)) })}</button></div></details>}
   </>;
   const placeOverview = <>
     <span className="place-kicker">{t('ws.kicker.look')}</span><h1>{site.name[lang]}</h1>

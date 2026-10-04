@@ -103,6 +103,9 @@ export function decide(review: Review, stretches: readonly number[], verdict: Ve
   return { ...review, decisions };
 }
 
+/** Forgets this place's decisions and messages. The model and other places are untouched. */
+export const startOver = (review: Review): Review => ({ ...review, decisions: {}, messages: [] });
+
 export const verdictOf = (review: Review, stretches: readonly number[]): Verdict | null =>
   stretches.length ? review.decisions[String(stretches[0])]?.verdict ?? null : null;
 

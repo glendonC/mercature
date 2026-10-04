@@ -158,6 +158,8 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .route-switch { display: flex; gap: 2px; padding: 3px; margin-bottom: 10px; border-radius: var(--radius-m); background: color-mix(in srgb, var(--ink) 6%, transparent); }
 .route-switch button { flex: 1; min-height: 38px; border: 0; border-radius: var(--radius-s); background: transparent; font-size: 13px; color: var(--muted); }
 .route-switch button[aria-pressed=true] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-s); }
+.route-start-over { margin-top: 22px; padding-top: 10px; border-top: 1px solid var(--line); }
+.route-start-over .route-text-button { color: var(--muted); }
 .route-text { margin: 0; padding: 12px; border-radius: var(--radius-m); background: rgb(255 255 255 / 0.7); font-size: var(--text-label); line-height: 1.55; white-space: pre-line; }
 
 /* Bottom: task, the guide's line, hints */

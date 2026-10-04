@@ -39,6 +39,7 @@ export const COPY = {
     spots: 'Spots', messages: 'Messages', note: 'Route note for visitors', reply: 'Reply', copyNote: 'Copy note', copyReply: 'Copy reply',
     copied: 'Copied.', copyFailed: 'Copy the text above. The clipboard is not available.', noNote: 'Confirm a barrier or mark a spot to check, and the note writes itself.',
     unreadable: 'Saved decisions on this device could not be read. They were set aside.', notSaved: 'This device did not keep the last change.',
+    startOver: 'Start over', startOverAsk: 'Clear every decision and message for this place?', clear: 'Clear', keep: 'Keep', cleared: 'Cleared. The model stays on this device.',
   },
   es: {
     home: 'Inicio', views: { place: 'Lugar', messages: 'Mensajes', changes: 'Cambios' }, workspace: 'Espacio de la ruta',
@@ -65,7 +66,7 @@ export const COPY = {
     message: 'Mensaje del visitante', messagePlaceholder: 'Pega o escribe lo que escribió el visitante', language: 'Idioma del mensaje',
     find: 'Buscar el punto', withoutAi: 'Usar sin IA', noModel: 'Leído sin el modelo.', download: (mb: number) => `Descargar ${mb} MB`,
     downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, modelFailed: 'No se pudo preparar el modelo. Elige el punto en el mapa.',
-    kind: 'Mensaje', issue: 'Tema', suggested: 'Puntos sugeridos', none: 'Ninguno', notSure: 'No estoy seguro',
+    kind: 'Mensaje', issue: 'Tema', suggested: 'Puntos sugeridos', none: 'Ninguno', notSure: 'Sin certeza',
     notSureSpots: 'Estos puntos son solo sugerencias.', notSureNone: 'Pregunta al visitante o elige el punto en el mapa.',
     yes: 'Sí, este punto', linkedTo: (spot: string) => `Enlazado a ${spot}`, notLinked: 'Sin enlazar', newMessage: 'Nuevo mensaje',
     kinds: { problem: 'Problema', praise: 'Elogio', question: 'Pregunta' } as Record<MessageKind, string>,
@@ -73,6 +74,7 @@ export const COPY = {
     spots: 'Puntos', messages: 'Mensajes', note: 'Nota de la ruta para visitantes', reply: 'Respuesta', copyNote: 'Copiar nota', copyReply: 'Copiar respuesta',
     copied: 'Copiado.', copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', noNote: 'Confirma una barrera o marca un punto por revisar, y la nota se escribe sola.',
     unreadable: 'No se pudieron leer las decisiones guardadas en este dispositivo. Se apartaron.', notSaved: 'Este dispositivo no guardó el último cambio.',
+    startOver: 'Empezar de nuevo', startOverAsk: '¿Borrar todas las decisiones y mensajes de este lugar?', clear: 'Borrar', keep: 'Conservar', cleared: 'Borrado. El modelo sigue en este dispositivo.',
   },
 } as const;
 export type Copy = (typeof COPY)[UiLang];

@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { BotAvatar } from 'bot-avatars';
 import AIResultCard, { type AIResult } from '../components/AIResultCard';
-import { decide, loadReview, logMessage, saveReview, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
+import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
 import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand, type ModelState, type Understanding } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
@@ -76,6 +76,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const [currentId, setCurrentId] = useState<string | null>(null);
   const current = review.messages.find(message => message.id === currentId) ?? null;
   const [replyFor, setReplyFor] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
   const [noteLang, setNoteLang] = useState<VisitorLang>('en');
   const [replyLanguage, setReplyLanguage] = useState<VisitorLang | null>(null);
   const [thinking, setThinking] = useState(false);
@@ -351,6 +352,12 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <LanguageSwitch value={noteLang} onChange={setNoteLang} label={t.note} />
       {note ? <><p className="route-text" lang={noteLang}>{note}</p><div className="route-actions"><button className="route-primary" onClick={() => copy(note)}>{t.copyNote}</button></div></> : <p className="route-quiet">{t.noNote}</p>}
     </>}
+    {(decided.length > 0 || review.messages.length > 0) && <div className="route-start-over">
+      {clearing ? <><p className="route-quiet">{t.startOverAsk}</p><div className="route-actions">
+        <button className="route-secondary" onClick={() => { commit(startOver); setClearing(false); setCurrentId(null); setReplyFor(null); setSelection(null); setSaid(t.cleared); }}>{t.clear}</button>
+        <button className="route-text-button" onClick={() => setClearing(false)}>{t.keep}</button>
+      </div></> : <button className="route-text-button" onClick={() => setClearing(true)}>{t.startOver}</button>}
+    </div>}
   </section>;
 
   const panel = tab === 'messages' ? messagesPanel : tab === 'changes' ? changesPanel : null;
