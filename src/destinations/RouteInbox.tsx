@@ -567,8 +567,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     ...examples.map(example => ({ ...example, example: true }))];
   const note = noteText(noteLang);
 
-  const inbox = <>
-    <p className="ri-guide">{w.guide}</p>
+  const summary = <>
     <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
       <span className="ri-meta">{w.flaggedSpots}</span>
       <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
@@ -582,6 +581,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         <TextButton icon={<CopyIcon />} onClick={() => copy(note)}>{w.copy}</TextButton>
       </div>}
     </Section>
+  </>;
+  const messageList = <>
     <Section heading="h2" title={w.messages}>
       <List inset>{rows.map(row => {
         const message = messageOf(row.id), answer = message?.answer, said = row.language === 'other' ? undefined : row.language;
@@ -597,6 +598,11 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         ? <span className="ri-confirm">{w.startOverAsk} <TextButton muted icon={<RotateIcon />} onClick={() => { commit(startOver); edit(clearEdits); if (place) void forgetPlace(place.id); setClearing(false); }}>{w.clear}</TextButton><TextButton muted icon={<CloseIcon />} onClick={() => setClearing(false)}>{w.keep}</TextButton></span>
         : <TextButton muted icon={<RotateIcon />} onClick={() => setClearing(true)}>{w.startOver}</TextButton>)}
     </div>
+  </>;
+  // On a phone the messages come first, since the sheet shows little; the summary of the walk follows them.
+  const inbox = <>
+    <p className="ri-guide">{w.guide}</p>
+    {narrow ? <>{messageList}{summary}</> : <>{summary}{messageList}</>}
   </>;
 
   const pastePane = <>
