@@ -10,6 +10,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_PLACES } from '../../src/site/registry.ts';
 import { accessFindings, accessKinds } from '../../src/osm/access.ts';
+import { recordWalk, wayAroundFrom } from '../../src/routes/around.ts';
 import { marksFromRows, placeMarks, promptTable, readPiece } from './marks.mjs';
 
 const id = process.argv[2];
@@ -166,6 +167,11 @@ place.osm = {
   note: 'What OpenStreetMap says along the walk, never checked by a person. Widths and inclines are left out. Only steps are a possible barrier, as in the findings.',
   kinds: accessKinds(access), findings: access,
 };
+// The way around the walk's mapped steps, built by src/routes/around.ts from the answers scripts/routes/around.mjs keeps.
+// A new key after osm, so every key before it stays as it was.
+const aroundFile = join(root, '.local/routes-around', `${id}.json`);
+if (!existsSync(aroundFile)) throw new Error(`Missing ${aroundFile}; run node scripts/routes/around.mjs ${id} first.`);
+place.way_around = wayAroundFrom(JSON.parse(readFileSync(aroundFile, 'utf8')), recordWalk(record));
 for (const view of place.views) if (!place.photos.some(photo => photo.id === view.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`View ${view.id} has no credited photo.`);
 for (const mark of scan.marks) if (!place.photos.some(photo => photo.id === mark.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`Mark ${mark.id} has no credited photo.`);
 writeFileSync(join(target, 'place.json'), `${JSON.stringify(place)}\n`);
