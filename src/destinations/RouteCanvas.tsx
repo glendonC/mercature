@@ -241,9 +241,9 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), NOTE.basis[language]].join('\n');
   }
   function replyText(message: LoggedMessage, language: VisitorLang) {
-    // Questions get a personal answer, never a statement about access.
-    if (message.answer?.kind === 'praise') return REPLY.praise[language]();
-    if (message.answer?.kind === 'question') return REPLY.question[language]();
+    // Questions get a personal answer, never a statement about access. Only a sure answer picks the praise or question reply.
+    if (message.answer?.status === 'ready' && message.answer.kind === 'praise') return REPLY.praise[language]();
+    if (message.answer?.status === 'ready' && message.answer.kind === 'question') return REPLY.question[language]();
     const stretches = message.spot ? stretchesOfKey(message.spot) : [];
     const verdict = verdictOf(review, stretches), spot = stretches.length ? spotOf(stretches[0]) : null;
     if (!message.spot || !verdict) return REPLY.open[language]();
