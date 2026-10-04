@@ -784,7 +784,7 @@ function KindMark({ kind }: { kind: Subject | 'noPhotos' }) {
 }
 
 /** A mark drawn on a photo: from the scan, or a finding. barrier: its kind can be a barrier; flagged: one of the walk's possible barriers. */
-type PhotoMark = { id: string; concept: string; label: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; named?: boolean };
+export type PhotoMark = { id: string; concept: string; label: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; named?: boolean };
 const SURFACES: ReadonlySet<string> = new Set(['footway', 'cobblestones', 'road', 'crossing']);
 /** Kinds in the order the legend and the summary list them: possible barriers, then the ground. */
 const order = (concept: string) => { const kind = markOf(concept); const at = kind ? MARK_ORDER.indexOf(kind) : -1; return at < 0 ? MARK_ORDER.length : at; };
@@ -792,7 +792,7 @@ const order = (concept: string) => { const kind = markOf(concept); const at = ki
 const layer = (mark: PhotoMark) => mark.flagged ? 3 : mark.barrier ? 2 : SURFACES.has(markOf(mark.concept) ?? '') ? 0 : 1;
 
 /** One legend entry per kind on the photo, possible barriers first, each with its hue and icon. */
-function legendOf(marks: readonly PhotoMark[], lang: UiLang): LegendItem[] {
+export function legendOf(marks: readonly PhotoMark[], lang: UiLang): LegendItem[] {
   // One entry per kind, worded by a finding where the kind has one.
   const kinds = new Map<string, PhotoMark>();
   for (const mark of [...marks].sort((a, b) => order(a.concept) - order(b.concept) || Number(!!b.named) - Number(!!a.named))) { const kind = markOf(mark.concept) ?? mark.concept; if (!kinds.has(kind)) kinds.set(kind, mark); }
@@ -800,7 +800,7 @@ function legendOf(marks: readonly PhotoMark[], lang: UiLang): LegendItem[] {
 }
 
 /** Pages through a spot's evidence: its photos, and any map record. */
-function Pager({ at, total, go, t }: { at: number; total: number; go: (page: number) => void; t: (typeof COPY)[keyof typeof COPY] }) {
+export function Pager({ at, total, go, t }: { at: number; total: number; go: (page: number) => void; t: (typeof COPY)[keyof typeof COPY] }) {
   return <div className="ri-pager">
     <IconButton label={t.previous} onClick={() => go((at + total - 1) % total)}><BackIcon size={16} /></IconButton>
     <span>{t.pageOf(at + 1, total)}</span>
@@ -821,7 +821,7 @@ function zoomOn(view: View, finding: Finding | null) {
 }
 
 /** A recorded photo with every mark the model drew on it: barriers in clay, the rest quiet. */
-function PhotoWithMarks({ view, photo, asset, lang, marks, lead, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly PhotoMark[]; lead: Finding | null;
+export function PhotoWithMarks({ view, photo, asset, lang, marks, lead, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly PhotoMark[]; lead: Finding | null;
   t: (typeof COPY)[keyof typeof COPY]; still?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [whole, setWhole] = useState(false);

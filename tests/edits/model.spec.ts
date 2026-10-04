@@ -25,7 +25,7 @@ test('the model ranks a spot she added, without taking messages from the authore
     return decide(score(await encoder.embed(queryText(text)), index, prepared), prepared);
   };
 
-  const added = addSpot(addSpot({ schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, seq: 0 },
+  const added = addSpot(addSpot({ schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, answers: {}, seq: 0 },
     25, 'narrow', ownNote('El paso junto al monasterio es muy angosto', 'es'), at), 45, 'kerb', NO_NOTE, at);
   const place = withEdits(QORIKANCHA_PLACE, added, locate);
   expect(place.features.map(feature => feature.id)).toContain('added-1');

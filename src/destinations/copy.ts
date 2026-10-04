@@ -125,12 +125,12 @@ export const REPLY = {
 function cap(text: string) { return text.charAt(0).toLocaleUpperCase() + text.slice(1); }
 
 /** A place name as English prose needs it: "the" before a square, a church or a common noun such as a ticket booth; a bare proper name stays bare. */
-function enPlace(name: string): string {
+export function enPlace(name: string): string {
   return /^(Plaza|Iglesia|Catedral|Capilla|Portal|Monasterio|Convento|Palacio|Templo)\b/.test(name) || /\b(ticket booth|entrance|gate|station|square)$/i.test(name) ? `the ${name}` : name;
 }
 
 /** A place name as Spanish prose needs it after "desde" or "hasta": with its article, and a common noun in lower case. */
-function esPlace(name: string): string {
+export function esPlace(name: string): string {
   const first = name.split(' ')[0];
   if (/^(Boletería|Calle|Entrada|Puerta)$/.test(first)) return `la ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
   if (/^(Plaza|Iglesia|Catedral|Capilla|Municipalidad|Casa|Estación)$/.test(first)) return `la ${name}`;

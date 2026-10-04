@@ -24,6 +24,8 @@ export type AddedSpot = {
 };
 /** Her record that a barrier is fixed, kept by stretch as decisions are. */
 export type FixRecord = { readonly stretches: readonly number[]; readonly at: string; readonly note: OwnNote };
+/** Her answer to the guide's question about one thing on the walk, and the stretch she tapped when the answer names a place, such as a step-free way nearby. */
+export type AnswerRecord = { readonly question: string; readonly answer: string; readonly at: string; readonly stretch?: number };
 export type Edits = {
   readonly schema: 'mercature-route-edits/1';
   readonly place: string;
@@ -32,13 +34,15 @@ export type Edits = {
   readonly fixed: Readonly<Record<string, FixRecord>>;
   /** Her own words about a spot, keyed by spot id. */
   readonly notes: Readonly<Record<string, OwnNote>>;
+  /** Her answers to the guide, keyed by the thing they are about. Records from before the guide have none. */
+  readonly answers: Readonly<Record<string, AnswerRecord>>;
   /** How many spots she has ever added here. It only grows, so a removed id is never given again. */
   readonly seq: number;
 };
 
 export const NOTE_LIMIT = 200;
 const key = (place: string) => `mercature.route-edits.v1.${place}`;
-const empty = (place: string): Edits => ({ schema: 'mercature-route-edits/1', place, added: [], fixed: {}, notes: {}, seq: 0 });
+const empty = (place: string): Edits => ({ schema: 'mercature-route-edits/1', place, added: [], fixed: {}, notes: {}, answers: {}, seq: 0 });
 const isText = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
 const isTime = (value: unknown): value is string => isText(value, 40) && !Number.isNaN(Date.parse(value));
 const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -72,9 +76,14 @@ export function parseEdits(raw: string, place: string): Edits {
     const kept = parseNote(note);
     if (kept.text) notes[spot] = kept;
   }
+  const answers: Record<string, AnswerRecord> = {};
+  for (const [about, record] of Object.entries(isRecord(value.answers) ? value.answers : {})) {
+    if (!isText(about, 80) || !isRecord(record) || !isText(record.question, 40) || !isText(record.answer, 40) || !isTime(record.at) || (record.stretch !== undefined && !isStretch(record.stretch))) throw new Error('answer');
+    answers[about] = { question: record.question, answer: record.answer, at: record.at, ...(record.stretch !== undefined ? { stretch: record.stretch as number } : {}) };
+  }
   const highest = Math.max(0, ...added.map(spot => Number(/^added-(\d+)$/.exec(spot.id)?.[1] ?? 0)));
   const seq = typeof value.seq === 'number' && Number.isInteger(value.seq) && value.seq >= highest && value.seq <= 100000 ? value.seq : highest;
-  return { schema: 'mercature-route-edits/1', place, added, fixed, notes, seq };
+  return { schema: 'mercature-route-edits/1', place, added, fixed, notes, answers, seq };
 }
 
 /** Reads this place's edits. An unreadable record is set aside, never silently overwritten. */
@@ -137,9 +146,18 @@ export function setNote(edits: Edits, spot: string, note: OwnNote): Edits {
   return { ...edits, notes };
 }
 
+/** Her answer to the guide about one thing; null clears it. */
+export function setAnswer(edits: Edits, about: string, answer: { question: string; answer: string; stretch?: number } | null, at = new Date().toISOString()): Edits {
+  const answers = { ...edits.answers };
+  if (answer) answers[about] = { question: answer.question, answer: answer.answer, at, ...(answer.stretch !== undefined && isStretch(answer.stretch) ? { stretch: answer.stretch } : {}) };
+  else delete answers[about];
+  return { ...edits, answers };
+}
+
 export const isFixed = (edits: Edits, stretches: readonly number[]): FixRecord | null =>
   stretches.length ? edits.fixed[String(stretches[0])] ?? null : null;
 export const addedSpot = (edits: Edits, id: string): AddedSpot | null => edits.added.find(spot => spot.id === id) ?? null;
 export const noteOf = (edits: Edits, spot: string): OwnNote | null => edits.notes[spot] ?? null;
+export const answerOf = (edits: Edits, about: string): AnswerRecord | null => edits.answers[about] ?? null;
 /** Forgets what she recorded about this place. Her decisions and the model are untouched. */
 export const clearEdits = (edits: Edits): Edits => empty(edits.place);

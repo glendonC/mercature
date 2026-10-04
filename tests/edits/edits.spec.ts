@@ -4,7 +4,7 @@ import { addSpot, addedSpot, clearFixed, isFixed, markFixed, noteLangOf, ownNote
 import { guessLanguage } from '../../src/destinations/copy';
 import { addedFeature, fixedLine, noteForPassage, ownNoteLines, withEdits, type Locate } from '../../src/edits/place';
 
-const empty: Edits = { schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, seq: 0 };
+const empty: Edits = { schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, answers: {}, seq: 0 };
 const at = '2026-10-04T12:00:00.000Z';
 const locate: Locate = stretch => ({ from: stretch * 10, to: stretch * 10 + 10, landmark: 'Loreto' });
 

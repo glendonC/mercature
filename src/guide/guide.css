@@ -1,0 +1,46 @@
+/* The guide: one clean line of dialogue, the bot out in the map, and her choices as a stacked list. White on charcoal throughout. */
+.guide-line { min-width: 0; padding: 12px 18px 13px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark);
+  color: #fff; font-size: 16px; line-height: 1.45; letter-spacing: -0.005em; overflow-wrap: anywhere; text-wrap: pretty; }
+.guide-line p { margin: 0; }
+.guide-line p + p { margin-top: 2px; }
+::highlight(guide-untyped) { color: transparent; }
+
+.guide-bot { position: absolute; z-index: 6; left: 0; top: 0; pointer-events: none; visibility: hidden; filter: drop-shadow(0 6px 10px rgb(20 22 24 / 0.22));
+  transition: transform 420ms var(--ease-out); will-change: transform; }
+.guide-bot[data-placed] { visibility: visible; }
+.guide-bot canvas { display: block; }
+
+/* Choices: a stacked list; the expected one is white. Each row is a 44 px target with its number key. */
+.guide-choices { display: grid; gap: 6px; }
+.guide-choice { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--tap); margin: 0; padding: 0 14px 0 10px; border: 0; border-radius: 12px;
+  background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float);
+  color: #fff; font: inherit; font-size: 15px; font-weight: 500; line-height: 1.25; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-hover) ease, transform var(--motion-hover) ease; }
+.guide-choice:hover:not(:disabled) { background: rgb(44 48 52 / 0.9); }
+.guide-choice:active:not(:disabled) { transform: scale(0.99); }
+.guide-choice-label { flex: 1; min-width: 0; padding: 10px 0; }
+.guide-key { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 6px; background: rgb(255 255 255 / 0.1); color: rgb(255 255 255 / 0.72); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.guide-choice[data-primary] { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px rgb(20 22 24 / 0.12), var(--shadow-float); }
+.guide-choice[data-primary]:hover:not(:disabled) { background: #f1f2f3; }
+.guide-choice[data-primary] .guide-key { background: rgb(20 22 24 / 0.08); color: var(--muted); }
+.guide-choice[aria-pressed=true] { box-shadow: inset 0 0 0 1.5px #fff, var(--shadow-float); }
+.guide-choice:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.guide-choice:disabled { opacity: 0.45; cursor: default; }
+.guide-choice .ui-icon { flex: none; width: 16px; height: 16px; }
+@media (max-width: 640px), (hover: none) and (pointer: coarse) { .guide-key { display: none; } .guide-choice { padding-left: 14px; } }
+
+/* Her own words: one field with its send button inside */
+.guide-words { display: flex; align-items: center; min-height: var(--tap); border-radius: 12px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); }
+.guide-words:focus-within { box-shadow: var(--glass-charcoal-edge), 0 0 0 2px var(--ink), var(--shadow-float); }
+.guide-words-field { flex: 1; min-width: 0; min-height: var(--tap); margin: 0; padding: 10px 4px 10px 14px; border: 0; background: none; color: #fff; font: inherit; font-size: 16px; line-height: 22px; outline: none; }
+.guide-words-field::placeholder { color: rgb(255 255 255 / 0.66); opacity: 1; }
+.guide-words-send { display: grid; place-items: center; flex: none; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 12px; background: none; color: #fff; cursor: pointer; }
+.guide-words-send:disabled { opacity: 0.35; cursor: default; }
+.guide-words-send:focus-visible { outline: 2px solid #fff; outline-offset: -6px; }
+
+@media (max-width: 640px) {
+  .guide-line { font-size: 15px; padding: 11px 15px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-bot, .guide-choice { transition: none; }
+}
