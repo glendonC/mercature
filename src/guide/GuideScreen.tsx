@@ -4,6 +4,7 @@ import { EDIT_KINDS, addSpot, answerOf, clearEdits, clearFixed, isFixed, loadEdi
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
 import { KIND_WORDS } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
+import { looksSupported } from '../language/policy';
 import { ROUTE_PLACES } from '../site/registry';
 import type { RoutePlace } from '../site/route';
 import { useLanguage } from '../i18n';
@@ -421,7 +422,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const learns = !!key && !!place?.features.some(feature => feature.id === key);
     if (learns && place) void remember(row.text, place, key!);
     setReplyLang(null);
-    go({ id: 'reply', at, ...(ask ? { ask } : {}) }, target ? `${s.messages.filed({ spot: spotWords(target) })}${learns ? ` ${s.messages.learned}` : ''}` : '');
+    // The model recalls her filing only for messages that fail its language check (docs/language.md), so only those are promised.
+    const recalls = learns && !looksSupported(row.text);
+    go({ id: 'reply', at, ...(ask ? { ask } : {}) }, target ? `${s.messages.filed({ spot: spotWords(target) })}${recalls ? ` ${s.messages.learned}` : ''}` : '');
   }
   const [replyLang, setReplyLang] = useState<VisitorLang | null>(null);
   const [noteLang, setNoteLang] = useState<VisitorLang>(lang);
