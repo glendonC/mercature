@@ -99,6 +99,8 @@ export const NOTE = {
   },
   steps: { en: 'Ask us if steps are hard for you.', es: 'Pregúntenos si los escalones le resultan difíciles.', ko: '계단이 힘드시면 미리 문의해 주세요.' },
   basis: { en: 'From street photos, not measurements.', es: 'Según fotos de la calle, no mediciones.', ko: '측정이 아닌 거리 사진을 바탕으로 합니다.' },
+  /** Once she has answered for a spot herself. */
+  basisChecked: { en: 'From street photos and our own checks, not measurements.', es: 'Según fotos de la calle y nuestras propias revisiones, no mediciones.', ko: '거리 사진과 저희의 확인을 바탕으로 하며, 측정값이 아닙니다.' },
   basisMapped: { en: 'From OpenStreetMap, not measurements or street photos.', es: 'Según OpenStreetMap, no mediciones ni fotos de la calle.', ko: '측정이나 거리 사진이 아닌 OpenStreetMap을 바탕으로 합니다.' },
 };
 export const REPLY = {
