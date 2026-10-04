@@ -88,7 +88,9 @@ test('typing finds prepared places by name, city or another name, offline', () =
     { id: 'tbilisi-narikala', name: 'Narikala', area: 'Tbilisi', aliases: 'Narikala fortress cable car ნარიყალა Нарикала' },
   ];
   expect(matchPrepared('cusco', places).map(p => p.id)).toEqual(['cusco-qorikancha']);
-  expect(matchPrepared('templo', places)).toEqual([]);
+  expect(matchPrepared('Qorikanca', places).map(p => p.id)).toEqual(['cusco-qorikancha']);
+  expect(matchPrepared('Narikkala', places).map(p => p.id)).toEqual(['tbilisi-narikala']);
+  expect(matchPrepared('Paris', places)).toEqual([]);
   expect(matchPrepared('temple sun', places).map(p => p.id)).toEqual(['cusco-qorikancha']);
   expect(matchPrepared('narik', places).map(p => p.id)).toEqual(['tbilisi-narikala']);
   expect(matchPrepared('ნარიყალა', places).map(p => p.id)).toEqual(['tbilisi-narikala']);

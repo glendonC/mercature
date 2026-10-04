@@ -13,7 +13,7 @@ import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import Menu from './Menu';
 import Places from './Places';
-import Search from './Search';
+import Search, { type Again, type GuideLine } from './Search';
 import { Dialogue } from '../ui';
 import { SCRIPT } from '../guide/script';
 import { toDestination, type Built } from '../search/build';
@@ -76,7 +76,7 @@ function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLEle
     const fit = () => {
       const wide = window.innerWidth >= 640, text = words.current?.getBoundingClientRect(), row = places.current?.getBoundingClientRect();
       // On a phone the walk sits below the search field and its line, not under them.
-      const field = search.current?.querySelector('.home-search-note')?.getBoundingClientRect();
+      const field = search.current?.querySelector('.home-search-row')?.getBoundingClientRect();
       const next: Insets = {
         top: wide ? 96 : Math.max(text?.bottom ?? 80, field?.bottom ?? 0) + 16,
         right: 24,
@@ -140,6 +140,11 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     const observer = new ResizeObserver(fit); observer.observe(line);
     return () => observer.disconnect();
   });
+  // What the guide says while she searches, the walk being built drawn behind it, and the last walk built, which can take another start.
+  const [line, setLine] = useState<GuideLine | null>(null);
+  const [preview, setPreview] = useState<Built | null>(null);
+  const [again, setAgain] = useState<Again | null>(null);
+  const shown = useMemo(() => { if (!preview) return null; try { const data = toDestination(preview.place), walk = buildWalk(data); return { data, walk, markers: spotMarkers(walk, null) }; } catch { return null; } }, [preview]);
   const prepared: Prepared[] = useMemo(() => covers.filter(cover => openable(cover.id)).map(cover => ({ id: cover.id, name: cover.name, area: fromRecord(cover.area, lang), aliases: `${cover.area} ${cover.aliases}` })), [openable, lang]);
   const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
@@ -147,13 +152,16 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   if (walks.open) return <RouteInbox key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
     spots={walks.open.built.spots} caption={walks.open.kept ? t('search.mapOnlyLong') : `${t('search.mapOnlyLong')} ${t('search.notKept')}`}/>;
   return <main ref={shell} className="welcome-shell site-home" aria-label={t('home.label')}>
-    {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
+    {shown ? <RouteMap key={shown.data.id} still data={shown.data} walk={shown.walk} photoView="" markers={shown.markers} labels={[]} insets={insets}
+      highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={shown.data.target.name}/>
+      : hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1>
-      <div ref={search}><Search prepared={prepared} onPrepared={onDestination} onWalk={walks.openWalk}/></div>
+      <div ref={search}><Search key={again ? `again ${again.target.id}` : 'search'} prepared={prepared} onPrepared={onDestination} onLine={setLine} onPreview={setPreview} again={again}
+        onWalk={(built, kept, target) => { setAgain({ target, from: built.place.request.start.name }); walks.openWalk(built, kept); }}/></div>
     </div>
     <Places label={t('home.onPhone')} savedLabel={t('home.onDevice')}
       places={[
@@ -165,6 +173,6 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
       ]}
       saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: [t('search.mapOnly'), walk.area].filter(Boolean).join(' · '), onOpen: () => walks.openKept(walk.id) })),
         ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
-    <Dialogue className="home-guide" label={t('home.guide')} lang={lang}>{SCRIPT[lang].home.greet}</Dialogue>
+    <Dialogue className="home-guide" label={t('home.guide')} lang={lang}>{line?.text ?? SCRIPT[lang].home.greet}</Dialogue>
   </main>;
 }

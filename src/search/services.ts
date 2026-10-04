@@ -16,6 +16,8 @@ export class SearchTrouble extends Error {
 export const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 export const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
 export const OVERPASS = 'https://overpass-api.de/api/interpreter';
+/** A second public Overpass server, asked once when the first is busy or slow. */
+export const OVERPASS_AGAIN = 'https://maps.mail.ru/osm/tools/overpass/api/interpreter';
 /** The longest walk built here: about an hour on foot, and an Overpass request the public server answers quickly. */
 export const LONGEST_WALK = 5000;
 
@@ -51,8 +53,9 @@ export async function ask(url: string, init: RequestInit, signal: AbortSignal | 
 }
 
 /** A place OpenStreetMap knows. */
-/** detail: the address around it, to tell answers apart; area: its town and country, for the place a walk is in. */
-export type Found = { id: string; name: string; detail: string; area: string; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
+/** detail: the address around it, to tell answers apart; area: its town and country, for the place a walk is in.
+ * broad: a whole city, region or country, too big to be the end of a walk. */
+export type Found = { id: string; name: string; detail: string; area: string; broad: boolean; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
 
 let lastAsked = 0;
 /**
@@ -84,9 +87,15 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const address = (raw.address ?? {}) as Record<string, string>;
     const town = address.city ?? address.town ?? address.village ?? address.hamlet ?? address.municipality ?? address.county ?? address.state;
     const area = [town !== name ? town : undefined, address.country].filter(Boolean).join(', ');
-    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
+    const box = Array.isArray(raw.boundingbox) ? (raw.boundingbox as string[]).map(Number) : [];
+    const span = box.length === 4 && box.every(Number.isFinite) ? distance([box[2], box[0]], [box[3], box[1]]) : 0;
+    const rank = Number(raw.place_rank ?? 30);
+    const broad = (rank > 0 && rank <= 16) || ['country', 'state', 'region', 'province', 'county', 'city', 'municipality', 'district', 'city_district'].includes(String(raw.addresstype ?? ''))
+      || (span > 4000 && raw.category !== 'highway');
+    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
-  return found;
+  // The same place can come back several times (a square, its outline, its centre): one row each.
+  return found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && distance(other.position, item.position) < 400) === i);
 }
 
 /** A named street the walk follows, from the walk's own turn by turn directions, in metres along it. */
@@ -127,11 +136,27 @@ export async function walkBetween(from: LonLat, to: LonLat, signal?: AbortSignal
 
 export type OsmElement = { type: 'node' | 'way' | 'relation'; id: number; tags?: Record<string, string>; lat?: number; lon?: number; geometry?: ({ lat: number; lon: number } | null)[] };
 
-/** Runs one Overpass query. The public server allows a few at a time per address, so a busy answer says to wait. */
-export async function overpass(query: string, signal?: AbortSignal): Promise<{ elements: OsmElement[]; fetchedAt: string }> {
-  const body = await ask(OVERPASS, { method: 'POST', body: new URLSearchParams({ data: query }) }, signal, 70) as { elements?: unknown; remark?: unknown } | null;
+/**
+ * Runs one Overpass query on the main public server; if it has not answered within a few seconds, or fails, the same query
+ * also goes to a second server, and the first good answer wins.
+ */
+export async function overpass(query: string, signal?: AbortSignal, seconds = 12): Promise<{ elements: OsmElement[]; fetchedAt: string }> {
+  const stop = new AbortController(), both = signal ? either(signal, stop.signal) : stop.signal;
+  const main = overpassAt(OVERPASS, query, both, seconds);
+  let timer = 0;
+  const backup = new Promise<{ elements: OsmElement[]; fetchedAt: string }>((resolve, reject) => {
+    const go = () => { clearTimeout(timer); overpassAt(OVERPASS_AGAIN, query, both, seconds + 6).then(resolve, reject); };
+    timer = setTimeout(go, 4000) as unknown as number;
+    main.catch(error => { if (!signal?.aborted && !(error instanceof SearchTrouble && error.kind === 'offline')) go(); else reject(error); });
+  });
+  try { return await Promise.any([main, backup]); }
+  catch (error) { throw (error as AggregateError).errors?.find((e: unknown) => e instanceof SearchTrouble) ?? error; }
+  finally { clearTimeout(timer); stop.abort(); }
+}
+
+async function overpassAt(server: string, query: string, signal: AbortSignal | undefined, seconds: number): Promise<{ elements: OsmElement[]; fetchedAt: string }> {
+  const body = await ask(server, { method: 'POST', body: new URLSearchParams({ data: query }) }, signal, seconds) as { elements?: unknown; remark?: unknown } | null;
   // Overpass answers 200 with a remark when it ran out of time or memory, and the elements are then incomplete.
   if (!body || !Array.isArray(body.elements) || /runtime error/i.test(String(body.remark ?? ''))) throw new SearchTrouble('busy');
-  const elements = body.elements;
-  return { elements: elements as OsmElement[], fetchedAt: new Date().toISOString() };
+  return { elements: body.elements as OsmElement[], fetchedAt: new Date().toISOString() };
 }

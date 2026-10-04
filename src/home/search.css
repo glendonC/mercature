@@ -1,8 +1,9 @@
-/* Home's search: a charcoal glass field under the headline, one plain line under it, and its answers in a charcoal card. */
+/* Home's search: a charcoal glass pill under the headline with its own round search button beside it, and its answers in a charcoal card. */
 /* Its answers open over the place photos, so the headline block that holds them rises above the photos while they show. */
 .home-words:has(.home-search-panel) { z-index: 5; }
 .home-search { position: absolute; top: calc(100% + 26px); left: 0; width: min(440px, 100%); }
-.home-search-field { display: flex; align-items: center; gap: 0; min-height: 48px; padding: 0 2px 0 14px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
+.home-search-row { display: flex; align-items: center; gap: 8px; }
+.home-search-field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0; min-height: 48px; padding: 0 2px 0 14px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
 .home-search-field:focus-within { outline: none; box-shadow: var(--glass-charcoal-edge), inset 0 0 0 1px rgb(255 255 255 / 0.6), var(--shadow-float); }
 .home-search-field > .ui-icon { flex: none; color: var(--ui-muted); }
 .home-search-field input { flex: 1; min-width: 0; height: 44px; margin: 0; padding: 0 4px 0 10px; border: 0; background: transparent; color: var(--ui-ink); font: inherit; font-size: var(--font-m); letter-spacing: -0.005em; outline: none; }
@@ -10,26 +11,17 @@
 /* The field itself shows focus with one outline; the box inside it shows none. */
 .home-search-field input:focus-visible { outline: none; }
 .home-search-field input::-webkit-search-cancel-button { display: none; }
-.home-search-note { margin: 8px 0 0 4px; font-size: var(--font-xs); line-height: var(--leading-tight); color: var(--muted); text-shadow: var(--halo); }
+/* The search action is its own circle, charcoal glass like the pill, the same height. */
+.home-search-row > .home-search-go { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
+.home-search-row > .home-search-go::before { display: none; }
+.home-search-row > .home-search-go:hover { background: rgb(27 30 33 / 0.92); }
 .home-search-panel { position: absolute; z-index: 6; top: 56px; left: 0; right: 0; max-height: min(58svh, 460px); padding-bottom: 8px; }
 .home-search-panel .ui-list { margin-top: 6px; }
-.home-search-line { margin: 10px 2px 4px; font-size: var(--font-s); line-height: var(--leading); color: var(--ui-muted); }
 .home-search-start { margin: 2px 0 6px; }
 .home-search-label { display: block; margin: 0 2px 6px; font-size: var(--font-xs); color: var(--ui-muted); }
+.home-search-start .home-search-go { width: 44px; height: 44px; background: var(--ui-fill); box-shadow: inset 0 0 0 var(--hair-width) var(--ui-hair-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .home-search-start .home-search-field { min-height: 44px; padding-left: 12px; background: var(--ui-fill); box-shadow: inset 0 0 0 var(--hair-width) var(--ui-hair-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .home-search-start .home-search-field:focus-within { outline: none; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
-.home-search-steps { display: grid; gap: 2px; margin: 4px 0 6px; padding: 0; list-style: none; }
-.home-search-steps li { position: relative; display: flex; align-items: center; min-height: 32px; padding-left: 24px; font-size: var(--font-s); color: var(--ui-ink); }
-.home-search-steps li::before { content: ''; position: absolute; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ui-ink); }
-.home-search-steps li[data-state=later] { color: var(--ui-muted); }
-.home-search-steps li[data-state=later]::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ui-hair-strong); }
-.home-search-steps li[data-state=done]::before { background: var(--reachable); }
-.home-search-steps li[data-state=now]::before { animation: home-search-now 1.1s ease-in-out infinite; }
-.home-search-steps li[data-state=stopped]::before { background: var(--ui-muted); }
-@keyframes home-search-now { 50% { opacity: .25; } }
-.home-search-trouble { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
-.home-search-trouble .home-search-line { flex: 1 1 200px; }
-@media (prefers-reduced-motion: reduce) { .home-search-steps li[data-state=now]::before { animation: none; } }
 @media (max-width: 639px) {
   .home-search { top: calc(100% + 18px); width: 100%; }
   .home-search-field input { font-size: 16px; }
