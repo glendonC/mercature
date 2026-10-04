@@ -128,7 +128,6 @@ export const en = {
   'record.handrail': 'Handrail',
   'record.ramp': 'Ramp',
   'record.gate': 'Gate',
-  'record.steep': 'Steep',
   'record.mappedNotWheelchair': 'Mapped as not wheelchair accessible',
   'record.fromMap': 'From the map, no photos',
   'record.surface': 'Surface',

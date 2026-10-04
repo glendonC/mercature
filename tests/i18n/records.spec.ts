@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { en } from '../../src/i18n/en';
 import { es } from '../../src/i18n/es';
+import { esDe, esPlace } from '../../src/i18n/names';
 import { fromRecord } from '../../src/i18n/records';
 
 test('Spanish has every English key and no other', () => {
@@ -21,4 +22,14 @@ test('every label in the published places reads in Spanish', () => {
   }
   expect(labels.size).toBeGreaterThan(0);
   expect([...labels].filter(label => fromRecord(label, 'es') === label)).toEqual([]);
+});
+
+test('a place name takes its Spanish article, and de el contracts', () => {
+  expect(esPlace('Plaza de Armas')).toBe('la Plaza de Armas');
+  expect(esPlace('Boletería del Qorikancha')).toBe('la boletería del Qorikancha');
+  expect(esPlace('Estación superior del teleférico de Narikala')).toBe('la estación superior del teleférico de Narikala');
+  expect(esPlace('Jirón Ucayali')).toBe('el jirón Ucayali');
+  expect(esPlace('Qorikancha')).toBe('Qorikancha');
+  expect(esDe(esPlace('Portal de Carrizos'))).toBe('del Portal de Carrizos');
+  expect(esDe(esPlace('Calle Loreto'))).toBe('de la calle Loreto');
 });

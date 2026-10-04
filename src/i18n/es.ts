@@ -132,7 +132,6 @@ export const es = {
   'record.handrail': 'Pasamanos',
   'record.ramp': 'Rampa',
   'record.gate': 'Portón',
-  'record.steep': 'Empinado',
   'record.mappedNotWheelchair': 'Según el mapa, no es accesible en silla de ruedas',
   'record.fromMap': 'Del mapa, sin fotos',
   'record.surface': 'Superficie',

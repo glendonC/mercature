@@ -16,7 +16,6 @@ const RECORDS: Readonly<Record<string, PlainKey>> = {
   'Handrail': 'record.handrail',
   'Ramp': 'record.ramp',
   'Gate': 'record.gate',
-  'Steep': 'record.steep',
   'Mapped as not wheelchair accessible': 'record.mappedNotWheelchair',
   'From the map, no photos': 'record.fromMap',
   'Surface': 'record.surface',
