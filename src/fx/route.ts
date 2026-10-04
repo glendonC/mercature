@@ -9,7 +9,7 @@ type Rgb = Palette['way'];
 
 /** A marker's colour by what it means: clay a possible barrier, blue the way, grey anything unknown or dismissed. */
 export function meaning(state: string): keyof Palette {
-  return state === 'open' || state === 'barrier' || state === 'check' ? 'barrier' : state === 'clear' || state === 'fixed' ? 'way' : 'unknown';
+  return state === 'open' || state === 'barrier' ? 'barrier' : state === 'clear' || state === 'fixed' ? 'way' : 'unknown';
 }
 
 /**
