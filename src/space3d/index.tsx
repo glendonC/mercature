@@ -21,12 +21,13 @@ export function canDraw3D(): boolean {
 }
 
 const spaces = new Map<string, Promise<Space | null>>();
-/** The place's published 3D, or null while it loads, when it has none, or when this browser cannot draw it. */
-export function useSpace(data: Destination | null): Space | null {
-  const [space, setSpace] = useState<Space | null>(null);
+/** The place's published 3D; null when it has none or this browser cannot draw it, undefined while that is not known yet. */
+export function useSpace(data: Destination | null): Space | null | undefined {
+  const [space, setSpace] = useState<Space | null | undefined>(undefined);
   useEffect(() => {
-    setSpace(null);
-    if (!data || !spaceBase(data) || !canDraw3D()) return;
+    if (!data) return setSpace(undefined);
+    if (!spaceBase(data) || !canDraw3D()) return setSpace(null);
+    setSpace(undefined);
     let live = true;
     if (!spaces.has(data.id)) spaces.set(data.id, loadSpace(data).catch(() => null));
     void spaces.get(data.id)!.then(found => { if (live) setSpace(found); });
@@ -36,7 +37,7 @@ export function useSpace(data: Destination | null): Space | null {
 }
 
 /** Whether the 3D shows any of these stretches of the walk. */
-export const covers = (space: Space | null, stretches: readonly number[]) => !!space && space.pieces.some(piece => piece.stretches.some(index => stretches.includes(index)));
+export const covers = (space: Space | null | undefined, stretches: readonly number[]) => !!space && space.pieces.some(piece => piece.stretches.some(index => stretches.includes(index)));
 
 const WORDS = { en: { photo: 'Photo', space: '3D', choose: 'Show the photo or the 3D' }, es: { photo: 'Foto', space: '3D', choose: 'Mostrar la foto o el 3D' } } as const;
 

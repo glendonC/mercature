@@ -27,6 +27,8 @@ export type Space3DProps = {
   settle?: boolean;
   /** With intro: hold the assembly until this turns true, so a screen can load the areas ahead of its moment. */
   play?: boolean;
+  /** With intro: how long it takes, as a share of its own 3.9 s. */
+  pace?: number;
   onIntroEnd?: () => void;
   /** No WebGL2, or the 3D could not load: show the map or the photo instead. */
   onUnavailable?: (reason: string) => void;
@@ -34,6 +36,8 @@ export type Space3DProps = {
   still?: boolean;
   /** Read the areas from another folder than the place's package, for review. */
   from?: string;
+  /** dark: a charcoal glass pane; light: no background, over a light map. */
+  tone?: 'dark' | 'light';
   className?: string;
 };
 
@@ -76,7 +80,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   return { target, yaw, pitch, distance: radius / Math.sin(half) * 1.02 };
 }
 
-export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, onIntroEnd, onUnavailable, still = false, from, className }: Space3DProps) {
+export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, pace = 1, onIntroEnd, onUnavailable, still = false, from, tone = 'dark', className }: Space3DProps) {
   const { lang } = useLanguage();
   const words = WORDS[lang === 'es' ? 'es' : 'en'];
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
@@ -102,6 +106,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     let r: Renderer;
     try { r = new Renderer(canvas.current); } catch (error) { fail(error instanceof Error ? error.message : 'WebGL2 is not available.'); return; }
     renderer.current = r;
+    r.light = tone === 'light';
     const lost = (event: Event) => { event.preventDefault(); fail('The 3D view stopped.'); };
     canvas.current.addEventListener('webglcontextlost', lost);
     const controller = new AbortController();
@@ -211,7 +216,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
       const playing = intro && !calm && !clock.current.done;
-      const t = playing ? (now - clock.current.start) / 1000 : 99;
+      const t = playing ? (now - clock.current.start) / 1000 / Math.max(0.3, pace) : 99;
       let moving = playing;
       if (goal.current && camera.current) {
         const g = goal.current, k = ease((now - g.at) / g.for);
@@ -242,7 +247,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!ended && calm) { ended = true; callbacks.current.onIntroEnd?.(); }
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [space, intro, settle, walk, play]);
+  }, [space, intro, settle, walk, play, pace]);
 
   // Touch and mouse: one finger or the left button turns, two fingers pinch and pan, the right button or Shift pans, the wheel zooms.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -340,7 +345,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   }, [space, data, focus, words]);
 
   if (failed) return null;
-  return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-ready={loaded > 0 || undefined}>
+  return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-tone={tone} data-ready={loaded > 0 || undefined}>
     {still ? <canvas ref={canvas} className="space3d-canvas" role="img" aria-label={words.label} /> : <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />}
     {!still && <p className="space3d-label">{words.label}</p>}
     {space && loaded < space.pieces.length && <p className="space3d-loading" role="status">{words.loading}</p>}

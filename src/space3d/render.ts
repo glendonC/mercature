@@ -49,7 +49,7 @@ export const pixelsPerMetre = (height: number, distance: number) => height / (2 
 const POINTS_VS = `#version 300 es
 in vec3 a_pos; in vec3 a_col;
 uniform mat4 u_matrix; uniform float u_scale; uniform float u_size; uniform float u_dpr;
-uniform float u_time; uniform float u_start; uniform vec2 u_band; uniform vec3 u_eye; uniform float u_fog;
+uniform float u_time; uniform float u_start; uniform vec2 u_band; uniform vec3 u_eye; uniform float u_fog; uniform float u_light;
 out vec4 v_col;
 float hash(float n) { return fract(sin(n * 12.9898 + 78.233) * 43758.5453); }
 void main() {
@@ -67,9 +67,10 @@ void main() {
   c = mix(vec3(grey), c, 0.82);
   c = pow(c, vec3(0.82)) * 1.06 + vec3(0.015, 0.025, 0.04);
   float fog = clamp((distance(p, u_eye) - u_fog) / (u_fog * 2.2), 0.0, 0.72);
-  c = mix(c, vec3(0.085, 0.1, 0.115), fog);
-  c = mix(vec3(0.62, 0.8, 1.0), c, t);
-  v_col = vec4(c, t);
+  // On dark glass the distance fades to the glass; on a light map it fades out, and the points sit a little darker.
+  c = mix(mix(c, vec3(0.085, 0.1, 0.115), fog), c * 0.86, u_light);
+  c = mix(mix(vec3(0.62, 0.8, 1.0), vec3(0.2, 0.42, 0.7), u_light), c, t);
+  v_col = vec4(c, t * (1.0 - u_light * fog * 0.85));
 }`;
 const POINTS_FS = `#version 300 es
 precision mediump float;
@@ -160,6 +161,8 @@ export class Renderer {
   private pinVao: WebGLVertexArrayObject | null = null; private pinCount = 0; private pinBuffers: WebGLBuffer[] = [];
   private lineColour: [number, number, number, number] = [0.42, 0.66, 0.98, 1];
   width = 1; height = 1; dpr = 1;
+  /** Drawn over a light map rather than on dark glass. */
+  light = false;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, depth: true, powerPreference: 'default' });
@@ -242,6 +245,7 @@ export class Renderer {
     gl.uniform1f(this.points.u('u_time'), frame.time);
     gl.uniform3fv(this.points.u('u_eye'), eye);
     gl.uniform1f(this.points.u('u_fog'), Math.max(30, frame.camera.distance * 0.9));
+    gl.uniform1f(this.points.u('u_light'), this.light ? 1 : 0);
     gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
     for (const area of this.areas) {
       if (frame.time < area.start - 0.05) continue;

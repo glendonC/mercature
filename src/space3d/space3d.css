@@ -87,3 +87,7 @@
 /* Full bleed, as a screen's stage: the reveal plays the assembly over its map. */
 .space3d.space3d-stage { position: absolute; inset: 0; min-height: 0; border-radius: 0; }
 .space3d-stage .space3d-credit { right: 12px; }
+.space3d[data-tone=light] { background: none; color: var(--ink); }
+.space3d[data-tone=light] .space3d-credit { color: var(--muted); text-shadow: var(--halo-label); }
+/* A stage's screen carries the credits in its own line. */
+.space3d-stage .space3d-credit { display: none; }
