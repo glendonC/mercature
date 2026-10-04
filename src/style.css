@@ -109,6 +109,15 @@
   --glass-charcoal-edge: inset 0 0.5px 0 rgb(255 255 255 / 0.12), inset 0 0 0 0.5px rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(0 0 0 / 0.45);
   --shadow-float: 0 1px 2px rgb(20 22 24 / 0.06), 0 4px 12px -2px rgb(20 22 24 / 0.1);
   --shadow-panel: 0 2px 6px -2px rgb(20 22 24 / 0.08), 0 16px 40px -10px rgb(20 22 24 / 0.22);
+  /* Marks on a photo: the clay family for kinds that can be barriers, quiet hues for the ground around them, never blue */
+  --mark-steps: var(--blocked);
+  --mark-kerb: #c97a45;
+  --mark-broken: #7d3a12;
+  --mark-bollard: #94603f;
+  --mark-crossing: #9a8cb0;
+  --mark-footway: #8c9c7c;
+  --mark-cobblestones: #b39a66;
+  --mark-road: #7d8186;
   /* The selection: an ink outline with a white halo */
   --select-ring: 0 0 0 1.5px var(--ink), 0 0 0 4px var(--surface);
   /* Motion */

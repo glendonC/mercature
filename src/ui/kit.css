@@ -17,15 +17,12 @@
 .kit-photo-frame { position: relative; overflow: hidden; aspect-ratio: 1 / var(--ratio, 0.75); border-radius: 10px; background: #d9dcde; }
 .kit-photo-frame img, .kit-photo-frame svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .kit-photo-frame img { object-fit: fill; }
-.kit-outline { fill: color-mix(in srgb, var(--blocked) 24%, transparent); stroke: var(--blocked); stroke-width: 2.5px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.kit-outline.is-quiet { fill: none; stroke: rgb(255 255 255 / 0.95); stroke-width: 1.5px; stroke-dasharray: 5 4; }
-[data-tone=dark] .kit-outline { fill: color-mix(in srgb, #a6501c 24%, transparent); stroke: #e0905f; }
 .kit-photo figcaption { margin-top: 4px; font-size: var(--font-xs); color: var(--ui-muted); }
 .kit-pins > span { position: absolute; z-index: 5; translate: -12px -12px; }
 .kit-sheet { --sheet-max: 46svh; }
 
-.kit-sheet-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: start; gap: 16px; max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; }
-.kit-specimen { min-width: 0; padding: 14px 16px 16px; border-radius: var(--radius-panel); background: rgb(255 255 255 / 0.55); box-shadow: 0 0 0 var(--hair-width) var(--hairline); }
+.kit-sheet-body { columns: 3 340px; column-gap: 16px; max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; }
+.kit-specimen { min-width: 0; margin: 0 0 16px; break-inside: avoid; padding: 14px 16px 16px; border-radius: var(--radius-panel); background: rgb(255 255 255 / 0.55); box-shadow: 0 0 0 var(--hair-width) var(--hairline); }
 .kit-specimen > header { margin-bottom: 10px; }
 .kit-specimen > header h2 { margin: 0; font-size: var(--font-xs); font-weight: 500; letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--muted); }
 .kit-specimen > header p { margin: 4px 0 0; font-size: var(--font-xs); color: var(--muted); }
@@ -38,7 +35,7 @@
 .kit-icons li { display: grid; justify-items: center; gap: 6px; padding: 10px 2px 8px; border-radius: 10px; color: var(--ink); text-align: center; }
 .kit-icons li:hover { background: var(--ui-hover); }
 .kit-icons span { font-size: var(--font-xs); line-height: 1.2; color: var(--muted); }
-.kit-wide { grid-column: 1 / -1; }
+.kit-wide { column-span: all; }
 .kit-ground { position: relative; height: 220px; overflow: hidden; border-radius: 10px; background: #eceeef; }
 .kit-ground-art { position: absolute; inset: 0; width: 100%; height: 100%; }
 .kit-ground-art rect { fill: #dcdfe1; stroke: #cdd1d4; }

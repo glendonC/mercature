@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cx } from './cx';
+import type { MarkKind } from './kinds';
 
 /** A short label: a language, an 'Example', a state. Dashed means made up. */
 export function Tag({ tone = 'neutral', children, className, lang, title }: { tone?: 'neutral' | 'solid' | 'example' | 'route' | 'barrier' | 'unknown'; children: ReactNode; className?: string; lang?: string; title?: string }) {
@@ -28,14 +29,15 @@ export function Kbd({ children }: { children: ReactNode }) {
  * mark, any other mark on a photo; selected, the ink outline with a white halo.
  */
 export type SwatchKind = 'route' | 'possible' | 'added' | 'fixed' | 'removed' | 'no-photos' | 'landmark' | 'outline' | 'mark' | 'selected';
-export function Swatch({ kind, className }: { kind: SwatchKind; className?: string }) {
-  return <span className={cx('ui-swatch', className)} data-kind={kind} aria-hidden="true" />;
+export function Swatch({ kind, mark, barrier, className }: { kind: SwatchKind; mark?: MarkKind; barrier?: boolean; className?: string }) {
+  return <span className={cx('ui-swatch', className)} data-kind={kind} data-mark={mark} data-barrier={barrier || undefined} aria-hidden="true" />;
 }
 
-/** A row of swatches with their words. */
-export function Legend({ items, label, className }: { items: { kind: SwatchKind; label: ReactNode; icon?: ReactNode }[]; label?: string; className?: string }) {
+/** A row of swatches with their words. A photo mark takes its kind's hue: { mark: 'cobblestones', icon, label }. */
+export type LegendItem = { kind?: SwatchKind; mark?: MarkKind; barrier?: boolean; label: ReactNode; icon?: ReactNode };
+export function Legend({ items, label, className }: { items: readonly LegendItem[]; label?: string; className?: string }) {
   return <ul className={cx('ui-legend', className)} aria-label={label}>
-    {items.map((item, index) => <li key={index}><Swatch kind={item.kind} />{item.icon}<span>{item.label}</span></li>)}
+    {items.map((item, index) => <li key={index}><Swatch kind={item.kind ?? 'mark'} mark={item.mark} barrier={item.barrier} />{item.icon}<span>{item.label}</span></li>)}
   </ul>;
 }
 

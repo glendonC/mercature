@@ -1,4 +1,5 @@
 import type { ReactNode, SVGProps } from 'react';
+import { markOf, type MarkKind } from './kinds';
 
 /** Thin line icons on a 24 px grid. The stroke stays near 1.4 px on screen at any size, so a 14 px marker glyph reads as well as a 20 px row icon. */
 export type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'> & { size?: number; title?: string };
@@ -30,6 +31,8 @@ export const FootwayIcon = make('FootwayIcon', <><circle cx="13.5" cy="4.3" r="1
 export const BollardIcon = make('BollardIcon', <path d="M9 20.5V8a3 3 0 0 1 6 0v12.5M9 11.5h6M6.5 20.5h11" />);
 export const BrokenPavementIcon = make('BrokenPavementIcon', <><rect x="3.5" y="6" width="17" height="12" rx="1.5" /><path d="m10.5 6 2 4-2.5 2.5 2.5 5.5" /></>);
 export const RoadIcon = make('RoadIcon', <path d="M6.5 20.5 10 3.5M17.5 20.5 14 3.5M12 6v1.5M12 11v2M12 16.5v2.5" />);
+/** Something on the walking path, of no named kind: a spot on a winding way. */
+export const PathIcon = make('PathIcon', <><path d="M7 21c0-3.6 10-4.6 10-9S7 6.6 7 3" /><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none" /></>);
 export const LandmarkIcon = make('LandmarkIcon', <path d="M12 3.5 4 8h16ZM5.5 10.5v7M10 10.5v7M14 10.5v7M18.5 10.5v7M3.5 20.5h17" />);
 
 /* What happened to a spot */
@@ -39,6 +42,8 @@ export const PhotoIcon = make('PhotoIcon', <>{camera}<circle cx="12" cy="13" r="
 export const NoPhotosIcon = make('NoPhotosIcon', <>{camera}<circle cx="12" cy="13" r="3.2" /><path d="m3.5 3.5 17 17" /></>);
 export const MessageIcon = make('MessageIcon', <path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V16h-.5A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5Z" />);
 export const NoteIcon = make('NoteIcon', <path d="M4.5 19.5 5.5 15 15.8 4.7a2 2 0 0 1 2.9 2.9L8.4 17.9ZM13.8 6.7l3.5 3.5" />);
+/** Go and look: the operator's check on site. */
+export const LookIcon = make('LookIcon', <><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /></>);
 export const RemoveIcon = make('RemoveIcon', <><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></>);
 
 /* What a visitor wrote */
@@ -57,16 +62,11 @@ export const CopyIcon = make('CopyIcon', <><rect x="8.5" y="8.5" width="11.5" he
 export const HomeIcon = make('HomeIcon', <path d="M4 10 12 3.5l8 6.5v10a.5.5 0 0 1-.5.5H15v-6.5H9V20.5H4.5A.5.5 0 0 1 4 20Z" />);
 export const MoreIcon = make('MoreIcon', <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" strokeWidth={3} />);
 
+const MARK_ICONS: Record<MarkKind, Icon> = { steps: StepsIcon, kerb: KerbIcon, broken: BrokenPavementIcon, bollard: BollardIcon, crossing: CrossingIcon, footway: FootwayIcon, cobblestones: CobblestonesIcon, road: RoadIcon };
+/** The icon for a mark kind. */
+export const iconOfMark = (kind: MarkKind): Icon => MARK_ICONS[kind];
 /** The icon for a finding's concept, as the place package names it ('steps', 'highway=steps', 'kerb', ...). */
 export function iconFor(concept: string): Icon | null {
-  const c = concept.toLowerCase();
-  if (/steps|stair/.test(c)) return StepsIcon;
-  if (/kerb|curb/.test(c)) return KerbIcon;
-  if (/crossing|zebra/.test(c)) return CrossingIcon;
-  if (/cobble|sett/.test(c)) return CobblestonesIcon;
-  if (/broken|crack|pothole/.test(c)) return BrokenPavementIcon;
-  if (/bollard|post/.test(c)) return BollardIcon;
-  if (/footway|sidewalk|pavement|pedestrian/.test(c)) return FootwayIcon;
-  if (/road|street|carriageway/.test(c)) return RoadIcon;
-  return null;
+  const kind = markOf(concept);
+  return kind ? MARK_ICONS[kind] : null;
 }

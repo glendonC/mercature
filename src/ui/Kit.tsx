@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { Callout, IconButton, Kbd, Legend, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, Callout, IconButton, Kbd, Legend, MARK_ORDER, markOf, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -16,9 +16,10 @@ const MESSAGES = [
   { lang: 'qu', text: 'Calle Loreto Maruriwan tupasqanpi kaq rumi patakuna sinchi sayaq.', spot: null, kind: null },
 ] as const;
 const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon], ['Crossing', I.CrossingIcon], ['Cobblestones', I.CobblestonesIcon], ['Footway', I.FootwayIcon], ['Bollard', I.BollardIcon],
-  ['Broken pavement', I.BrokenPavementIcon], ['Road', I.RoadIcon], ['Landmark', I.LandmarkIcon], ['No photos', I.NoPhotosIcon], ['Photo', I.PhotoIcon], ['Fixed', I.FixedIcon], ['Added by you', I.AddedIcon],
-  ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon],
+  ['Broken pavement', I.BrokenPavementIcon], ['Road', I.RoadIcon], ['On the path', I.PathIcon], ['Landmark', I.LandmarkIcon], ['No photos', I.NoPhotosIcon], ['Photo', I.PhotoIcon], ['Fixed', I.FixedIcon], ['Added by you', I.AddedIcon],
+  ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Check on site', I.LookIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon],
   ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['More', I.MoreIcon]];
+const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road' };
 const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'dark' ? 'dark' : 'light'; } catch { return 'light'; } };
 
 function useHero() {
@@ -73,12 +74,13 @@ export default function Kit() {
       <div className="kit-photo-frame">
         <img src={assetUrl(data!, lead.view.file)} alt="Steps" />
         <svg viewBox={`0 0 ${lead.view.width} ${lead.view.height}`} preserveAspectRatio="none" aria-hidden="true">
-          {lead.marks.sort((a, b) => Number(a.barrier) - Number(b.barrier)).map(f => <polygon key={f.id} className={f.barrier ? 'kit-outline' : 'kit-outline is-quiet'} points={f.outline.map(p => p.join(',')).join(' ')} />)}
+          {lead.marks.sort((a, b) => Number(a.barrier) - Number(b.barrier)).map(f => { const points = f.outline.map(p => p.join(',')).join(' '), mark = markOf(f.concept) ?? undefined; return <g key={f.id}>
+            <polygon className="ui-mark-halo" data-barrier={f.barrier || undefined} points={points} /><polygon className="ui-mark" data-mark={mark} data-barrier={f.barrier || undefined} points={points} /></g>; })}
         </svg>
       </div>
       {lead.photo && <figcaption>{lead.photo.creator}. CC BY-SA 4.0 · Mapillary</figcaption>}
     </figure>
-    <Legend items={[{ kind: 'outline', label: 'Steps' }, { kind: 'mark', label: 'Kerb' }]} />
+    <Legend items={[{ mark: 'steps', barrier: true, icon: <I.StepsIcon />, label: 'Steps' }, { mark: 'kerb', icon: <I.KerbIcon />, label: 'Kerb' }]} />
     <div className="kit-tools"><TextButton flush icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Note</TextButton><TextButton muted>Remove</TextButton></div>
     <div className="kit-reply">
       <Segmented label="Reply in" value="ko" onChange={() => {}} options={[{ value: 'en', label: 'English' }, { value: 'es', label: 'Español', lang: 'es' }, { value: 'ko', label: '한국어', lang: 'ko' }]} />
@@ -124,6 +126,10 @@ export default function Kit() {
 
       <Specimen title="Icons" note="24 px grid, round 1.4 px line at any size.">
         <ul className="kit-icons">{ICONS.map(([name, Icon]) => <li key={name}><Icon size={20} /><span>{name}</span></li>)}</ul>
+      </Specimen>
+
+      <Specimen title="Photo marks" note="One hue per kind with its icon. Clay for kinds that can be barriers, quiet hues for the ground, never blue. A possible barrier is drawn heavier.">
+        <Legend className="kit-meaning" items={MARK_ORDER.map(kind => ({ mark: kind, barrier: kind === 'steps', icon: (() => { const Icon = I.iconOfMark(kind); return <Icon />; })(), label: MARK_NAMES[kind] + (kind === 'steps' ? ', possible barrier' : BARRIER_KINDS.has(kind) ? '' : '') }))} />
       </Specimen>
 
       <Specimen wide title="Map labels" note="Icon and colour for the kind and its state, a short title, a smaller meta line, a halo.">
