@@ -1,8 +1,8 @@
-/** What SAM 3 marks on a photo, by kind: the kinds that can be barriers first, then the ground around them. */
+/** What SAM 3 marks on a photo, by kind: the kinds that can be barriers first, then the street around them. */
 export type MarkKind = 'steps' | 'kerb' | 'broken' | 'bollard' | 'footway' | 'cobblestones' | 'road' | 'crossing';
-export const MARK_ORDER: readonly MarkKind[] = ['steps', 'kerb', 'broken', 'bollard', 'crossing', 'footway', 'cobblestones', 'road'];
-/** Kinds drawn in the clay family; the rest take quiet hues. */
-export const BARRIER_KINDS: ReadonlySet<MarkKind> = new Set(['steps', 'kerb', 'broken', 'bollard']);
+export const MARK_ORDER: readonly MarkKind[] = ['steps', 'kerb', 'broken', 'crossing', 'bollard', 'footway', 'cobblestones', 'road'];
+/** Kinds drawn in the clay family, as the place package counts them; the rest take quiet hues. */
+export const BARRIER_KINDS: ReadonlySet<MarkKind> = new Set(['steps', 'kerb', 'broken']);
 
 /** The kind of a finding's concept as the place package names it ('steps', 'highway=steps', 'kerb', 'pavement', ...). */
 export function markOf(concept: string): MarkKind | null {
