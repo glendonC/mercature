@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { appendOperation, createScenario } from '../../src/spatial/scenario';
-import { BENCH_CLEAR_POSITION, DEFAULT_PROFILE, SYNTHETIC_SCENE } from '../../src/spatial/fixtures';
+import { BENCH_CLEAR_POSITION, TEST_PROFILE, TEST_SCENE } from '../spatial/fixtures';
 import { contentHash } from '../../src/spatial/validation';
 import { canExportPlan, confirmTargets, createPlan, createPlanStore, evaluatePlan, exportPlan, importPlan, MAX_PLAN_BYTES, parsePlan, PLAN_STORAGE_KEY, reviseDecision, serializePlan, type ImprovementPlan, type Origin, type StorageLike } from '../../src/plans';
 
@@ -11,10 +11,10 @@ function origin(local = false): Origin {
   return { kind: 'concern', id: 'concern-1', source: { id: 'source-1', revision: '1', description: 'Authored Korean trial statement', provenance: local ? 'local' : 'synthetic', permission: local ? 'local-only' : 'exportable' }, originalText, language: 'ko', supportingSpan: { start: 0, end: originalText.length, quote: originalText } };
 }
 function plan(local = false, operations = true): ImprovementPlan {
-  const scene = structuredClone(SYNTHETIC_SCENE), profile = { ...structuredClone(DEFAULT_PROFILE), cellSize: .5 };
+  const scene = structuredClone(TEST_SCENE), profile = { ...structuredClone(TEST_PROFILE), cellSize: .5 };
   const issue = origin(local);
   const scenario = operations ? appendOperation(scene, profile, createScenario(scene, profile), { kind: 'move', objectId: 'bench', to: BENCH_CLEAR_POSITION }) : createScenario(scene, profile);
-  return createPlan({ id: 'plan-1', title: 'Review the courtyard passage', origin: issue, confirmation: confirmTargets({ origin: issue, scene, targetIds: ['bench'], reviewer: 'Operator', interpretation: 'Reported difficulty beside the bench; no field measurements supplied.', now }), project: { schemaVersion: 'spatial-v1', scene, profile, scenario }, now });
+  return createPlan({ id: 'plan-1', title: 'Review the passage', origin: issue, confirmation: confirmTargets({ origin: issue, scene, targetIds: ['bench'], reviewer: 'Operator', interpretation: 'Reported difficulty beside the bench; no field measurements supplied.', now }), project: { schemaVersion: 'spatial-v1', scene, profile, scenario }, now });
 }
 function memory(): StorageLike & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -81,7 +81,7 @@ test('confirmation cannot change target snapshots or invent target evidence', ()
 
 test('scenario operations must belong to confirmed targets', () => {
   const p = plan();
-  const confirmation = confirmTargets({ origin: p.origin, scene: p.project.scene, targetIds: ['courtyard'], reviewer: 'Operator', interpretation: 'Review courtyard only', now });
+  const confirmation = confirmTargets({ origin: p.origin, scene: p.project.scene, targetIds: ['floor'], reviewer: 'Operator', interpretation: 'Review the floor only', now });
   expect(() => createPlan({ ...p, confirmation, now })).toThrow(/human-confirmed/);
 });
 
@@ -129,7 +129,7 @@ test('list, save, load and delete preserve detached records across store instanc
   expect(store.list()).toEqual({ ok: true, value: [] }); expect(store.save(p).ok).toBe(true);
   const reopened = createPlanStore(backend).load(p.id); expect(reopened).toEqual({ ok: true, value: p });
   p.title = 'Unsaved change'; expect(store.load(p.id)).toEqual(reopened);
-  expect(store.list()).toMatchObject({ ok: true, value: [{ title: 'Review the courtyard passage', language: 'ko', exportable: false }] });
+  expect(store.list()).toMatchObject({ ok: true, value: [{ title: 'Review the passage', language: 'ko', exportable: false }] });
   expect(store.delete(p.id)).toEqual({ ok: true, value: undefined });
   expect(store.load(p.id)).toMatchObject({ ok: false, error: { code: 'not-found' } });
   expect(store.list()).toEqual({ ok: true, value: [] });
@@ -165,7 +165,7 @@ test('saved original concern and baseline cannot be overwritten by a different p
 test('destination confirmation binds its position and supporting evidence without enabling a geometry edit', () => {
   const p = plan(false, false);
   const confirmation = confirmTargets({ origin: p.origin, scene: p.project.scene, targetIds: ['garden'], reviewer: 'Operator', interpretation: 'Review the reported garden approach', now });
-  expect(confirmation.targets[0].evidence[0]).toContain('Authored destination on courtyard');
+  expect(confirmation.targets[0].evidence[0]).toContain('Authored destination on floor');
   expect(() => createPlan({ ...p, confirmation, now })).not.toThrow();
   const ambiguous = structuredClone(p.project.scene); ambiguous.destinations[0].id = 'bench';
   expect(() => confirmTargets({ origin: p.origin, scene: ambiguous, targetIds: ['bench'], reviewer: 'Operator', interpretation: 'Ambiguous ID', now })).toThrow(/unique/);

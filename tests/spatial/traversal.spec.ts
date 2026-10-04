@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { solveScene } from '../../src/spatial/solver';
-import { DEFAULT_PROFILE, SYNTHETIC_SCENE } from '../../src/spatial/fixtures';
+import { TEST_PROFILE, TEST_SCENE } from './fixtures';
 import { appendOperation, applyScenario, createScenario, parseProject, serializeProject, undoScenario } from '../../src/spatial/scenario';
 import { sampleTraversal, traversalIsCurrent } from '../../src/spatial/traversal';
 import { contentHash, SOLVER_HASH } from '../../src/spatial/validation';
 import type { Profile, Scene, Traversal } from '../../src/spatial/contracts';
 
 function room(): Scene {
-  const scene = structuredClone(SYNTHETIC_SCENE);
+  const scene = structuredClone(TEST_SCENE);
   scene.obstacles = []; scene.unknown = [];
-  scene.start = { x: 1.017, y: 1.033, supportId: 'courtyard' };
-  scene.destinations = [{ id: 'end', label: 'End', x: 10.013, y: 6.029, supportId: 'courtyard' }];
+  scene.start = { x: 1.017, y: 1.033, supportId: 'floor' };
+  scene.destinations = [{ id: 'end', label: 'End', x: 10.013, y: 6.029, supportId: 'floor' }];
   return scene;
 }
 
@@ -35,9 +35,9 @@ function inspectSweeps(path: Traversal, scene: Scene, profile: Profile) {
 }
 
 test('complete traversal retains exact off-grid endpoints and only checked cardinal sweeps', () => {
-  const scene = room(), profile = structuredClone(DEFAULT_PROFILE);
+  const scene = room(), profile = structuredClone(TEST_PROFILE);
   // Forces a detour; a straight start-to-destination interpolation would intersect this box.
-  scene.obstacles = [{ ...SYNTHETIC_SCENE.obstacles[0], id: 'middle', bounds: { minX: 4, minY: 0, maxX: 5, maxY: 5 } }];
+  scene.obstacles = [{ ...TEST_SCENE.obstacles[0], id: 'middle', bounds: { minX: 4, minY: 0, maxX: 5, maxY: 5 } }];
   const result = solveScene(scene,profile), path = result.traversals[0];
   expect(path.kind).toBe('complete');
   expect(path.points[0]).toEqual({ x: scene.start.x, y: scene.start.y, elevation: 0 });
@@ -49,9 +49,9 @@ test('complete traversal retains exact off-grid endpoints and only checked cardi
 
 test('blocked and unknown destinations stop at certified approaches without crossing thin barriers or unknown support', () => {
   for (const mode of ['blocked','unknown'] as const) {
-    const scene = room(), profile = structuredClone(DEFAULT_PROFILE);
+    const scene = room(), profile = structuredClone(TEST_PROFILE);
     const bounds = { minX: 4.991, minY: 0, maxX: 4.992, maxY: 8 };
-    if (mode === 'blocked') scene.obstacles = [{ ...SYNTHETIC_SCENE.obstacles[0], id: 'thin', bounds }];
+    if (mode === 'blocked') scene.obstacles = [{ ...TEST_SCENE.obstacles[0], id: 'thin', bounds }];
     else scene.unknown = [{ id: 'unobserved', label: 'Unobserved', bounds, elevation: 0, reason: 'Missing floor' }];
     const path = solveScene(scene,profile).traversals[0];
     expect(path.status).toBe(mode); expect(path.kind).toBe('approach');
@@ -65,42 +65,42 @@ test('diagonal corner contact cannot create a route and blocked exact start has 
   const scene = room();
   scene.destinations[0].y = 6;
   scene.obstacles = [
-    { ...SYNTHETIC_SCENE.obstacles[0], id: 'a', bounds: { minX: 4, minY: 0, maxX: 5, maxY: 4 } },
-    { ...SYNTHETIC_SCENE.obstacles[0], id: 'b', bounds: { minX: 5, minY: 4, maxX: 6, maxY: 8 } },
+    { ...TEST_SCENE.obstacles[0], id: 'a', bounds: { minX: 4, minY: 0, maxX: 5, maxY: 4 } },
+    { ...TEST_SCENE.obstacles[0], id: 'b', bounds: { minX: 5, minY: 4, maxX: 6, maxY: 8 } },
   ];
-  const path = solveScene(scene,DEFAULT_PROFILE).traversals[0];
+  const path = solveScene(scene,TEST_PROFILE).traversals[0];
   expect(path.status).toBe('blocked'); expect(path.kind).toBe('approach');
-  inspectSweeps(path,scene,DEFAULT_PROFILE);
+  inspectSweeps(path,scene,TEST_PROFILE);
   scene.start.x = 4.5; scene.start.y = 2;
-  const unavailable = solveScene(scene,DEFAULT_PROFILE).traversals[0];
+  const unavailable = solveScene(scene,TEST_PROFILE).traversals[0];
   expect(unavailable.kind).toBe('unavailable'); expect(unavailable.points).toEqual([]);
   expect(sampleTraversal(unavailable,0)).toBeNull();
 });
 
 test('unsupported checks suppress even a locally clear approach and disconnected elevations never produce a climb', () => {
   for (const requirement of ['turning','longitudinalSlope','crossSlope','multilevel'] as const) {
-    const profile = structuredClone(DEFAULT_PROFILE); profile.requirements[requirement] = true;
+    const profile = structuredClone(TEST_PROFILE); profile.requirements[requirement] = true;
     const path = solveScene(room(),profile).traversals[0];
     expect(path.kind).toBe('unavailable'); expect(path.points).toEqual([]);
     expect(sampleTraversal(path,0)).toBeNull();
   }
-  const step = { ...DEFAULT_PROFILE, maxStep: .1 };
+  const step = { ...TEST_PROFILE, maxStep: .1 };
   expect(solveScene(room(),step).traversals[0].kind).toBe('unavailable');
   const scene = room(); scene.supports.push({ ...scene.supports[0], id: 'upper', elevation: 3 });
   scene.destinations[0].supportId = 'upper';
-  expect(solveScene(scene,DEFAULT_PROFILE).traversals[0].kind).toBe('unavailable');
+  expect(solveScene(scene,TEST_PROFILE).traversals[0].kind).toBe('unavailable');
 });
 
 test('exact destination at unknown scope edge is an approach, never an invented final connector', () => {
   const scene = room(); scene.destinations[0].x = .05;
-  const path = solveScene(scene,DEFAULT_PROFILE).traversals[0];
+  const path = solveScene(scene,TEST_PROFILE).traversals[0];
   expect(path.status).toBe('unknown'); expect(path.kind).toBe('approach');
-  expect(path.points.at(-1)!.x).toBeGreaterThan(DEFAULT_PROFILE.width/2);
-  inspectSweeps(path,scene,DEFAULT_PROFILE);
+  expect(path.points.at(-1)!.x).toBeGreaterThan(TEST_PROFILE.width/2);
+  inspectSweeps(path,scene,TEST_PROFILE);
 });
 
 test('sampling clamps distance, preserves corners, and rejects malformed diagonals and non-finite inputs', () => {
-  const original = solveScene(room(),DEFAULT_PROFILE).traversals[0];
+  const original = solveScene(room(),TEST_PROFILE).traversals[0];
   const path: Traversal = { ...original, points: [{x:0,y:0,elevation:0},{x:2,y:0,elevation:0},{x:2,y:3,elevation:0}], length:5 };
   expect(sampleTraversal(path,-100)).toMatchObject({x:0,y:0,distance:0});
   expect(sampleTraversal(path,1)).toMatchObject({x:1,y:0});
@@ -113,7 +113,7 @@ test('sampling clamps distance, preserves corners, and rejects malformed diagona
 });
 
 test('scenario paths bind exact revisions, survive save and undo deterministically, and preserve unknowns', () => {
-  const scene = structuredClone(SYNTHETIC_SCENE), profile = structuredClone(DEFAULT_PROFILE);
+  const scene = structuredClone(TEST_SCENE), profile = structuredClone(TEST_PROFILE);
   const baseline = solveScene(scene,profile).traversals[0];
   const scenario = appendOperation(scene,profile,createScenario(scene,profile),{kind:'remove',objectId:'bench'});
   const path = solveScene(scene,profile,scenario).traversals[0];
@@ -138,12 +138,12 @@ test('scenario paths bind exact revisions, survive save and undo deterministical
 
 test('approaches stop before missing support, uncertainty margins and low headroom', () => {
   for (const control of ['hole','uncertain-wall','low-overhang'] as const) {
-    const scene = room(), profile = structuredClone(DEFAULT_PROFILE);
+    const scene = room(), profile = structuredClone(TEST_PROFILE);
     if (control === 'hole') {
       scene.supports[0].bounds = {...scene.bounds,maxX:4.9};
       scene.supports.push({...scene.supports[0],id:'far',bounds:{...scene.bounds,minX:5.1}});
       scene.destinations[0].supportId = 'far';
-    } else scene.obstacles = [{...SYNTHETIC_SCENE.obstacles[0],id:control,bounds:{minX:5,minY:0,maxX:5.1,maxY:8},
+    } else scene.obstacles = [{...TEST_SCENE.obstacles[0],id:control,bounds:{minX:5,minY:0,maxX:5.1,maxY:8},
       uncertainty: control === 'uncertain-wall' ? .2 : 0, bottom: control === 'low-overhang' ? 1.7 : 0}];
     const path = solveScene(scene,profile).traversals[0];
     expect(path.kind).toBe('approach');

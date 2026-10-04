@@ -3,14 +3,13 @@ import type { Obstacle, Rect, Scene, UnknownRegion } from './contracts';
 
 export type Point = { x: number; y: number };
 export type Project = (point: Point, z?: number) => Point;
-type Kind = 'hut' | 'shed' | 'sacks' | 'pots' | 'bench' | 'beds' | 'barrow' | 'tree' | 'tank' | 'sign' | 'wall' | 'box';
+type Kind = 'hut' | 'shed' | 'sacks' | 'pots' | 'bench' | 'beds' | 'barrow' | 'tree' | 'tank' | 'sign' | 'box';
 type Material = { top: string; light: string; dark: string; detail: string };
 
 /** Presentation only. Known authored ids draw as recognisable objects; any other id draws as a plain box. */
 const KINDS: Record<string, Kind> = {
   'tasting-hut': 'hut', 'roasting-shed': 'shed', 'coffee-sacks': 'sacks', 'flower-pots': 'pots', bench: 'bench',
   'drying-beds': 'beds', wheelbarrow: 'barrow', 'shade-tree': 'tree', 'water-tank': 'tank', 'welcome-sign': 'sign',
-  'wall-north': 'wall', 'wall-south': 'wall',
 };
 const MATERIALS: Record<Kind, Material> = {
   hut: { top: '#c9b49d', light: '#e7ddd0', dark: '#cdbca8', detail: '#a48d75' },
@@ -23,7 +22,6 @@ const MATERIALS: Record<Kind, Material> = {
   tree: { top: '#93735a', light: '#9c7c61', dark: '#7d6049', detail: '#7f9f6b' },
   tank: { top: '#d3d6d5', light: '#c7cbca', dark: '#afb4b3', detail: '#959b9a' },
   sign: { top: '#efe5d1', light: '#ddcdae', dark: '#bba786', detail: '#8b6a50' },
-  wall: { top: '#dcd8d1', light: '#d4cfc7', dark: '#bdb7ae', detail: '#a39d94' },
   box: { top: '#ddd8cf', light: '#d4cec5', dark: '#bfb8ae', detail: '#a49d93' },
 };
 const CANOPY = { radius: 1.5, lift: .35 };
