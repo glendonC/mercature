@@ -256,6 +256,11 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     run();
   }, [landed, size, fitCamera, run]);
 
+  // The map credit of a map people use: the full line at first, folded to a small chip after the first move or a few seconds;
+  // a tap opens it again.
+  const [credit, setCredit] = useState(true);
+  useEffect(() => { const timer = window.setTimeout(() => setCredit(false), 6000); return () => clearTimeout(timer); }, []);
+
   // The selected marker, or the one last opened while it is still in view, stays in the free band between the place title
   // and the guide, or any sheet, as they change. Panning or the whole route lets the last one go.
   const chosen = markers.find(marker => marker.selected) ?? null;
@@ -304,6 +309,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   function local(event: ReactPointerEvent) { const r = box.current!.getBoundingClientRect(); return { x: event.clientX - r.left, y: event.clientY - r.top }; }
   function down(event: ReactPointerEvent<HTMLDivElement>) {
     if (still || (event.target as HTMLElement).closest('button, a, .route-card')) return;
+    setCredit(false);
     event.currentTarget.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, local(event));
     const points = [...pointers.current.values()], x = points.reduce((s, p) => s + p.x, 0) / points.length, y = points.reduce((s, p) => s + p.y, 0) / points.length;
@@ -343,6 +349,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const wheel = (event: WheelEvent) => {
       if ((event.target as HTMLElement).closest('.route-card')) return;
       event.preventDefault();
+      setCredit(false);
       const c = live.current; if (!c) return;
       const r = element.getBoundingClientRect(), sx = event.clientX - r.left, sy = event.clientY - r.top;
       const anchor = lens(c, tiltOf(r.width, r.height), r.width, r.height).ground([sx, sy]);
@@ -425,7 +432,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // How much a circle on the ground flattens, for the ring under the selected marker.
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
   return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
-    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still}
+    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
       lens={flat ? undefined : view} rise={rise} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
@@ -451,6 +458,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     </div>
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}
     {card && <div className="route-card-slot" ref={cardBox} style={cardStyle ?? { left: -9999, top: 0 }}>{card}</div>}
+    {/* A backdrop keeps the plain credit line its page places; a map people use gets the folding control. */}
+    {!still && <button type="button" className="route-credit" aria-expanded={credit} aria-label={words.credit} onClick={() => setCredit(open => !open)}
+      style={{ right: Math.max(8, insets.right), bottom: Math.max(4, clearBottom + 4) }}><span>{credit ? words.credit : '© OSM'}</span></button>}
   </div>;
 });
 export default RouteMap;

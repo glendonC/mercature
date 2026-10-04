@@ -152,11 +152,13 @@ type Props = {
   rise?: number;
   /** A backdrop: no zoom buttons, scale bar or north arrow. The credit stays. */
   still?: boolean;
+  /** Draws the map credit line; a host that shows the credit itself turns it off. */
+  credit?: boolean;
 };
 export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: string };
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
-export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, lens, rise = 0, still = false }: Props) {
+export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, lens, rise = 0, still = false, credit = true }: Props) {
   const { t } = useLanguage();
   const fog = useId();
   const words = given ?? { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
@@ -203,5 +205,5 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
     <g transform={`translate(${target.join(' ')})${lens ? ` scale(${Math.min(1.3, size(data.target.position))})` : ''}`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>
     {children}
     {!lens && !still && <><g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text></>}
-  </svg>{!still && <div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div>}<span className="destination-map-credit">{words.credit}</span></section>;
+  </svg>{!still && <div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div>}{credit && <span className="destination-map-credit">{words.credit}</span>}</section>;
 }
