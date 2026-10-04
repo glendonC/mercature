@@ -60,9 +60,6 @@ export function withEdits(place: RoutePlace, edits: Edits, locate: Locate): Rout
   return { ...place, features: [...place.features, ...edits.added.map(spot => addedFeature(spot, locate))] };
 }
 
-/** True for a spot she added, so the interface can label it as hers. */
-export const isAdded = (edits: Edits, id: string): boolean => edits.added.some(spot => spot.id === id);
-
 /**
  * The visitor-facing line for a spot she has fixed, in the reader's language.
  * A recorded spot's subject maps onto a kind first: steps, kerb, and anything else is "other".

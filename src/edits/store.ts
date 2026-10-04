@@ -137,7 +137,6 @@ export function setNote(edits: Edits, spot: string, note: OwnNote): Edits {
 
 export const isFixed = (edits: Edits, stretches: readonly number[]): FixRecord | null =>
   stretches.length ? edits.fixed[String(stretches[0])] ?? null : null;
-export const addedIds = (edits: Edits): readonly string[] => edits.added.map(spot => spot.id);
 export const addedSpot = (edits: Edits, id: string): AddedSpot | null => edits.added.find(spot => spot.id === id) ?? null;
 export const noteOf = (edits: Edits, spot: string): OwnNote | null => edits.notes[spot] ?? null;
 /** Forgets what she recorded about this place. Her decisions and the model are untouched. */

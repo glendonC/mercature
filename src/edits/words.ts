@@ -25,7 +25,7 @@ export const EDIT_WORDS = {
   kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow', other: 'Other' } as Record<EditKind, string>,
   noteLabel: 'Your note',
   notePlaceholder: 'What a visitor should know',
-  noteKept: 'Kept on this phone. Visitors see it in the route note.',
+  noteKept: 'Kept on this device. Visitors see it in the route note.',
   takenAs: (language: string) => `Taken as ${language}`,
   languages: { en: 'English', es: 'Spanish', ko: 'Korean', other: 'Another language' } as Record<string, string>,
   changeLanguage: 'Language of your note',
