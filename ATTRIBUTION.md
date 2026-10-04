@@ -14,9 +14,9 @@ Outfit is Copyright 2021 The Outfit Project Authors, licensed under the [SIL Ope
 
 React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respectively; Playwright uses Apache-2.0. Exact versions and transitive dependencies are recorded in the lockfile; their distributions retain their licenses.
 
-The guide uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
+The guide on the hidden farm workspace and the loopback inspection screen uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
 
-The preparation views use [thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt).
+The preparation views of the hidden farm workspace and the loopback inspection screen use [thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt).
 
 ## Published place package
 
@@ -36,4 +36,4 @@ The destination records, including the published Qorikancha package, were prepar
 
 ## Language model and runtime
 
-Message understanding runs [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) by Microsoft (MIT), through the [Xenova ONNX export](https://huggingface.co/Xenova/multilingual-e5-small) pinned at revision `761b726d`. The weights are downloaded once to the device and are not redistributed in this repository. Inference uses [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) (MIT) and tokenization uses [@huggingface/tokenizers](https://github.com/huggingface/tokenizers) (Apache-2.0).
+Message understanding runs [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) by Microsoft (MIT), through the [Xenova ONNX export](https://huggingface.co/Xenova/multilingual-e5-small) pinned at revision `761b726d`. The weights are downloaded once to the device. They are not in this repository, but the live site serves a trimmed copy of the MIT-licensed weights from its own origin. Inference uses [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) (MIT) and tokenization uses [@huggingface/tokenizers](https://github.com/huggingface/tokenizers) (Apache-2.0).

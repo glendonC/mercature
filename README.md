@@ -55,7 +55,9 @@ Runtime Web. It downloads once and then works with no connection: 83,783,194 byt
 from fixed lists and says Not sure when unsure. On 48 held-out English, Spanish and Korean messages
 about the farm it put the right spot first 46 times; moved to the Qorikancha walk with no new
 training, 28 of 31. It failed on Quechua, so messages that do not look like English, Spanish or
-Korean now always get Not sure. For those messages the phone also learns from her: when she taps the
+Korean now always get Not sure. A simpler keyword match is not enough: exact aliases find the spot as
+often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the walk
+they pick exactly the right spots for only 3 of 34 messages. For those messages the phone also learns from her: when she taps the
 spot, it keeps the link on the device, and later similar messages rank that spot first. On
 machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and
 7.3, 8.8 and 9.4 with one, two and three linked messages per spot. A Korean message lost its right
@@ -64,7 +66,7 @@ check. One message takes a median of 25 to 38 ms in Chromium on the development 
 with the CPU slowed six times; no phone has been measured.
 All test messages are synthetic, written by a large language model; the farm-tour messages from the
 brief's persona, Noor, trained the model's heads. Details: [model and
-evaluation](docs/language.md).
+evaluation](docs/language.md). Privacy, consent, bias and oversight: [responsible AI](docs/product.md#responsible-ai).
 
 ## Get started
 
@@ -112,5 +114,5 @@ are in [attribution](ATTRIBUTION.md).
 | Start here | Go deeper |
 | --- | --- |
 | [Product](docs/product.md) | [Architecture](docs/architecture.md) |
-| [Model and evaluation](docs/language.md) | [Plan records](docs/contracts.md) |
+| [Model and evaluation](docs/language.md) | [Deploy](docs/deploy.md) |
 | [Evidence and data](docs/evidence.md) | [Attribution](ATTRIBUTION.md) |

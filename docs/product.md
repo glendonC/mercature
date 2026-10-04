@@ -39,6 +39,13 @@ Results by language, size and speed are in [language](language.md).
 - A saved plan or note is a proposal, not proof that anything changed on the ground.
 - No phone has been measured, and no real operator has used it.
 
+## Responsible AI
+
+- **Privacy.** Messages are read on the phone; no message, edit or link is sent anywhere, and the deployed app makes no request outside its own address. Start over deletes the place's messages, edits and remembered links.
+- **Consent.** She pastes messages visitors already sent her. The app collects nothing from visitors and sends nothing to them; she copies each reply herself.
+- **Bias and limits.** The model reads Latin and Korean script only. Quechua answers Not sure until she links a message to a spot. One large language model wrote every test message, and the Spanish and Korean text in the app has not been reviewed by a native speaker.
+- **Oversight.** Not sure hands the decision to her. She files, edits and copies every reply herself, and the model never writes free text.
+
 ## Data
 
 Street photos from Mapillary (CC BY-SA 4.0, credited on every photo), places and paths from OpenStreetMap (ODbL), a walking route from Valhalla, and model-written test messages (CC0). The figures behind the problem, every dataset, and what the data does not cover are in [evidence](evidence.md).
