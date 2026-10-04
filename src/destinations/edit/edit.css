@@ -14,7 +14,7 @@
 }
 .edit-title { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: -.01em; }
 .edit-where { margin: -6px 0 0; font-size: var(--text-phone-min); color: var(--ink); }
-.edit-quiet { margin: 0; font-size: var(--text-caption); line-height: 1.45; color: var(--muted); }
+.edit-quiet { margin: 0; font-size: var(--font-xs); line-height: 1.45; color: var(--muted); }
 .edit-label { font-size: var(--text-phone-min); color: var(--muted); }
 
 .edit-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
