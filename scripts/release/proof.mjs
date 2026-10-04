@@ -5,7 +5,8 @@
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
  *      message afresh: Start over clears the first answer, never the model.
- *   node scripts/release/proof.mjs [url] [--serve dist] [--out dir] [--browser chromium|webkit]
+ *   node scripts/release/proof.mjs [url] [--serve dist] [--out dir] [--browser chromium|webkit] [--ui inbox]
+ * Places open in the guide's conversation; --ui inbox runs the same proof on the message inbox instead.
  * With --serve, the build is served like GitHub Pages under the URL's path and the server is
  * stopped before the offline restart. The offline restart also sends every request, the service
  * worker's own included, to a proxy that drops it. Screenshots and report.json go to the out directory.
@@ -25,9 +26,13 @@ const option = name => { const i = args.indexOf(name); return i >= 0 ? args.spli
 const serve = option('--serve');
 const outOption = option('--out');
 const browserName = option('--browser') ?? 'chromium';
+const inbox = option('--ui') === 'inbox';
 const engine = { chromium, webkit }[browserName] ?? (() => { throw new Error(`Unknown browser ${browserName}.`); })();
 const base = new URL(args[0] ?? 'http://127.0.0.1:4186/mercature/');
-const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-z0-9.-]/gi, '-')}${browserName === 'chromium' ? '' : `-${browserName}`}`);
+const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-z0-9.-]/gi, '-')}${browserName === 'chromium' ? '' : `-${browserName}`}${inbox ? '-inbox' : ''}`);
+const app = inbox ? new URL('?ui=inbox', base).href : base.href;
+// What a place shows once its reveal is skipped.
+const SCREEN = inbox ? `.ri-row[data-row="example-ko-steps"]` : '.guide-screen .ui-dialogue';
 // The Korean demo message, the inbox's Korean Example: steps by the church were too steep for the writer's mother.
 const ROW = 'example-ko-steps';
 const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.';
@@ -108,11 +113,21 @@ async function openRoute(page, name) {
     await page.screenshot({ path: resolve(out, `${name}.png`) });
   }
   if (await skip.isVisible()) await skip.click();
-  await page.locator(`.ri-row[data-row="${ROW}"]`).waitFor();
+  await page.locator(SCREEN).waitFor();
 }
 
 /** The open message once its answer shows: the kind from the meta line, the ranked spots under About. */
 async function answerOf(page, started) {
+  if (!inbox) {
+    // The guide names the kind in words; the stored answer has it, and the choices rank the spots as 1., 2., 3.
+    await page.waitForFunction(([key, id]) => !!JSON.parse(localStorage.getItem(key) ?? 'null')?.messages?.find(message => message.id === id)?.answer, [REVIEW, ROW], { timeout: 15 * 60_000 });
+    await page.locator('.ui-choice').first().waitFor();
+    const message = await logged(page);
+    const labels = await page.locator('.ui-choice').evaluateAll(choices => choices.map(choice => { const copy = choice.cloneNode(true); copy.querySelectorAll('[aria-hidden="true"]').forEach(node => node.remove()); return copy.textContent.trim(); }));
+    const kind = message.answer.kind ? `${message.answer.kind[0].toUpperCase()}${message.answer.kind.slice(1)}${message.answer.status === 'unsure' ? '?' : ''}` : null;
+    const spots = labels.flatMap(label => { const [, rank, name] = label.match(/^(\d)\. (.+)$/) ?? []; return rank ? [{ rank, label: name, pressed: false }] : []; });
+    return { quote: message.text, kind, spots, filed: message.spot, seconds: (Date.now() - started) / 1000 };
+  }
   await page.locator('.ri-about').waitFor({ timeout: 15 * 60_000 });
   const answer = await page.evaluate(() => ({
     quote: document.querySelector('.ri-quote')?.textContent ?? null,
@@ -125,14 +140,16 @@ async function answerOf(page, started) {
 }
 const logged = page => page.evaluate(([key, id]) => JSON.parse(localStorage.getItem(key) ?? 'null')?.messages?.find(message => message.id === id) ?? null, [REVIEW, ROW]);
 const describe = answer => `${answer.kind}; ${answer.spots.map(spot => `${spot.rank} ${spot.label}${spot.pressed ? ' (filed)' : ''}`).join(', ')}; ${answer.seconds} s`;
-const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(EXPECTED.spots) && answer.spots.every(spot => !spot.pressed);
+const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(EXPECTED.spots) && answer.spots.every(spot => !spot.pressed) && !answer.filed;
+/** The inbox opens the Korean Example by its row; the guide reads the messages in order, the Korean one first. */
+const openMessage = page => inbox ? page.locator(`.ri-row[data-row="${ROW}"]`).click() : page.getByRole('button', { name: 'Read messages', exact: true }).click();
 
 try {
   if (serve) await startServer();
   profile = await mkdtemp(join(tmpdir(), 'mercature-proof-'));
   // Online, first visit on a fresh profile.
   let page = await launch(false);
-  const first = await page.goto(base.href);
+  const first = await page.goto(app);
   check('app loads', first?.status() === 200, `${first?.status()} ${base.href}`);
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
   check('service worker scope is the app path', scope === base.href, scope);
@@ -159,13 +176,13 @@ try {
   const skipNarikala = page.getByRole('button', { name: 'Skip', exact: true });
   await skipNarikala.waitFor();
   if (await skipNarikala.isVisible()) await skipNarikala.click();
-  await page.locator('.route-inbox').waitFor();
+  await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor();
   const gulua = await page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
   page.off('response', onNarikala);
   await page.screenshot({ path: resolve(out, 'narikala-390.png') });
   check('Narikala opens from its published package', gulua && narikala.includes(`200 ${base.pathname}places/narikala/place.json`),
     `${narikala.filter(line => line.endsWith('place.json')).join(', ')}; Data Gulua Rise marker ${gulua ? 'shown' : 'missing'}`);
-  await page.goto(base.href);
+  await page.goto(app);
 
   const placeRequests = [];
   page.on('response', response => { if (/\/places\/|\/routes\//.test(response.url())) placeRequests.push(`${response.status()} ${new URL(response.url()).pathname}`); });
@@ -176,7 +193,7 @@ try {
   check('route opens from the published package', fromPackage && !placeRequests.some(line => line.startsWith('200 ') && line.includes('/routes/')), placeRequests.filter(line => line.includes('place.json') || line.includes('/routes/')).join(', '));
 
   // On a fresh profile the Korean Example offers the download, and the answer follows it.
-  await page.locator(`.ri-row[data-row="${ROW}"]`).click();
+  await openMessage(page);
   const download = page.getByRole('button', { name: /^Download \d+ MB$/ });
   await download.waitFor({ timeout: 30_000 });
   report.offer = await download.textContent();
@@ -188,6 +205,16 @@ try {
   report.answers.online = online;
   await page.screenshot({ path: resolve(out, 'answer-online-390.png') });
   check('Korean demo message answered online', matches(online), `download and answer: ${describe(online)}`);
+  if (!inbox) {
+    // Filing the first spot gives her the reply in Korean, with Copy inside it.
+    await page.getByRole('button', { name: `1. ${EXPECTED.spots[0]}`, exact: true }).click();
+    const box = page.locator('.gs-copybox');
+    await box.waitFor();
+    const reply = { text: (await box.textContent())?.trim() ?? '', copy: await box.getByRole('button', { name: /copy/i }).count(), spot: (await logged(page))?.spot ?? null };
+    report.reply = reply;
+    await page.screenshot({ path: resolve(out, 'reply-390.png') });
+    check('filing the first spot gives a reply with Copy inside', reply.spot === 'steps-340-350' && reply.copy === 1 && /[\uac00-\ud7a3]/.test(reply.text), `${reply.spot}; ${reply.text.slice(0, 60)}`);
+  }
 
   const fetched = report.downloads.filter(item => item.phase === 'online');
   const hub = fetched.filter(item => !item.path.startsWith(base.pathname) || /huggingface|hf\.co/.test(item.path));
@@ -203,15 +230,24 @@ try {
     return { name, keys: (await cache.keys()).map(request => new URL(request.url).pathname) };
   });
   // Start over clears the first answer, so the offline one has to come from the model again.
-  await page.getByRole('button', { name: 'All messages' }).click();
-  await page.getByRole('button', { name: 'Start over', exact: true }).click();
-  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  if (inbox) {
+    await page.getByRole('button', { name: 'All messages' }).click();
+    await page.getByRole('button', { name: 'Start over', exact: true }).click();
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  } else {
+    // In the guide, Start over sits under the route note.
+    await page.goto(app);
+    await openRoute(page);
+    await page.getByRole('button', { name: 'See the route note', exact: true }).click();
+    await page.getByRole('button', { name: 'Start over', exact: true }).click();
+    await page.getByRole('button', { name: 'Clear it', exact: true }).click();
+  }
   report.clearedBeforeOffline = (await logged(page)) === null;
 
   // Cold restart with no network: the server is gone too when this script started it. WebKit reloads online.
   if (server && !inMemory) { server.kill(); server = null; }
   page = await launch(true);
-  const offline = await page.goto(base.href);
+  const offline = await page.goto(app);
   if (inMemory) check('offline start is served by the service worker', null, 'not run in WebKit');
   else {
     // The server is out of reach: the worker's own update check goes to the proxy and is refused.
@@ -222,16 +258,17 @@ try {
   }
   await openRoute(page);
   await page.screenshot({ path: resolve(out, 'route-offline-390.png') });
-  const unread = await page.locator(`.ri-row[data-row="${ROW}"]`).textContent();
-  // Let the inbox find the stored model before the tap, as a person would.
+  const unread = inbox ? /Not read yet/.test(await page.locator(`.ri-row[data-row="${ROW}"]`).textContent() ?? '') : true;
+  // Let the screen find the stored model before the tap, as a person would.
   await page.waitForTimeout(1500);
   const offlineStarted = Date.now();
-  await page.locator(`.ri-row[data-row="${ROW}"]`).click();
+  await openMessage(page);
   const again = await answerOf(page, offlineStarted);
+  const offered = await page.getByRole('button', { name: /^Download \d+ MB$/ }).count();
   report.answers.offline = again;
   const fresh = await logged(page);
   await page.screenshot({ path: resolve(out, 'answer-offline-390.png') });
-  check(inMemory ? 'Korean demo message answered again from the stored model' : 'Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && /Not read yet/.test(unread ?? '') && !!fresh?.answer?.model && matches(again),
+  check(inMemory ? 'Korean demo message answered again from the stored model' : 'Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && unread && offered === 0 && !!fresh?.answer?.model && matches(again),
     `${describe(again)}; read afresh by ${fresh?.answer?.model ?? 'nothing'}`);
   check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
