@@ -151,10 +151,13 @@ export type Script = {
   };
   /** The way around the mapped steps that OpenStreetMap's router suggests. metres: how much longer than the walk. */
   around: { offer: (s: { metres: number }) => string; show: string; ask: string; kept: string; dropped: string; unchecked: string; none: string; offline: string;
+    /** OpenStreetMap shows no steps on the walk, so there is nothing to go around. */
+    same: string;
     chips: { show: string; works: string; notWorks: string; unknown: string; better: string; notNow: string } };
   /** Another street she adds: she taps its start and end, and it is routed on foot. */
   street: { offer: string; start: string; end: string; routing: string; found: (s: { metres: number; osm: number }) => string; kept: (s: { street: string }) => string; failed: string; offline: string;
-    chips: { add: string; keep: string; again: string; cancel: string } };
+    busy: string; tooFar: string; tooLong: string; removed: (s: { street: string }) => string;
+    chips: { add: string; keep: string; again: string; cancel: string; remove: string } };
   /** Asked once per walk; yes asks her to tap the place, then the 'through' question. */
   narrow: { ask: string; chips: { yes: string; no: string; unknown: string } };
   messages: {
@@ -170,6 +173,8 @@ export type Script = {
     unsure: string;
     noSpot: string;
     unplaced: string;
+    /** A message in a script the model cannot read, such as Georgian or Russian: no spot is offered. */
+    unreadable: string;
     tap: string;
     filed: (s: SpotSlots) => string;
     /** Said once her tap has taught the model where messages like this go. */
@@ -198,6 +203,8 @@ export type Script = {
     none: string;
     chips: { open: string; next: string };
   };
+  /** Under a photo: whether she has checked what it shows. date is the day of her answer, such as "4 October". */
+  photo: { unchecked: string; checked: (s: { date: string }) => string; removed: string };
   model: {
     /** The model is not on this device yet: one download, then it works offline. */
     download: (s: { mb: number }) => string;
@@ -401,6 +408,7 @@ const en: Script = {
     unchecked: 'Okay. I won’t suggest it until you’ve checked it.',
     none: 'OpenStreetMap doesn’t know a way around these steps.',
     offline: 'I need internet to look for a way around.',
+    same: 'OpenStreetMap doesn’t show any steps on your walk, so there’s nothing to go around.',
     chips: { show: 'Show the way around', works: 'It works', notWorks: 'It doesn’t work', unknown: 'I’m not sure', better: 'I know a better way', notNow: 'Not now' },
   },
   street: {
@@ -412,7 +420,11 @@ const en: Script = {
     kept: s => `Added ${s.street}. We’ll check it with the rest.`,
     failed: 'I couldn’t find a way on foot there. Try other points.',
     offline: 'I need internet to add a street.',
-    chips: { add: 'Add a street', keep: 'Keep this street', again: 'Try again', cancel: 'Cancel' },
+    busy: 'The map service is busy right now. Try again in a minute.',
+    tooFar: 'That’s a bit far from your walk. Tap closer to it.',
+    tooLong: 'That’s a long way. Try a shorter street.',
+    removed: s => `Took ${s.street} off your map.`,
+    chips: { add: 'Add a street', keep: 'Keep this street', again: 'Try again', cancel: 'Cancel', remove: 'Remove this street' },
   },
   narrow: { ask: 'Is there a narrow place anywhere on this walk?', chips: { yes: 'Yes, I’ll show you', no: 'No narrow places', unknown: 'I’m not sure' } },
   messages: {
@@ -425,6 +437,7 @@ const en: Script = {
     unsure: 'I’m not sure which spot they mean. Can you tap it?',
     noSpot: 'This one isn’t about a particular spot.',
     unplaced: 'I can’t tell where this is. Ask the visitor, or tap it.',
+    unreadable: 'I can’t read this language yet. Tap the spot on the map, or ask the visitor.',
     tap: 'Tap the spot on the map.',
     filed: s => `Done. It’s on ${s.spot}.`,
     learned: 'Next time, I’ll suggest that spot for messages like it.',
@@ -448,6 +461,7 @@ const en: Script = {
     none: 'Nothing’s come up more than once yet.',
     chips: { open: 'Show me', next: 'Next' },
   },
+  photo: { unchecked: 'Not checked yet', checked: s => `You checked this on ${s.date}`, removed: 'You took this off your map' },
   model: {
     download: s => `I need a one-time ${s.mb} MB download to read messages offline.`,
     downloadChip: s => `Download ${s.mb} MB`,
@@ -626,6 +640,7 @@ const es: Script = {
     unchecked: 'De acuerdo. No lo sugeriré hasta que lo revises.',
     none: 'Según OpenStreetMap, no hay otro camino que evite estos escalones.',
     offline: 'Necesito internet para buscar otro camino.',
+    same: 'OpenStreetMap no muestra escalones en tu recorrido, así que no hay nada que evitar.',
     chips: { show: 'Ver el otro camino', works: 'Sí sirve', notWorks: 'No sirve', unknown: 'No sé', better: 'Conozco uno mejor', notNow: 'Ahora no' },
   },
   street: {
@@ -637,7 +652,11 @@ const es: Script = {
     kept: s => `Agregué ${s.street}. La revisamos con lo demás.`,
     failed: 'No encontré un camino a pie ahí. Prueba con otros puntos.',
     offline: 'Necesito internet para agregar una calle.',
-    chips: { add: 'Agregar una calle', keep: 'Guardar esta calle', again: 'Intentar de nuevo', cancel: 'Cancelar' },
+    busy: 'El servicio de mapas está ocupado. Inténtalo en un minuto.',
+    tooFar: 'Eso queda un poco lejos de tu recorrido. Toca más cerca.',
+    tooLong: 'Es un camino muy largo. Prueba con una calle más corta.',
+    removed: s => `Quité ${s.street} de tu mapa.`,
+    chips: { add: 'Agregar una calle', keep: 'Guardar esta calle', again: 'Intentar de nuevo', cancel: 'Cancelar', remove: 'Quitar esta calle' },
   },
   narrow: { ask: '¿Hay algún paso angosto en el recorrido?', chips: { yes: 'Sí, te lo muestro', no: 'No hay pasos angostos', unknown: 'No sé' } },
   messages: {
@@ -650,6 +669,7 @@ const es: Script = {
     unsure: 'No sé bien de qué punto habla. ¿Lo tocas?',
     noSpot: 'Este no habla de un punto en particular.',
     unplaced: 'No sé dónde es. Pregúntale al visitante o tócalo tú.',
+    unreadable: 'Todavía no puedo leer este idioma. Toca el punto en el mapa o pregúntale al visitante.',
     tap: 'Toca el punto en el mapa.',
     filed: s => `Listo, quedó en ${s.spot}.`,
     learned: 'La próxima vez te sugeriré ese punto para mensajes así.',
@@ -673,6 +693,7 @@ const es: Script = {
     none: 'Todavía nada se repite.',
     chips: { open: 'Muéstrame', next: 'Siguiente' },
   },
+  photo: { unchecked: 'Sin revisar todavía', checked: s => `Lo revisaste el ${s.date}`, removed: 'Lo quitaste de tu mapa' },
   model: {
     download: s => `Necesito una descarga única de ${s.mb} MB para leer mensajes sin internet.`,
     downloadChip: s => `Descargar ${s.mb} MB`,

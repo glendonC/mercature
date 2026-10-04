@@ -623,6 +623,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
           { id: 'without', label: s.model.withoutChip, onClick: () => withoutAi(row) },
         ];
       } else if (message?.spot) { const target = targetOf(message.spot); lines.push(s.messages.filed({ spot: target ? spotWords(target) : message.spot })); }
+      else if (!readable(row.text) && !message?.spot) lines.push(s.messages.unreadable);
       else if (step.another || !answer) lines.push(s.messages.tap);
       else if (first && answer.remembered) lines.push(s.messages.remembered({ spot: spotWords(first) }), s.messages.spot({ spot: spotWords(first) }));
       else if (first && answer.status === 'ready') lines.push(s.messages.spot({ spot: spotWords(first) }));
