@@ -1016,7 +1016,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { if (then === EDITED) { finish(); return; } history.current.push(step); setStep(then); setAck(''); } };
   } else if (step.id === 'edit') {
     // After a change, what visitors now read is all she hears before the choices.
-    if (!result) lines.push(...(step.mode === 'add' ? [s.edit.addSpot, s.edit.addSpotTap] : [step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask]));
+    if (!result) lines.push(...(step.mode === 'add' ? [data.views.length ? s.edit.addSpot : s.edit.addSpotMapped, s.edit.addSpotTap] : [step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask]));
     if (!step.mode) chips = [{ id: 'add', label: s.edit.chips.addSpot, onClick: () => go({ id: 'edit', mode: 'add' }) }, { id: 'change', label: s.edit.chips.changeSpot, onClick: () => go({ id: 'edit', mode: 'change' }) },
       { id: 'street', label: s.edit.chips.addStreet, onClick: () => go({ id: 'street' }) }, { id: 'note', label: s.edit.chips.note, onClick: () => go({ id: 'edit', mode: 'note' }) }];
     // Every change she made stays beside the choices while she edits: a tap flies the map there, Undo takes it back.
@@ -1050,7 +1050,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     for (const [key, said] of Object.entries(edits.answers)) {
       const item = items.find(one => one.key === key); if (!item) continue;
       const spot = 'spot' in item ? item.spot : null, title = spot ? tagOf({ kind: 'spot', id: spot.id }) : capital(s.words.marks[(item as { mark: MarkKind }).mark]((item as { count: number }).count));
-      const chip = (s.check.answers as Record<string, Record<string, string> | undefined>)[said.question]?.[said.answer] ?? said.answer;
+      const chip = saidLabel(key) ?? said.answer;
       list.push({ id: `answer:${key}`, kind: kindOf(spot ? spot.findings[0]?.concept ?? '' : (item as { mark: MarkKind }).mark), label: said.answer === 'notThere' || said.answer === 'gone' ? s.changes.takenOff({ tag: title }) : `${title}: ${chip}`,
         points: spot ? [spot.at] : (item as { points: Point[] }).points, undo: () => {
           edit(edits => setAnswer(edits, key, null));
