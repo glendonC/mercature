@@ -16,27 +16,32 @@
 /* Map words and markers, upright over the map */
 .route-labels, .route-markers { position: absolute; inset: 0; pointer-events: none; }
 .route-labels span { position: absolute; transform: translate(-50%, -50%); max-width: 180px; font-size: var(--text-caption); line-height: 1.2; text-align: center; color: var(--muted); text-shadow: var(--halo, 0 0 2px var(--paper), 0 0 6px var(--paper), 0 0 12px var(--paper)); }
+/* Markers: a thin ring in the state colour around a small core, on a light glass disc; a square is the operator's own record */
 .route-marker { position: absolute; z-index: 2; display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; background: transparent; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
 .route-marker:focus-visible { outline: none; }
 .route-marker:focus-visible .route-marker-dot { outline: 2px solid var(--ink); outline-offset: 5px; }
-.route-marker-dot { position: relative; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--blocked); box-shadow: 0 0 0 2px var(--surface), 0 2px 6px rgb(20 22 24 / 0.22); color: var(--on-primary); font-size: 13px; font-weight: 500; line-height: 1; transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
-.route-marker[data-state=open] .route-marker-dot::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 2px solid var(--blocked); opacity: 0; animation: route-pulse 2.4s var(--ease) infinite; }
-.route-marker[data-state=barrier] .route-marker-dot { border-radius: 4px; width: 17px; height: 17px; }
-.route-marker[data-state=check] .route-marker-dot { background: var(--surface); border: 2.5px dashed var(--blocked); }
-.route-marker[data-state=not-barrier] .route-marker-dot { width: 13px; height: 13px; background: var(--surface); border: 2.5px solid var(--unknown); }
-.route-marker[data-state=no-photos] .route-marker-dot { width: 15px; height: 15px; background: repeating-linear-gradient(45deg, var(--unknown) 0 2px, var(--surface) 2px 4.5px); border: 1.5px solid var(--unknown); }
-.route-marker[data-state=landmark] .route-marker-dot { width: 11px; height: 11px; background: var(--ink); }
-.route-marker[data-state=clear] .route-marker-dot { width: 13px; height: 13px; background: var(--reachable); }
-.route-marker[data-state=fixed] .route-marker-dot { width: 17px; height: 17px; border-radius: 4px; background: var(--reachable); }
-.route-marker[data-state=fixed] .route-marker-dot::before { content: ''; width: 7px; height: 3.5px; border: solid var(--on-primary); border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
-.route-marker[data-rank] .route-marker-dot { width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--surface), 0 0 0 9px color-mix(in srgb, var(--ink) 12%, transparent), 0 2px 8px rgb(20 22 24 / 0.25); }
-.route-marker[data-rank] .route-marker-dot::after { display: none; }
+.route-marker-dot { --ring: var(--blocked); position: relative; display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: rgb(255 255 255 / 0.78); box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 1px rgb(255 255 255 / 0.55), 0 1px 4px rgb(20 22 24 / 0.14); color: var(--ink); font-size: 12px; font-weight: 500; line-height: 1; transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+.route-marker-dot::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--ring); }
+.route-marker[data-state=open] .route-marker-dot::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--blocked); opacity: 0; animation: route-pulse 2.4s var(--ease) infinite; }
+.route-marker[data-state=barrier] .route-marker-dot, .route-marker[data-state=fixed] .route-marker-dot { border-radius: 3px; }
+.route-marker[data-state=barrier] .route-marker-dot::before { width: 6px; height: 6px; border-radius: 1px; }
+.route-marker[data-state=check] .route-marker-dot { border: 1.5px dashed var(--blocked); box-shadow: 0 1px 4px rgb(20 22 24 / 0.14); }
+.route-marker[data-state=check] .route-marker-dot::before, .route-marker[data-state=not-barrier] .route-marker-dot::before { display: none; }
+.route-marker[data-state=not-barrier] .route-marker-dot { --ring: var(--unknown); width: 12px; height: 12px; }
+.route-marker[data-state=no-photos] .route-marker-dot { --ring: var(--unknown); width: 13px; height: 13px; }
+.route-marker[data-state=no-photos] .route-marker-dot::before { width: 9px; height: 1.5px; border-radius: 1px; transform: rotate(-45deg); }
+.route-marker[data-state=fixed] .route-marker-dot, .route-marker[data-state=clear] .route-marker-dot { --ring: var(--reachable); }
+.route-marker[data-state=fixed] .route-marker-dot::before { width: 6px; height: 3px; border-radius: 0; background: none; border: solid var(--reachable); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
+.route-marker[data-state=landmark] .route-marker-dot { --ring: var(--ink); width: 11px; height: 11px; box-shadow: inset 0 0 0 1px var(--ink), 0 1px 3px rgb(20 22 24 / 0.12); }
+.route-marker[data-state=landmark] .route-marker-dot::before { width: 4px; height: 4px; }
+.route-marker[data-rank] .route-marker-dot { --ring: var(--ink); width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgb(255 255 255 / 0.88); box-shadow: inset 0 0 0 1.5px var(--ink), 0 0 0 4px rgb(255 255 255 / 0.5), 0 1px 5px rgb(20 22 24 / 0.16); }
+.route-marker[data-rank] .route-marker-dot::before, .route-marker[data-rank] .route-marker-dot::after { display: none; }
 .route-marker[data-state=no-photos], .route-marker[data-state=landmark] { z-index: 1; }
 .route-marker[aria-pressed=true], .route-marker[data-rank] { z-index: 3; }
-.route-marker[aria-pressed=true] .route-marker-dot { transform: scale(1.25); box-shadow: 0 0 0 2px var(--ink), 0 0 0 5px var(--surface), 0 3px 10px rgb(20 22 24 / 0.3); }
-/* Messages filed at a spot: a small count above its marker */
-.route-marker-count { position: absolute; left: calc(50% + 5px); bottom: calc(50% + 5px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--radius-pill); background: var(--ink); color: var(--on-primary); box-shadow: 0 0 0 1.5px var(--surface); font-size: 12px; font-weight: 500; line-height: 17px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
-.route-marker-tag { position: absolute; left: 36px; top: 50%; transform: translateY(-50%); padding: 3px 9px; border-radius: var(--radius-pill); background: var(--glass-panel, var(--glass)); box-shadow: var(--shadow-s); font-size: var(--text-caption); white-space: nowrap; color: var(--ink); pointer-events: none; }
+.route-marker[aria-pressed=true] .route-marker-dot { transform: scale(1.2); box-shadow: inset 0 0 0 2px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink), 0 0 12px 5px rgb(255 255 255 / 0.8); }
+/* Messages filed at a spot: a small outlined count above its marker */
+.route-marker-count { position: absolute; left: calc(50% + 5px); bottom: calc(50% + 5px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.92); color: var(--ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 40%, transparent); font-size: var(--text-caption); font-weight: 500; line-height: 16px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
+.route-marker-tag { position: absolute; left: 36px; top: 50%; transform: translateY(-50%); padding: 2px 8px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.82); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--text-caption); letter-spacing: 0.01em; white-space: nowrap; color: var(--ink); pointer-events: none; }
 @keyframes route-pulse { 0% { opacity: 0.55; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.5); } }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
 .route-card-slot { position: absolute; z-index: 6; width: 340px; }
@@ -63,9 +68,11 @@
 .route-overlay .route-photo-ring { stroke: var(--surface); stroke-width: 13px; }
 .route-overlay .route-photo-at { stroke-width: 8px; }
 
-/* The selected spot glows: a white halo on its marker and a ring spreading on the ground */
+/* On the leaning map a marker floats on a hairline above its spot, like a pin on a game map; the selected one glows,
+   with a ring spreading on the ground under it */
+.route-map[data-lean] :is(.route-marker-dot, .route-marker-tag, .route-marker-count) { translate: 0 -11px; }
+.route-map[data-lean] .route-marker::after { content: ''; position: absolute; left: calc(50% - 0.5px); top: calc(50% - 5px); width: 1px; height: 5px; background: color-mix(in srgb, var(--ink) 55%, transparent); pointer-events: none; }
 .route-map[data-lean] .route-marker[aria-pressed=true]::before { content: ''; position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border: 1.5px solid var(--ink); border-radius: 50%; opacity: 0; transform: scaleY(var(--squash, 1)) scale(0.35); animation: map-ground-ring 2s var(--ease) infinite; pointer-events: none; }
-.route-map[data-lean] .route-marker[aria-pressed=true] .route-marker-dot { box-shadow: 0 0 0 2px var(--ink), 0 0 0 5px var(--surface), 0 0 14px 7px rgb(255 255 255 / 0.9), 0 3px 10px rgb(20 22 24 / 0.3); }
 @keyframes map-ground-ring { 0% { opacity: 0.6; transform: scaleY(var(--squash, 1)) scale(0.35); } 100% { opacity: 0; transform: scaleY(var(--squash, 1)) scale(1.8); } }
 @media (prefers-reduced-motion: reduce) {
   .route-map[data-lean] .route-marker[aria-pressed=true]::before { animation: none; opacity: 0.35; transform: scaleY(var(--squash, 1)); }
@@ -75,7 +82,7 @@
 
 @media (max-width: 640px) {
   .route-labels span { font-size: var(--text-phone-min); max-width: 130px; }
-  .route-marker-count { min-width: 19px; height: 19px; font-size: var(--text-phone-min); line-height: 19px; }
+  .route-marker-count { min-width: 18px; height: 18px; font-size: var(--text-phone-min); line-height: 18px; }
   .route-marker-tag { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
