@@ -14,13 +14,13 @@ import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
-import { PhotoWithMarks, Pager, legendOf, type PhotoMark } from '../destinations/RouteInbox';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { iconFor, CopyIcon } from '../ui/icons';
-import { Legend, MARK_ORDER, Tag, markOf, type MarkKind } from '../ui';
+import { iconFor } from '../ui/icons';
+import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, markOf, type MarkKind } from '../ui';
+import { LabelledPhoto, photoOf } from '../photo';
 import Swap from '../fx/Swap';
 import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
-import { Bot, Choices, Line, Words, type Chip } from './Say';
+import { Bot, Options, Typed, type Chip } from './Say';
 import './guide.css';
 import './guide-screen.css';
 
@@ -262,11 +262,6 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return at ? nearestStretch(data, walk, at) : null;
   }
   const removed = (stretches: readonly number[]) => verdictOf(review, stretches) === 'not-barrier';
-  const findingLabels = useMemo(() => new Map(data.findings.map(f => [f.id, f.label])), [data.findings]);
-  const marksOn = (viewId: string): PhotoMark[] => {
-    const scanned = data.marks.filter(mark => mark.viewId === viewId && mark.outline.length > 2).map(mark => ({ ...mark, label: (mark.finding && findingLabels.get(mark.finding)) || mark.label, named: !!mark.finding }));
-    return scanned.length ? scanned : data.findings.filter(f => f.viewId === viewId).map(f => ({ ...f, flagged: f.barrier, named: true }));
-  };
   const monthOf = (iso: string | null | undefined) => { const date = iso ? new Date(iso) : null; return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat(lang === 'es' ? 'es-PE' : 'en-GB', { month: 'long', year: 'numeric' }).format(date) : ''; };
 
   // The walk check: flagged spots first, then stretches no photo shows, then the other kinds a model marked near the walk.
@@ -537,13 +532,20 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // The map keeps clear of the dialogue docked below it, and frames what the step is about once the dialogue has settled.
   const [dockHeight, setDockHeight] = useState(0);
   useLayoutEffect(() => {
-    const element = dock.current;
-    if (!element) return;
-    const measure = () => setDockHeight(element.offsetHeight);
+    const host = screen.current, work = dock.current;
+    if (!host || !work) return;
+    // The line is a new element with each turn, so its size is watched afresh after every render.
+    const measure = () => {
+      const line = host.querySelector<HTMLElement>('.ui-dialogue'), below = line?.offsetHeight ?? 0, above = work.offsetHeight;
+      host.style.setProperty('--dialogue', `${below}px`);
+      setDockHeight(below + (above ? above + 12 : 0));
+    };
     measure();
-    const observer = new ResizeObserver(measure); observer.observe(element);
+    const observer = new ResizeObserver(measure);
+    observer.observe(work);
+    const line = host.querySelector('.ui-dialogue'); if (line) observer.observe(line);
     return () => observer.disconnect();
-  }, []);
+  });
   const inset = safeArea();
   // The map always keeps some room above the dialogue, however tall the dialogue grows, so the walk can still be framed.
   const top = (narrow ? 64 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - 180));
@@ -646,7 +648,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     } else {
       const message = current, replyIn = replyLang ?? replyLanguage(row.language);
       lines.push(s.reply.say({ n: step.at + 1, total: rows.length, language: s.words.languages[replyIn] ?? replyIn }));
-      if (message) { const text = replyText(message, replyIn); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={said === s.reply.copied ? s.reply.copied : s.reply.copy} onCopy={() => copy(text, s.reply.copied)} />; }
+      if (message) { const text = replyText(message, replyIn); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={s.reply.copy} copiedLabel={s.reply.copied} />; }
       chips = [{ id: 'next', label: step.at + 1 < rows.length ? s.messages.chips.next : s.check.chips.next, primary: true, onClick: () => go(nextMessage(step.at)) }];
     }
   } else if (step.id === 'insights') {
@@ -685,23 +687,26 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips = [...helloChips.filter(chip => chip.id === 'check' || chip.id === 'messages').map(chip => ({ ...chip, primary: false })),
         ...(review.messages.length || Object.keys(review.decisions).length || edits.added.length || Object.keys(edits.fixed).length || Object.keys(edits.notes).length || Object.keys(edits.answers).length ? [{ id: 'restart', label: s.restart.chip, onClick: () => setStep({ id: 'note', clearing: true }) }] : [])];
     }
-    if (text) above = <TextBox text={text} lang={noteLang} onLang={setNoteLang} copyLabel={said === s.note.copied ? s.note.copied : s.note.copy} onCopy={() => copy(text, s.note.copied)} />;
+    if (text) above = <TextBox text={text} lang={noteLang} onLang={setNoteLang} copyLabel={s.note.copy} copiedLabel={s.note.copied} />;
   }
 
-  /** The photo for one item of the check, with every mark a model drew on it, where it is, and who it affects. */
+  /** The photo for one item of the check: every outline named on the photo itself, where it is, and who it affects. A tap on an outline moves the conversation to it. */
   function CheckCard({ item, at, affects }: { item: Item; at: number; affects: string }) {
     const [page, setPage] = useState(0);
-    const evidence = 'spot' in item ? item.spot.findings.filter(f => (f.viewId && views.has(f.viewId)) || f.osm) : [];
+    const evidence = 'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : [];
     const lead = evidence[Math.min(page, Math.max(0, evidence.length - 1))] ?? null;
-    const viewId = 'spot' in item ? lead?.viewId ?? null : item.viewId, view = viewId ? views.get(viewId) ?? null : null;
-    const marks = view ? marksOn(view.id) : [];
+    const shown = photoOf(data, 'spot' in item ? lead?.viewId : item.viewId);
+    const pick = (id: string) => {
+      const spot = walk.spots.find(one => one.findings.some(f => f.id === id));
+      const there = spot ? items.findIndex(one => 'spot' in one && one.spot.id === spot.id) : -1;
+      if (there >= 0 && there !== at) go({ id: 'check', at: there });
+    };
     return <section className="gs-card gs-photo" data-tone="dark" aria-label={s.check.progress({ n: at + 1, total: items.length })}>
-      <p className="gs-card-meta"><span>{s.check.progress({ n: at + 1, total: items.length })}</span>{'spot' in item && <span>{spotName(item.spot)}</span>}<span className="gs-affects">{affects}</span></p>
-      {view ? <PhotoWithMarks view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={marks} lead={'spot' in item ? lead : null} t={t} />
+      <p className="gs-card-meta"><span>{s.check.progress({ n: at + 1, total: items.length })}</span>{'spot' in item && <span>{spotName(item.spot)}</span>}{evidence.length > 1 && <span className="gs-pages">
+        {evidence.map((f, i) => <button key={f.id} type="button" className="gs-page" aria-pressed={i === Math.min(page, evidence.length - 1)} aria-label={t.pageOf(i + 1, evidence.length)} onClick={() => setPage(i)} />)}</span>}</p>
+      {shown ? <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={pick} lang={lang} height={narrow ? 220 : undefined} fit={narrow ? 'cover' : 'contain'} />
         : <p className="gs-empty">{data.views.length ? t.noPhotos : s.check.noStreetPhotos}</p>}
-      {lead?.osm && !lead.viewId && <p className="gs-card-meta">{fromRecord(lead.label, lang)} · {t.mapRecord}</p>}
-      {evidence.length > 1 && <Pager at={Math.min(page, evidence.length - 1)} total={evidence.length} go={setPage} t={t} />}
-      {view && marks.length > 0 && <div className="gs-legend"><Legend items={legendOf(marks, lang)} /></div>}
+      <p className="gs-affects">{affects}</p>
     </section>;
   }
 
@@ -714,12 +719,16 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const placeBot = useCallback(() => {
     const element = bot.current, host = screen.current;
     if (!element || !host) return;
-    const box = host.getBoundingClientRect(), size = element.offsetWidth || 52;
-    const focus = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"] .route-marker-dot, .route-marker[data-rank="1"] .route-marker-dot')?.getBoundingClientRect();
+    const box = host.getBoundingClientRect(), size = element.offsetWidth || 44;
+    const marker = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"], .route-marker[data-rank="1"]');
+    const dot = marker?.querySelector('.route-marker-dot')?.getBoundingClientRect();
     const start = walk.start && lens.current ? lens.current.at(walk.start.at) : null;
-    const [x, y] = focus ? [focus.right - box.left + 10, focus.top - box.top - size - 4] : start ? [start[0] + 14, start[1] - size - 18] : [24, 90];
+    // Beside the marker, out and up, on the side away from its caption; never on the marker itself.
+    const away = marker?.dataset.side === 'left' ? 1 : -1;
+    const [cx, cy] = dot ? [dot.left + dot.width / 2 - box.left + away * (28 + size / 2), dot.top + dot.height / 2 - box.top - 28 - size / 2]
+      : start ? [start[0] - 28 - size / 2, start[1] - 28 - size / 2] : [40, 110];
     const floor = (dock.current?.getBoundingClientRect().top ?? box.bottom) - box.top - size - 8;
-    element.style.transform = `translate(${Math.round(Math.max(12, Math.min(box.width - size - 12, x)))}px, ${Math.round(Math.max(72, Math.min(floor, y)))}px)`;
+    element.style.transform = `translate(${Math.round(Math.max(12, Math.min(box.width - size - 12, cx - size / 2)))}px, ${Math.round(Math.max(68, Math.min(floor, cy - size / 2)))}px)`;
     element.dataset.placed = '';
   }, [walk]);
   const onLens = useCallback((next: Lens) => { lens.current = next; placeBot(); }, [placeBot]);
@@ -749,29 +758,29 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         onMarker={id => { const target = markerTarget(id); if (target) select(target); }} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
-    <Bot ref={bot} working={working} size={narrow ? 44 : 52} />
-    <div className="gs-stage" ref={dock}>
-      <div key={turn} className="gs-work" data-content={above ? '' : undefined}>
+    <Bot ref={bot} working={working} />
+    <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
+      <div key={turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}
-        <div className="gs-actions">
-          <Choices chips={chips} />
-          {words && <Words placeholder={s.input.placeholder} send={s.input.send} onSend={text => void words!(text)} disabled={busy === 'reading'} />}
+        {(chips.length > 0 || history.current.length > 0) && <div className="gs-actions">
+          <Options chips={chips} />
           {history.current.length > 0 && <button type="button" className="gs-back" onClick={back}>{s.back}</button>}
-        </div>
+        </div>}
       </div>
-      <Line key={`line ${turn}`} className="gs-line" lines={lines} lang={lang} />
-      {problem && <p className="gs-problem" role="alert">{problem}</p>}
     </div>
+    <Dialogue key={`line ${turn}`} label={t.workspace} lang={lang} meta={step.id === 'check' && item ? s.check.progress({ n: step.at + 1, total: items.length }) : undefined}
+      working={busy === 'reading'} workingLabel={s.model.reading}
+      composer={words ? <Composer label={s.input.placeholder} sendLabel={s.input.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
+      <Typed lines={lines} lang={lang} />
+      {problem && <p className="gs-problem" role="alert">{problem}</p>}
+    </Dialogue>
   </main>;
 }
 
 /** Text she copies for someone else, the whole of it, with its language and Copy inside the box. */
-function TextBox({ text, lang, onLang, copyLabel, onCopy }: { text: string; lang: VisitorLang; onLang: (lang: VisitorLang) => void; copyLabel: string; onCopy: () => void }) {
-  return <section className="gs-card gs-text" data-tone="dark">
-    <div className="gs-text-body" lang={lang}><Swap value={text} lang={lang} /></div>
-    <div className="gs-text-foot">
-      <div className="gs-langs" role="group">{VISITOR_LANGS.map(item => <button key={item.id} type="button" className="gs-lang" aria-pressed={lang === item.id} lang={item.id} onClick={() => onLang(item.id)}>{item.label}</button>)}</div>
-      <button type="button" className="gs-copy" onClick={onCopy}><CopyIcon size={16} /><span>{copyLabel}</span></button>
-    </div>
-  </section>;
+function TextBox({ text, lang, onLang, copyLabel, copiedLabel }: { text: string; lang: VisitorLang; onLang: (lang: VisitorLang) => void; copyLabel: string; copiedLabel: string }) {
+  return <CopyBox className="gs-copybox" text={text} lang={lang} lead copyLabel={copyLabel} copiedLabel={copiedLabel}
+    meta={<span className="gs-langs" role="group">{VISITOR_LANGS.map(item => <button key={item.id} type="button" className="gs-lang" aria-pressed={lang === item.id} lang={item.id} onClick={() => onLang(item.id)}>{item.label}</button>)}</span>}>
+    <Swap value={text} lang={lang} />
+  </CopyBox>;
 }

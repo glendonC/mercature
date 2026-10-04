@@ -1,6 +1,9 @@
 import type { MessageKind, UiLanguage } from '../site/contracts';
 import type { EditKind } from '../edits/store';
 import { KIND_WORDS } from '../edits/words';
+import { esPlace } from '../i18n/names';
+
+export { esPlace };
 
 export type UiLang = UiLanguage;
 export type VisitorLang = 'en' | 'es' | 'ko';
@@ -143,16 +146,6 @@ export function enPlace(name: string): string {
   if (!(/^(Plaza|Iglesia|Catedral|Capilla|Portal|Monasterio|Convento|Palacio|Templo)\b/.test(name) || /\b(ticket booth|entrance|gate|station|square)$/i.test(name))) return name;
   // A name that starts with a common word is a description, so it reads in lower case after "the".
   return /^(Cable|Upper|Lower|Top|Bottom|Old|New|Main|North|South|East|West)\b/.test(name) ? `the ${name.charAt(0).toLocaleLowerCase()}${name.slice(1)}` : `the ${name}`;
-}
-
-/** A place name as Spanish prose needs it after "desde" or "hasta": with its article, and a common noun in lower case. */
-export function esPlace(name: string): string {
-  const first = name.split(' ')[0];
-  if (/^(Boletería|Calle|Entrada|Puerta|Estación|Cresta|Subida)$/.test(first)) return `la ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
-  if (/^(Paseo|Templo)$/.test(first)) return `el ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
-  if (/^(Plaza|Iglesia|Catedral|Capilla|Municipalidad|Casa)$/.test(first)) return `la ${name}`;
-  if (/^(Portal|Monasterio|Convento|Palacio|Museo|Mirador|Mercado|Puente)$/.test(first)) return `el ${name}`;
-  return name;
 }
 
 /** Where a spot is, phrased per language from its landmark. */

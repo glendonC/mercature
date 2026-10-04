@@ -13,32 +13,33 @@
 .gs-place h1 { margin: 0; font-size: var(--font-m); font-weight: 500; line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
 .gs-place p { margin: 1px 0 0; font-size: var(--font-xs); color: var(--muted); }
 
-/* The stage at the bottom: the line of dialogue on its own at the very bottom, and above it, only when a step has them, what the
-   line is about on the left and her choices stacked on the right. Space between them lets taps through to the map. */
-.gs-stage { position: absolute; z-index: 7; left: 50%; bottom: 0; display: grid; gap: 12px; width: min(820px, 100%); max-height: calc(100% - 140px - env(safe-area-inset-top, 0px));
-  transform: translateX(-50%); padding: 12px calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px)); pointer-events: none; }
-.gs-stage > * { pointer-events: auto; }
-.gs-work { display: flex; align-items: flex-end; justify-content: flex-end; gap: 14px; min-height: 0; pointer-events: none; animation: gs-turn-in var(--motion-panel) var(--ease-out) both; }
-.gs-work[data-content] { justify-content: space-between; }
-.gs-work > * { pointer-events: auto; }
+/* Above the shared dialogue at the bottom (src/ui), only when a step has them: what the line is about on the left and her choices
+   stacked on the right. The space between them lets taps through to the map. */
+.gs-work { position: absolute; z-index: 9; left: 50%; bottom: calc(var(--dialogue, 120px) + 12px); width: min(820px, 100% - 32px); max-height: calc(100% - var(--dialogue, 120px) - 150px - env(safe-area-inset-top, 0px));
+  display: flex; transform: translateX(-50%); pointer-events: none; }
+.gs-turn { display: flex; align-items: flex-end; justify-content: flex-end; gap: 14px; width: 100%; min-height: 0; animation: gs-turn-in var(--motion-panel) var(--ease-out) both; }
+.gs-work[data-content] .gs-turn { justify-content: space-between; }
+.gs-turn > * { pointer-events: auto; }
 @keyframes gs-turn-in { from { opacity: 0; translate: 0 6px; } }
 .gs-content { flex: 0 1 460px; min-width: 0; max-height: 100%; overflow-y: auto; scrollbar-width: none; border-radius: 14px; }
 .gs-content::-webkit-scrollbar { display: none; }
-.gs-actions { display: grid; align-content: end; gap: 6px; flex: 0 0 300px; min-width: 0; }
-.gs-line { width: 100%; }
+.gs-actions { display: grid; align-content: end; gap: 4px; flex: 0 0 300px; min-width: 0; }
 .gs-back { justify-self: end; min-height: 32px; padding: 0 8px; border: 0; border-radius: var(--radius-s); background: none; color: var(--muted); font: inherit; font-size: var(--font-xs); text-shadow: var(--halo); cursor: pointer; }
 .gs-back:hover { color: var(--ink); }
 .gs-back:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
-.gs-problem { margin: 0; font-size: var(--font-xs); color: var(--error); text-shadow: var(--halo); }
+.gs-problem { margin: 4px 0 0; font-size: var(--font-xs); color: var(--ui-error); }
 
 /* Cards that open above the dialogue: charcoal glass, white words */
 .gs-card { width: 100%; max-width: 560px; margin: 0; padding: 8px 12px 10px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); color: var(--ui-ink); }
 .gs-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; font-size: var(--font-xs); color: var(--ui-muted); }
 .gs-card-meta .ui-tag { color: var(--ui-ink); }
-.gs-affects { flex-basis: 100%; color: var(--ui-ink); }
 .gs-photo { max-width: min(460px, calc((100svh - 400px) * 4 / 3 + 24px)); }
-.gs-photo .ri-photo { margin: 0; }
-.gs-legend { margin: 6px 0 0; }
+.gs-affects { margin: 6px 0 0; font-size: var(--font-xs); color: var(--ui-ink); }
+.gs-pages { display: inline-flex; gap: 2px; margin-inline-start: auto; }
+.gs-page { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.gs-page::before { content: ''; display: block; width: 6px; height: 6px; margin: auto; border-radius: 50%; background: rgb(255 255 255 / 0.4); }
+.gs-page[aria-pressed=true]::before { background: #fff; }
+.gs-page:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -2px; }
 .gs-empty { margin: 4px 0; font-size: var(--font-s); color: var(--ui-muted); }
 .gs-quote blockquote { margin: 0; font-size: var(--font-m); line-height: var(--leading-read); overflow-wrap: anywhere; }
 .gs-insights { display: grid; gap: 2px; padding: 4px 12px; list-style: none; }
@@ -49,7 +50,9 @@
 .gs-inline:hover { background: var(--ui-hover); }
 .gs-inline:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -2px; }
 
-/* Text she copies: all of it shown, the language and Copy inside the box */
+/* Text she copies (the shared copy box): its language switch sits inside, beside Copy */
+.gs-copybox { width: 100%; max-width: 560px; }
+.gs-langs { display: inline-flex; margin-inline-start: -8px; }
 .gs-text { padding: 10px 12px 4px; }
 .gs-text-body { font-size: var(--font-m); line-height: var(--leading-read); white-space: pre-line; overflow-wrap: anywhere; }
 .gs-text-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; border-top: var(--hair-width) solid var(--ui-hair); }
@@ -64,13 +67,11 @@
   .gs-bar { height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) calc(4px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px)); }
   .guide-screen .destination-map-controls { top: calc(64px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
   .guide-screen .destination-map-controls button:not(:last-child) { display: none; }
-  .gs-stage { width: 100%; gap: 8px; max-height: calc(100% - 120px - env(safe-area-inset-top, 0px)); padding: 8px calc(12px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px)); }
-  .gs-work, .gs-work[data-content] { flex-direction: column; align-items: stretch; gap: 8px; overflow-y: auto; scrollbar-width: none; }
+  .gs-work { width: calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); bottom: calc(var(--dialogue, 120px) + 8px); max-height: calc(100% - var(--dialogue, 120px) - 120px - env(safe-area-inset-top, 0px)); }
+  .gs-turn, .gs-work[data-content] .gs-turn { flex-direction: column; align-items: stretch; gap: 8px; overflow-y: auto; scrollbar-width: none; }
   .gs-content, .gs-actions { flex: none; }
-  .gs-photo .ri-photo-frame { max-height: 28svh; }
-  .gs-card { max-width: none; }
-  .gs-photo { max-width: none; }
+  .gs-card, .gs-photo, .gs-copybox { max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gs-work { animation: none; }
+  .gs-turn { animation: none; }
 }

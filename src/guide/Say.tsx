@@ -1,6 +1,6 @@
-import { forwardRef, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { forwardRef, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { GuideAvatar } from '../components/Companion';
-import { EnterIcon } from '../ui/icons';
+import { Choice, Choices, Companion } from '../ui';
 import './guide.css';
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,11 +19,10 @@ function untypedHighlight(): Highlight | null {
 }
 
 /**
- * What the guide says: one clean line at the bottom of the screen, as a game shows its dialogue, white on charcoal glass.
- * New words type in quickly; with reduced motion, or where the browser cannot paint a highlight, they show at once.
- * live: the line is announced when its words change.
+ * The guide's words inside the shared Dialogue: new words type in quickly, within 1.1 s; with reduced motion, or where the
+ * browser cannot paint a highlight, they show at once. The Dialogue announces them.
  */
-export function Line({ lines, lang, live = true, className }: { lines: readonly string[]; lang?: string; live?: boolean; className?: string }) {
+export function Typed({ lines, lang }: { lines: readonly string[]; lang?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const text = lines.join('\n');
   useLayoutEffect(() => {
@@ -50,40 +49,21 @@ export function Line({ lines, lang, live = true, className }: { lines: readonly 
     frame = requestAnimationFrame(type);
     return () => { cancelAnimationFrame(frame); clearTimeout(done); highlight.delete(range); };
   }, [text]);
-  return <div ref={box} className={className ? `guide-line ${className}` : 'guide-line'} lang={lang} role={live ? 'status' : undefined} aria-live={live ? 'polite' : undefined}>
-    {lines.map((line, i) => <p key={i}>{line}</p>)}
-  </div>;
+  return <div ref={box} className="guide-typed" lang={lang}>{lines.map((line, i) => <p key={i}>{line}</p>)}</div>;
 }
 
-/** The guide itself, out in the world: the grey avatar on its own, placed by the screen beside what it is talking about. */
-export const Bot = forwardRef<HTMLDivElement, { working?: boolean; size?: number; className?: string; style?: CSSProperties }>(function Bot({ working = false, size = 52, className, style }, ref) {
-  return <div ref={ref} className={className ? `guide-bot ${className}` : 'guide-bot'} style={style} aria-hidden="true"><GuideAvatar size={size} working={working} /></div>;
+/** The guide itself, out in the world: the avatar in the shared companion disc, placed by the screen beside what it talks about. */
+export const Bot = forwardRef<HTMLDivElement, { working?: boolean; className?: string }>(function Bot({ working = false, className }, ref) {
+  return <div ref={ref} className={className ? `guide-bot ${className}` : 'guide-bot'} aria-hidden="true"><Companion working={working}><GuideAvatar size={36} working={working} /></Companion></div>;
 });
 
 export type Chip = { id: string; label: string; onClick: () => void; primary?: boolean; icon?: ReactNode; disabled?: boolean; pressed?: boolean; lang?: string };
 
-/** Her choices, stacked as a game lists them, each with the number key that picks it. The expected one is white. */
-export function Choices({ chips, label, keys = true }: { chips: readonly Chip[]; label?: string; keys?: boolean }) {
+/** Her choices, stacked as a game lists them, each with the number key that picks it on a keyboard. The expected one is white. */
+export function Options({ chips, label }: { chips: readonly Chip[]; label?: string }) {
   if (!chips.length) return null;
-  return <div className="guide-choices" role="group" aria-label={label}>
-    {chips.map((chip, i) => <button key={chip.id} type="button" className="guide-choice" data-primary={chip.primary || undefined} aria-pressed={chip.pressed}
-      disabled={chip.disabled} lang={chip.lang} onClick={chip.onClick} aria-keyshortcuts={keys && i < 9 ? String(i + 1) : undefined}>
-      {keys && i < 9 && <span className="guide-key" aria-hidden="true">{i + 1}</span>}{chip.icon}<span className="guide-choice-label">{chip.label}</span>
-    </button>)}
-  </div>;
-}
-
-/** Her own words: one line, sent with the button inside the field. */
-export function Words({ placeholder, send, onSend, disabled = false, lang }: { placeholder: string; send: string; onSend: (text: string) => void; disabled?: boolean; lang?: string }) {
-  const [text, setText] = useState('');
-  const submit = (event?: FormEvent) => {
-    event?.preventDefault();
-    const words = text.trim();
-    if (!words || disabled) return;
-    setText(''); onSend(words);
-  };
-  return <form className="guide-words" onSubmit={submit}>
-    <input className="guide-words-field" value={text} maxLength={300} placeholder={placeholder} aria-label={placeholder} lang={lang} enterKeyHint="send" onChange={event => setText(event.target.value)} />
-    <button type="submit" className="guide-words-send" aria-label={send} disabled={!text.trim() || disabled}><EnterIcon size={18} /></button>
-  </form>;
+  return <Choices label={label} className="guide-choices">
+    {chips.map((chip, i) => <Choice key={chip.id} lead={chip.primary} selected={chip.pressed} disabled={chip.disabled} lang={chip.lang} onClick={chip.onClick}
+      aria-keyshortcuts={i < 9 ? String(i + 1) : undefined} icon={i < 9 ? <span className="guide-key" aria-hidden="true">{i + 1}</span> : chip.icon}>{chip.label}</Choice>)}
+  </Choices>;
 }
