@@ -217,19 +217,12 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   // On a phone behind the reveal, the sheet starts low and the map keeps the reveal's framing; a swipe or a tap lifts it.
   const [peek, setPeek] = useState(settled);
   const peeking = narrow && peek && pane.kind === 'inbox';
-  const refit = useRef(false);
   useEffect(() => { if (pane.kind !== 'inbox') setPeek(false); }, [pane.kind]);
+  // Once the sheet has moved, the walk is framed again in the map left above it.
   function lift(open: boolean) {
-    setPeek(!open); refit.current = true;
+    setPeek(!open); aim({ kind: 'fit' });
     if (!open) sheet.current?.scrollTo({ top: 0 });
   }
-  // Once the sheet has moved, the walk is framed again in the map left above it.
-  useEffect(() => {
-    if (!refit.current) return;
-    refit.current = false;
-    const timer = setTimeout(() => map.current?.fit(true), quiet() ? 0 : 260);
-    return () => clearTimeout(timer);
-  }, [peek]);
   const swipe = useRef<{ id: number; y: number; handle: boolean } | null>(null);
   const swiped = useRef(false);
   // Hover: a marker under a fine pointer or at keyboard focus, or the marker a row in the panel points at.
@@ -283,24 +276,53 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [clearing, setClearing] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(0);
+  // What the map shows for the open pane: the whole walk, or the spots an answer points to. On a phone it waits until the sheet has
+  // settled, since a new pane or an answer easing in changes its height, then frames them in the map the sheet leaves free, and
+  // follows the sheet for a moment longer; a tap or wheel on the map, or a flight to one spot, lets it go.
+  type Aim = { kind: 'fit' } | { kind: 'frame'; points: Point[] };
+  const aiming = useRef<{ aim: Aim; until: number } | null>(null), aimTimer = useRef(0);
+  function aim(next: Aim | null) {
+    aiming.current = next && { aim: next, until: performance.now() + 1200 };
+    clearTimeout(aimTimer.current);
+    if (next) aimTimer.current = window.setTimeout(applyAim, narrow ? 140 : 0);
+  }
+  function applyAim() {
+    const now = aiming.current?.aim;
+    if (!now || !map.current) return;
+    if (now.kind === 'fit') { map.current.fit(true); return; }
+    const inset = safeArea();
+    map.current.frame(now.points, narrow ? { top: 130 + inset.top, right: 30 + inset.right, bottom: (sheet.current?.offsetHeight ?? 300) + 20 + inset.bottom, left: 30 + inset.left }
+      : { top: 110 + inset.top, right: 440 + inset.right, bottom: 60 + inset.bottom, left: 60 + inset.left });
+  }
+  useEffect(() => {
+    if (!aiming.current || performance.now() > aiming.current.until) return;
+    clearTimeout(aimTimer.current);
+    aimTimer.current = window.setTimeout(applyAim, narrow ? 140 : 0);
+  }, [sheetHeight]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const letGo = (event: Event) => { if ((event.target as Element | null)?.closest?.('.ri-map')) aiming.current = null; };
+    addEventListener('pointerdown', letGo, true);
+    addEventListener('wheel', letGo, { capture: true, passive: true });
+    return () => { removeEventListener('pointerdown', letGo, true); removeEventListener('wheel', letGo, true); clearTimeout(aimTimer.current); };
+  }, []);
   function fly(target: Target | null) {
     const at = target && pointOf(target);
     if (!at || !map.current) return;
+    aim(null);
     const { width, height, fitK } = map.current.size();
     const screen: Point = narrow ? [width / 2, Math.max(150, (height - sheetHeight) * 0.55)] : [Math.max(260, (width - 400) * 0.5), height * 0.5];
     map.current.focus(at, screen, fitK * 1.8);
   }
+  /** The spots an answer points to, framed together; without any, the whole walk. */
   function frameAll(keys: readonly string[]) {
     const points = keys.map(targetOf).filter((target): target is Target => !!target).map(pointOf).filter((point): point is Point => !!point);
-    if (!points.length || !map.current) return;
-    // Wait for the panel to show the answer, so its real height is known.
-    requestAnimationFrame(() => requestAnimationFrame(() => map.current?.frame(points, narrow ? { top: 130, right: 30, bottom: (sheet.current?.offsetHeight ?? 300) + 20, left: 30 } : { top: 110, right: 440, bottom: 60, left: 60 })));
+    aim(points.length ? { kind: 'frame', points } : { kind: 'fit' });
   }
   function openSpot(target: Target, move = true) {
     setPane({ kind: 'spot', target }); setPage(0); setEditing(null); setSaid('');
     if (move) fly(target);
   }
-  function home() { setPane({ kind: 'inbox' }); setEditing(null); setSaid(''); setLine(''); map.current?.fit(true); }
+  function home() { setPane({ kind: 'inbox' }); setEditing(null); setSaid(''); setLine(''); aim({ kind: 'fit' }); }
   // An editor opened low in the panel scrolls into view, so a phone shows it above the fold, and stays in view as it grows
   // (typing adds the row for the note's language).
   useEffect(() => {
@@ -339,7 +361,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     // since a message she placed since may change where it points.
     const known = messageOf(id);
     if (known && (known.spot || !ai)) { show(known); return; }
-    setPending({ id, text, language }); setLine('');
+    setPending({ id, text, language }); setLine(''); aim({ kind: 'fit' });
   }
   // A new message is read once the model is ready or found stored on this device, while its pane is open.
   useEffect(() => {
@@ -351,7 +373,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const answer = message.answer;
     setLine(!answer ? message.spot ? w.line.linked : w.line.manual : lineFor(answer, message.spot));
     const target = message.spot ? targetOf(message.spot) : null;
-    if (target) fly(target); else if (answer?.candidates.length) frameAll(answer.candidates);
+    if (target) fly(target); else frameAll(answer?.candidates ?? []);
   }
   function lineFor(answer: ModelAnswer, spot: string | null) {
     // Placed by her tap, anywhere but where a sure answer filed itself: the line says it is placed.
@@ -386,7 +408,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   }
   function withoutAi(id: string, text: string, language: string) {
     commit(review => logMessage(review, { text, language, answer: null, spot: null }, id));
-    setPending(null); setLine(w.line.manual);
+    setPending(null); setLine(w.line.manual); aim({ kind: 'fit' });
   }
   async function download() {
     if (!place || busy) return;

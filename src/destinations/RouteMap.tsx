@@ -171,10 +171,11 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const free: Box = { left: i.left + w * 0.05, top: i.top + h * 0.05, right: width - i.right - w * 0.05, bottom: height - i.bottom - h * 0.05 };
     return { flat, free, key: [width, height, i.top, i.right, i.bottom, i.left].join(' ') };
   }, [walk]);
-  /** The lean for a screen and its free box, turned to lay the walk across or stand it upright, whichever shows it larger. */
+  /** The lean for a screen, turned to lay the walk across or stand it upright, whichever shows it larger in the free box the screen
+   * first has. It is kept for that screen size, so a sheet growing or shrinking never turns the map under her. */
   const aims = useRef(new Map<string, Tilt>());
   const tiltOf = useCallback((width: number, height: number): Tilt => {
-    const { flat, free, key } = fitFlat(width, height), known = aims.current.get(key);
+    const { flat, free } = fitFlat(width, height), key = `${width} ${height}`, known = aims.current.get(key);
     if (known) return known;
     if (!width || !height) return tiltFor(width);
     const [across, upright] = [tiltFor(width).course, 90].map(course => aimed({ ...tiltFor(width), course }, walk.route[0] ?? [0, 0], walk.route.at(-1) ?? [0, 0]));
@@ -342,7 +343,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [chosen?.id, clearBottom]);
 
   useImperativeHandle(ref, () => ({
-    fit: (animate = true) => go(fitCamera(size.width, size.height), animate),
+    fit: (animate = true) => { lastOpened.current = null; go(fitCamera(size.width, size.height), animate); },
     focus: (at, screen, zoom) => {
       const current = live.current ?? fitCamera(size.width, size.height);
       go(clamp(place(at, screen, Math.max(current.k, zoom ?? current.k), goal.current)));
