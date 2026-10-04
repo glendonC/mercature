@@ -8,7 +8,7 @@ export type VisitorLang = 'en' | 'es' | 'ko';
 /** The route screen's strings. The Spanish is unreviewed by a native speaker. */
 export const COPY = {
   en: {
-    workspace: 'Route workspace', walk: (from: string, m: number) => `From ${from}, ${m} m on foot`,
+    workspace: 'Route workspace', walk: (from: string, m: number) => `From ${enPlace(from)}, ${m} m on foot`,
     range: (from: number, to: number) => `${from} to ${to} m`, noPhotos: 'No photos here', mapRecord: 'OpenStreetMap record, unverified',
     map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' },
     pageOf: (n: number, total: number) => `${n} of ${total}`, previous: 'Previous', next: 'Next', whole: 'Show the whole photo', closer: 'Show the marked part',
@@ -18,12 +18,12 @@ export const COPY = {
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
       messages: 'Messages', add: 'Add a message', example: 'Example', translated: 'Machine-translated', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
-      guide: 'Tap a marker for its photo, or open a message.', start: 'Start',
+      guide: 'Tap a marker for its photo, or open a message.', guideMapOnly: 'Tap a marker, or open a message.', start: 'Start',
       found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Visitors raise', scanned: 'Model marks near the walk', scannedKinds: (n: number) => n === 1 ? '1 kind' : `${n} kinds`, flaggedSpots: 'Flagged spots', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
       paste: 'Paste what a visitor wrote.', read: 'Read message', cancel: 'Cancel',
       about: 'About', reply: 'Reply', copyReply: 'Copy reply', filed: (spot: string) => `Filed on ${spot}`, placed: 'Filed',
-      line: { reading: 'Reading the message…', ready: 'Filed on the closest match. Tap another spot to move it.', unsure: 'Not sure which spot. Tap it on the map.', none: 'Not sure. Ask the visitor, or tap the spot on the map.', noSpot: 'This message is not about one spot.', manual: 'Tap the spot on the map.', remembered: 'The first spot is where you linked a similar message before.', linked: 'Filed. The reply below uses what your map says.' },
+      line: { reading: 'Reading the message…', ready: 'Filed on the closest match. Tap another spot to move it.', unsure: 'Not sure which spot. Tap it on the map.', none: 'Not sure. Ask the visitor, or tap the spot on the map.', noSpot: 'This message is not about one spot.', manual: 'Tap the spot on the map.', remembered: 'The first spot is where you linked a similar message before.', linked: 'Filed. The reply below uses what your map says.', unreadable: 'This language cannot be read here yet. Tap the spot on the map, or ask the visitor.' },
       visitors: (n: number) => n ? `${n} ${n === 1 ? 'message' : 'messages'} from visitors` : 'No visitor messages here yet',
       suggestion: 'Model suggestion', remove: 'Remove', restore: 'Put back', removed: 'Removed from your map',
       addHere: 'Add a spot here', clearHere: 'Nothing flagged on this stretch',
@@ -32,7 +32,7 @@ export const COPY = {
     },
   },
   es: {
-    workspace: 'Espacio de la ruta', walk: (from: string, m: number) => `Desde ${from === 'Plaza de Armas' ? 'la Plaza de Armas' : from}, ${m} m a pie`,
+    workspace: 'Espacio de la ruta', walk: (from: string, m: number) => `Desde ${esPlace(from)}, ${m} m a pie`,
     range: (from: number, to: number) => `${from} a ${to} m`, noPhotos: 'No hay fotos aquí', mapRecord: 'Registro de OpenStreetMap, sin verificar',
     map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' },
     pageOf: (n: number, total: number) => `${n} de ${total}`, previous: 'Anterior', next: 'Siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
@@ -42,12 +42,12 @@ export const COPY = {
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
       messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', translated: 'Traducción automática', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
-      guide: 'Toca un marcador para ver su foto o abre un mensaje.', start: 'Salida',
+      guide: 'Toca un marcador para ver su foto o abre un mensaje.', guideMapOnly: 'Toca un marcador o abre un mensaje.', start: 'Salida',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', scanned: 'Marcas del modelo cerca del recorrido', scannedKinds: (n: number) => n === 1 ? '1 tipo' : `${n} tipos`, flaggedSpots: 'Puntos señalados', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',
       paste: 'Pega lo que escribió un visitante.', read: 'Leer mensaje', cancel: 'Cancelar',
       about: 'Se refiere a', reply: 'Respuesta', copyReply: 'Copiar respuesta', filed: (spot: string) => `Ubicado en ${spot}`, placed: 'Ubicado',
-      line: { reading: 'Leyendo el mensaje…', ready: 'Ubicado en el punto más probable. Toca otro punto para moverlo.', unsure: 'Sin certeza del punto. Tócalo en el mapa.', none: 'Sin certeza. Pregunta al visitante o toca el punto en el mapa.', noSpot: 'Este mensaje no trata de un punto concreto.', manual: 'Toca el punto en el mapa.', remembered: 'El primer punto es donde antes enlazaste un mensaje parecido.', linked: 'Ubicado. La respuesta de abajo usa lo que dice tu mapa.' },
+      line: { reading: 'Leyendo el mensaje…', ready: 'Ubicado en el punto más probable. Toca otro punto para moverlo.', unsure: 'Sin certeza del punto. Tócalo en el mapa.', none: 'Sin certeza. Pregunta al visitante o toca el punto en el mapa.', noSpot: 'Este mensaje no trata de un punto concreto.', manual: 'Toca el punto en el mapa.', remembered: 'El primer punto es donde antes enlazaste un mensaje parecido.', linked: 'Ubicado. La respuesta de abajo usa lo que dice tu mapa.', unreadable: 'Este idioma aún no se puede leer aquí. Toca el punto en el mapa o pregunta al visitante.' },
       visitors: (n: number) => n ? `${n} ${n === 1 ? 'mensaje' : 'mensajes'} de visitantes` : 'Aún no hay mensajes de visitantes aquí',
       suggestion: 'Sugerencia del modelo', remove: 'Quitar', restore: 'Restaurar', removed: 'Quitado de tu mapa',
       addHere: 'Agregar un punto aquí', clearHere: 'Nada señalado en este tramo',
@@ -72,6 +72,8 @@ export const SUBJECTS: Record<Subject, Where> = {
   kerb: { en: 'a kerb with no ramp in view', es: 'un bordillo sin rampa visible', ko: '경사로가 보이지 않는 연석' },
   path: { en: 'something on the path', es: 'algo en el camino', ko: '길 위의 장애물' },
 };
+/** What OpenStreetMap records at a flagged spot. */
+const MAPPED: Record<Subject, Where> = { steps: SUBJECTS.steps, kerb: { en: 'a raised kerb', es: 'un bordillo alto', ko: '높은 연석' }, path: SUBJECTS.path };
 export const NOTE = {
   title: { en: (from: string, to: string, m: number) => `${cap(enPlace(from))} to ${enPlace(to)}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${esPlace(from)} hasta ${esPlace(to)}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
   /** A spot the model flagged: what street photos show there, which nobody has checked. Under 10 m along, it is at the start of the walk, never "about 0 m". */
@@ -79,6 +81,12 @@ export const NOTE = {
     en: (s: Subject, w: Where, m: number) => m < 10 ? `Street photos show ${SUBJECTS[s].en} ${w.en}, at the start of the walk.` : `Street photos show ${SUBJECTS[s].en} ${w.en}, about ${m} m along the walk.`,
     es: (s: Subject, w: Where, m: number) => m < 10 ? `Las fotos de la calle muestran ${SUBJECTS[s].es} ${w.es}, al inicio del recorrido.` : `Las fotos de la calle muestran ${SUBJECTS[s].es} ${w.es}, a unos ${m} m del inicio.`,
     ko: (s: Subject, w: Where, m: number) => m < 10 ? `거리 사진에 출발점, ${w.ko} 근처 ${SUBJECTS[s].ko}이 보입니다.` : `거리 사진에 출발점에서 약 ${m}m, ${w.ko} 근처 ${SUBJECTS[s].ko}이 보입니다.`,
+  },
+  /** A spot flagged only by OpenStreetMap tags: what the map records there, which nobody has checked. */
+  mapped: {
+    en: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap records ${MAPPED[s].en} ${w.en}, at the start of the walk.` : `OpenStreetMap records ${MAPPED[s].en} ${w.en}, about ${m} m along the walk.`,
+    es: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap registra ${MAPPED[s].es} ${w.es}, al inicio del recorrido.` : `OpenStreetMap registra ${MAPPED[s].es} ${w.es}, a unos ${m} m del inicio.`,
+    ko: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap에 출발점, ${w.ko} 근처 ${MAPPED[s].ko}이 기록되어 있습니다.` : `OpenStreetMap에 출발점에서 약 ${m}m, ${w.ko} 근처 ${MAPPED[s].ko}이 기록되어 있습니다.`,
   },
   /** A spot she added: her own record, in plain words. */
   added: {
@@ -88,6 +96,7 @@ export const NOTE = {
   },
   steps: { en: 'Ask us if steps are hard for you.', es: 'Pregúntenos si los escalones le resultan difíciles.', ko: '계단이 힘드시면 미리 문의해 주세요.' },
   basis: { en: 'From street photos, not measurements.', es: 'Según fotos de la calle, no mediciones.', ko: '측정이 아닌 거리 사진을 바탕으로 합니다.' },
+  basisMapped: { en: 'From OpenStreetMap, not measurements or street photos.', es: 'Según OpenStreetMap, no mediciones ni fotos de la calle.', ko: '측정이나 거리 사진이 아닌 OpenStreetMap을 바탕으로 합니다.' },
 };
 export const REPLY = {
   /** thing: what the photos show (SUBJECTS) at a flagged spot, or her own words (KIND_WORDS) at a spot she added. */
@@ -100,6 +109,11 @@ export const REPLY = {
     en: () => 'Thank you for telling us. We checked the photos of that spot and saw no barrier.',
     es: () => 'Gracias por avisarnos. Revisamos las fotos de ese lugar y no vimos ninguna barrera.',
     ko: () => '알려 주셔서 감사합니다. 그 장소의 사진을 확인했지만 장애물은 보이지 않았습니다.',
+  },
+  'not-barrier-mapped': {
+    en: () => 'Thank you for telling us. We checked that spot and saw no barrier.',
+    es: () => 'Gracias por avisarnos. Revisamos ese lugar y no vimos ninguna barrera.',
+    ko: () => '알려 주셔서 감사합니다. 그 장소를 확인했지만 장애물은 보이지 않았습니다.',
   },
   check: {
     en: () => "Thank you. We'll check that spot on our next walk.",
@@ -126,15 +140,18 @@ function cap(text: string) { return text.charAt(0).toLocaleUpperCase() + text.sl
 
 /** A place name as English prose needs it: "the" before a square, a church or a common noun such as a ticket booth; a bare proper name stays bare. */
 export function enPlace(name: string): string {
-  return /^(Plaza|Iglesia|Catedral|Capilla|Portal|Monasterio|Convento|Palacio|Templo)\b/.test(name) || /\b(ticket booth|entrance|gate|station|square)$/i.test(name) ? `the ${name}` : name;
+  if (!(/^(Plaza|Iglesia|Catedral|Capilla|Portal|Monasterio|Convento|Palacio|Templo)\b/.test(name) || /\b(ticket booth|entrance|gate|station|square)$/i.test(name))) return name;
+  // A name that starts with a common word is a description, so it reads in lower case after "the".
+  return /^(Cable|Upper|Lower|Top|Bottom|Old|New|Main|North|South|East|West)\b/.test(name) ? `the ${name.charAt(0).toLocaleLowerCase()}${name.slice(1)}` : `the ${name}`;
 }
 
 /** A place name as Spanish prose needs it after "desde" or "hasta": with its article, and a common noun in lower case. */
 export function esPlace(name: string): string {
   const first = name.split(' ')[0];
-  if (/^(Boletería|Calle|Entrada|Puerta)$/.test(first)) return `la ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
-  if (/^(Plaza|Iglesia|Catedral|Capilla|Municipalidad|Casa|Estación)$/.test(first)) return `la ${name}`;
-  if (/^(Portal|Monasterio|Convento|Palacio|Templo|Museo|Mirador|Mercado|Puente)$/.test(first)) return `el ${name}`;
+  if (/^(Boletería|Calle|Entrada|Puerta|Estación|Cresta|Subida)$/.test(first)) return `la ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
+  if (/^(Paseo|Templo)$/.test(first)) return `el ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
+  if (/^(Plaza|Iglesia|Catedral|Capilla|Municipalidad|Casa)$/.test(first)) return `la ${name}`;
+  if (/^(Portal|Monasterio|Convento|Palacio|Museo|Mirador|Mercado|Puente)$/.test(first)) return `el ${name}`;
   return name;
 }
 

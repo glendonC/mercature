@@ -58,6 +58,8 @@ const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', 
 const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind]);
 /** What a model's issue type suggests she would call it; she can change it before it goes on her map. */
 const kindOfCategory = (category: string | null): EditKind => category === 'steps-or-slope' ? 'steps' : category === 'path-blocked' ? 'narrow' : 'other';
+/** Whether the model can read a message at all: it knows Latin and Hangul letters only. */
+const readable = (text: string) => /[\p{Script=Latin}\p{Script=Hangul}]/u.test(text);
 const replyLanguage = (language: string): VisitorLang => language === 'es' || language === 'ko' ? language : language === 'qu' ? 'es' : 'en';
 const VISITOR_LANGS: { id: VisitorLang; label: string }[] = [{ id: 'en', label: 'EN' }, { id: 'es', label: 'ES' }, { id: 'ko', label: 'KO' }];
 /** How her answer shows on the map: taken off, fixed, or kept as she says it is. */
@@ -196,7 +198,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return {
       en: bare(named.name.en).match(/\b(at|near|on|by)\b.*$/)?.[0] ?? fallback.en,
       es: bare(named.name.es).match(/\b(en|cerca)\b.*$/)?.[0] ?? fallback.es,
-      ko: spot.from === 0 && walk.start ? where(walk.start, names).ko : landmark?.aliases.ko?.[0] ?? fallback.ko,
+      ko: spot.from === 0 && walk.start ? routeSpots.find(item => !item.stretches.length && item.landmark === walk.start!.name)?.aliases.ko?.[0] ?? where(walk.start, names).ko : landmark?.aliases.ko?.[0] ?? fallback.ko,
     };
   }
   const spotName = (spot: Spot) => {
@@ -339,7 +341,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     try { result = await understand(text, place); } catch { result = { status: 'unavailable' as const, kind: null, category: null, candidates: [] as string[], reason: 'model-failed' as const }; }
     if (mine !== ticket.current) return;
     setReading(null); setBusy(null);
-    const candidates = result.status === 'invalid' ? [] : result.candidates.filter(key => targetOf(key)).slice(0, 3);
+    // The model reads Latin and Hangul letters only: for any other script its spots are noise, so none is offered.
+    const candidates = result.status === 'invalid' || !readable(text) ? [] : result.candidates.filter(key => targetOf(key)).slice(0, 3);
     const answer: ModelAnswer = { status: result.status === 'invalid' ? 'unavailable' : result.status, kind: result.kind, category: result.category, candidates, model: result.model ? `${result.model.id}@${result.model.revision}` : null, ...(result.reason === 'remembered' ? { remembered: true as const } : {}) };
     // The model's spot is only offered: she confirms it before the message is filed.
     commit(review => review.messages.some(message => message.id === id) ? updateMessage(review, id, { answer }) : logMessage(review, { text, language, answer, spot: null }, id));
@@ -450,7 +453,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const subject = spot ? subjectOf(spot) : subjectOfKind(added(target.id)?.kind ?? 'other');
     const at = spot ? whereOf(spot) : nearOf(stretches[0]), from = spot ? spot.from : data.stretches[stretches[0]].from;
     if (fix) return `${REPLY.check[language]().split('.')[0]}. ${fixedLine(spot ? kindOfSubject(subject) : added(target.id)!.kind, at, from, fix.at, language)}`;
-    if (removed(stretches)) return REPLY['not-barrier'][language]();
+    if (removed(stretches)) return REPLY[data.photos.length ? 'not-barrier' : 'not-barrier-mapped'][language]();
     return REPLY.barrier[language]((spot ? SUBJECTS[subject] : KIND_WORDS[added(target.id)?.kind ?? 'other'])[language], at);
   }
   function noteText(language: VisitorLang) {
@@ -459,7 +462,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     for (const spot of walk.spots.filter(item => item.kind === 'flagged')) {
       const fix = isFixed(edits, spot.stretches), subject = subjectOf(spot);
       if (fix) lines.push(fixedLine(kindOfSubject(subject), whereOf(spot), spot.from, fix.at, language));
-      else if (!removed(spot.stretches)) { lines.push(NOTE.barrier[language](subject, whereOf(spot), Math.round(spot.from))); steps ||= subject === 'steps'; }
+      else if (!removed(spot.stretches)) { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, whereOf(spot), Math.round(spot.from))); steps ||= subject === 'steps'; }
       const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
     for (const spot of edits.added) {
@@ -471,7 +474,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!lines.length) return '';
     const end = (name: string) => { const spot = routeSpots.find(item => !item.stretches.length && item.landmark === name); return !spot ? name : language === 'ko' ? spot.aliases.ko?.[0] ?? spot.name.en : spot.name[language]; };
     const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), Math.round(data.lengthMetres)) : data.title;
-    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), NOTE.basis[language]].join('\n');
+    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), (data.photos.length ? NOTE.basis : NOTE.basisMapped)[language]].join('\n');
   }
   function copy(text: string, done: string) { navigator.clipboard.writeText(text).then(() => setSaid(done), () => setSaid(t.copyFailed)); }
 
@@ -528,7 +531,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     : selected && (selected.kind === 'stretch' || selected.kind === 'added') ? stretchesOf(selected).flatMap(index => data.stretches[index].line.map(walk.project)) : null;
   const labels = useMemo(() => {
     const name = (landmark: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === landmark)?.name[lang] ?? fromRecord(landmark, lang);
-    return [...(walk.start ? [{ name: name(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: name(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name, at: l.at }))];
+    return [...(walk.start ? [{ name: name(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: name(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: routeSpots.find(spot => !spot.stretches.length && spot.landmark === l.name)?.name[lang] ?? (l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name), at: l.at }))];
   }, [walk, lang, routeSpots]);
 
   // The map keeps clear of the dialogue docked below it, and frames what the step is about once the dialogue has settled.
@@ -737,7 +740,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   return <main ref={screen} className="guide-screen route-canvas" data-step={step.id} aria-label={t.workspace} lang={lang} style={{ '--dock': `${dockHeight}px` } as CSSProperties}
     onKeyDown={event => { if (event.key === 'Escape' && history.current.length) back(); }}>
     <header className="gs-bar">
-      <div className="gs-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p>{caption && <p>{caption}</p>}</div>
+      <div className="gs-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start ? routeSpots.find(spot => !spot.stretches.length && spot.landmark === walk.start!.name)?.name[lang] ?? walk.start.name : data.title, Math.round(data.lengthMetres))}</p>{caption && <p>{caption}</p>}</div>
       <Menu onHome={onHome} current={shownPlace} onPlace={next => { if (next !== shownPlace) (onPlace ?? onHome)(next); }} />
     </header>
     <div className="gs-map">

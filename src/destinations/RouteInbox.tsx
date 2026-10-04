@@ -35,6 +35,8 @@ const bare = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
 const subjectOf = (findings: readonly Finding[]): Subject => findings.some(f => /steps/.test(f.concept)) ? 'steps' : findings.some(f => f.concept === 'kerb') ? 'kerb' : 'path';
 const subjectOfKind = (kind: EditKind): Subject => kind === 'steps' ? 'steps' : kind === 'kerb' ? 'kerb' : 'path';
 const kindOfSubject = (subject: Subject): EditKind => subject === 'steps' ? 'steps' : subject === 'kerb' ? 'kerb' : 'other';
+/** Whether the model can read a message at all: it knows Latin and Hangul letters only. */
+const readable = (text: string) => /[\p{Script=Latin}\p{Script=Hangul}]/u.test(text);
 const replyLanguage = (language: string): VisitorLang => language === 'es' || language === 'ko' ? language : language === 'qu' ? 'es' : 'en';
 const noteLanguage = (text: string) => guessLanguage(text);
 const VISITOR_LANGS: { id: VisitorLang; label: string }[] = [{ id: 'en', label: 'English' }, { id: 'es', label: 'Español' }, { id: 'ko', label: '한국어' }];
@@ -166,7 +168,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     return {
       en: bare(named.name.en).match(/\b(at|near|on|by)\b.*$/)?.[0] ?? fallback.en,
       es: bare(named.name.es).match(/\b(en|cerca)\b.*$/)?.[0] ?? fallback.es,
-      ko: spot.from === 0 && walk.start ? where(walk.start, names).ko : landmark?.aliases.ko?.[0] ?? fallback.ko,
+      ko: spot.from === 0 && walk.start ? routeSpots.find(item => !item.stretches.length && item.landmark === walk.start!.name)?.aliases.ko?.[0] ?? where(walk.start, names).ko : landmark?.aliases.ko?.[0] ?? fallback.ko,
     };
   }
   const spotName = (spot: Spot) => {
@@ -379,13 +381,14 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   function show(message: LoggedMessage) {
     setPending(null);
     const answer = message.answer;
-    setLine(!answer ? message.spot ? w.line.linked : w.line.manual : lineFor(answer, message.spot));
+    setLine(!answer ? message.spot ? w.line.linked : w.line.manual : lineFor(answer, message.spot, message.text));
     const target = message.spot ? targetOf(message.spot) : null;
     if (target) fly(target); else frameAll(answer?.candidates ?? []);
   }
-  function lineFor(answer: ModelAnswer, spot: string | null) {
+  function lineFor(answer: ModelAnswer, spot: string | null, text: string) {
     // Placed by her tap, anywhere but where a sure answer filed itself: the line says it is placed.
     if (spot && !(answer.status === 'ready' && spot === answer.candidates[0])) return w.line.linked;
+    if (!readable(text)) return w.line.unreadable;
     if (answer.remembered) return w.line.remembered;
     if (answer.status === 'unavailable') return w.line.manual;
     if (!answer.candidates.length) return answer.kind ? w.line.noSpot : w.line.none;
@@ -403,13 +406,14 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     reading.current = null;
     setBusy(null);
     if (result.status === 'invalid') { setLine(w.line.manual); return; }
-    const candidates = result.candidates.filter(key => targetOf(key)).slice(0, 3);
+    // The model reads Latin and Hangul letters only: for any other script its spots are noise, so none is offered.
+    const candidates = readable(text) ? result.candidates.filter(key => targetOf(key)).slice(0, 3) : [];
     const answer: ModelAnswer = { status: result.status, kind: result.kind, category: result.category, candidates, model: result.model ? `${result.model.id}@${result.model.revision}` : null, ...(result.reason === 'remembered' ? { remembered: true as const } : {}) };
     // A sure answer files itself on the first spot; she can move it with one tap.
     const spot = answer.status === 'ready' && candidates[0] ? candidates[0] : null;
     commit(review => review.messages.some(message => message.id === id) ? updateMessage(review, id, { answer, spot }) : logMessage(review, { text, language, answer, spot }, id));
     setPending(null); setReadNow(id);
-    setLine(lineFor(answer, spot));
+    setLine(lineFor(answer, spot, text));
     // The camera follows the answer only while its message is still open.
     if (paneNow.current.kind !== 'message' || paneNow.current.id !== id) return;
     if (spot) fly(targetOf(spot)); else frameAll(candidates);
@@ -529,7 +533,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     : selected && (selected.kind === 'stretch' || selected.kind === 'added') ? stretchesOf(selected).flatMap(index => data.stretches[index].line.map(walk.project)) : null;
   const labels = useMemo(() => {
     const endName = (name: string) => routeSpots.find(spot => !spot.stretches.length && spot.landmark === name)?.name[lang] ?? fromRecord(name, lang);
-    return [...(walk.start ? [{ name: endName(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: endName(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name, at: l.at }))];
+    return [...(walk.start ? [{ name: endName(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: endName(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: routeSpots.find(spot => !spot.stretches.length && spot.landmark === l.name)?.name[lang] ?? (l.kind === 'street' && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name), at: l.at }))];
   }, [walk, lang, routeSpots]);
   const shownView = (() => {
     if (pane.kind !== 'spot') return '';
@@ -552,7 +556,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const subject = spot ? subjectOf(spot.findings) : subjectOfKind(added(target.id)?.kind ?? 'other');
     const at = spot ? whereOf(spot) : nearOf(stretches[0]), from = spot ? spot.from : data.stretches[stretches[0]].from;
     if (fix) return `${REPLY.check[language]().split('.')[0]}. ${fixedLine(spot ? kindOfSubject(subject) : added(target.id)!.kind, at, from, fix.at, language)}`;
-    if (removed(stretches)) return REPLY['not-barrier'][language]();
+    if (removed(stretches)) return REPLY[data.photos.length ? 'not-barrier' : 'not-barrier-mapped'][language]();
     // What the photos show at a flagged spot; her own words at a spot she added.
     return REPLY.barrier[language]((spot ? SUBJECTS[subject] : KIND_WORDS[added(target.id)?.kind ?? 'other'])[language], at);
   }
@@ -567,7 +571,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     for (const spot of walk.spots.filter(item => item.kind === 'flagged')) {
       const fix = isFixed(edits, spot.stretches), subject = subjectOf(spot.findings);
       if (fix) lines.push(fixedLine(kindOfSubject(subject), whereOf(spot), spot.from, fix.at, language));
-      else if (!removed(spot.stretches)) { lines.push(NOTE.barrier[language](subject, whereOf(spot), Math.round(spot.from))); steps ||= subject === 'steps'; }
+      else if (!removed(spot.stretches)) { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, whereOf(spot), Math.round(spot.from))); steps ||= subject === 'steps'; }
       const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
     for (const spot of edits.added) {
@@ -579,7 +583,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (!lines.length) return '';
     const end = (name: string) => { const spot = routeSpots.find(item => !item.stretches.length && item.landmark === name); return !spot ? name : language === 'ko' ? spot.aliases.ko?.[0] ?? spot.name.en : spot.name[language]; };
     const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), Math.round(data.lengthMetres)) : data.title;
-    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), NOTE.basis[language]].join('\n');
+    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), (data.photos.length ? NOTE.basis : NOTE.basisMapped)[language]].join('\n');
   }
   function copy(text: string) { navigator.clipboard.writeText(text).then(() => setSaid(w.copied), () => setSaid(t.copyFailed)); }
 
@@ -640,7 +644,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   </>;
   // The messages come first, since they are her work, and the summary of the walk follows them, in one order on every screen.
   const inbox = <>
-    <p className="ri-guide">{w.guide}</p>
+    <p className="ri-guide">{data.photos.length ? w.guide : w.guideMapOnly}</p>
     {messageList}{summary}
   </>;
 
@@ -738,7 +742,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   return <main ref={root} className="route-inbox route-canvas" data-pane={pane.kind} data-peek={peeking || undefined} style={{ '--peek': `${PEEK}px` } as CSSProperties} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
     <header className="ri-bar">
-      <div className="ri-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p>{caption && <p className="ri-caption">{caption}</p>}</div>
+      <div className="ri-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start ? routeSpots.find(spot => !spot.stretches.length && spot.landmark === walk.start!.name)?.name[lang] ?? walk.start.name : data.title, Math.round(data.lengthMetres))}</p>{caption && <p className="ri-caption">{caption}</p>}</div>
       <Menu onHome={onHome} current={shownPlace} onPlace={place => { if (place !== shownPlace) (onPlace ?? onHome)(place); }} />
     </header>
     <Panel as="aside" phone="sheet" scroll className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined} data-preview={previewing ? '' : undefined}
