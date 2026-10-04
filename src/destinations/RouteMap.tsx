@@ -10,6 +10,8 @@ import { useChanges } from '../fx/changes';
 import type { Point, Run, Walk } from './walk';
 import { AddedIcon, BollardIcon, BrokenPavementIcon, CobblestonesIcon, CrossingIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, iconFor, type Icon } from '../ui/icons';
 import { kindOf } from '../ui/kinds';
+import { useLanguage } from '../i18n';
+import { COPY } from './copy';
 
 export type Insets = { top: number; right: number; bottom: number; left: number };
 /** open: a possible barrier nobody has answered; barrier: she says it is still there; fixed: she fixed it; not-barrier: she says it
@@ -167,6 +169,8 @@ const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 const LEAN_FOR = 1000;
 /** The turntable starts this long after the map first shows, takes this long per turn, and paints at most every this many ms. */
 const TURN_AFTER = 4000, TURN_FOR = 75000, PAINT_EVERY = 33;
+/** While it turns, each spot's caption shows this long before the next one's. */
+const TELL_EVERY = 2500;
 /** Any input stops the turntable for the rest of the visit; the old inbox never turns. */
 let turntableStopped = (() => { try { return new URLSearchParams(location.search).get('ui') === 'inbox'; } catch { return true; } })();
 /** A camera move; arc is how far it draws back halfway, so a long flight keeps both ends in sight. */
@@ -240,11 +244,26 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Judged by its stretches, since a replay hides photos until each lands; a backdrop shows only the markers it is given.
   const mapOnly = data.stretches.length > 0 && data.stretches.every(stretch => !stretch.views.length);
   const records = useMemo(() => mapOnly && !still ? recordsOf(data, walk) : [], [mapOnly, still, data, walk]);
-  const markers = useMemo(() => {
+  const listed = useMemo(() => {
     if (!mapOnly || still) return given;
     const own = given.filter(marker => marker.state !== 'no-photos');
     return own.some(marker => marker.state === 'osm') ? own : [...own, ...records];
-  }, [given, mapOnly, records]);
+  }, [given, mapOnly, still, records]);
+  // While the backdrop turns, its spots say what they are one at a time, in walking order: the one telling and the one before it,
+  // which fades as it rises away.
+  const { lang } = useLanguage();
+  const [told, setTold] = useState<{ now: string; was: string | null } | null>(null);
+  const markers = useMemo(() => {
+    if (!told) return listed;
+    const words = COPY[lang].inbox;
+    return listed.map(marker => {
+      const spot = marker.id === told.now || marker.id === told.was ? walk.spots.find(item => item.id === marker.id) : null;
+      if (!spot) return marker;
+      const subject = spot.kind === 'no-photos' ? 'noPhotos' as const : spot.findings.some(f => /steps/.test(f.concept)) ? 'steps' as const : spot.findings.some(f => f.concept === 'kerb') ? 'kerb' as const : 'path' as const;
+      const from = Math.round(spot.from), icon: MarkerIcon = subject === 'noPhotos' ? 'no-photos' : subject;
+      return { ...marker, tag: `${words.kinds[subject]} · ${from === 0 ? words.start : `${from} m`}`, icon };
+    });
+  }, [listed, told, lang, walk]);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<View | null>(null);
@@ -446,8 +465,22 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       if (event.type === 'pointermove' && ((event as PointerEvent).pointerType !== 'mouse' || !((event as PointerEvent).movementX || (event as PointerEvent).movementY))) return;
       turntableStopped = true; cancelAnimationFrame(frame); off();
     };
+    // The captions take turns from the moment it starts turning, flagged spots first, and stop with it.
+    const order = [...walk.spots.filter(spot => spot.kind === 'flagged'), ...walk.spots.filter(spot => spot.kind === 'no-photos')].map(spot => spot.id);
+    let told = 0, telling = 0, prior: string | null = null;
+    // The next spot in order that stands in the free part of the screen as the map turns, with room for its caption.
+    const tell = () => {
+      const seen = lens(live.current ?? fit, tilt, width, height), i = insetsRef.current;
+      for (let tries = 0; tries < order.length; tries++) {
+        const id = order[told++ % order.length], spot = walk.spots.find(item => item.id === id), at = spot && seen.at(spot.at);
+        if (!at || at[0] < i.left + 24 || at[0] > width - i.right - 24 || at[1] < i.top + 30 || at[1] > height - i.bottom - 16) continue;
+        setTold({ now: id, was: prior }); prior = id; return;
+      }
+      setTold(prior ? { now: '', was: prior } : null); prior = null;
+    };
+    const begin = window.setTimeout(() => { tell(); telling = window.setInterval(tell, TELL_EVERY); }, Math.max(0, TURN_AFTER - (performance.now() - born)));
     const kinds = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
-    const off = () => kinds.forEach(kind => removeEventListener(kind, stop, { capture: true }));
+    const off = () => { kinds.forEach(kind => removeEventListener(kind, stop, { capture: true })); clearTimeout(begin); clearInterval(telling); setTold(null); };
     kinds.forEach(kind => addEventListener(kind, stop, { capture: true, passive: true }));
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
@@ -484,7 +517,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     addEventListener('pointermove', move, { capture: true, passive: true });
     return () => removeEventListener('pointermove', move, { capture: true });
   }, [still]);
-  const lifted = hovered ?? (markers.some(marker => marker.id === pointed) ? pointed : null);
+  const lifted = hovered ?? (still ? told?.now ?? null : markers.some(marker => marker.id === pointed) ? pointed : null);
   const raise = (id: string | null) => { if (pointedNow.current === id) return; pointedNow.current = id; setPointed(id); onHover?.(id); };
 
   // The selected marker, or the one last opened while it is still in view, stays in the free band between the place title
@@ -692,9 +725,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       const side = (['right', 'left'] as const).find(side => {
         const rect = { x: side === 'right' ? at[0] + 14 : at[0] - 14 - w, y: y - h / 2, w, h };
         // A caption stays in the part of the map the page keeps free, so a panel over the map never hides one.
-        if (rect.x < Math.max(8, insets.left - 24) || rect.x + w > size.width - Math.max(8, insets.right - 24) || rect.y + h > size.height - clearBottom || (!raised && rect.y < insets.top - 4) || rect.y < 4) return false;
+        // On a backdrop the free box keeps every caption clear of the page's headline and its rows.
+        if (rect.x < Math.max(8, insets.left - 24) || rect.x + w > size.width - Math.max(8, insets.right - 24) || rect.y + h > size.height - Math.max(clearBottom, still ? insets.bottom : 0) || ((!raised || still) && rect.y < insets.top - 4) || rect.y < 4) return false;
         // The chosen marker's caption may cover other markers; every other caption keeps clear of them.
-        if (taken.some(other => other !== own.get(marker.id) && !(marker.selected && boxes.has(other)) && overlaps(other, rect))) return false;
+        if (taken.some(other => other !== own.get(marker.id) && !((marker.selected || (still && marker.id === lifted)) && boxes.has(other)) && overlaps(other, rect))) return false;
         taken.push(rect);
         return true;
       });
@@ -747,7 +781,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
           {marker.changed && <span className="route-marker-changed" aria-hidden="true" />}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-mark': marker.kind, 'data-changed': marker.changed || undefined, 'data-gone': marker.gone || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-mark': marker.kind, 'data-changed': marker.changed || undefined, 'data-gone': marker.gone || undefined, 'data-leaving': (still && told?.was === marker.id) || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} aria-hidden={marker.gone || undefined} tabIndex={marker.gone ? -1 : undefined}
             onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}

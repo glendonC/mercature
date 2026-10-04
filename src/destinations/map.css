@@ -88,6 +88,11 @@
 .destination-map-controls[data-surface=glass] > .ui-icon-button { padding: 0; border-radius: 50%; color: #f2f3f4; }
 .route-map[data-still], .route-map[data-still]:active { touch-action: auto; cursor: default; }
 .route-map[data-still] .route-marker { pointer-events: none; }
+/* A turning backdrop's captions take turns: each rises in with its marker's lift, and the one before rises away as it fades */
+.route-map[data-still] .route-marker-tag { animation: map-tell-in var(--motion-slow) var(--ease-out) backwards; }
+.route-map[data-still] .route-marker[data-leaving] .route-marker-tag { animation: map-tell-out var(--motion-slow) var(--ease-in-out) forwards; }
+@keyframes map-tell-in { from { opacity: 0; translate: 0 -2px; } }
+@keyframes map-tell-out { to { opacity: 0; translate: 0 -22px; } }
 
 /* Leaning: streets, then blocks with crisp roofs and walls in three tones of light from the left, a faint stone on landmarks,
    and a haze toward the horizon. Roofs ease from the flat map's grey as the map leans. */
