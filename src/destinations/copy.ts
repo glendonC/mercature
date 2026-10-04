@@ -71,10 +71,11 @@ const SUBJECTS: Record<Subject, Where> = {
 };
 export const NOTE = {
   title: { en: (from: string, to: string, m: number) => `${from} to ${to}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${from} hasta ${to}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
+  /** Under 10 m along, a spot is at the start of the walk, never "about 0 m". */
   barrier: {
-    en: (s: Subject, w: Where, m: number) => `${cap(SUBJECTS[s].en)} ${w.en}, about ${m} m along the walk.`,
-    es: (s: Subject, w: Where, m: number) => `${cap(SUBJECTS[s].es)} ${w.es}, a unos ${m} m del inicio.`,
-    ko: (s: Subject, w: Where, m: number) => `출발점에서 약 ${m}m, ${w.ko} 근처에 ${SUBJECTS[s].ko}이 있습니다.`,
+    en: (s: Subject, w: Where, m: number) => m < 10 ? `${cap(SUBJECTS[s].en)} ${w.en}, at the start of the walk.` : `${cap(SUBJECTS[s].en)} ${w.en}, about ${m} m along the walk.`,
+    es: (s: Subject, w: Where, m: number) => m < 10 ? `${cap(SUBJECTS[s].es)} ${w.es}, al inicio del recorrido.` : `${cap(SUBJECTS[s].es)} ${w.es}, a unos ${m} m del inicio.`,
+    ko: (s: Subject, w: Where, m: number) => m < 10 ? `출발점, ${w.ko} 근처에 ${SUBJECTS[s].ko}이 있습니다.` : `출발점에서 약 ${m}m, ${w.ko} 근처에 ${SUBJECTS[s].ko}이 있습니다.`,
   },
   check: {
     en: (_s: Subject, w: Where) => `We have not checked the path ${w.en} yet.`,
