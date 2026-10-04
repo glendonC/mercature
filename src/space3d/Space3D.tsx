@@ -70,7 +70,7 @@ function rgbOf(colour: string): Vec3 {
 /** Lighter, for a mark that must read on the dark glass. */
 const lift = (rgb: Vec3, by: number): Vec3 => rgb.map(c => c + (1 - c) * by) as Vec3;
 /** Her pick: a small white ring with an ink edge (the shader draws the ring; the rest of the look is unused). */
-const PICK_LOOK: Look = { size: 14, fill: [1, 1, 1], fillAlpha: 0, ring: [1, 1, 1], ringWidth: 2, halo: 0, glyph: 0, glyphRgb: [1, 1, 1], glyphSize: 0, square: 0, badge: 0, selected: 0, dim: 0, rank: 0 };
+const PICK_LOOK: Look = { size: 14, fill: [1, 1, 1], fillAlpha: 0, ring: [1, 1, 1], ringWidth: 2, halo: 0, glyph: 0, glyphRgb: [1, 1, 1], glyphSize: 0, square: 0, badge: 0, selected: 0, dim: 0, rank: 0, changed: 0, gone: 0 };
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (t: number) => t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -317,7 +317,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     for (const pin of pins.current) {
       const button = pin.kind === 'marker' ? buttons.current.get(pin.id) : undefined;
       if (!button) continue;
-      const at = project(m, pin.at, box.width, box.height), off = !at || at[0] < 0 || at[1] < 0 || at[0] > box.width || at[1] > box.height;
+      const at = project(m, pin.at, box.width, box.height), off = !at || pin.look.gone > 0.5 || at[0] < 0 || at[1] < 0 || at[0] > box.width || at[1] > box.height;
       if (at) button.style.transform = `translate(${at[0]}px, ${at[1]}px)`;
       if (button.hidden !== off) button.hidden = off;
     }
@@ -331,7 +331,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!m || !box || !r) return;
     let best: { pin: (typeof pins.current)[number]; d: number } | null = null;
     for (const pin of pins.current) {
-      if (pin.kind === 'mark' && camera.current && camera.current.distance > 140) continue;
+      if (pin.kind === 'mark' && camera.current && camera.current.distance > 140 || pin.look.gone > 0.5) continue;
       const at = project(m, pin.at, box.width, box.height);
       if (!at) continue;
       const d = Math.hypot(at[0] - x, at[1] - y), reach = Math.max(22, pin.look.size / 2 + 8) + (pin.scan ? 0 : 4);
@@ -350,7 +350,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   /** Enter or a click on a marker's keyboard button: the same as tapping its marker. */
   const choose = (id: string) => {
     const pin = pins.current.find(item => item.kind === 'marker' && item.id === id);
-    if (!pin) return;
+    if (!pin || pin.look.gone > 0.5) return;
     callbacks.current.onMarker?.(id);
     if (callbacks.current.onPick) report([pin.at[0], pin.at[1], pin.at[2] - pinHeight], id);
   };
@@ -421,7 +421,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-tone={tone} data-ready={loaded > 0 || undefined}>
     {still ? <canvas ref={canvas} className="space3d-canvas" role="img" aria-label={words.label} /> : <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />}
     {!still && <div className="space3d-markers">{markers.map(m => <button key={m.id} ref={button => { if (button) buttons.current.set(m.id, button); else buttons.current.delete(m.id); }}
-      type="button" className="space3d-marker" aria-label={m.label} aria-pressed={m.selected} hidden onClick={() => choose(m.id)} />)}</div>}
+      type="button" className="space3d-marker" aria-label={m.label} aria-pressed={m.selected} aria-hidden={m.gone || undefined} tabIndex={m.gone ? -1 : undefined} hidden onClick={() => choose(m.id)} />)}</div>}
     {!still && <p className="space3d-label">{words.label}</p>}
     {space && loaded < space.pieces.length && <p className="space3d-loading" role="status">{words.loading}</p>}
     {!still && <div className="space3d-controls">

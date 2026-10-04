@@ -6,6 +6,8 @@ export type Rgb = [number, number, number];
 export type Look = {
   size: number; fill: Rgb; fillAlpha: number; ring: Rgb; ringWidth: number; halo: number;
   glyph: number; glyphRgb: Rgb; glyphSize: number; square: number; badge: number; selected: number; dim: number; rank: number;
+  /** changed: the dashed ink ring of a marker her edits changed; gone: not in this view, lifted away and faded out. */
+  changed: number; gone: number;
 };
 
 const css = (name: string, fallback: string) => (typeof document === 'undefined' ? '' : getComputedStyle(document.documentElement).getPropertyValue(name).trim()) || fallback;
@@ -19,9 +21,9 @@ const token = (name: string, fallback: string) => rgbOf(css(name, fallback));
 const WHITE: Rgb = [1, 1, 1], CHARCOAL: Rgb = [0.114, 0.129, 0.145];
 
 /** The map's marker for a state, as map.css draws it: a dot with a ring and a glyph; a possible barrier is dark with its kind's ring and a corner badge. */
-export function lookOf(marker: Pick<Marker, 'state' | 'selected' | 'rank' | 'kind'>, others: boolean): Look {
+export function lookOf(marker: Pick<Marker, 'state' | 'selected' | 'rank' | 'kind' | 'changed' | 'gone'>, others: boolean): Look {
   const kind = marker.kind ? css(`--mark-${marker.kind}`, '') : '';
-  const base: Look = { size: 14, fill: WHITE, fillAlpha: 0.78, ring: token('--blocked', '#a6501c'), ringWidth: 1.5, halo: 1, glyph: 1, glyphRgb: token('--blocked', '#a6501c'), glyphSize: 5, square: 0, badge: 0, selected: 0, dim: 0, rank: 0 };
+  const base: Look = { size: 14, fill: WHITE, fillAlpha: 0.78, ring: token('--blocked', '#a6501c'), ringWidth: 1.5, halo: 1, glyph: 1, glyphRgb: token('--blocked', '#a6501c'), glyphSize: 5, square: 0, badge: 0, selected: 0, dim: 0, rank: 0, changed: marker.changed ? 1 : 0, gone: marker.gone ? 1 : 0 };
   let look: Look;
   switch (marker.state) {
     case 'open': case 'barrier': case 'added': {
@@ -44,7 +46,7 @@ export function lookOf(marker: Pick<Marker, 'state' | 'selected' | 'rank' | 'kin
   return look;
 }
 
-const NUMBERS = ['size', 'fillAlpha', 'ringWidth', 'halo', 'glyphSize', 'square', 'badge', 'selected', 'dim', 'rank'] as const;
+const NUMBERS = ['size', 'fillAlpha', 'ringWidth', 'halo', 'glyphSize', 'square', 'badge', 'selected', 'dim', 'rank', 'changed', 'gone'] as const;
 const COLOURS = ['fill', 'ring', 'glyphRgb'] as const;
 const mix = (a: Look, b: Look, k: number): Look => {
   const out = { ...b } as Look;
@@ -56,16 +58,17 @@ const mix = (a: Look, b: Look, k: number): Look => {
   return out;
 };
 
-/** Eases each pin from the look it had to the look it has, over the map's marker transition (160 ms, ease out). */
+/** Eases each pin from the look it had to the look it has, as the map's markers ease: a state over 160 ms, ease out; a marker leaving
+ * or coming back into the view over 400 ms, ease in and out. */
 export class Tweens {
-  private from = new Map<string, { look: Look; at: number }>();
+  private from = new Map<string, { look: Look; at: number; length: number; both: boolean }>();
   private shown = new Map<string, Look>();
-  constructor(private length = 160) {}
   /** Sets each pin's look; a pin whose look changed eases there from what it showed. */
   set(looks: Map<string, Look>, now: number, instant: boolean) {
     for (const [id, look] of looks) {
       const was = this.now(id, now);
-      if (!instant && was && JSON.stringify(was) !== JSON.stringify(look)) this.from.set(id, { look: was, at: now });
+      const turns = !!was && Math.round(was.gone) !== look.gone;
+      if (!instant && was && JSON.stringify(was) !== JSON.stringify(look)) this.from.set(id, { look: was, at: now, length: turns ? 400 : 160, both: turns });
       else this.from.delete(id);
       this.shown.set(id, look);
     }
@@ -76,9 +79,9 @@ export class Tweens {
     const to = this.shown.get(id), from = this.from.get(id);
     if (!to) return undefined;
     if (!from) return to;
-    const t = Math.min(1, (now - from.at) / this.length);
+    const t = Math.min(1, (now - from.at) / from.length);
     if (t >= 1) { this.from.delete(id); return to; }
-    return mix(from.look, to, 1 - Math.pow(1 - t, 3));
+    return mix(from.look, to, from.both ? (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) : 1 - Math.pow(1 - t, 3));
   }
   get moving() { return this.from.size > 0; }
 }
