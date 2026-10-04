@@ -87,4 +87,4 @@
 
 /* The guide stands near the walk on the map, above the place photos, never on its own line, and under the search's answers. */
 .home-bot { position: absolute; z-index: 4; left: 63%; bottom: calc(var(--guide) + 220px + var(--safe-bottom)); }
-@media (max-width: 639px) { .home-bot { left: auto; right: calc(24px + var(--safe-right)); bottom: auto; top: 46%; } }
+@media (max-width: 639px) { .home-bot { left: auto; right: calc(20px + var(--safe-right)); bottom: calc(var(--guide) + 196px + var(--safe-bottom)); } }

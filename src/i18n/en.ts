@@ -45,6 +45,7 @@ export const en = {
   'home.closeMenu': 'Close',
   'home.sources': 'Sources',
   'home.sourceMap': 'Map data: OpenStreetMap contributors, ODbL.',
+  'home.sourceSearch': "Search: the words you enter go to OpenStreetMap's Nominatim; a walk you build asks Valhalla and Overpass for the way and the map along it, and stays on this device.",
   'home.sourcePhotos': 'Street photos: Mapillary contributors, CC BY-SA 4.0. Cropped views are adaptations and keep that licence.',
   'home.sourceModel': 'Message understanding: multilingual-e5-small by Microsoft, MIT, downloaded once to this device.',
   'home.creditsNote': 'Destination covers from Wikimedia Commons. Resized to WebP and masked for display; separate from each example’s source evidence.',

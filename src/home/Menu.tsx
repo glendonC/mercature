@@ -43,6 +43,7 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
         </Section>
         <Section title={t('home.sources')}>
           <p className="menu-source">{t('home.sourceMap')}</p>
+          <p className="menu-source">{t('home.sourceSearch')}</p>
           <p className="menu-source">{t('home.sourcePhotos')}</p>
           <p className="menu-source">{t('home.sourceModel')}</p>
           <p className="menu-source">{t('home.creditsNote')}</p>

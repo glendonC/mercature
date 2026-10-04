@@ -49,6 +49,7 @@ export const es = {
   'home.closeMenu': 'Cerrar',
   'home.sources': 'Fuentes',
   'home.sourceMap': 'Datos del mapa: colaboradores de OpenStreetMap, ODbL.',
+  'home.sourceSearch': "Búsqueda: las palabras que escribes van a Nominatim de OpenStreetMap; un recorrido que armas pide a Valhalla y Overpass el camino y el mapa a lo largo de él, y queda en este dispositivo.",
   'home.sourcePhotos': 'Fotos de la calle: colaboradores de Mapillary, CC BY-SA 4.0. Las vistas recortadas son adaptaciones y mantienen esa licencia.',
   'home.sourceModel': 'Comprensión de mensajes: multilingual-e5-small de Microsoft, MIT, descargado una sola vez en este dispositivo.',
   'home.creditsNote': 'Portadas de Wikimedia Commons, reducidas a WebP y recortadas para mostrarlas. No son parte de la evidencia de cada lugar.',
