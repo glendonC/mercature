@@ -796,6 +796,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // about once the dialogue has settled.
   const [frame, setFrame] = useState({ dock: 0, below: 0 });
   const dockHeight = frame.dock;
+  // On a phone the photo is a strip; it gives up height until the card and her choices fit above the dialogue, and takes it back when there is room.
+  const [photoFit, setPhotoFit] = useState<number | null>(null);
+  const photoStrip = () => Math.round(Math.min(150, innerHeight * 0.18));
   useLayoutEffect(() => {
     const host = screen.current, work = dock.current;
     if (!host || !work) return;
@@ -805,6 +808,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       host.style.setProperty('--dialogue', `${below}px`);
       const next = { dock: below + (above ? above + 12 : 0), below };
       setFrame(last => last.dock === next.dock && last.below === next.below ? last : next);
+      const content = work.querySelector<HTMLElement>('.gs-content'), actions = work.querySelector<HTMLElement>('.gs-actions');
+      if (narrow && content?.querySelector('.gs-photo')) {
+        // The room is the turn's own limit on a phone (guide-screen.css): above the dialogue, below a strip of map.
+        const strip = photoStrip(), room = host.clientHeight - below - 64 - innerHeight * 0.16 - safeArea().top, natural = content.scrollHeight + (actions ? actions.offsetHeight + 8 : 0);
+        setPhotoFit(fit => { const now = fit ?? strip, target = Math.round(Math.max(84, Math.min(strip, now + room - natural))); return Math.abs(target - now) < 2 ? fit : target >= strip ? null : target; });
+      }
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -848,7 +857,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const away = !!here && !('spot' in item && same(here, { kind: 'spot', id: item.spot.id }));
     return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
-      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? photoFit ?? photoStrip() : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   };
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = result ? editResult(result.said) : ack ? [ack] : [];

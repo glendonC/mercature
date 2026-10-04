@@ -78,10 +78,17 @@
   .gs-bar { height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) calc(4px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px)); }
   .guide-screen .destination-map-controls { top: calc(64px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
   .guide-screen .destination-map-controls button:not(:last-child) { display: none; }
-  .gs-edits { top: calc(env(safe-area-inset-top, 0px) + 60px); }
+  /* The row is centred in the room left of the map's button, so its pills never reach it */
+  .gs-edits { top: calc(env(safe-area-inset-top, 0px) + 60px); left: calc(12px + env(safe-area-inset-left, 0px)); right: calc(60px + env(safe-area-inset-right, 0px)); justify-content: center; width: auto; translate: none; pointer-events: none; }
+  .gs-edits > * { pointer-events: auto; }
   /* At least a strip of map stays above the card, with the spot framed in it; a long turn scrolls inside. */
   .gs-work { width: calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); bottom: calc(var(--dialogue, 120px) + 8px); max-height: calc(100% - var(--dialogue, 120px) - 64px - 16dvh - env(safe-area-inset-top, 0px)); }
-  .gs-turn, .gs-work[data-content] .gs-turn { flex-direction: column; align-items: stretch; gap: 8px; overflow-y: auto; scrollbar-width: none; }
+  .gs-turn, .gs-work[data-content] .gs-turn { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 8px; overflow-y: auto; scrollbar-width: none; }
+  /* The group rests on the dialogue; taller than its room, it starts at the card's head and scrolls, so the head is never cut */
+  .gs-turn > :first-child { margin-top: auto; }
+  /* With Before / Now beside Edit, the way around keeps only its icon; its name stays for screen readers */
+  .gs-edits:has(.gs-compare) .gs-around { padding-inline: 12px; }
+  .gs-edits:has(.gs-compare) .gs-around .ui-button-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .gs-content, .gs-actions { flex: none; }
   .gs-card, .gs-photo, .gs-copybox { max-width: none; }
 }
