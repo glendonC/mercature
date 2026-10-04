@@ -15,7 +15,9 @@ test('a prepared place opens from Home, from its package or its local record', a
   await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
   await page.locator('.menu-button').click();
   await page.getByRole('button', {name:'Home', exact:true}).click();
-  // Without its local record Narikala is not offered on Home at all.
-  expect(requested).toContain('/routes/tbilisi-narikala/route.json');
-  await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi', exact:true})).toHaveCount(0);
+  // Narikala opens from its published package; Swayambhu, with neither a package nor its local record, is not offered at all.
+  await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi', exact:true})).toBeVisible();
+  expect(requested).toContain('/routes/kathmandu-swayambhu/route.json');
+  expect(requested).not.toContain('/routes/tbilisi-narikala/route.json');
+  await expect(page.getByRole('button', {name:'Explore Swayambhu · Kathmandu', exact:true})).toHaveCount(0);
 });

@@ -58,9 +58,10 @@ test('a photo-only place replays its photo and still opens its map', async ({pag
   await expect(page.getByText('No retained 3D at this destination')).toBeVisible();
 });
 
-test('a place without its records is not offered on Home', async ({page}) => {
+test('a place with neither a published package nor its records is not offered on Home', async ({page}) => {
   await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
   await page.goto('/');
   await expect(page.getByRole('button', {name:'Explore Qorikancha · Cusco'})).toBeVisible();
-  await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi'})).toHaveCount(0);
+  await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi'})).toBeVisible();
+  await expect(page.getByRole('button', {name:'Explore Swayambhu · Kathmandu'})).toHaveCount(0);
 });
