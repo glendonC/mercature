@@ -200,7 +200,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     const chosen = focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : space.pieces.map(p => p.center);
     const points = (chosen.length ? chosen : data.line).map(p => { const [x, y] = metres(p, origin); return [x, y, ground(x, y)] as Vec3; });
     const to = framing(points, aspect, intro ? OBLIQUE : 0.95, walk);
-    to.distance = Math.max(to.distance + 30, 70);
+    to.distance = Math.max(to.distance + 14, 50);
     if (!camera.current || reduced()) camera.current = to;
     else goal.current = { from: { ...camera.current }, to, at: performance.now(), for: 700 };
     dirty.current = true;
@@ -397,7 +397,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!host.current || !camera.current || !space) return;
     const { width, height } = host.current.getBoundingClientRect(), origin: Coordinate = [data.origin[0], data.origin[1]];
     const to = framing(space.pieces.map(p => { const [x, y] = metres(p.center, origin); return [x, y, ground(x, y)] as Vec3; }), width / Math.max(1, height), 0.95, walk);
-    to.distance = Math.max(to.distance + 30, 70);
+    to.distance = Math.max(to.distance + 14, 50);
     if (reduced()) move(to); else goal.current = { from: { ...camera.current }, to, at: performance.now(), for: 600 };
     dirty.current = true;
   };
