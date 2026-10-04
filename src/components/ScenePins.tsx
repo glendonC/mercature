@@ -25,5 +25,5 @@ export default function ScenePins({stageRef, spots, selectedId, onSelect, revisi
     window.addEventListener('resize', update);
     return () => {observer.disconnect(); window.removeEventListener('resize', update);};
   }, [stageRef, spots, revision]);
-  return <div className="scene-pins" aria-label={t('pins.label')}>{positions.map((spot, index) => <button className="scene-pin" key={spot.id} style={{left: spot.x, top: spot.y}} onClick={() => onSelect(spot.id)} aria-label={t('pins.pin', {n: index + 1, label: spot.label})} aria-pressed={selectedId === spot.id}>{index + 1}</button>)}</div>;
+  return <div className="scene-pins" role="group" aria-label={t('pins.label')}>{positions.map((spot, index) => <button className="scene-pin" key={spot.id} style={{left: spot.x, top: spot.y}} onClick={() => onSelect(spot.id)} aria-label={t('pins.pin', {n: index + 1, label: spot.label})} aria-pressed={selectedId === spot.id}>{index + 1}</button>)}</div>;
 }
