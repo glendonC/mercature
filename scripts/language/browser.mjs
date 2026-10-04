@@ -102,6 +102,13 @@ try {
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
   ];
+  // One spot added to the walk: only that spot should be embedded.
+  if (placeName === 'route') {
+    result.addedSpot = [
+      await page.evaluate(() => window.languageCheck.prepareSite('route-plus')),
+      await page.evaluate(() => window.languageCheck.prepareSite('route-plus')),
+    ];
+  }
   const answers = [];
   for (const message of chosen) {
     answers.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });

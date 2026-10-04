@@ -1,6 +1,6 @@
 {
   "split": "route",
-  "throttle": 1,
+  "throttle": 6,
   "source": "trimmed files served by this origin",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36",
   "downloadBytesBefore": 83782751,
@@ -13,8 +13,8 @@
         "bytes": 72649787
       }
     },
-    "ms": 2809.5,
-    "progressEvents": 86,
+    "ms": 8177.399999976158,
+    "progressEvents": 82,
     "first": {
       "status": "downloading",
       "loadedBytes": 443,
@@ -49,7 +49,7 @@
         13,
         14
       ],
-      "ms": 1912
+      "ms": 10981
     },
     {
       "result": "cached",
@@ -77,12 +77,12 @@
         14,
         15
       ],
-      "ms": 116
+      "ms": 627
     },
     {
       "result": "cached",
       "ticks": [],
-      "ms": 0
+      "ms": 1
     }
   ],
   "answers": [
@@ -102,7 +102,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 41
+      "elapsedMs": 238
     },
     {
       "id": "r001-en",
@@ -119,7 +119,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 37
+      "elapsedMs": 216
     },
     {
       "id": "r001-es",
@@ -137,7 +137,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 215
     },
     {
       "id": "r001-ko",
@@ -155,7 +155,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 39
+      "elapsedMs": 228
     },
     {
       "id": "r001-qu",
@@ -173,7 +173,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 41
+      "elapsedMs": 243
     },
     {
       "id": "r002-en",
@@ -191,7 +191,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 40
+      "elapsedMs": 236
     },
     {
       "id": "r002-es",
@@ -209,7 +209,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 46
+      "elapsedMs": 279
     },
     {
       "id": "r002-ko",
@@ -227,7 +227,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 38
+      "elapsedMs": 235
     },
     {
       "id": "r003-en",
@@ -244,7 +244,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 184
     },
     {
       "id": "r003-es",
@@ -262,7 +262,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 37
+      "elapsedMs": 225
     },
     {
       "id": "r003-ko",
@@ -280,7 +280,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 37
+      "elapsedMs": 235
     },
     {
       "id": "r003-qu",
@@ -298,7 +298,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 39
+      "elapsedMs": 252
     },
     {
       "id": "r004-en",
@@ -312,7 +312,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 31
+      "elapsedMs": 200
     },
     {
       "id": "r004-es",
@@ -330,7 +330,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 32
+      "elapsedMs": 212
     },
     {
       "id": "r004-ko",
@@ -348,7 +348,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 220
     },
     {
       "id": "r005-en",
@@ -365,7 +365,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 220
     },
     {
       "id": "r005-es",
@@ -383,7 +383,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 37
+      "elapsedMs": 239
     },
     {
       "id": "r005-ko",
@@ -401,7 +401,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 40
+      "elapsedMs": 253
     },
     {
       "id": "r006-en",
@@ -419,7 +419,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 43
+      "elapsedMs": 270
     },
     {
       "id": "r006-es",
@@ -437,7 +437,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 45
+      "elapsedMs": 281
     },
     {
       "id": "r006-ko",
@@ -454,7 +454,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 44
+      "elapsedMs": 286
     },
     {
       "id": "r007-en",
@@ -468,7 +468,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 177
     },
     {
       "id": "r007-es",
@@ -485,7 +485,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 194
     },
     {
       "id": "r007-ko",
@@ -502,7 +502,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 166
     },
     {
       "id": "r007-qu",
@@ -520,7 +520,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 40
+      "elapsedMs": 247
     },
     {
       "id": "r008-en",
@@ -534,7 +534,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 31
+      "elapsedMs": 198
     },
     {
       "id": "r008-es",
@@ -548,7 +548,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 33
+      "elapsedMs": 213
     },
     {
       "id": "r008-ko",
@@ -565,7 +565,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 226
     },
     {
       "id": "r009-en",
@@ -582,7 +582,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 193
     },
     {
       "id": "r009-es",
@@ -599,7 +599,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 32
+      "elapsedMs": 249
     },
     {
       "id": "r009-ko",
@@ -616,7 +616,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 271
     },
     {
       "id": "r010-en",
@@ -634,7 +634,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 240
     },
     {
       "id": "r010-es",
@@ -648,7 +648,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 222
     },
     {
       "id": "r010-ko",
@@ -666,7 +666,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 35
+      "elapsedMs": 223
     },
     {
       "id": "r011-en",
@@ -680,7 +680,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 27
+      "elapsedMs": 167
     },
     {
       "id": "r011-es",
@@ -694,7 +694,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 166
     },
     {
       "id": "r011-ko",
@@ -708,7 +708,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 173
     },
     {
       "id": "r011-qu",
@@ -726,7 +726,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 213
     },
     {
       "id": "r012-en",
@@ -744,7 +744,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 42
+      "elapsedMs": 232
     },
     {
       "id": "r012-es",
@@ -762,7 +762,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 42
+      "elapsedMs": 252
     },
     {
       "id": "r012-ko",
@@ -780,7 +780,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 44
+      "elapsedMs": 274
     },
     {
       "id": "r013-en",
@@ -794,7 +794,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 181
     },
     {
       "id": "r013-es",
@@ -808,7 +808,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 192
     },
     {
       "id": "r013-ko",
@@ -822,7 +822,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 191
     }
   ],
   "memory": {
@@ -832,15 +832,15 @@
     "remembered": 2,
     "matchesNode": "44/44"
   },
-  "firstUnderstandMs": 41,
-  "laterUnderstandMedianMs": 36,
+  "firstUnderstandMs": 238,
+  "laterUnderstandMedianMs": 225,
   "offline": {
     "pageFromServiceWorker": true,
     "stateBefore": {
       "status": "absent"
     },
     "storedBefore": true,
-    "message": "The stone steps on Loreto near Maruri still have no handrail (fd39e7c8).",
+    "message": "The stone steps on Loreto near Maruri still have no handrail (a094f773).",
     "answer": {
       "status": "ready",
       "kind": "problem",
@@ -855,7 +855,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 288
+      "elapsedMs": 1797
     },
     "stateAfter": {
       "status": "ready",

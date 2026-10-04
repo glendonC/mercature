@@ -218,7 +218,7 @@ Right spot first on the held-out farm messages, memory with examples in all four
 3. The Quechua figures above were measured under the frozen Quechua rule, which this restriction leaves unchanged; they are the same with and without it.
 4. On the Qorikancha walk, 3 Quechua messages are too few to claim anything.
 
-Run as the app now applies it (`--restricted`; `memory-heldout-restricted.json`, `memory-route-restricted.json`): every English, Spanish and Korean decision equals the run without a memory at every k, in both memories, and the Quechua figures equal those above. Chromium gave the same decisions as Node with no examples (88 of 88, 44 of 44) and with 68 and 56 kept examples (88 of 88, 44 of 44), and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout-restricted.json`, `browser-memory-route-restricted.json`).
+Run as the app now applies it (`--restricted`; `memory-heldout-restricted.json`, `memory-route-restricted.json`): every English, Spanish and Korean decision equals the run without a memory at every k, in both memories, and the Quechua figures equal those above. Chromium gave the same decisions as Node with no examples (88 of 88, 44 of 44) and with 68 and 56 kept examples (88 of 88, 44 of 44), and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout-restricted.json`, `browser-memory-route-restricted.json`, and with the CPU slowed 6× `browser-memory-route-restricted-cpu6x.json`).
 
 The embedding of each linked message is still stored, although only its spelling sketch is used now.
 
@@ -240,19 +240,20 @@ On the development Mac (Apple M5 Max, one inference thread):
 | Embed the farm's 17 features, first time (`prepareSite`) | | 1.8 to 2.2 s | 13.1 to 13.6 s |
 | Embed the Qorikancha walk's 14 spots, first time (`prepareSite`) | | 1.7 to 1.9 s | 10.8 to 11.5 s |
 | `prepareSite` again, vectors already stored | | 0 ms | 1 ms |
+| One spot added to the walk, the other 14 stored (`prepareSite`) | | 0.12 s | 0.63 s |
 | Embed the 27 label passages and the 17 features | 2.3 s | | |
 | One message, median | 26 ms | 25 to 38 ms | 156 to 221 ms |
 | One message, 95th percentile | 38 ms | | 255 ms |
 | First message after a cold restart, model and vectors stored | | 0.3 to 0.5 s | 1.8 to 2.0 s |
 | The same before spot and label vectors were stored | | 2.7 to 2.9 s | 18.2 s |
 
-No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. A place's spots are embedded once, with one progress tick per spot, and `prepareSite` can do it before the first message; later sessions read the stored vectors.
+No phone has been measured. The last column uses Chromium's CPU throttling (`browser.mjs --throttle 6`) as a rough stand-in for a mid-range phone; it does not model a phone's memory, storage or heat. A place's spots are embedded once, with one progress tick per spot, and `prepareSite` can do it before the first message; later sessions read the stored vectors. Each spot's vectors are kept under a hash of its own passages, so adding or editing a spot embeds only that spot.
 
 ## Offline
 
 `prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device, and `modelDownloadBytes()` how many bytes `prepareModel()` would download from this origin (0 once stored). The trimmed files are looked up under the app's base path, so a deploy under a sub-path serves them too.
 
-The embeddings of the label passages and of each place's spots are stored too, keyed by model files, revision, place and a hash of the exact passages, so any change to a spot's names, description or aliases means they are computed again. Answers are never stored: every message runs through the model. A message's embedding and spelling sketch are stored only when the operator links that message to a spot (see Learning from the operator's confirmations). With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
+The embeddings of the label passages and of each spot are stored too, keyed by model files, revision and a hash of the exact passages, so a change to a spot's names, description or aliases recomputes that spot only, and spots an edit leaves unchanged are reused. Answers are never stored: every message runs through the model. A message's embedding and spelling sketch are stored only when the operator links that message to a spot (see Learning from the operator's confirmations). With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
 
 Checked with `scripts/language/browser.mjs` on a production build that uses the app's own service worker: after provisioning, Chromium was closed and reopened on the same profile with networking disabled. The page came from the service worker, the model state started `absent`, and a new message was understood with no network request. On iPhone, Safari deletes a site's stored data after seven days of browsing without a visit unless the site was added to the home screen, so the model would need downloading again.
 

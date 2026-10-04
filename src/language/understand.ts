@@ -6,7 +6,7 @@ import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
 import type { StoredExample } from './encoder';
 import { recall, remembered, sketch } from './memory';
 import { ENCODER } from './model';
-import { buildIndex, decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
+import { decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
 
 /** Identity of the model that produced a result, so a saved decision can name its source. */
 export type ModelInfo = { readonly id: string; readonly revision: string; readonly bytes: number };
@@ -72,12 +72,15 @@ type SiteIndex = {
   promise: Promise<FeatureIndex>;
   done: number;
   settled: boolean;
-  /** Read from vectors stored in an earlier session rather than embedded now. */
+  /** Every spot came from vectors kept earlier; none was embedded now. */
   stored: boolean;
   readonly total: number;
   readonly listeners: Set<(done: number, total: number) => void>;
 };
 const indexCache = new Map<string, SiteIndex>();
+type SpotVectors = { readonly vectors: readonly ArrayLike<number>[]; readonly embedded: boolean };
+/** Each spot's passage vectors, by model set, revision and its exact passages, shared by every place and edit. */
+const spotCache = new Map<string, Promise<SpotVectors>>();
 
 function publish(next: ModelState) {
   state = next;
@@ -194,26 +197,46 @@ function storedEmbed(texts: readonly string[], vectors: readonly ArrayLike<numbe
   };
 }
 
+/**
+ * A spot's vectors: from this session, else from the device, else embedded now and kept. Keyed by
+ * its passages only, so editing a place embeds just the spots whose passages changed.
+ */
+function spotVectors(texts: readonly string[], loaded: Loaded): Promise<SpotVectors> {
+  const storeKey = `spot:${hash(JSON.stringify(texts))}`;
+  const key = `${loaded.scope}:${storeKey}`;
+  let entry = spotCache.get(key);
+  if (!entry) {
+    entry = (async () => {
+      const stored = await loaded.store.read(storeKey, texts.length);
+      if (stored) return { vectors: stored, embedded: false };
+      const vectors = [];
+      for (const text of texts) vectors.push(await loaded.embed(text));
+      await loaded.store.write(storeKey, vectors);
+      return { vectors, embedded: true };
+    })();
+    entry.catch(() => spotCache.delete(key));
+    spotCache.set(key, entry);
+  }
+  return entry;
+}
+
 /** The site index is keyed by model set and revision, site id and the exact feature passages. */
 function siteIndex(site: Place, loaded: Loaded): SiteIndex {
   const passages = site.features.map(feature => [feature.id, passageTexts(feature)] as const);
   const key = `${loaded.scope}:${site.id}:${hash(JSON.stringify(passages))}`;
   const existing = indexCache.get(key);
   if (existing) return existing;
-  const texts = passages.flatMap(([, texts]) => [texts.full, ...texts.lists]);
-  const storeKey = `place:${site.id}:${hash(JSON.stringify(passages))}`;
-  const entry: SiteIndex = { promise: Promise.resolve([]), done: 0, settled: false, stored: false, total: site.features.length, listeners: new Set() };
+  const entry: SiteIndex = { promise: Promise.resolve([]), done: 0, settled: false, stored: true, total: site.features.length, listeners: new Set() };
   entry.promise = (async () => {
-    const stored = await loaded.store.read(storeKey, texts.length);
-    if (stored) {
-      entry.stored = true;
-      return buildIndex(site.features, storedEmbed(texts, stored));
-    }
-    const index = await buildIndex(site.features, loaded.embed, () => {
+    // Same order and vectors as buildIndex(): the full passage, then one word list per language.
+    const index = [];
+    for (const [id, texts] of passages) {
+      const { vectors, embedded } = await spotVectors([texts.full, ...texts.lists], loaded);
+      if (embedded) entry.stored = false;
+      index.push({ id, full: vectors[0], lists: vectors.slice(1) });
       entry.done++;
       for (const listener of entry.listeners) listener(entry.done, entry.total);
-    });
-    await loaded.store.write(storeKey, index.flatMap(feature => [feature.full, ...feature.lists]));
+    }
     return index;
   })().then(index => {
     entry.settled = true;
@@ -225,7 +248,8 @@ function siteIndex(site: Place, loaded: Loaded): SiteIndex {
 }
 
 /**
- * Embeds a site's features ahead of the first message, with one progress tick per feature.
+ * Embeds a site's features ahead of the first message, with one progress tick per feature; a
+ * feature whose passages were embedded before (in any place, on this device) ticks at once.
  * Works only on an already loaded model: it never downloads and never loads.
  */
 export async function prepareSite(site: Place, onProgress?: (done: number, total: number) => void): Promise<'embedded' | 'cached' | 'unavailable'> {

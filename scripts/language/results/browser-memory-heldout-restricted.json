@@ -13,7 +13,7 @@
         "bytes": 72649787
       }
     },
-    "ms": 2422,
+    "ms": 2572.4000000953674,
     "progressEvents": 86,
     "first": {
       "status": "downloading",
@@ -52,7 +52,7 @@
         16,
         17
       ],
-      "ms": 1777
+      "ms": 1854
     },
     {
       "result": "cached",
@@ -76,7 +76,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 37
     },
     {
       "id": "f001-es",
@@ -93,7 +93,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 35
+      "elapsedMs": 36
     },
     {
       "id": "f001-ko",
@@ -111,7 +111,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 35
+      "elapsedMs": 36
     },
     {
       "id": "f001-qu",
@@ -129,7 +129,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 44
+      "elapsedMs": 45
     },
     {
       "id": "f005-en",
@@ -147,7 +147,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 27
     },
     {
       "id": "f005-es",
@@ -182,7 +182,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 30
     },
     {
       "id": "f005-qu",
@@ -200,7 +200,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 35
     },
     {
       "id": "f008-en",
@@ -249,7 +249,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 25
+      "elapsedMs": 26
     },
     {
       "id": "f008-qu",
@@ -267,7 +267,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 29
     },
     {
       "id": "f013-en",
@@ -303,7 +303,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 31
     },
     {
       "id": "f013-ko",
@@ -320,7 +320,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 27
     },
     {
       "id": "f013-qu",
@@ -338,7 +338,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 49
+      "elapsedMs": 50
     },
     {
       "id": "f017-en",
@@ -355,7 +355,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 25
     },
     {
       "id": "f017-es",
@@ -390,7 +390,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 25
     },
     {
       "id": "f017-qu",
@@ -408,7 +408,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 27
     },
     {
       "id": "f020-en",
@@ -443,7 +443,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 21
+      "elapsedMs": 22
     },
     {
       "id": "f020-ko",
@@ -460,7 +460,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 19
+      "elapsedMs": 20
     },
     {
       "id": "f020-qu",
@@ -478,7 +478,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 30
     },
     {
       "id": "f022-en",
@@ -495,7 +495,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 30
     },
     {
       "id": "f022-es",
@@ -512,7 +512,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 30
     },
     {
       "id": "f022-ko",
@@ -529,7 +529,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 31
+      "elapsedMs": 32
     },
     {
       "id": "f022-qu",
@@ -547,7 +547,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 38
+      "elapsedMs": 40
     },
     {
       "id": "f024-en",
@@ -561,7 +561,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 18
+      "elapsedMs": 19
     },
     {
       "id": "f024-es",
@@ -575,7 +575,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 21
+      "elapsedMs": 22
     },
     {
       "id": "f024-ko",
@@ -589,7 +589,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 18
+      "elapsedMs": 19
     },
     {
       "id": "f024-qu",
@@ -603,7 +603,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 29
     },
     {
       "id": "f029-en",
@@ -617,7 +617,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 19
+      "elapsedMs": 22
     },
     {
       "id": "f029-es",
@@ -631,7 +631,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 17
+      "elapsedMs": 20
     },
     {
       "id": "f029-ko",
@@ -645,7 +645,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 21
+      "elapsedMs": 25
     },
     {
       "id": "f029-qu",
@@ -659,7 +659,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 25
+      "elapsedMs": 29
     },
     {
       "id": "f031-en",
@@ -677,7 +677,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 12
+      "elapsedMs": 14
     },
     {
       "id": "f031-es",
@@ -695,7 +695,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 14
+      "elapsedMs": 17
     },
     {
       "id": "f031-ko",
@@ -712,7 +712,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 11
+      "elapsedMs": 13
     },
     {
       "id": "f031-qu",
@@ -730,7 +730,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 13
+      "elapsedMs": 16
     },
     {
       "id": "f037-en",
@@ -748,7 +748,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 32
+      "elapsedMs": 37
     },
     {
       "id": "f037-es",
@@ -766,7 +766,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 42
     },
     {
       "id": "f037-ko",
@@ -784,7 +784,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 39
     },
     {
       "id": "f037-qu",
@@ -802,7 +802,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 42
+      "elapsedMs": 49
     },
     {
       "id": "f041-en",
@@ -819,7 +819,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 32
     },
     {
       "id": "f041-es",
@@ -836,7 +836,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 36
+      "elapsedMs": 43
     },
     {
       "id": "f041-ko",
@@ -854,7 +854,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 33
     },
     {
       "id": "f041-qu",
@@ -872,7 +872,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 44
+      "elapsedMs": 51
     },
     {
       "id": "f047-en",
@@ -889,7 +889,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 21
+      "elapsedMs": 24
     },
     {
       "id": "f047-es",
@@ -906,7 +906,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 28
     },
     {
       "id": "f047-ko",
@@ -923,7 +923,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 25
+      "elapsedMs": 29
     },
     {
       "id": "f047-qu",
@@ -941,7 +941,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 35
+      "elapsedMs": 38
     },
     {
       "id": "f050-en",
@@ -959,7 +959,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 35
+      "elapsedMs": 36
     },
     {
       "id": "f050-es",
@@ -977,7 +977,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 34
+      "elapsedMs": 35
     },
     {
       "id": "f050-ko",
@@ -1013,7 +1013,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 29
     },
     {
       "id": "f051-en",
@@ -1027,7 +1027,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 25
     },
     {
       "id": "f051-es",
@@ -1079,7 +1079,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 32
+      "elapsedMs": 33
     },
     {
       "id": "f056-en",
@@ -1097,7 +1097,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 30
+      "elapsedMs": 31
     },
     {
       "id": "f056-es",
@@ -1115,7 +1115,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 29
+      "elapsedMs": 31
     },
     {
       "id": "f056-ko",
@@ -1133,7 +1133,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 33
+      "elapsedMs": 34
     },
     {
       "id": "f056-qu",
@@ -1169,7 +1169,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 19
+      "elapsedMs": 20
     },
     {
       "id": "f060-es",
@@ -1201,7 +1201,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 16
+      "elapsedMs": 17
     },
     {
       "id": "f060-qu",
@@ -1219,7 +1219,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 20
+      "elapsedMs": 21
     },
     {
       "id": "f062-en",
@@ -1236,7 +1236,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 28
+      "elapsedMs": 29
     },
     {
       "id": "f062-es",
@@ -1254,7 +1254,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 26
+      "elapsedMs": 27
     },
     {
       "id": "f062-ko",
@@ -1272,7 +1272,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 25
     },
     {
       "id": "f062-qu",
@@ -1373,7 +1373,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 17
+      "elapsedMs": 18
     },
     {
       "id": "f067-es",
@@ -1387,7 +1387,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 17
+      "elapsedMs": 18
     },
     {
       "id": "f067-ko",
@@ -1401,7 +1401,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 17
+      "elapsedMs": 18
     },
     {
       "id": "f067-qu",
@@ -1415,7 +1415,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 24
+      "elapsedMs": 25
     },
     {
       "id": "f069-en",
@@ -1450,7 +1450,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 16
+      "elapsedMs": 17
     },
     {
       "id": "f069-ko",
@@ -1499,7 +1499,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 17
+      "elapsedMs": 18
     },
     {
       "id": "f072-es",
@@ -1513,7 +1513,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 16
+      "elapsedMs": 17
     },
     {
       "id": "f072-ko",
@@ -1549,7 +1549,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 23
+      "elapsedMs": 24
     }
   ],
   "memory": {
@@ -1559,15 +1559,15 @@
     "remembered": 3,
     "matchesNode": "88/88"
   },
-  "firstUnderstandMs": 36,
-  "laterUnderstandMedianMs": 25,
+  "firstUnderstandMs": 37,
+  "laterUnderstandMedianMs": 27,
   "offline": {
     "pageFromServiceWorker": true,
     "stateBefore": {
       "status": "absent"
     },
     "storedBefore": true,
-    "message": "The cart was blocking the path by the drying beds again (fc448d7b).",
+    "message": "The cart was blocking the path by the drying beds again (f45abf19).",
     "answer": {
       "status": "unsure",
       "kind": "problem",
@@ -1583,7 +1583,7 @@
         "revision": "761b726dd34fb83930e26aab4e9ac3899aa1fa78+latin-hangul+heads.b6a40a3cfcfa",
         "bytes": 72649787
       },
-      "elapsedMs": 285
+      "elapsedMs": 274
     },
     "stateAfter": {
       "status": "ready",
@@ -1601,8 +1601,8 @@
     "online": [],
     "offline": [
       "http://127.0.0.1:4189/",
-      "http://127.0.0.1:4189/assets/index-hJrkTZ3N.js",
-      "http://127.0.0.1:4189/assets/encoder-Ds0Jujk8.js",
+      "http://127.0.0.1:4189/assets/index-kr3mWCYc.js",
+      "http://127.0.0.1:4189/assets/encoder-DA9ktI-8.js",
       "http://127.0.0.1:4189/assets/heads-By5QHNgV.js",
       "http://127.0.0.1:4189/assets/ort-wasm-simd-threaded-BQa_0C5h.mjs"
     ]
