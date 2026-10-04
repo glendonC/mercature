@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Mercature",
   "short_name": "Mercature",
-  "description": "Understand a visitor's message in any language and try a fix on your site.",
+  "description": "An editable spatial accessibility model.",
   "lang": "en",
   "start_url": "./",
   "scope": "./",
