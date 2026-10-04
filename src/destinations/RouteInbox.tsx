@@ -443,7 +443,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     return <>
       <h2 className="ri-title">{nameOf(target)}</h2>
       <p className="ri-row-meta">{kind}{target.kind === 'added' && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}</p>
-      {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={marksOn(view.id)} lead={lead} pager={null} t={t} />}
+      {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={marksOn(view.id)} lead={lead} t={t} />}
       <Section heading="h2" title={w.visitors(filed.length)}>
         {latest && <List inset><Row static icon={<Tag tone="solid" lang={said}>{latest.language.toUpperCase()}</Tag>} label={<span lang={said}>{latest.text}</span>} /></List>}
       </Section>
@@ -474,7 +474,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const shownView = (() => {
     if (pane.kind !== 'spot') return '';
     const target = pane.target;
-    if (target.kind === 'spot') { const spot = walk.spots.find(item => item.id === target.id); const evidence = spot ? spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []; return evidence[Math.min(page, evidence.length - 1)]?.viewId ?? ''; }
+    if (target.kind === 'spot') { const spot = walk.spots.find(item => item.id === target.id); const evidence = spot ? spot.findings.filter(f => (f.viewId && views.has(f.viewId)) || f.osm) : []; return evidence[Math.min(page, evidence.length - 1)]?.viewId ?? ''; }
     const index = stretchesOf(target)[0];
     return index === undefined ? '' : data.stretches[index]?.views.find(id => views.has(id)) ?? '';
   })();
@@ -627,9 +627,9 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <Back onClick={home} label={w.back} />
       <h2 className="ri-title">{name}</h2>
       <p className="ri-row-meta">{mine && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}{clear && w.clearHere}{spot?.kind === 'no-photos' && t.noPhotos}</p>
-      {view && <PhotoWithMarks view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={outlines} lead={shown} t={t}
-        pager={evidence.length > 1 ? { at: Math.min(page, evidence.length - 1), total: evidence.length, go: setPage } : null} />}
+      {view && <PhotoWithMarks view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={outlines} lead={shown} t={t} />}
       {shown?.osm && !shown.viewId && <p className="ri-row-meta">{fromRecord(shown.label, lang)} · {t.mapRecord}</p>}
+      {evidence.length > 1 && <Pager at={Math.min(page, evidence.length - 1)} total={evidence.length} go={setPage} t={t} />}
       {view && outlines.length > 0 && <div className="ri-legend"><Legend items={legendOf(outlines, lang)} /><span className="ri-meta">{w.suggestion}</span></div>}
       <Section heading="h2" title={w.visitors(filed.length)}>
         {filed.length > 0 && <List inset>{filed.map(message => { const said = message.language === 'other' ? undefined : message.language; return <Row key={message.id} className="ri-row" onClick={() => void read(message.id, message.text, message.language)}
@@ -725,6 +725,15 @@ function legendOf(marks: readonly PhotoMark[], lang: UiLang): LegendItem[] {
   return [...kinds.values()].map(mark => { const Icon = iconFor(mark.concept); return { mark: markOf(mark.concept) ?? undefined, barrier: mark.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: fromRecord(mark.label, lang) }; });
 }
 
+/** Pages through a spot's evidence: its photos, and any map record. */
+function Pager({ at, total, go, t }: { at: number; total: number; go: (page: number) => void; t: (typeof COPY)[keyof typeof COPY] }) {
+  return <div className="ri-pager">
+    <IconButton label={t.previous} onClick={() => go((at + total - 1) % total)}><BackIcon size={16} /></IconButton>
+    <span>{t.pageOf(at + 1, total)}</span>
+    <IconButton label={t.next} onClick={() => go((at + 1) % total)}><ChevronIcon size={16} /></IconButton>
+  </div>;
+}
+
 /** Frames a small outline closely so a person can judge it; a tap shows the whole photo. */
 function zoomOn(view: View, finding: Finding | null) {
   if (!finding || finding.outline.length < 3) return null;
@@ -738,8 +747,8 @@ function zoomOn(view: View, finding: Finding | null) {
 }
 
 /** A recorded photo with every mark the model drew on it: barriers in clay, the rest quiet. */
-function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly PhotoMark[]; lead: Finding | null;
-  pager: { at: number; total: number; go: (page: number) => void } | null; t: (typeof COPY)[keyof typeof COPY]; still?: boolean }) {
+function PhotoWithMarks({ view, photo, asset, lang, marks, lead, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly PhotoMark[]; lead: Finding | null;
+  t: (typeof COPY)[keyof typeof COPY]; still?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [whole, setWhole] = useState(false);
   const zoom = zoomOn(view, lead);
@@ -754,11 +763,6 @@ function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t, still
   return <figure className="ri-photo" style={{ '--ratio': view.height / view.width } as CSSProperties}>
     <div className="ri-photo-box">
       {zoom && !still ? <button className="ri-photo-frame" aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button> : <div className="ri-photo-frame">{image}</div>}
-      {pager && <div className="ri-pager">
-        <IconButton label={t.previous} onClick={() => pager.go((pager.at + pager.total - 1) % pager.total)}><BackIcon size={16} /></IconButton>
-        <span>{t.photoOf(pager.at + 1, pager.total)}</span>
-        <IconButton label={t.next} onClick={() => pager.go((pager.at + 1) % pager.total)}><ChevronIcon size={16} /></IconButton>
-      </div>}
     </div>
     {photo && <figcaption>{photo.creator}{date ? `, ${date}` : ''}. CC BY-SA 4.0 · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</figcaption>}
   </figure>;

@@ -86,3 +86,18 @@ test('a message tapped before the stored model is found is read once it is, and 
   await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
   await expect(meta).toContainText('Read earlier');
 });
+
+test('the pager stays on a spot\'s map record page, so its photos can be reached again', async ({page}) => {
+  test.setTimeout(30000);
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await openRoute(page);
+  await page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m/}).click();
+  const next = page.getByRole('button', {name:'Next', exact:true});
+  for (let i = 0; i < 3; i++) await next.click();
+  await expect(page.getByText('OpenStreetMap record, unverified')).toBeVisible();
+  await expect(page.locator('.ri-pager')).toContainText('4 of 4');
+  await next.click();
+  await expect(page.locator('.ri-pager')).toContainText('1 of 4');
+  await expect(page.locator('.ri-panel .ri-photo img')).toBeVisible();
+});

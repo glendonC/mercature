@@ -86,7 +86,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .ri-photo-frame img { object-fit: fill; }
 .ri-photo figcaption { margin-top: 4px; font-size: var(--font-xs); color: var(--ui-muted); }
 .ri-photo figcaption a { display: inline-block; padding: 14px 0; margin: -14px 0; color: inherit; }
-.ri-pager { position: absolute; left: 50%; bottom: 4px; display: flex; align-items: center; padding: 0 2px; transform: translateX(-50%); border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); font-size: var(--font-xs); white-space: nowrap; }
+.ri-pager { position: relative; display: flex; align-items: center; width: fit-content; margin: 6px auto 0; padding: 0 2px; border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); font-size: var(--font-xs); white-space: nowrap; }
 .ri-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin: 6px 0 2px; }
 
 @media (max-width: 640px) {
