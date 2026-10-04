@@ -12,7 +12,7 @@ import { COPY, NOTE, REPLY, guessLanguage, where, type Subject, type UiLang, typ
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import { EXAMPLES } from './examples';
 import { spotState } from './markers';
-import RouteMap, { type MapHandle, type Marker } from './RouteMap';
+import RouteMap, { type Insets, type MapHandle, type Marker } from './RouteMap';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from './walk';
 import AddSpot from './edit/AddSpot';
 import MarkFixed from './edit/MarkFixed';
@@ -33,6 +33,9 @@ const replyLanguage = (language: string): VisitorLang => language === 'es' || la
 const noteLanguage = (text: string) => guessLanguage(text);
 const VISITOR_LANGS: { id: VisitorLang; label: string }[] = [{ id: 'en', label: 'English' }, { id: 'es', label: 'Español' }, { id: 'ko', label: '한국어' }];
 const MESSAGE_LANGS = [...VISITOR_LANGS, { id: 'qu', label: 'Runasimi' }, { id: 'other', label: 'Other' }];
+
+/** Where the walk is framed: clear of the panel on wide screens and of the sheet on phones. The first fit uses no sheet height. */
+export const mapInsets = (narrow: boolean, sheetHeight = 0): Insets => narrow ? { top: 110, right: 20, bottom: Math.max(180, sheetHeight + 20), left: 20 } : { top: 100, right: 430, bottom: 50, left: 50 };
 
 function useNarrow() {
   const query = '(max-width: 640px)';
@@ -196,12 +199,22 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     if (move) fly(target);
   }
   function home() { setPane({ kind: 'inbox' }); setEditing(null); setSaid(''); setLine(''); map.current?.fit(true); }
+  // Focus follows the panel: into a pane when it opens, back to the row that opened it on return.
+  const lastRow = useRef<string | null>(null);
+  useEffect(() => {
+    const panel = sheet.current; if (!panel) return;
+    if (pane.kind !== 'inbox') { panel.querySelector<HTMLElement>('.ri-back')?.focus({ preventScroll: true }); return; }
+    const row = lastRow.current && panel.querySelector<HTMLElement>(`[data-row="${CSS.escape(lastRow.current)}"]`);
+    if (row) row.focus({ preventScroll: true });
+    lastRow.current = null;
+  }, [pane.kind]);
 
   // Messages: examples first read here, then kept like any message she adds.
   const examples = EXAMPLES[data.id] ?? [];
   const [pending, setPending] = useState<{ id: string; text: string; language: string } | null>(null);
   const messageOf = (id: string) => review.messages.find(message => message.id === id) ?? null;
   async function read(id: string, text: string, language: string) {
+    if (pane.kind === 'inbox') lastRow.current = id;
     setPane({ kind: 'message', id }); setReplyLang(null); setSaid('');
     const known = messageOf(id);
     if (known) { show(known); return; }
@@ -393,7 +406,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     <h2 className="ri-heading">{w.messages}</h2>
     <ul className="ri-list">{rows.map(row => {
       const message = messageOf(row.id), answer = message?.answer;
-      return <li key={row.id}><button className="ri-row" onClick={() => void read(row.id, row.text, row.language)}>
+      return <li key={row.id}><button className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)}>
         <span className="ri-lang" lang={row.language === 'other' ? undefined : row.language}>{row.language.toUpperCase()}</span>
         <span className="ri-row-main">
           <span className="ri-excerpt" lang={row.language === 'other' ? undefined : row.language}>{row.text}</span>
@@ -435,7 +448,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
         {(downloadBytes || model.status === 'downloading') ? <button className="ri-primary" disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</button> : null}
         <button className="ri-text" onClick={() => withoutAi(shown.id, shown.text, language)}>{t.withoutAi}</button>
       </div>}
-      {line && <Assistant working={busy === 'reading' || busy === 'download'} text={busy === 'download' ? t.guide.downloading : line} />}
+      {line && <Assistant working={busy === 'reading' || busy === 'download'} text={busy === 'download' ? t.downloading : line} />}
       {answer && answer.candidates.length > 0 && <>
         <h2 className="ri-heading">{w.about}</h2>
         <ol className="ri-list ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <li key={key}>
@@ -447,7 +460,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
         <h2 className="ri-heading">{w.reply}</h2>
         <div className="ri-langs" role="group" aria-label={w.reply}>{VISITOR_LANGS.map(item => <button key={item.id} aria-pressed={replyIn === item.id} onClick={() => setReplyLang(item.id)} lang={item.id}>{item.label}</button>)}</div>
         <p className="ri-reply" lang={replyIn}>{replyText(message, replyIn)}</p>
-        <div className="ri-actions"><button className="ri-primary" onClick={() => copy(replyText(message, replyIn))}>{w.copyReply}</button>{said && <span className="ri-said" role="status">{said}</span>}</div>
+        <div className="ri-actions"><button className="ri-primary" onClick={() => copy(replyText(message, replyIn))}><CopyIcon />{w.copyReply}</button>{said && <span className="ri-said" role="status">{said}</span>}</div>
       </>}
     </>;
   })();
@@ -499,9 +512,9 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
   }, [narrow]);
-  const insets = narrow ? { top: 110, right: 20, bottom: Math.max(180, sheetHeight + 20), left: 20 } : { top: 100, right: 430, bottom: 50, left: 50 };
+  const insets = mapInsets(narrow, sheetHeight);
 
-  return <main ref={root} className="route-inbox" data-pane={pane.kind} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
+  return <main ref={root} className="route-inbox route-canvas" data-pane={pane.kind} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
     <header className="ri-bar">
       <button className="ri-icon" onClick={onHome} aria-label={t.home}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>
       <div className="ri-place"><h1>{DESTINATIONS[data.id].name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p></div>
@@ -517,6 +530,10 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
         onMarker={id => { const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
     </div>
   </main>;
+}
+
+function CopyIcon() {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" /></svg>;
 }
 
 function Back({ onClick, label }: { onClick: () => void; label: string }) {

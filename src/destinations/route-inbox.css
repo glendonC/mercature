@@ -12,7 +12,7 @@
 .route-inbox button:focus-visible, .route-inbox textarea:focus-visible, .route-inbox select:focus-visible, .route-inbox a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .ri-map { position: absolute; inset: 0; }
 .route-inbox .destination-map-controls { top: auto; right: auto; left: 20px; bottom: 20px; box-shadow: var(--shadow-s); }
-.route-inbox .destination-map-credit { left: 20px; right: auto; bottom: 4px; padding: 0; background: none; font-size: 11px; text-shadow: var(--halo); }
+.route-inbox .destination-map-credit { left: 20px; right: auto; bottom: 4px; padding: 0; background: none; font-size: 12px; text-shadow: var(--halo); }
 /* Nothing on the walk asks to be confirmed, so markers rest instead of pulsing. */
 .route-inbox .route-marker[data-state=open] .route-marker-dot::after { display: none; }
 
@@ -57,10 +57,10 @@
 .ri-row-main { display: grid; gap: 1px; flex: 1; min-width: 0; }
 .ri-excerpt { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .ri-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
-.ri-row-meta em { font-style: normal; padding: 0 6px; border: 1px solid var(--hair); border-radius: 999px; font-size: 11px; color: var(--ink); }
-.ri-lang { flex: none; min-width: 26px; padding: 1px 4px; border-radius: 6px; background: color-mix(in srgb, var(--ink) 7%, transparent); font-size: 11px; font-weight: 500; text-align: center; color: var(--ink); }
+.ri-row-meta em { font-style: normal; padding: 0 6px; border: 1px solid var(--hair); border-radius: 999px; font-size: 12px; color: var(--ink); }
+.ri-lang { flex: none; min-width: 26px; padding: 1px 4px; border-radius: 6px; background: color-mix(in srgb, var(--ink) 7%, transparent); font-size: 12px; font-weight: 500; text-align: center; color: var(--ink); }
 .ri-kind { flex: none; color: var(--muted); }
-.ri-rank { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--on-primary); font-size: 11px; }
+.ri-rank { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--on-primary); font-size: 12px; }
 .ri-filed { font-size: 12px; color: var(--muted); font-weight: 400; }
 .ri-filed:empty::before { content: '●'; color: var(--reachable); }
 
@@ -75,11 +75,12 @@
 .ri-filedline { margin: 8px 0 0; }
 .ri-said { font-size: 12px; color: var(--muted); }
 .ri-problem { margin: 10px 0 0; font-size: 13px; color: var(--error); }
-.ri-credit { margin: 14px 0 0; font-size: 11px; color: var(--muted); }
+.ri-credit { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
 
 /* Buttons: quiet text, and at most one slim primary */
 .ri-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
-.ri-primary { min-height: 36px; padding: 0 14px; border: 1px solid var(--ink); border-radius: 999px; background: var(--ink); color: var(--on-primary) !important; font-size: 13px; cursor: pointer; }
+.ri-primary { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent); border-radius: 999px; background: rgb(255 255 255 / 0.35); color: var(--ink); font-size: 13px; cursor: pointer; }
+.ri-primary:hover:not(:disabled) { background: rgb(255 255 255 / 0.75); border-color: var(--ink); }
 .ri-primary { position: relative; }
 .ri-primary::before, .ri-text::before { content: ''; position: absolute; inset: -4px -2px; }
 .ri-primary:disabled { opacity: 0.4; cursor: default; }
@@ -104,7 +105,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .ri-photo-frame img { object-fit: fill; }
 .ri-outline { fill: color-mix(in srgb, var(--blocked) 22%, transparent); stroke: var(--blocked); stroke-width: 2.5px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .ri-outline.is-quiet { fill: none; stroke: rgb(255 255 255 / 0.95); stroke-width: 2px; stroke-dasharray: 6 4; }
-.ri-photo figcaption { margin-top: 4px; font-size: 11px; color: var(--muted); }
+.ri-photo figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
 .ri-photo figcaption a { color: inherit; }
 .ri-pager { position: absolute; left: 50%; bottom: 6px; display: flex; align-items: center; gap: 0; padding: 0 2px; transform: translateX(-50%); border-radius: 999px; background: var(--glass-panel); backdrop-filter: var(--glass-blur); box-shadow: 0 0 0 0.5px var(--hair); font-size: 12px; white-space: nowrap; }
 .ri-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 12px; }
