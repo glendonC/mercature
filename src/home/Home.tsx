@@ -5,6 +5,7 @@ import swayambhu from '../covers/swayambhu.webp';
 import { NOOR_FARM } from '../site/farm';
 import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destination } from '../destinations/data';
 import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
+import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
 import { CloseIcon, InfoIcon } from '../icons';
@@ -58,13 +59,8 @@ function useHero(): { data: Destination | null; walk: Walk | null; markers: Mark
   const walk = useMemo(() => data && buildWalk(data), [data]);
   const review = useMemo(() => data && loadReview(data.id).review, [data]);
   if (!walk || !review) return { data, walk: null, markers: [], left: 0 };
-  /** A spot carries the state the route canvas gives it (src/destinations/RouteCanvas.tsx); the still map hides the labels. */
-  const markers: Marker[] = walk.spots.map(spot => ({
-    id: spot.id, at: spot.at, selected: false, label: '',
-    state: spot.kind === 'no-photos' ? 'no-photos' : verdictOf(review, spot.stretches) ?? 'open',
-  }));
   const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
-  return { data, walk, markers, left: flagged.filter(spot => !verdictOf(review, spot.stretches)).length };
+  return { data, walk, markers: spotMarkers(walk, review), left: flagged.filter(spot => !verdictOf(review, spot.stretches)).length };
 }
 const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
 /** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
