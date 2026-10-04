@@ -251,7 +251,7 @@ const count_es = (n: number, one: string, many: string, feminine = false) => `${
 const places_es = (n: number) => n === 1 ? 'en un lugar' : n <= 4 ? 'en algunos lugares' : n <= 15 ? 'en varios lugares' : 'en muchos lugares';
 /** "de" before a slot that starts with "el" contracts to "del": habla del bordillo, never de el bordillo. */
 const de = (x: string) => /^el /.test(x) ? `del ${x.slice(3)}` : `de ${x}`;
-const ASK_EN = `That's fine. Your route note will ask visitors to check with you first.`;
+const ASK_EN = `That’s fine. Your route note will ask visitors to check with you first.`;
 const ASK_ES = 'No pasa nada. Tu nota de la ruta les pedirá a los visitantes que te consulten antes.';
 
 const en: Script = {
@@ -455,7 +455,7 @@ const en: Script = {
     reading: 'Reading it…',
     notKept: 'This device couldn’t keep the download. You can still place messages yourself.',
     stopped: 'The download stopped. Try again, or place it yourself.',
-    failed: 'I couldn’t load here. You can still place it yourself.',
+    failed: 'Something went wrong on this device. You can still place it yourself.',
     tryAgain: 'Try again',
   },
   missed: {
@@ -680,7 +680,7 @@ const es: Script = {
     reading: 'Leyéndolo…',
     notKept: 'Este dispositivo no pudo guardar la descarga. Igual puedes ubicar los mensajes tú.',
     stopped: 'La descarga se detuvo. Inténtalo de nuevo o ubícalo tú.',
-    failed: 'No pude cargar aquí. Igual puedes ubicarlo tú.',
+    failed: 'Algo falló en este dispositivo. Igual puedes ubicarlo tú.',
     tryAgain: 'Reintentar',
   },
   missed: {
