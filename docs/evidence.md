@@ -50,11 +50,11 @@ The figures behind the problem Mercature addresses, the data it is built with, a
 - 71.7% of Peruvian workers are in units of 1 to 10 people, and 88.6% of those are informal. The tool is built for that scale: no accounts, no server and no staff. It does the reading and sorting; the operator decides.
 - 89.2% of rural households have a mobile phone and 27.1% have internet service. The daily work has to run on a phone, offline, after one download.
 - Quechua is the mother tongue of 55.2% of the Cusco region's population aged 5 and over, and the model fails on it (see below). The tool reports that failure instead of hiding it.
-- UN Tourism reports 2 to 3 companions per traveller with a disability, so a barrier on a walking route can affect a whole group. The route shows where street photos suggest steps or kerbs, and the operator keeps each spot current.
+- UN Tourism reports 2 to 3 companions per traveller with a disability, so a barrier on a tour route can affect a whole group. The route shows where street photos suggest steps or kerbs, and the operator keeps each spot current.
 
 ## The Qorikancha route
 
-The place in the app: a walking route in Cusco from the Plaza de Armas to the Qorikancha ticket booth, prepared once from public street photos and map data. Figures from the route's own record:
+The place in the app: a route in Cusco from the Plaza de Armas to the Qorikancha ticket booth, prepared once from public street photos and map data. Figures from the route's own record:
 
 | Item | Value |
 | --- | --- |
@@ -76,7 +76,7 @@ The place in the app: a walking route in Cusco from the Plaza de Armas to the Qo
 
 ## The Narikala route
 
-The second place in the app: a walking route in Tbilisi, Georgia, from the Narikala cable car top station to the Narikala fortress gate, prepared the same way. Figures from its own record:
+The second place in the app: a route in Tbilisi, Georgia, from the Narikala cable car top station to the Narikala fortress gate, prepared the same way. Figures from its own record:
 
 | Item | Value |
 | --- | --- |
@@ -92,7 +92,7 @@ The second place in the app: a walking route in Tbilisi, Georgia, from the Narik
 
 ## Noor's farm (training data only)
 
-In the brief, Noor farms in the fictional Ondera highlands; we set her farm in La Convención, Cusco, for the synthetic messages. Her farm is the authored setting of the synthetic messages that trained the model's heads, labeled synthetic. Its workspace stays in the code, reachable only through a test entry, and is not offered in the app. It has 17 named features in Spanish and English, with aliases in English, Spanish and Korean, and Quechua aliases on 16 of them (unreviewed), and every dimension is invented. Its path check uses an illustrative 0.9 m square envelope on one flat level, which is not a wheelchair standard; slopes, steps and surface firmness are not modelled. The model's held-out evaluation uses messages about this farm.
+In the brief, Noor farms in the fictional Ondera highlands; her farm is set in La Convención, Cusco, for the synthetic messages. Her farm is the authored setting of the synthetic messages that trained the model's heads, labeled synthetic. Its workspace stays in the code as a hidden example reached only by ?place=farm, not offered from the app. It has 17 named features in Spanish and English, with aliases in English, Spanish and Korean, and Quechua aliases on 16 of them (unreviewed), and every dimension is invented. Its path check uses an illustrative 0.9 m square envelope on one flat level, which is not a wheelchair standard; slopes, steps and surface firmness are not modelled. The model's held-out evaluation uses messages about this farm.
 
 ## Data the tool is built with
 
@@ -103,7 +103,7 @@ In the brief, Noor farms in the fictional Ondera highlands; we set her farm in L
 | Example visitor messages | Synthetic. Written by a large language model for this project; no message was written by a person or sent by a visitor. Each message family has English, Spanish and Korean versions written as separate paraphrases with the same labels. 22 families also have a Quechua version, machine-translated by the same model and aimed at Southern Quechua (Cusco-Collao), and Quechua is used for held-out testing only. Every record states its language, whether it was written directly or machine-translated, its family and its labels: message kind, issue type and site features. Files: `scripts/language/messages.json` and `scripts/language/messages-train-extra.json` | CC0-1.0 | 403 messages in 127 families; splits and results in [language](language.md) |
 | Route test messages | Synthetic, written by a large language model for this project: messages about the Qorikancha route, for evaluation only; English, Spanish, Korean and machine-translated Quechua (`scripts/language/route-messages.json`) | CC0-1.0 | 44 messages in 14 families |
 | Memory test messages | Synthetic, written by a large language model for this project, for the evaluation of the memory of confirmations only; mostly machine-translated Quechua (`scripts/language/memory-messages.json`) | CC0-1.0 | 273 messages (147 Quechua) |
-| Qorikancha route | The place above: Mapillary street photos credited per photo, places, streets and paths from OpenStreetMap, the walking route from the public Valhalla server, partial 3D from [VGGT-1B-Commercial](https://huggingface.co/facebook/VGGT-1B-Commercial) and outlines from [SAM 3](https://github.com/facebookresearch/sam3). A 4,297,674-byte package is published, with 27 credited photo views, 5 thinned 3D pieces, the OpenStreetMap records along the route and its way around; the full photos and the full 3D stay on the development machine | Photos [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); OpenStreetMap [ODbL 1.0](https://www.openstreetmap.org/copyright); Valhalla MIT; VGGT custom license; SAM License | 77,743,319 bytes in full; 4,297,674 bytes published |
+| Qorikancha route | The place above: Mapillary street photos credited per photo, places, streets and paths from OpenStreetMap, the route on foot from the public Valhalla server, partial 3D from [VGGT-1B-Commercial](https://huggingface.co/facebook/VGGT-1B-Commercial) and outlines from [SAM 3](https://github.com/facebookresearch/sam3). A 4,297,674-byte package is published, with 27 credited photo views, 5 thinned 3D pieces, the OpenStreetMap records along the route and its way around; the full photos and the full 3D stay on the development machine | Photos [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); OpenStreetMap [ODbL 1.0](https://www.openstreetmap.org/copyright); Valhalla MIT; VGGT custom license; SAM License | 77,743,319 bytes in full; 4,297,674 bytes published |
 | Narikala route | The second route (below), prepared the same way: 359 Mapillary photo records, 72 credited photo views, 5 thinned 3D pieces, the OpenStreetMap records along it and its way around | As for the Qorikancha route | 8,509,580 bytes published |
 | Other recorded destination | Swayambhu (Kathmandu): 19 records captured 2015 to 2018, with no usable 3D; kept on the development machine, not published | As for the route | 77,729,808 bytes for the full records of Narikala and Swayambhu together |
 | Noor's farm site | Synthetic. The training setting above ([inventory](../src/site/inventory.ts), [layout](../src/site/farm.ts)) | Part of this repository | 17 features |

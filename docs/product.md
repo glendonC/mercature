@@ -28,7 +28,7 @@ Each route also carries what OpenStreetMap records along it: 44 records on Qorik
 
 ## Noor's farm
 
-In the brief, Noor farms in the fictional Ondera highlands; we set her farm in La Convención, Cusco, for the synthetic messages. Her farm exists in Mercature as the model's synthetic training data: the example messages that trained its heads are about an authored farm, labelled synthetic. Its workspace stays in the code, reachable only through a test entry, and is not offered in the app. The app's places are the real routes.
+In the brief, Noor farms in the fictional Ondera highlands; her farm is set in La Convención, Cusco, for the synthetic messages. Her farm exists in Mercature as the model's synthetic training data: the example messages that trained its heads are about an authored farm, labelled synthetic. Its workspace stays in the code as a hidden example reached only by ?place=farm, not offered from the app. The app's places are the real routes.
 
 ## What the model does and does not do
 
@@ -63,7 +63,7 @@ Results by language, size and speed are in [language](language.md).
   - Start over deletes the place's messages, edits and remembered links.
 - **Consent.** She pastes messages visitors already sent her. The app collects nothing from visitors and sends nothing to them; she copies each reply herself.
 - **Bias and limits.** The model reads Latin and Korean script only. Messages that fail the language check always get Not sure. Every Quechua message in the held-out and route tests failed it, and 146 of the 147 in the memory test. Once she files a message on a spot, similar messages that fail the check put that spot first. One large language model wrote every test message, and the Spanish and Korean text in the app has not been reviewed by a native speaker.
-- **Oversight.** The guide proposes and she answers; nothing on her map changes without her tap. A sure answer is filed on its best spot and she can move it; on Not sure she taps the spot. She copies every reply herself.
+- **Oversight.** The guide proposes and she answers; nothing on her map changes without her tap. A sure answer offers its best spot and she confirms it, or she chooses another spot. On Not sure she taps the spot. She copies every reply herself.
 
 ## Data
 

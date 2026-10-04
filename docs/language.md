@@ -31,7 +31,7 @@ The app shell gains about 125 KB, precached by the service worker: the language 
 
 The kind and issue-type heads do not read the embedding directly. Each reads the message's similarity to short passages describing every label, three per label in English, Spanish and Korean (`scripts/language/labels.mjs`). These passages paraphrase the label definitions written for the data before any message existed. The place head reads the full 384-dimensional embedding.
 
-**Reuse.** None of the heads refers to the farm's feature names: a new place needs its spot list with aliases, and its layout for the path check. Tested on the Qorikancha walk without retraining (below), the spot ranking and the message kind carried over. The issue type did not: it was right for 8 of 28 problems, and 3 of its confident answers were wrong. A new place therefore also needs a few labeled messages to check or retrain the issue-type head.
+**Reuse.** None of the heads refers to the farm's feature names: a new place needs its spot list with aliases, and its layout for the path check. Tested on the Qorikancha tour route without retraining (below), the spot ranking and the message kind carried over. The issue type did not: it was right for 8 of 28 problems, and 3 of its confident answers were wrong. A new place therefore also needs a few labeled messages to check or retrain the issue-type head.
 
 ## Data
 
@@ -39,7 +39,7 @@ The kind and issue-type heads do not read the embedding directly. Each reads the
 | --- | ---: | --- |
 | `scripts/language/messages.json` | 253 (77 families) | train 114, dev 51, held-out 88 |
 | `scripts/language/messages-train-extra.json` | 150 (50 families) | training only |
-| `scripts/language/route-messages.json` | 44 (14 families) | Qorikancha walk, evaluation only |
+| `scripts/language/route-messages.json` | 44 (14 families) | Qorikancha route, evaluation only |
 
 All three files are synthetic, written by a large language model for this project, under CC0-1.0. Each family is one message written in English, Spanish and Korean as separate paraphrases with the same labels. In the first file 22 families also have a Southern Quechua (Cusco-Collao) machine translation, and in the route file 4. No text has been reviewed by a native speaker and no message comes from a real visitor.
 
@@ -47,7 +47,7 @@ Labels: message kind, issue type for problems (two for two-concern messages), an
 
 Splits are by family, so translations and paraphrases of one message never cross splits. The 22 Quechua families form the held-out set, so Quechua is never used for training or thresholds. Quechua is not among the languages of XLM-R, the base of multilingual-e5-small, while English, Spanish and Korean are. Every English message was read to check labels before the split; the extra training families were written without access to the evaluation file.
 
-Not covered: real visitor writing (length, spelling, slang, mixed languages), places other than the farm and the Qorikancha walk, long reviews, voice, and any review by native speakers.
+Not covered: real visitor writing (length, spelling, slang, mixed languages), places other than the farm and the Qorikancha route, long reviews, voice, and any review by native speakers.
 
 ## Training and thresholds
 
@@ -122,9 +122,9 @@ Because a Quechua message could get a confident wrong answer, a check was added 
 - Re-running the held-out set with it: no English, Spanish or Korean answer changed, and all 22 Quechua messages now get *Not sure*, where 9 had received confident answers, 1 of them right.
 - This shows only that the tool now abstains on Quechua. It says nothing about understanding Quechua, and very short English or Spanish messages without function words ("Excelente tour!") also get *Not sure*.
 
-## Transfer to the Qorikancha walk
+## Transfer to the Qorikancha route
 
-The heads were trained only on farm messages. To see whether they carry over, 44 messages about the recorded walk from the Plaza de Armas to Qorikancha (14 spots in `src/site/route.ts`: six flagged stretches and eight landmarks) were written after the heads were frozen and scored once with them, without retraining (`scripts/language/route-messages.json`, synthetic, written by a large language model for this project; `node scripts/language/evaluate.mjs route`). Four spots are steps, told apart only by their landmarks.
+The heads were trained only on farm messages. To see whether they carry over, 44 messages about the recorded route from the Plaza de Armas to Qorikancha (14 spots in `src/site/route.ts`: six flagged stretches and eight landmarks) were written after the heads were frozen and scored once with them, without retraining (`scripts/language/route-messages.json`, synthetic, written by a large language model for this project; `node scripts/language/evaluate.mjs route`). Four spots are steps, told apart only by their landmarks.
 
 | Language | Top-1 | Top-3 | Kind | Issue type | Confident and right | Not sure | As expected |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -155,7 +155,7 @@ When the operator links a message to a spot ("Yes, this spot"), the phone keeps 
 `scripts/language/memory-messages.json` (synthetic, CC0-1.0, written by a large language model for this project):
 
 - **Farm:** a Southern Quechua (Cusco-Collao) machine translation of each of the 105 training and dev families, from their English and Spanish versions, with the family's labels.
-- **Qorikancha walk:** 42 new families, three per spot, each in English, Spanish and Korean as independent paraphrases, with a Southern Quechua machine translation.
+- **Qorikancha route:** 42 new families, three per spot, each in English, Spanish and Korean as independent paraphrases, with a Southern Quechua machine translation.
 
 Both were written in separate sessions given only the source messages or the spot list, without access to the held-out farm messages or the route messages. No text has been reviewed by a native speaker.
 
@@ -208,7 +208,7 @@ Right spot first on the held-out farm messages, memory with examples in all four
 - **Quechua.** On the machine-translated Quechua test messages, the right spot came first for 9.4 of 16 at k = 3, against 5 without a memory: 3 more were required. With a Quechua-only memory the figures are the same, since English, Spanish and Korean examples never won a Quechua message. At k = 3 the memory made 6.35 suggestions per draw on the 22 Quechua messages, 1.1 of them with a wrong first spot, and cost a right first spot 0.1 times per draw. Of its 127 spelling matches over the 20 draws, 105 named the right spot. They rest on shared words, mostly content words (*rumi*, stone; *hap'ikunapaq*, something to hold; *hank'ana*, roasting) and common grammar words (*ancha*, very; *karqan*, was); only 2 of 127 share a spot's name or alias.
 - **English and Spanish.** The memory changed no answer. Confident answers, confident wrong answers and answers as expected stayed the same in all three languages.
 - **The failure.** f022-ko, a Korean negation (the stone steps down to the coffee rows were not slippery at all), got the coffee sacks first instead of the steps, by embedding, in 1 of 20 draws at k = 1 and 3 of 20 at k = 2, as *Not sure* (`remembered`). The ship rule allows no drop in mean top-1 for any language, memory and k.
-- **Qorikancha walk.** No English (9 of 10), Spanish (9 of 10) or Korean (10 of 11) answer changed at any k. Quechua went from 1 of 3 to 1.85, 2.6 and 3 of 3 at k = 1, 2 and 3; three messages are too few to claim anything. Unlike on the farm, all 40 spelling matches at k = 3 shared a street or landmark name with the kept example (Plaza de Armas, Loreto, Maruri).
+- **Qorikancha route.** No English (9 of 10), Spanish (9 of 10) or Korean (10 of 11) answer changed at any k. Quechua went from 1 of 3 to 1.85, 2.6 and 3 of 3 at k = 1, 2 and 3; three messages are too few to claim anything. Unlike on the farm, all 40 spelling matches at k = 3 shared a street or landmark name with the kept example (Plaza de Armas, Loreto, Maruri).
 - **Same in the browser.** With no examples, Chromium gave the same decisions as Node for 88 of 88 held-out and 44 of 44 route messages, reason included. With 68 and 56 kept examples (all four languages, k = 1, first draw) they agreed again on 88 of 88 and 44 of 44; the examples survived an offline restart, and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout.json`, `browser-memory-route.json`).
 
 ### Restriction, decided after the held-out run
@@ -216,7 +216,7 @@ Right spot first on the held-out farm messages, memory with examples in all four
 1. The preregistered rule failed the ship rule on Korean: with the all-language memory, one negated message (f022-ko) got a wrong first spot in 1 of 20 draws at k = 1 and 3 of 20 at k = 2, always shown as *Not sure*.
 2. After the held-out run it was decided that the memory acts only on messages that fail the language check. English, Spanish and Korean messages are then answered exactly as without a memory, by construction: the memory is not consulted for them.
 3. The Quechua figures above were measured under the frozen Quechua rule, which this restriction leaves unchanged; they are the same with and without it.
-4. On the Qorikancha walk, 3 Quechua messages are too few to claim anything.
+4. On the Qorikancha route, 3 Quechua messages are too few to claim anything.
 
 Run as the app now applies it (`--restricted`; `memory-heldout-restricted.json`, `memory-route-restricted.json`): every English, Spanish and Korean decision equals the run without a memory at every k, in both memories, and the Quechua figures equal those above. Chromium gave the same decisions as Node with no examples (88 of 88, 44 of 44) and with 68 and 56 kept examples (88 of 88, 44 of 44), and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout-restricted.json`, `browser-memory-route-restricted.json`, and with the CPU slowed 6× `browser-memory-route-restricted-cpu6x.json`).
 
@@ -238,9 +238,9 @@ On the development Mac (Apple M5 Max, one inference thread):
 | --- | ---: | ---: | ---: |
 | Read, check and create the inference session | 0.5 s | | |
 | Embed the farm's 17 features, first time (`prepareSite`) | | 1.8 to 2.2 s | 13.1 to 13.6 s |
-| Embed the Qorikancha walk's 14 spots, first time (`prepareSite`) | | 1.7 to 1.9 s | 10.8 to 11.5 s |
+| Embed the Qorikancha route's 14 spots, first time (`prepareSite`) | | 1.7 to 1.9 s | 10.8 to 11.5 s |
 | `prepareSite` again, vectors already stored | | 0 ms | 1 ms |
-| One spot added to the walk, the other 14 stored (`prepareSite`) | | 0.12 s | 0.63 s |
+| One spot added to the route, the other 14 stored (`prepareSite`) | | 0.12 s | 0.63 s |
 | Embed the 27 label passages and the 17 features | 2.3 s | | |
 | One message, median | 26 ms | 25 to 38 ms | 156 to 221 ms |
 | One message, 95th percentile | 38 ms | | 255 ms |
@@ -282,7 +282,7 @@ An earlier trial with the same encoder accepted a feature only when its cosine s
 
 ## Reproduce
 
-Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`), and the memory's calibration, held-out, route and Chromium runs, frozen and restricted (`memory-*.json`, `browser-memory-*.json`). Each has every decision, ranking and timing.
+Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha route (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`), and the memory's calibration, held-out, route and Chromium runs, frozen and restricted (`memory-*.json`, `browser-memory-*.json`). Each has every decision, ranking and timing.
 
 
 Node 24 or newer, from the repository root:
