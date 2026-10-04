@@ -1,6 +1,7 @@
 import type { UiLanguage } from '../site/contracts';
 import type { EditKind } from '../edits/store';
 import type { MarkKind } from '../ui/kinds';
+import type { OsmLine } from '../destinations/copy';
 
 /**
  * Everything the guide says, in English and Spanish: fixed lines with typed slots, and the labels of the choices she can tap.
@@ -138,6 +139,10 @@ export type Script = {
     affects: Record<AccessKind, string>;
     /** A count of one kind of mark, such as (45) => "45 kerbs". */
     marks: Record<MarkKind, (count: number) => string>;
+    /** What OpenStreetMap shows along a route from the map alone, by kind and value, inside check.osmKind, such as "steps with no handrail". */
+    osm: Record<OsmLine, string>;
+    /** Who parts with no street lights affect. */
+    affectsDark: string;
     /** The kinds she can give a spot, as chips. */
     kinds: Record<EditKind, string>;
     /** The same kinds inside a line, such as "a kerb". */
@@ -180,6 +185,8 @@ export type Script = {
     kind: (s: KindSlots) => string;
     /** On a walk with no street photos read: what OpenStreetMap records there. */
     osm: (s: ItemSlots) => string;
+    /** On such a walk, one kind OpenStreetMap shows along it, from words.osm, and in how many places. */
+    osmKind: (s: { what: string; places: number }) => string;
     /** What OpenStreetMap adds about a spot the photos show. */
     osmToo: (s: ItemSlots) => string;
     /** Where the photo would be, on such a walk. */
@@ -389,6 +396,12 @@ const en: Script = {
       crossing: n => `crossings ${places_en(n)}`, bollard: n => `posts or bollards ${places_en(n)}`, footway: n => `pavement ${places_en(n)}`,
       cobblestones: n => `cobblestones ${places_en(n)}`, road: n => `the road ${places_en(n)}`,
     },
+    osm: {
+      bench: 'benches', toilets: 'toilets', crossing: 'road crossings', handrail: 'steps with a handrail', noHandrail: 'steps with no handrail', ramp: 'ramps', noRamp: 'steps with no ramp',
+      lit: 'street lights', unlit: 'parts with no street lights', wheelchairNo: 'places marked not for wheelchairs', wheelchairLimited: 'places marked limited for wheelchairs',
+      cobbles: 'cobblestones', loose: 'loose or unpaved ground', kerbLowered: 'lowered kerbs', kerbRaised: 'high kerbs',
+    },
+    affectsDark: 'Harder for people who can’t see well after dark.',
     kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow place', other: 'Something else', bench: 'Bench', toilet: 'Toilet', ramp: 'Ramp', handrail: 'Handrail' },
     added: { steps: 'steps', kerb: 'a kerb', narrow: 'a narrow place', other: 'something in the way', bench: 'a bench', toilet: 'a toilet', ramp: 'a ramp', handrail: 'a handrail' },
     groups: { blocks: 'Something in the way', helps: 'Something that helps' },
@@ -431,6 +444,7 @@ const en: Script = {
     noPhotos: s => `There are no photos of this part, ${s.where}.`,
     kind: s => `The photos also show ${s.what}.`,
     osm: s => `OpenStreetMap shows ${s.what} here, ${s.where}.`,
+    osmKind: s => `OpenStreetMap shows ${s.what} ${places_en(s.places)} along the route.`,
     osmToo: s => `OpenStreetMap adds: ${s.osm}.`,
     noStreetPhotos: 'From the map',
     core: {
@@ -674,6 +688,12 @@ const es: Script = {
       crossing: n => `cruces peatonales ${places_es(n)}`, bollard: n => `postes o bolardos ${places_es(n)}`, footway: n => `acera ${places_es(n)}`,
       cobblestones: n => `empedrado ${places_es(n)}`, road: n => `calzada ${places_es(n)}`,
     },
+    osm: {
+      bench: 'bancas', toilets: 'baños', crossing: 'cruces peatonales', handrail: 'escalones con pasamanos', noHandrail: 'escalones sin pasamanos', ramp: 'rampas', noRamp: 'escalones sin rampa',
+      lit: 'alumbrado', unlit: 'partes sin alumbrado', wheelchairNo: 'lugares marcados como no accesibles en silla de ruedas', wheelchairLimited: 'lugares marcados con acceso limitado en silla de ruedas',
+      cobbles: 'empedrado', loose: 'suelo suelto o sin pavimentar', kerbLowered: 'bordillos rebajados', kerbRaised: 'bordillos altos',
+    },
+    affectsDark: 'Cuesta más de noche a quien ve poco.',
     kinds: { steps: 'Escalones', kerb: 'Bordillo', narrow: 'Paso angosto', other: 'Otra cosa', bench: 'Banca', toilet: 'Baño', ramp: 'Rampa', handrail: 'Pasamanos' },
     added: { steps: 'escalones', kerb: 'un bordillo', narrow: 'un paso angosto', other: 'algo que estorba', bench: 'una banca', toilet: 'un baño', ramp: 'una rampa', handrail: 'un pasamanos' },
     groups: { blocks: 'Algo que estorba', helps: 'Algo que ayuda' },
@@ -716,6 +736,7 @@ const es: Script = {
     noPhotos: s => `No hay fotos de esta parte, ${s.where}.`,
     kind: s => `Las fotos también muestran ${s.what}.`,
     osm: s => `Según OpenStreetMap, aquí hay ${s.what}, ${s.where}.`,
+    osmKind: s => `Según OpenStreetMap, hay ${s.what} ${places_es(s.places)} del recorrido.`,
     osmToo: s => `Además, según OpenStreetMap: ${s.osm}.`,
     noStreetPhotos: 'Del mapa',
     core: {

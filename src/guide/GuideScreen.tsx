@@ -11,8 +11,9 @@ import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import { esDe } from '../i18n/names';
 import Menu, { type MenuPlace } from '../home/Menu';
-import { ANSWER_NOTE, AROUND_NOTE, COPY, KIND_NOTE, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
+import { ANSWER_NOTE, AROUND_NOTE, COPY, KIND_NOTE, OSM_NOTE, type OsmLine, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
 import { DESTINATIONS, type Destination } from '../destinations/data';
+import { checkItems } from '../osm/check';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerIcon, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
@@ -32,8 +33,12 @@ import './guide-screen.css';
 
 /** A place on the walk the conversation can be about: a spot of the walk, a plain stretch, a named landmark, or a spot she added. */
 type Target = { kind: 'spot'; id: string } | { kind: 'stretch'; index: number } | { kind: 'landmark'; id: string } | { kind: 'added'; id: string };
-/** One item of the walk check: a flagged spot, a stretch no photo shows, or another kind a model marked near the walk. */
-type Item = { key: string; access: AccessKind; spot: Spot } | { key: string; access: AccessKind; mark: MarkKind; count: number; points: Point[]; viewId: string | null };
+/**
+ * One item of the walk check: a flagged spot, a stretch no photo shows, another kind a model marked near the walk, or on a route from the
+ * map alone one kind OpenStreetMap shows along it, said by its most common value (line) and in how many places.
+ */
+type Item = { key: string; access: AccessKind; spot: Spot } | { key: string; access: AccessKind; mark: MarkKind; count: number; points: Point[]; viewId: string | null }
+  | { key: string; access: AccessKind; osm: { kind: string; line: OsmLine; places: number }; points: Point[] };
 /** An edit the guide offers from her words or her tap; nothing changes on her map until she confirms it. With no kind yet, she picks one, a group first. */
 type Proposal = { mode: 'add' | 'note'; text: string; target: Target; kind?: EditKind; group?: KindGroup; from: Step };
 type Step =
@@ -89,6 +94,21 @@ function accessOfSpot(spot: Spot): AccessKind {
 const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', kerb: 'kerb', broken: 'broken', crossing: 'crossing', bollard: 'bollard', cobblestones: 'uneven' };
 /** Kinds near the walk the check goes through after the flagged spots, in the order a person would. Kerbs beside the walk are context, not a question. */
 const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind] && kind !== 'kerb');
+/** Which note line a kind OpenStreetMap shows takes, by its tag's value; a value with none, such as wheelchair=yes or a paved surface, is not asked about. */
+const OSM_LINES: Readonly<Record<string, (value: string) => OsmLine | undefined>> = {
+  bench: () => 'bench', toilets: () => 'toilets', crossing: () => 'crossing',
+  handrail: value => value === 'yes' ? 'handrail' : value === 'no' ? 'noHandrail' : undefined,
+  ramp: value => value === 'yes' ? 'ramp' : value === 'no' ? 'noRamp' : undefined,
+  lit: value => value === 'yes' ? 'lit' : value === 'no' ? 'unlit' : undefined,
+  wheelchair: value => value === 'no' ? 'wheelchairNo' : value === 'limited' ? 'wheelchairLimited' : undefined,
+  surface: value => /^(sett|cobblestone|unhewn_cobblestone|pebblestone)$/.test(value) ? 'cobbles' : value ? 'loose' : undefined,
+  kerb: value => value === 'lowered' || value === 'flush' ? 'kerbLowered' : value === 'raised' ? 'kerbRaised' : undefined,
+};
+/** What each such line is for the guide's words: who it affects. */
+const ACCESS_OF_OSM: Record<OsmLine, AccessKind> = {
+  bench: 'bench', toilets: 'toilets', crossing: 'crossing', handrail: 'handrail', noHandrail: 'steps', ramp: 'ramp', noRamp: 'steps', lit: 'lighting', unlit: 'lighting',
+  wheelchairNo: 'noWheelchair', wheelchairLimited: 'noWheelchair', cobbles: 'uneven', loose: 'uneven', kerbLowered: 'ramp', kerbRaised: 'kerb',
+};
 /** The map icon of something that helps, which she can add. */
 const HELP_ICON: Partial<Record<EditKind, MarkerIcon>> = { bench: 'bench', toilet: 'toilets', ramp: 'ramp', handrail: 'handrail' };
 /** The words that name a kind in her own text, in English, Spanish and Korean. */
@@ -356,9 +376,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const removed = (stretches: readonly number[]) => verdictOf(review, stretches) === 'not-barrier';
   const monthOf = (iso: string | null | undefined) => { const date = iso ? new Date(iso) : null; return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat(lang === 'es' ? 'es-PE' : 'en-GB', { month: 'long', year: 'numeric' }).format(date) : ''; };
 
-  // The walk check: flagged spots first, then stretches no photo shows, then the other kinds a model marked near the walk.
+  // A route from the map alone, judged by its stretches as the map does: no photo was read anywhere along it.
+  const mapOnly = data.stretches.length > 0 && data.stretches.every(stretch => !stretch.views.length);
+  // The walk check: flagged spots first, then stretches no photo shows, then the other kinds a model marked near the walk. On a route from the
+  // map alone every part has no photos, so those are not asked about; what OpenStreetMap shows along it is, kind by kind, after its flagged spots.
   const items = useMemo<Item[]>(() => {
-    const spotItems = [...walk.spots.filter(spot => spot.kind === 'flagged'), ...walk.spots.filter(spot => spot.kind === 'no-photos')].map(spot => ({ key: spot.id, access: accessOfSpot(spot), spot }));
+    const spotItems = [...walk.spots.filter(spot => spot.kind === 'flagged'), ...(mapOnly ? [] : walk.spots.filter(spot => spot.kind === 'no-photos'))].map(spot => ({ key: spot.id, access: accessOfSpot(spot), spot }));
     const near = data.marks.filter(mark => mark.position && mark.stretches.length && !mark.flagged);
     const kinds = CHECK_KINDS.flatMap(kind => {
       const marks = near.filter(mark => markOf(mark.concept) === kind);
@@ -368,16 +391,27 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const viewId = [...perView].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
       return [{ key: `marks:${kind}`, access: ACCESS_OF_MARK[kind]!, mark: kind, count: marks.length, points: marks.map(mark => walk.project(mark.position!)), viewId }];
     });
-    return [...spotItems, ...kinds];
-  }, [walk, data.marks, views]);
+    // A tag already in a flagged spot is asked about there. A kind is said by its most widespread value that has a line; its places are its tags with that line.
+    const flagged = new Set(walk.spots.flatMap(spot => spot.findings.map(finding => finding.id)));
+    const tags = mapOnly ? (data.access ?? []).filter(tag => !flagged.has(tag.id)) : [], byId = new Map(tags.map(tag => [tag.id, tag]));
+    const osm = checkItems(tags).flatMap(group => {
+      const lineOf = OSM_LINES[group.kind], line = lineOf && group.says.map(said => lineOf(said.value)).find(Boolean);
+      if (!lineOf || !line) return [];
+      const these = group.findings.map(id => byId.get(id)).filter((tag): tag is NonNullable<typeof tag> => !!tag && lineOf(tag.value) === line);
+      const points = these.flatMap(tag => tag.position ? [walk.project([tag.position[0], tag.position[1]])] : tag.stretches.map(index => midpoint(data.stretches[index].line.map(walk.project))));
+      return [{ key: `osm:${line}`, access: ACCESS_OF_OSM[line], osm: { kind: group.kind, line, places: these.length }, points }];
+    });
+    return [...spotItems, ...kinds, ...osm];
+  }, [walk, data.marks, data.access, data.stretches, views, mapOnly]);
   /** A spot's question fits its kind; a kind along much of the walk asks whether the note mentions it, but cobblestones ask for a smoother way. */
-  const questionOf = (item: Item): QuestionId => 'spot' in item ? QUESTION_OF[item.access] : item.mark === 'cobblestones' ? 'smoother' : 'mention';
+  const questionOf = (item: Item): QuestionId => 'spot' in item ? QUESTION_OF[item.access] : 'osm' in item ? 'mention' : item.mark === 'cobblestones' ? 'smoother' : 'mention';
   const itemOfTarget = (target: Target) => target.kind === 'spot' ? items.findIndex(item => 'spot' in item && item.spot.id === target.id) : -1;
   /** What the check counts, as the greeting does: the flagged spots on a route with photos, every item on a route from the map alone. The rest come after with no counter. */
   const counted = (item: Item | undefined) => !!item && (!data.views.length || ('spot' in item && item.spot.kind === 'flagged'));
   const countedItems = items.filter(counted);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   function slotsOf(item: Item, at: number): ItemSlots {
+    if ('osm' in item) return { n: at + 1, total: items.length, what: s.words.osm[item.osm.line], where: '', metres: 0, photos: 0, when: '', osm: '' };
     if (!('spot' in item)) return { n: at + 1, total: items.length, what: s.words.marks[item.mark](item.count), where: '', metres: 0, photos: item.viewId ? 1 : 0, when: '', osm: '' };
     const spot = item.spot, shown = spot.findings.filter(f => f.viewId && views.has(f.viewId));
     const newest = shown.map(f => photos.get(views.get(f.viewId!)!.photoId)?.capturedAt ?? '').sort().at(-1);
@@ -709,10 +743,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       if (spot === avoided && !fix && !gone(spot.stretches) && line !== aroundLine) lines.push(aroundLine);
       const own = noteOf(mine, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
-    // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them.
-    for (const one of items) if (!('spot' in one) && KIND_NOTE[one.mark as keyof typeof KIND_NOTE]) {
+    // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them. A kind OpenStreetMap shows
+    // along a route from the map alone goes in by its own line, which names OpenStreetMap.
+    for (const one of items) {
       const said = answerOf(mine, one.key)?.answer;
-      if (said === 'yes' || (one.mark === 'cobblestones' && said && said !== 'unknown')) lines.push(KIND_NOTE[one.mark as keyof typeof KIND_NOTE][language]);
+      if ('osm' in one) { if (said === 'yes') lines.push(OSM_NOTE[one.osm.line][language]); }
+      else if (!('spot' in one) && KIND_NOTE[one.mark as keyof typeof KIND_NOTE] && (said === 'yes' || (one.mark === 'cobblestones' && said && said !== 'unknown'))) lines.push(KIND_NOTE[one.mark as keyof typeof KIND_NOTE][language]);
     }
     for (const spot of mine.added) {
       const fix = isFixed(mine, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
@@ -741,7 +777,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     return [...groups.values()].sort((a, b) => b.count - a.count).slice(0, 3);
   }, [review.messages]);
-  const walkSlots = useMemo(() => ({ ...walkSlotsOf(data, lang, authored), messages: rows.length }), [data, lang, authored, rows.length]);
+  // On a route from the map alone, "things to check" are the check's own items, so the greeting's count matches its "1 of N".
+  const walkSlots = useMemo(() => ({ ...walkSlotsOf(data, lang, authored), messages: rows.length, ...(mapOnly ? { osm: items.length } : {}) }), [data, lang, authored, rows.length, mapOnly, items.length]);
 
   // What the map shows for the step: the thing it is about, ranked suggestions, and how the camera frames them.
   const current = step.id === 'message' || step.id === 'reply' ? messageOf(rows[step.at]?.id ?? '') : null;
@@ -855,8 +892,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   /** The check card for one item; a card she picked a place from in 3D stays open, in 3D, and its head names the place she picked while she says what is there. */
   const cardOf = (item: Item, at: number, here?: Target | null) => {
     const away = !!here && !('spot' in item && same(here, { kind: 'spot', id: item.spot.id }));
-    return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : s.words.affects[item.access]}
-      empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
+    return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : 'osm' in item && item.osm.line === 'unlit' ? s.words.affectsDark : s.words.affects[item.access]}
+      empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item || 'osm' in item ? null : item.viewId}
       stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? photoFit ?? photoStrip() : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   };
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
@@ -901,6 +938,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const follow = FOLLOW_OF[item.access as FollowKind];
       lines.push(s.check.follow[item.access as FollowKind]);
       chips = (FOLLOWS[follow] as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[follow] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, follow, choice) }));
+      quiet = skip;
+    } else if ('osm' in item) {
+      // A kind OpenStreetMap shows along a route from the map alone: whether her note mentions it.
+      lines.push(s.check.osmKind({ what: slots.what, places: item.osm.places }), earlier ? s.select.answered({ answer: earlier }) : s.check.ask.mention(slots));
+      chips = (QUESTIONS.mention as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers.mention as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, 'mention', choice) }));
       quiet = skip;
     } else if (!('spot' in item)) {
       // A kind along much of the walk is one question: whether the note mentions it, or for cobblestones whether there is a smoother way.
@@ -1074,9 +1116,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const capital = (text: string) => `${text.charAt(0).toLocaleUpperCase()}${text.slice(1)}`;
     for (const [key, said] of Object.entries(edits.answers)) {
       const item = items.find(one => one.key === key); if (!item) continue;
-      const spot = 'spot' in item ? item.spot : null, title = spot ? tagOf({ kind: 'spot', id: spot.id }) : capital(s.words.marks[(item as { mark: MarkKind }).mark]((item as { count: number }).count));
+      const spot = 'spot' in item ? item.spot : null, osm = 'osm' in item ? item.osm : null;
+      const title = spot ? tagOf({ kind: 'spot', id: spot.id }) : osm ? capital(s.words.osm[osm.line]) : capital(s.words.marks[(item as { mark: MarkKind }).mark]((item as { count: number }).count));
       const chip = saidLabel(key) ?? said.answer;
-      list.push({ id: `answer:${key}`, kind: kindOf(spot ? spot.findings[0]?.concept ?? '' : (item as { mark: MarkKind }).mark), label: said.answer === 'notThere' || said.answer === 'gone' ? s.changes.takenOff({ tag: title }) : `${title}: ${chip}`,
+      list.push({ id: `answer:${key}`, kind: kindOf(spot ? spot.findings[0]?.concept ?? '' : osm ? (osm.kind === 'lit' ? 'lighting' : osm.kind) : (item as { mark: MarkKind }).mark), label: said.answer === 'notThere' || said.answer === 'gone' ? s.changes.takenOff({ tag: title }) : `${title}: ${chip}`,
         points: spot ? [spot.at] : (item as { points: Point[] }).points, undo: () => {
           edit(edits => setAnswer(edits, key, null));
           if (!spot) return;

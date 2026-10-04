@@ -239,6 +239,29 @@ export const KIND_NOTE = {
   handrail: { en: 'Some steps have handrails.', es: 'Algunos escalones tienen pasamanos.', ko: '일부 계단에는 난간이 있습니다.' },
 };
 
+/**
+ * A kind OpenStreetMap shows along a route built from the map alone, once she says to mention it, by kind and by its tag's most common value.
+ * Every line names OpenStreetMap as its source and none says a place can be reached.
+ */
+export const OSM_NOTE = {
+  bench: { en: 'Benches along the route, according to OpenStreetMap.', es: 'Bancas en el recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로에 벤치가 있습니다.' },
+  toilets: { en: 'Toilets along the route, according to OpenStreetMap.', es: 'Baños en el recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로에 화장실이 있습니다.' },
+  crossing: { en: 'The route crosses roads in places, according to OpenStreetMap.', es: 'El recorrido cruza calles en algunos puntos, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 중간에 차도를 건너는 곳이 있습니다.' },
+  handrail: { en: 'Some steps have a handrail, according to OpenStreetMap.', es: 'Algunos escalones tienen pasamanos, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 일부 계단에 난간이 있습니다.' },
+  noHandrail: { en: 'Some steps have no handrail, according to OpenStreetMap.', es: 'Algunos escalones no tienen pasamanos, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 일부 계단에는 난간이 없습니다.' },
+  ramp: { en: 'Ramps on parts of the route, according to OpenStreetMap.', es: 'Rampas en partes del recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 일부에 경사로가 있습니다.' },
+  noRamp: { en: 'Some steps have no ramp, according to OpenStreetMap.', es: 'Algunos escalones no tienen rampa, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 일부 계단에는 경사로가 없습니다.' },
+  lit: { en: 'Street lights on parts of the route, according to OpenStreetMap.', es: 'Alumbrado en partes del recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 일부에 가로등이 있습니다.' },
+  unlit: { en: 'Parts of the route have no street lights, according to OpenStreetMap.', es: 'Partes del recorrido no tienen alumbrado, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 일부에는 가로등이 없습니다.' },
+  wheelchairNo: { en: 'OpenStreetMap marks parts of the route as not for wheelchairs; ask us.', es: 'OpenStreetMap marca partes del recorrido como no accesibles en silla de ruedas; pregúntenos.', ko: 'OpenStreetMap에 경로 일부가 휠체어 이용 불가로 표시되어 있습니다. 문의해 주세요.' },
+  wheelchairLimited: { en: 'OpenStreetMap marks parts of the route as limited for wheelchairs; ask us.', es: 'OpenStreetMap marca partes del recorrido con acceso limitado en silla de ruedas; pregúntenos.', ko: 'OpenStreetMap에 경로 일부가 휠체어 이용이 제한된 곳으로 표시되어 있습니다. 문의해 주세요.' },
+  cobbles: { en: 'Cobblestones on parts of the route, according to OpenStreetMap.', es: 'Empedrado en partes del recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 일부가 돌길입니다.' },
+  loose: { en: 'Loose or unpaved ground on parts of the route, according to OpenStreetMap.', es: 'Suelo suelto o sin pavimentar en partes del recorrido, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 경로 일부는 포장되지 않은 길입니다.' },
+  kerbLowered: { en: 'Lowered kerbs at some crossings, according to OpenStreetMap.', es: 'Bordillos rebajados en algunos cruces, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 일부 횡단보도에 낮은 연석이 있습니다.' },
+  kerbRaised: { en: 'High kerbs at some crossings, according to OpenStreetMap.', es: 'Bordillos altos en algunos cruces, según OpenStreetMap.', ko: 'OpenStreetMap에 따르면 일부 횡단보도에 높은 연석이 있습니다.' },
+};
+export type OsmLine = keyof typeof OSM_NOTE;
+
 /** The way around the mapped steps, once she says it works. extra: metres longer than the walk, rounded. */
 export const AROUND_NOTE = {
   en: (w: Where, extra: number) => `There’s a way around the steps ${w.en}, about ${extra} m longer. We’ve checked it.`,
