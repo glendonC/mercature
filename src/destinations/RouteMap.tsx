@@ -281,8 +281,6 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const timer = window.setTimeout(() => setArriving(null), 1400);
     return () => clearTimeout(timer);
   }, [landed, still]);
-  /** Raised each time the whole route is shown again, so the motion layer can run the light along it once more. */
-  const [replay, setReplay] = useState(0);
   useEffect(() => {
     if (!leaning) return;
     const reveal = document.querySelector('.reveal'), host = reveal?.parentNode;
@@ -520,8 +518,6 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const fit = fitCamera(size.width, size.height), current = live.current ?? fit;
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
-    // Whole route runs the light along the walk again; zooming out as far as it goes does not.
-    if (typeof action !== 'function') setReplay(n => n + 1);
   };
   // How much a circle on the ground flattens, for the ring under the selected marker.
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
@@ -530,7 +526,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
-    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} landed={landed} replay={replay} markers={markers} focus={lifted ?? markers.find(marker => marker.rank === 1)?.id ?? null} hover={lifted} photoView={photoView} changes={changes} />}
+    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} markers={markers} hover={lifted} photoView={photoView} changes={changes} />}
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
