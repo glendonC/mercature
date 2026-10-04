@@ -39,8 +39,29 @@ const noteLanguage = (text: string) => guessLanguage(text);
 const VISITOR_LANGS: { id: VisitorLang; label: string }[] = [{ id: 'en', label: 'English' }, { id: 'es', label: 'Español' }, { id: 'ko', label: '한국어' }];
 const MESSAGE_LANGS = [...VISITOR_LANGS, { id: 'qu', label: 'Runasimi' }, { id: 'other', label: 'Other' }];
 
-/** Where the walk is framed: clear of the panel on wide screens and of the sheet on phones. The first fit uses no sheet height. */
-export const mapInsets = (narrow: boolean, sheetHeight = 0): Insets => narrow ? { top: 110, right: 20, bottom: Math.max(180, sheetHeight + 20), left: 20 } : { top: 100, right: 430, bottom: 50, left: 50 };
+/** The screen's safe-area insets (status bar, home indicator, notch), read from CSS and kept until the window changes size. */
+let safe: Insets | null = null;
+function safeArea(): Insets {
+  if (safe) return safe;
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+  document.body.appendChild(probe);
+  const style = getComputedStyle(probe);
+  safe = { top: parseFloat(style.paddingTop) || 0, right: parseFloat(style.paddingRight) || 0, bottom: parseFloat(style.paddingBottom) || 0, left: parseFloat(style.paddingLeft) || 0 };
+  probe.remove();
+  return safe;
+}
+if (typeof window !== 'undefined') addEventListener('resize', () => { safe = null; });
+
+/**
+ * Where the walk is framed: clear of the panel on wide screens and of the sheet on phones, inside the safe area.
+ * The first fit uses no sheet height. The reveal frames with the same function, so the two stay matched on any device.
+ */
+export const mapInsets = (narrow: boolean, sheetHeight = 0): Insets => {
+  const inset = safeArea();
+  return narrow ? { top: 110 + inset.top, right: 20 + inset.right, bottom: Math.max(180 + inset.bottom, sheetHeight + 20), left: 20 + inset.left }
+    : { top: 100 + inset.top, right: 430 + inset.right, bottom: 50 + inset.bottom, left: 50 + inset.left };
+};
 
 function useNarrow() {
   const query = '(max-width: 640px)';
