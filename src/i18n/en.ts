@@ -39,8 +39,6 @@ export const en = {
   // Home
   'home.label': 'Mercature home',
   'home.onPhone': 'Places on this phone',
-  'home.open': 'Open',
-  'home.onFoot': '{area} · {metres} m on foot',
   'home.flaggedSpots': '{n} flagged spots',
   'home.oneFlaggedSpot': '1 flagged spot',
   'home.noFlaggedSpots': 'No flagged spots',

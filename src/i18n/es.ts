@@ -42,8 +42,6 @@ export const es = {
   // Home
   'home.label': 'Inicio de Mercature',
   'home.onPhone': 'Lugares en este teléfono',
-  'home.open': 'Abrir',
-  'home.onFoot': '{area} · {metres} m a pie',
   'home.flaggedSpots': '{n} puntos señalados',
   'home.oneFlaggedSpot': '1 punto señalado',
   'home.noFlaggedSpots': 'Ningún punto señalado',
@@ -204,10 +202,11 @@ export const es = {
   // Editing the walk
   'edit.addTitle': 'Agrega un punto que conoces',
   'edit.addWhere': '{where}, {from} a {to} m',
+  'edit.kindLabel': 'Qué hay',
   'edit.kind.steps': 'Escalones',
   'edit.kind.kerb': 'Bordillo',
   'edit.kind.narrow': 'Paso angosto',
-  'edit.kind.other': 'Otra cosa',
+  'edit.kind.other': 'Otro',
   'edit.noteLabel': 'Tu nota',
   'edit.notePlaceholder': 'Lo que un visitante debe saber',
   'edit.noteKept': 'Se guarda en este teléfono. Los visitantes la ven en la nota de la ruta.',
