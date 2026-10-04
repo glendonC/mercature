@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EDIT_KINDS, ownNote, type EditKind, type NoteLang, type OwnNote } from '../../edits/store';
+import { EDIT_KINDS, noteLangOf, ownNote, type EditKind, type NoteLang, type OwnNote } from '../../edits/store';
 import { EDIT_WORDS, type EditWords } from '../../edits/words';
 import { PrimaryAction, Section, Segmented, TextButton } from '../../ui';
 import { CloseIcon, PlusIcon } from '../../ui/icons';
@@ -17,14 +17,13 @@ type Props = {
   words?: EditWords;
 };
 
-const asLang = (value: string): NoteLang => value === 'es' || value === 'ko' || value === 'other' ? value : 'en';
 
 /** A spot she knows about that no photo showed. Her record, never a measurement. */
 export default function AddSpot({ where, range, onAdd, onCancel, guess, words = EDIT_WORDS }: Props) {
   const [kind, setKind] = useState<EditKind | null>(null);
   const [text, setText] = useState('');
   const [chosen, setChosen] = useState<NoteLang | null>(null);
-  const language = chosen ?? asLang(guess?.(text) ?? 'en');
+  const language = chosen ?? noteLangOf(guess?.(text) ?? 'en');
   return <Section title={words.addTitle} label={words.addTitle} className="edit-section">
     <p className="edit-where">{words.addWhere(where, Math.round(range.from), Math.round(range.to))}</p>
     <div className="edit-kinds">

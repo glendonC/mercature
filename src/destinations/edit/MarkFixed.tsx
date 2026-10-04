@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ownNote, type NoteLang, type OwnNote } from '../../edits/store';
+import { noteLangOf, ownNote, type NoteLang, type OwnNote } from '../../edits/store';
 import { EDIT_WORDS, recordDate, type EditWords } from '../../edits/words';
 import { PrimaryAction, Section, TextButton } from '../../ui';
 import { CloseIcon, FixedIcon } from '../../ui/icons';
@@ -17,13 +17,12 @@ type Props = {
   words?: EditWords;
 };
 
-const asLang = (value: string): NoteLang => value === 'es' || value === 'ko' || value === 'other' ? value : 'en';
 
 /** Her record that a barrier is fixed, with the date. It says what she recorded, not that we checked. */
 export default function MarkFixed({ spot, date, onFix, onCancel, guess, words = EDIT_WORDS }: Props) {
   const [text, setText] = useState('');
   const [chosen, setChosen] = useState<NoteLang | null>(null);
-  const language = chosen ?? asLang(guess?.(text) ?? 'en');
+  const language = chosen ?? noteLangOf(guess?.(text) ?? 'en');
   const day = date ?? recordDate(new Date().toISOString(), 'en');
   return <Section title={words.fixTitle} label={words.fixTitle} className="edit-section">
     <p className="edit-where">{spot}</p>

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { QORIKANCHA_PLACE } from '../../src/site/route';
-import { addSpot, addedSpot, clearFixed, isFixed, markFixed, ownNote, parseEdits, removeSpot, setNote, EDIT_KINDS, NOTE_LIMIT, NO_NOTE, type Edits } from '../../src/edits/store';
+import { addSpot, addedSpot, clearFixed, isFixed, markFixed, noteLangOf, ownNote, parseEdits, removeSpot, setNote, EDIT_KINDS, NOTE_LIMIT, NO_NOTE, type Edits } from '../../src/edits/store';
+import { guessLanguage } from '../../src/destinations/copy';
 import { addedFeature, fixedLine, noteForPassage, ownNoteLines, withEdits, type Locate } from '../../src/edits/place';
 
 const empty: Edits = { schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, seq: 0 };
@@ -117,4 +118,14 @@ test('her words reach only the note written in their own language', () => {
   expect(ownNoteLines(note, 'en')).toEqual([]);
   expect(ownNoteLines(note, 'ko')).toEqual([]);
   expect(ownNoteLines(ownNote('Kimsa patatam', 'other'), 'en')).toEqual([]);
+});
+
+test('a note guessed as a language the visitor notes do not use is taken as another language, never English', () => {
+  for (const language of ['en', 'es', 'ko', 'other'] as const) expect(noteLangOf(language)).toBe(language);
+  expect(noteLangOf('qu')).toBe('other');
+  expect(noteLangOf('fr')).toBe('other');
+  const quechua = 'Manam kanchu allin ñan, rumikuna hatun kan';
+  expect(guessLanguage(quechua)).toBe('qu');
+  expect(noteLangOf(guessLanguage(quechua))).toBe('other');
+  expect(ownNoteLines(ownNote(quechua, noteLangOf(guessLanguage(quechua))), 'en')).toEqual([]);
 });

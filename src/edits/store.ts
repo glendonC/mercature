@@ -9,6 +9,8 @@ export type EditKind = (typeof EDIT_KINDS)[number];
 /** The language her own words were taken as, so the right visitor note carries them. */
 export const NOTE_LANGS = ['en', 'es', 'ko', 'other'] as const;
 export type NoteLang = (typeof NOTE_LANGS)[number];
+/** A guessed language as a note language: one the visitor notes are written in, else another language, Quechua and French included. */
+export const noteLangOf = (guess: string): NoteLang => (NOTE_LANGS as readonly string[]).includes(guess) ? guess as NoteLang : 'other';
 /** Her own words, with the language they were taken as. */
 export type OwnNote = { readonly text: string; readonly language: NoteLang };
 /** A spot she added, on one 10 m stretch of the walk. */
