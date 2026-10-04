@@ -203,6 +203,23 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   }, [peek]);
   const swipe = useRef<{ id: number; y: number; handle: boolean } | null>(null);
   const swiped = useRef(false);
+  // Hover: a marker under a fine pointer or at keyboard focus, or the marker a row in the panel points at.
+  // On a wide screen a marker hovered on the map previews its spot in the panel; a click pins it.
+  const [hover, setHover] = useState<{ id: string; from: 'map' | 'row' } | null>(null);
+  const leave = useRef(0);
+  function hoverFrom(from: 'map' | 'row', id: string | null) {
+    clearTimeout(leave.current);
+    if (id) setHover({ id, from });
+    // Sliding from one marker to the next crosses the map, so the panel waits a beat before it comes back.
+    else leave.current = window.setTimeout(() => setHover(now => now?.from === from ? null : now), from === 'map' ? 90 : 0);
+  }
+  useEffect(() => () => clearTimeout(leave.current), []);
+  const pointAt = (target: Target | null) => ({
+    onPointerEnter: (event: { pointerType: string }) => { if (target && event.pointerType !== 'touch') hoverFrom('row', markerIdOf(target)); },
+    onPointerLeave: () => hoverFrom('row', null),
+    onFocus: (event: { currentTarget: HTMLElement }) => { if (target && event.currentTarget.matches(':focus-visible')) hoverFrom('row', markerIdOf(target)); },
+    onBlur: () => hoverFrom('row', null),
+  });
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<Editing>(null);
   const [line, setLine] = useState('');
@@ -234,7 +251,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   // An editor opened low in the panel scrolls into view, so a phone shows it above the fold.
   useEffect(() => {
     if (!editing) return;
-    sheet.current?.querySelector('.edit-panel')?.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
+    sheet.current?.querySelector('section[class*=edit]')?.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
   }, [editing]);
   // Focus follows the panel: into a pane when it opens, back to the row that opened it on return.
   const lastRow = useRef<string | null>(null);
@@ -356,7 +373,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       tag: `${editWords.kinds[spot.kind]} · ${along(data.stretches[spot.stretch].from)}`, icon: fix ? 'fixed' : 'added',
       label: named([addedName(spot.id), fix ? editWords.fixedOn(recordDate(fix.at, lang)) : editWords.addedBy], count) });
   }
-  const extra: Target[] = [...ranked.map(targetOf).filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch')), ...(selected && (selected.kind === 'landmark' || selected.kind === 'stretch') ? [selected] : [])];
+  const pointed = hover?.from === 'row' ? markerTarget(hover.id) : null;
+  const extra: Target[] = [...ranked.map(targetOf), selected, pointed].filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch'));
   for (const target of extra) {
     const id = target.kind === 'landmark' ? `landmark:${target.id}` : `stretch:${(target as { index: number }).index}`, at = pointOf(target);
     if (!at || markers.some(marker => marker.id === id)) continue;
@@ -367,6 +385,32 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (id.startsWith('stretch:')) return { kind: 'stretch', index: Number(id.slice(8)) };
     if (id.startsWith('added:')) return { kind: 'added', id: id.slice(6) };
     return walk.spots.some(spot => spot.id === id) ? { kind: 'spot', id } : null;
+  }
+  function markerIdOf(target: Target) {
+    return target.kind === 'spot' ? target.id : target.kind === 'added' ? `added:${target.id}` : target.kind === 'landmark' ? `landmark:${target.id}` : `stretch:${target.index}`;
+  }
+  // What the panel previews: a marker hovered on the map, on a wide screen, unless she is typing or already looking at it.
+  const previewing = (() => {
+    if (narrow || hover?.from !== 'map' || pane.kind === 'paste' || editing) return null;
+    const target = markerTarget(hover.id);
+    return target && !(pane.kind === 'spot' && same(pane.target, target)) ? target : null;
+  })();
+  /** A spot at a glance, laid out as its pane: what it is, its photo with every mark, and the latest of what visitors said there. */
+  function previewOf(target: Target) {
+    const stretches = stretchesOf(target), spot = target.kind === 'spot' ? walk.spots.find(item => item.id === target.id) ?? null : null;
+    const lead = spot?.findings.find(f => f.viewId && views.has(f.viewId)) ?? null;
+    const view = lead?.viewId ? views.get(lead.viewId) ?? null : stretches.length ? data.stretches[stretches[0]]?.views.map(id => views.get(id)).find(Boolean) ?? null : null;
+    const filed = review.messages.filter(message => message.spot === keyOf(target)), latest = filed[0], said = latest?.language === 'other' ? undefined : latest?.language;
+    const fix = stretches.length ? isFixed(edits, stretches) : null, gone = spot?.kind === 'flagged' && removed(stretches);
+    const kind = spot ? spot.kind === 'no-photos' ? t.noPhotos : w.kinds[subjectOf(spot.findings)] : target.kind === 'added' ? editWords.kinds[added(target.id)?.kind ?? 'other'] : target.kind === 'stretch' ? w.clearHere : null;
+    return <>
+      <h2 className="ri-title">{nameOf(target)}</h2>
+      <p className="ri-row-meta">{kind}{target.kind === 'added' && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}</p>
+      {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={data.findings.filter(f => f.viewId === view.id)} lead={lead} pager={null} t={t} />}
+      <Section heading="h2" title={w.visitors(filed.length)}>
+        {latest && <List inset><Row static icon={<Tag tone="solid" lang={said}>{latest.language.toUpperCase()}</Tag>} label={<span lang={said}>{latest.text}</span>} /></List>}
+      </Section>
+    </>;
   }
   function tapTarget(target: Target) {
     if (pane.kind === 'message' && current) file(current.id, target); else openSpot(target);
@@ -464,7 +508,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     <Section heading="h2" title={w.messages}>
       <List inset>{rows.map(row => {
         const message = messageOf(row.id), answer = message?.answer, said = row.language === 'other' ? undefined : row.language;
-        return <Row key={row.id} className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)}
+        return <Row key={row.id} className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)} {...pointAt(message?.spot ? targetOf(message.spot) : null)}
           icon={<Tag tone="solid" lang={said}>{row.language.toUpperCase()}</Tag>} label={<span lang={said}>{row.text}</span>}
           detail={message ? message.spot ? nameOfKey(message.spot) : w.notFiled : w.unread} meta={row.example ? <Tag tone="example">{w.example}</Tag> : null}
           trailing={answer?.kind && answer.status === 'ready' ? <KindIcon kind={answer.kind} /> : message ? <KindIcon kind={null} /> : null} />;
@@ -505,7 +549,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       </div>}
       {line && <Assistant working={busy === 'reading' || busy === 'download'} text={busy === 'download' ? t.downloading : line} />}
       {answer && answer.candidates.length > 0 && <Section heading="h2" title={w.about}>
-        <List ordered className="ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <Row key={key} className="ri-row" selected={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)}
+        <List ordered className="ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <Row key={key} className="ri-row" selected={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)} {...pointAt(target)}
           icon={<span className="ri-rank">{index + 1}</span>} label={<span className="ri-row-main">{nameOf(target)}</span>} meta={message?.spot === key ? <span className="ri-filed">{w.placed}</span> : null} />; })}</List>
       </Section>}
       {message?.spot && !answer?.candidates.includes(message.spot) && <p className="ri-filedline"><TextButton icon={<PinIcon />} onClick={() => { const target = targetOf(message.spot!); if (target) openSpot(target); }}>{w.filed(nameOfKey(message.spot))}</TextButton></p>}
@@ -574,7 +618,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <div className="ri-place"><h1>{DESTINATIONS[data.id].name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p></div>
       <Menu onHome={onHome} current={shownPlace} onPlace={place => { if (place !== shownPlace) (onPlace ?? onHome)(place); }} />
     </header>
-    <Panel as="aside" phone="sheet" scroll className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined}
+    <Panel as="aside" phone="sheet" scroll className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined} data-preview={previewing ? '' : undefined}
       onPointerDown={event => { swiped.current = false; swipe.current = narrow && pane.kind === 'inbox' ? { id: event.pointerId, y: event.clientY, handle: !!(event.target as HTMLElement).closest('.ri-handle') } : null; }}
       onPointerMove={event => {
         const start = swipe.current; if (!start || start.id !== event.pointerId) return;
@@ -587,10 +631,12 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {narrow && pane.kind === 'inbox' && <button className="ri-handle" aria-label={w.messages} aria-expanded={!peeking} onClick={() => lift(peeking)} />}
       {content}
       {problem && <p className="ri-problem" role="alert">{problem}</p>}
+      {previewing && <div className="ri-preview" inert style={{ top: sheet.current?.scrollTop ?? 0 }}>{previewOf(previewing)}</div>}
     </Panel>
     <div className="ri-map">
       <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
-        onMarker={id => { const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
+        onMarker={id => { clearTimeout(leave.current); setHover(null); const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap}
+        onHover={id => hoverFrom('map', id)} hovered={hover?.id ?? null} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
     </div>
   </main>;
 }
@@ -633,8 +679,8 @@ function zoomOn(view: View, finding: Finding | null) {
 }
 
 /** A recorded photo with every mark the model drew on it: barriers in clay, the rest quiet. */
-function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly Finding[]; lead: Finding | null;
-  pager: { at: number; total: number; go: (page: number) => void } | null; t: (typeof COPY)[keyof typeof COPY] }) {
+function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly Finding[]; lead: Finding | null;
+  pager: { at: number; total: number; go: (page: number) => void } | null; t: (typeof COPY)[keyof typeof COPY]; still?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [whole, setWhole] = useState(false);
   const zoom = zoomOn(view, lead);
@@ -648,7 +694,7 @@ function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t }: { v
   </div>;
   return <figure className="ri-photo" style={{ '--ratio': view.height / view.width } as CSSProperties}>
     <div className="ri-photo-box">
-      {zoom ? <button className="ri-photo-frame" aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button> : <div className="ri-photo-frame">{image}</div>}
+      {zoom && !still ? <button className="ri-photo-frame" aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button> : <div className="ri-photo-frame">{image}</div>}
       {pager && <div className="ri-pager">
         <IconButton label={t.previous} onClick={() => pager.go((pager.at + pager.total - 1) % pager.total)}><BackIcon size={16} /></IconButton>
         <span>{t.photoOf(pager.at + 1, pager.total)}</span>

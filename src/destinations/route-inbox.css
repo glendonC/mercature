@@ -59,7 +59,13 @@
 .ri-input { margin-top: 2px; }
 .ri-select { flex: 1; min-width: 0; }
 .ri-select select { width: 100%; }
-.ri-panel .edit-panel, .ri-panel section[class*=edit] { margin-top: 10px; }
+.ri-panel section[class*=edit] { margin-top: 10px; }
+
+/* A hovered marker's spot on the panel's glass; the panel's own content keeps its place, size and scroll, unseen, until the pointer leaves */
+.ri-panel[data-preview] > :not(.ri-preview) { visibility: hidden; }
+.ri-preview { position: absolute; z-index: 2; left: 0; right: 0; height: 100%; overflow: hidden; padding: 12px 14px 8px; animation: ri-preview-in 120ms var(--ease) both; }
+@keyframes ri-preview-in { from { opacity: 0; } }
+.ri-preview .ri-title { margin-top: 0; }
 
 /* The photo with every mark */
 .ri-photo { margin: 6px 0 0; }
@@ -92,6 +98,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .route-inbox .destination-map-controls button:not(:last-child) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .ri-preview { animation: none; }
   .ri-spark[data-working] { animation: none; }
   .ri-photo-image, .ri-panel { transition: none; }
 }
