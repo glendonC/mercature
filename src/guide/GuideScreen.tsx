@@ -14,6 +14,7 @@ import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
+import { loadLines, mapPaths, saveLines, setCheck, wayAroundOf } from '../routes/lines';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { iconFor } from '../ui/icons';
 import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
@@ -40,6 +41,8 @@ type Step =
   | { id: 'insights' }
   | { id: 'missed'; here?: Target }
   | { id: 'propose'; proposal: Proposal }
+  /** The way around a flight of steps that OpenStreetMap suggests, shown on the map, for her to say whether it works. */
+  | { id: 'around'; at: number }
   | { id: 'note'; clearing?: boolean };
 
 const same = (a: Target | null, b: Target | null) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
@@ -130,6 +133,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const latest = useRef(review);
   const [edits, setEdits] = useState(() => loadEdits(data.id).edits);
   const latestEdits = useRef(edits);
+  const [ways, setWays] = useState(() => loadLines(data.id).lines);
+  const around = wayAroundOf(data, ways);
   const [problem, setProblem] = useState('');
   function commit(change: (review: Review) => Review) {
     const next = change(latest.current); latest.current = next; setReview(next);
@@ -551,6 +556,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const top = (narrow ? 64 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - 180));
   const insets = { top, right: 24 + inset.right, bottom: under(dockHeight), left: 24 + inset.left };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
+    if (step.id === 'around' && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
     if (item && !('spot' in item)) return item.points.length ? { kind: 'frame', points: item.points } : { kind: 'fit' };
     if (item) return { kind: 'frame', points: item.spot.path.length ? item.spot.path : [item.spot.at] };
     if (ranked.length) { const points = ranked.map(targetOf).filter((target): target is Target => !!target).map(pointOf).filter((point): point is Point => !!point); if (points.length) return { kind: 'frame', points }; }
@@ -597,6 +603,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         : item.access === 'unseen' ? s.check.noPhotos(slots) : !data.views.length ? s.check.osm(slots) : slots.when ? s.check.sawWhen(slots) : s.check.saw(slots);
       lines.push(about, ...(slots.osm ? [s.check.osmToo(slots)] : []), s.check.ask[question](slots));
       chips = (QUESTIONS[question] as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[question] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, question, choice) }));
+      if (around?.status === 'found' && 'spot' in item && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index))))
+        chips.push({ id: 'around', label: s.around.chips.show, onClick: () => go({ id: 'around', at: step.at }) });
       chips.push({ id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } });
     }
     words = hear;
@@ -669,6 +677,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips = [{ id: 'done', label: s.missed.chips.done, primary: true, onClick: () => go({ id: 'note' }) }];
     }
     words = hear;
+  } else if (step.id === 'around' && around) {
+    // Her answer is her record of the way, never a measurement; nothing about it is claimed until she says it works.
+    const said = (works: boolean | null, line: string) => () => { const next = setCheck(ways, works); setWays(next); if (!saveLines(next)) setProblem(s.notSaved); go(nextCheck(step.at), line); };
+    lines.push(s.around.offer({ metres: Math.max(0, Math.round((around.lengthMetres ?? around.walkMetres) - around.walkMetres)) }), s.around.show, s.around.ask);
+    chips = [{ id: 'works', label: s.around.chips.works, primary: true, onClick: said(true, s.around.kept) }, { id: 'notWorks', label: s.around.chips.notWorks, onClick: said(false, s.around.dropped) },
+      { id: 'unknown', label: s.around.chips.unknown, onClick: said(null, s.around.unchecked) }, { id: 'notNow', label: s.around.chips.notNow, onClick: back }];
   } else if (step.id === 'propose') {
     const proposal = step.proposal;
     if (proposal.mode === 'note') lines.push(s.check.words({ spot: spotWords(proposal.target) }));
@@ -756,6 +770,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={id => { const target = markerTarget(id); if (target) select(target); }} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         picking={(step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || undefined}
+        paths={mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets)}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
     <Bot ref={bot} working={working} />
