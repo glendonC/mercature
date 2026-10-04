@@ -143,6 +143,7 @@
   --ui-primary-hover: #30353a;
   --ui-on-primary: var(--on-primary);
   --ui-focus: var(--ink);
+  --ui-error: var(--error);
 }
 @media (min-resolution: 2dppx) {
   :root {
@@ -164,6 +165,7 @@
   --ui-primary-hover: #30353a;
   --ui-on-primary: var(--on-primary);
   --ui-focus: var(--ink);
+  --ui-error: var(--error);
   --reachable: #1f5fa8;
   --blocked: #a6501c;
   --unknown: #5f6368;
@@ -184,6 +186,7 @@
   --ui-primary-hover: #ffffff;
   --ui-on-primary: var(--ink);
   --ui-focus: #ffffff;
+  --ui-error: #f2a493;
   --reachable: #7aaee8;
   --blocked: #e0905f;
   --unknown: #a9aeb3;
