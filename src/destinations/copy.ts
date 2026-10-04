@@ -73,7 +73,7 @@ export const SUBJECTS: Record<Subject, Where> = {
   path: { en: 'something on the path', es: 'algo en el camino', ko: '길 위의 장애물' },
 };
 export const NOTE = {
-  title: { en: (from: string, to: string, m: number) => `${from} to ${to}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${from} hasta ${to}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
+  title: { en: (from: string, to: string, m: number) => `${cap(enPlace(from))} to ${enPlace(to)}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${esPlace(from)} hasta ${esPlace(to)}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
   /** A spot the model flagged: what street photos show there, which nobody has checked. Under 10 m along, it is at the start of the walk, never "about 0 m". */
   barrier: {
     en: (s: Subject, w: Where, m: number) => m < 10 ? `Street photos show ${SUBJECTS[s].en} ${w.en}, at the start of the walk.` : `Street photos show ${SUBJECTS[s].en} ${w.en}, about ${m} m along the walk.`,
@@ -123,6 +123,20 @@ export const REPLY = {
   },
 };
 function cap(text: string) { return text.charAt(0).toLocaleUpperCase() + text.slice(1); }
+
+/** A place name as English prose needs it: "the" before a square, a church or a common noun such as a ticket booth; a bare proper name stays bare. */
+function enPlace(name: string): string {
+  return /^(Plaza|Iglesia|Catedral|Capilla|Portal|Monasterio|Convento|Palacio|Templo)\b/.test(name) || /\b(ticket booth|entrance|gate|station|square)$/i.test(name) ? `the ${name}` : name;
+}
+
+/** A place name as Spanish prose needs it after "desde" or "hasta": with its article, and a common noun in lower case. */
+function esPlace(name: string): string {
+  const first = name.split(' ')[0];
+  if (/^(Boletería|Calle|Entrada|Puerta)$/.test(first)) return `la ${first.toLocaleLowerCase()}${name.slice(first.length)}`;
+  if (/^(Plaza|Iglesia|Catedral|Capilla|Municipalidad|Casa|Estación)$/.test(first)) return `la ${name}`;
+  if (/^(Portal|Monasterio|Convento|Palacio|Templo|Museo|Mirador|Mercado|Puente)$/.test(first)) return `el ${name}`;
+  return name;
+}
 
 /** Where a spot is, phrased per language from its landmark. */
 export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string }): Where {
