@@ -8,7 +8,7 @@ export const COPY = {
   en: {
     workspace: 'Route workspace', walk: (from: string, m: number) => `From ${from}, ${m} m on foot`,
     range: (from: number, to: number) => `${from} to ${to} m`, noPhotos: 'No photos here', mapRecord: 'OpenStreetMap record, unverified',
-    map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' }, creditsShort: '© OpenStreetMap. Photos: Mapillary, CC BY-SA 4.0',
+    map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' },
     photoOf: (n: number, total: number) => `Photo ${n} of ${total}`, previous: 'Previous photo', next: 'Next photo', whole: 'Show the whole photo', closer: 'Show the marked part',
     message: 'Visitor message', messagePlaceholder: 'Paste or type what the visitor wrote', language: 'Message language',
     withoutAi: 'Use without AI', download: (mb: number) => `Download ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} of ${total} MB`, downloading: 'Downloading the model…',
@@ -16,7 +16,7 @@ export const COPY = {
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
       messages: 'Messages', add: 'Add a message', example: 'Example', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
-      guide: 'Tap a marker for its photo, or open a message.',
+      guide: 'Tap a marker for its photo, or open a message.', start: 'Start',
       found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Visitors raise', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
       paste: 'Paste what a visitor wrote.', read: 'Read message', cancel: 'Cancel',
@@ -32,7 +32,7 @@ export const COPY = {
   es: {
     workspace: 'Espacio de la ruta', walk: (from: string, m: number) => `Desde ${from === 'Plaza de Armas' ? 'la Plaza de Armas' : from}, ${m} m a pie`,
     range: (from: number, to: number) => `${from} a ${to} m`, noPhotos: 'No hay fotos aquí', mapRecord: 'Registro de OpenStreetMap, sin verificar',
-    map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' }, creditsShort: '© OpenStreetMap. Fotos: Mapillary, CC BY-SA 4.0',
+    map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' },
     photoOf: (n: number, total: number) => `Foto ${n} de ${total}`, previous: 'Foto anterior', next: 'Foto siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
     message: 'Mensaje del visitante', messagePlaceholder: 'Pega o escribe lo que escribió el visitante', language: 'Idioma del mensaje',
     withoutAi: 'Usar sin IA', download: (mb: number) => `Descargar ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, downloading: 'Descargando el modelo…',
@@ -40,7 +40,7 @@ export const COPY = {
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
       messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
-      guide: 'Toca un marcador para ver su foto, o abre un mensaje.',
+      guide: 'Toca un marcador para ver su foto o abre un mensaje.', start: 'Inicio',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',
       paste: 'Pega lo que escribió un visitante.', read: 'Leer mensaje', cancel: 'Cancelar',

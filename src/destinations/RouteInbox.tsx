@@ -15,6 +15,7 @@ import { EXAMPLES } from './examples';
 import { spotState } from './markers';
 import RouteMap, { type Insets, type MapHandle, type Marker } from './RouteMap';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from './walk';
+import { iconFor } from '../ui/icons';
 import AddSpot from './edit/AddSpot';
 import MarkFixed from './edit/MarkFixed';
 import OwnNoteEditor from './edit/OwnNote';
@@ -327,16 +328,23 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const selected: Target | null = pane.kind === 'spot' ? pane.target : filedOn;
   const filedCounts = new Map<string, number>();
   for (const message of review.messages) if (message.spot) filedCounts.set(message.spot, (filedCounts.get(message.spot) ?? 0) + 1);
-  /** A marker's name says how many visitors wrote about it, since the count on the dot is not read aloud. */
-  const named = (name: string, count: number) => count ? `${name}, ${w.visitors(count)}` : name;
+  /** A marker's name says what she decided and how many visitors wrote about it, since its icon and count are not read aloud. */
+  const named = (parts: (string | undefined)[], count: number) => [...parts.filter(Boolean), ...(count ? [w.visitors(count)] : [])].join(', ');
+  /** Captions name the kind and how far along the walk; the state is the marker's colour and icon. */
+  const along = (from: number) => Math.round(from) === 0 ? w.start : `${Math.round(from)} m`;
   const markers: Marker[] = walk.spots.map(spot => {
     const target: Target = { kind: 'spot', id: spot.id }, fix = isFixed(edits, spot.stretches), count = filedCounts.get(keyOf(target)) ?? 0;
     const state = fix ? 'fixed' : spotState(spot, review) === 'not-barrier' ? 'not-barrier' : spot.kind === 'no-photos' ? 'no-photos' : 'open';
-    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag: fix ? editWords.fixedOn(recordDate(fix.at, lang)) : undefined, label: named(spotName(spot), count) };
+    const subject = subjectOf(spot.findings), tag = `${spot.kind === 'no-photos' ? w.kinds.noPhotos : w.kinds[subject]} · ${along(spot.from)}`;
+    const icon = state === 'fixed' ? 'fixed' : state === 'not-barrier' ? 'dismissed' : state === 'no-photos' ? 'no-photos' : subject === 'path' ? iconFor(spot.findings[0]?.concept ?? '') ?? 'path' : subject;
+    const status = fix ? editWords.fixedOn(recordDate(fix.at, lang)) : state === 'not-barrier' ? w.removed : undefined;
+    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, label: named([spotName(spot), status], count) };
   });
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
-    if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count, tag: fix ? editWords.fixedOn(recordDate(fix.at, lang)) : editWords.addedBy, label: named(addedName(spot.id), count) });
+    if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count,
+      tag: `${editWords.kinds[spot.kind]} · ${along(data.stretches[spot.stretch].from)}`, icon: fix ? 'fixed' : 'added',
+      label: named([addedName(spot.id), fix ? editWords.fixedOn(recordDate(fix.at, lang)) : editWords.addedBy], count) });
   }
   const extra: Target[] = [...ranked.map(targetOf).filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch')), ...(selected && (selected.kind === 'landmark' || selected.kind === 'stretch') ? [selected] : [])];
   for (const target of extra) {
@@ -574,7 +582,6 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {narrow && pane.kind === 'inbox' && <button className="ri-handle" aria-label={w.messages} aria-expanded={!peeking} onClick={() => lift(peeking)} />}
       {content}
       {problem && <p className="ri-problem" role="alert">{problem}</p>}
-      <p className="ri-credit">{t.creditsShort}</p>
     </aside>
     <div className="ri-map">
       <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
