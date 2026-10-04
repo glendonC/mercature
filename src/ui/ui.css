@@ -51,7 +51,7 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-text-button:hover::before, .ui-icon-button:hover::before { background: var(--ui-hover); }
 .ui-text-button:active::before, .ui-icon-button:active::before { background: var(--ui-press); }
 .ui-text-button.ui-text-button:focus-visible, .ui-icon-button.ui-icon-button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -6px; }
-/* The primary's ring sits 2 px outside its pill, so it shows against the pill on any surface */
+/* The primary's ring sits 2 px outside its pill and still inside the button's own box, so a scroll box at its edge never clips it */
 .ui-primary.ui-primary:focus-visible { outline: none; }
 .ui-primary:focus-visible::before { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
 .ui-button-label { font-size: var(--font-s); font-weight: 500; line-height: 1; letter-spacing: -0.005em; white-space: nowrap; color: var(--ui-ink); }
@@ -61,8 +61,8 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-text-button:disabled, .ui-primary:disabled, .ui-icon-button:disabled { opacity: 0.4; cursor: default; }
 .ui-text-button:disabled::before, .ui-icon-button:disabled::before { background: none; }
 
-.ui-primary { padding: 0 16px; border-radius: var(--radius-pill); }
-.ui-primary::before { inset: 6px 0; background: var(--ui-primary); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(20 22 24 / 0.2); }
+.ui-primary { padding: 0 18px; border-radius: var(--radius-pill); }
+.ui-primary::before { inset: 6px 4px; background: var(--ui-primary); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(20 22 24 / 0.2); }
 .ui-primary:hover:not(:disabled)::before { background: var(--ui-primary-hover); }
 .ui-primary:active:not(:disabled)::before { transform: scale(0.98); }
 .ui-primary .ui-button-label, .ui-primary .ui-button-icon { color: var(--ui-on-primary); }
