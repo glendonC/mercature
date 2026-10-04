@@ -12,7 +12,7 @@ import { buildWalk, type Walk } from '../destinations/walk';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import { useLanguage } from '../i18n';
 import { fromRecord, possibleFromRecord } from '../i18n/records';
-import { loadMarks, type Mark } from './marks';
+import { walkMarks, type Mark } from './marks';
 import RevealFx from '../fx/RevealFx';
 import { photosShown, type Beats } from '../fx/build';
 import './reveal.css';
@@ -106,7 +106,6 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const [layer, setLayer] = useState<{ url: string; areas: number } | null>(null);
   const [pointsDone, setPointsDone] = useState(false);
   const [view, setView] = useState<number[] | null>(null);
-  const [marks, setMarks] = useState<Mark[]>([]);
   const [lens, setLens] = useState<Lens | null>(null);
   const narrow = useNarrow();
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
@@ -116,16 +115,13 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   useEffect(() => {
     const controller = new AbortController();
     setFailed(false);
-    // The marks come with the records, so the replay starts with its whole schedule known.
-    loadDestination(id, controller.signal).then(async next => {
-      const found = await loadMarks(next, controller.signal);
-      setMarks(found);
-      setData(next);
-    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    loadDestination(id, controller.signal).then(setData).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, [id, attempt]);
 
   const ordered = useMemo(() => data ? captureOrder(data.photos) : [], [data]);
+  // Every mark comes with the records, so the replay starts with its whole schedule known.
+  const marks = useMemo<Mark[]>(() => data ? walkMarks(data) : [], [data]);
   // A place with a route canvas replays on that canvas's own leaned map, so the hand-off is only a fade.
   const leaned = !!data && hasRouteCanvas(data);
   const walk = useMemo(() => data && leaned ? buildWalk(data) : null, [data, leaned]);
