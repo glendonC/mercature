@@ -5,12 +5,12 @@
   background: var(--ground); color: var(--ink); font-size: var(--font-s); line-height: var(--leading);
 }
 .ri-map { position: absolute; inset: 0; }
-.route-inbox .destination-map-controls { top: auto; right: auto; left: 20px; bottom: 20px; }
+.route-inbox .destination-map-controls { top: auto; right: auto; left: calc(20px + env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
 /* Nothing on the walk asks to be confirmed, so markers rest instead of pulsing. */
 .route-inbox .route-marker[data-state=open] .route-marker-dot::after { display: none; }
 
 /* Top: the place and the menu, over the map */
-.ri-bar { position: absolute; z-index: 8; inset: 0 0 auto; display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 12px 0 20px; background: linear-gradient(var(--ground) 35%, transparent); pointer-events: none; }
+.ri-bar { position: absolute; z-index: 8; inset: 0 0 auto; display: flex; align-items: center; gap: 12px; height: calc(64px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) calc(12px + env(safe-area-inset-right, 0px)) 0 calc(20px + env(safe-area-inset-left, 0px)); background: linear-gradient(var(--ground) 35%, transparent); pointer-events: none; }
 .ri-bar > * { pointer-events: auto; }
 .ri-place { flex: 1; min-width: 0; text-shadow: var(--halo); }
 .ri-place h1 { margin: 0; font-size: var(--font-m); font-weight: 500; line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
@@ -18,7 +18,7 @@
 
 /* The panel: placed here on a wide screen; on a phone it is the shared bottom sheet. Inside it, colours come from the --ui-* tokens. */
 @media (min-width: 641px) {
-  .ri-panel { position: absolute; z-index: 7; top: 68px; right: 16px; width: 340px; max-height: calc(100% - 84px); }
+  .ri-panel { position: absolute; z-index: 7; top: calc(68px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: 340px; max-height: calc(100% - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
 }
 .ri-guide { margin: 8px 0 4px; font-size: var(--font-xs); color: var(--ui-muted); }
 .ri-meta { font-size: var(--font-xs); color: var(--ui-muted); }
@@ -91,7 +91,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .ri-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin: 6px 0 2px; }
 
 @media (max-width: 640px) {
-  .ri-bar { height: 56px; padding: 0 4px 0 16px; }
+  .ri-bar { height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) calc(4px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px)); }
   .route-inbox::before { content: ''; position: absolute; z-index: 4; inset: 0 0 auto; height: 110px; background: linear-gradient(var(--ground) 55%, transparent); pointer-events: none; }
   .ri-panel { --sheet-max: 58svh; transition: max-height var(--motion-panel) var(--ease-out); }
   .route-inbox[data-pane=spot] .ri-panel, .route-inbox[data-pane=message] .ri-panel { --sheet-max: 66svh; }
@@ -100,9 +100,9 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .ri-handle { position: relative; z-index: 1; display: block; width: calc(100% + 32px); height: var(--tap); margin: 0 -16px -22px; padding: 0; border: 0; border-radius: 0; background: none; touch-action: none; cursor: grab; }
   .ri-handle::after { content: ''; position: absolute; left: 50%; top: 9px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: var(--ui-hair-strong); }
   .ri-handle:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -4px; }
-  .route-inbox[data-peek] .ri-panel { max-height: var(--peek); overflow: hidden; touch-action: none; }
+  .route-inbox[data-peek] .ri-panel { max-height: calc(var(--peek) + env(safe-area-inset-bottom, 0px)); overflow: hidden; touch-action: none; }
   .ri-guide { font-size: var(--font-s); margin-bottom: 6px; }
-  .route-inbox .destination-map-controls { top: 112px; left: auto; right: 8px; bottom: auto; }
+  .route-inbox .destination-map-controls { top: calc(112px + env(safe-area-inset-top, 0px)); left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); bottom: auto; }
   .route-inbox .destination-map-controls button:not(:last-child) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
