@@ -25,6 +25,8 @@ export type Space3DProps = {
   intro?: boolean;
   /** End the assembly looking straight down, framed as the map. */
   settle?: boolean;
+  /** With intro: hold the assembly until this turns true, so a screen can load the areas ahead of its moment. */
+  play?: boolean;
   onIntroEnd?: () => void;
   /** No WebGL2, or the 3D could not load: show the map or the photo instead. */
   onUnavailable?: (reason: string) => void;
@@ -74,7 +76,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   return { target, yaw, pitch, distance: radius / Math.sin(half) * 1.02 };
 }
 
-export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, onIntroEnd, onUnavailable, still = false, from, className }: Space3DProps) {
+export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, onIntroEnd, onUnavailable, still = false, from, className }: Space3DProps) {
   const { lang } = useLanguage();
   const words = WORDS[lang === 'es' ? 'es' : 'en'];
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
@@ -183,9 +185,10 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   useEffect(() => {
     const r = renderer.current;
     if (!r || !space) return;
+    if (intro && !play) return;
     let frame = 0, ended = !intro;
-    const still = reduced();
-    if (intro && !still) clock.current = { start: performance.now(), done: false };
+    const calm = reduced();
+    if (intro && !calm) clock.current = { start: performance.now(), done: false };
     const resize = () => {
       const box = host.current?.getBoundingClientRect();
       if (!box) return;
@@ -207,7 +210,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      const playing = intro && !still && !clock.current.done;
+      const playing = intro && !calm && !clock.current.done;
       const t = playing ? (now - clock.current.start) / 1000 : 99;
       let moving = playing;
       if (goal.current && camera.current) {
@@ -236,10 +239,10 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
       if (playing && t >= SETTLE_FROM + (settle ? SETTLE_FOR : 0) + 0.1 && !ended) { ended = true; clock.current.done = true; callbacks.current.onIntroEnd?.(); }
     };
     frame = requestAnimationFrame(tick);
-    if (!ended && still) { ended = true; callbacks.current.onIntroEnd?.(); }
+    if (!ended && calm) { ended = true; callbacks.current.onIntroEnd?.(); }
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [space, intro, settle, walk]);
+  }, [space, intro, settle, walk, play]);
 
   // Touch and mouse: one finger or the left button turns, two fingers pinch and pan, the right button or Shift pans, the wheel zooms.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -339,7 +342,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   if (failed) return null;
   return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-ready={loaded > 0 || undefined}>
     {still ? <canvas ref={canvas} className="space3d-canvas" role="img" aria-label={words.label} /> : <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />}
-    <p className="space3d-label">{words.label}</p>
+    {!still && <p className="space3d-label">{words.label}</p>}
     {space && loaded < space.pieces.length && <p className="space3d-loading" role="status">{words.loading}</p>}
     {!still && <div className="space3d-controls">
       <IconButton label={words.zoomIn} surface="glass" onClick={() => zoom(0.7)}><PlusIcon /></IconButton>
