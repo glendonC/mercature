@@ -51,6 +51,17 @@ export const ProblemIcon = make('ProblemIcon', <path d="M12 4 21 19.5H3ZM12 10v4
 export const PraiseIcon = make('PraiseIcon', <path d="m12 4 2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.3 6.9 19l1.2-5.6L4 9.6l5.6-.6Z" />);
 export const QuestionIcon = make('QuestionIcon', <><circle cx="12" cy="12" r="8.5" /><path d="M9.6 9.6a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.2 1-1.2 1.8v.4M12 16.8v.2" /></>);
 
+/* Actions */
+export const CheckIcon = make('CheckIcon', <path d="m5 12.5 4.5 4.5L19 7" />);
+/** Start over: a full turn back to the beginning. */
+export const RotateIcon = make('RotateIcon', <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v4.5H9" />);
+/** Undo one record: an arrow turning back. */
+export const UndoIcon = make('UndoIcon', <path d="M9 14 4.5 9.5 9 5M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3" />);
+/** Do it by hand: she taps the spot herself. */
+export const PointerIcon = make('PointerIcon', <path d="M6 3.5 18.5 10l-5.4 1.8L11 17.5Z M13.1 11.8l5 5" />);
+export const PinIcon = make('PinIcon', <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.3" /></>);
+export const DownloadIcon = make('DownloadIcon', <path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14" />);
+
 /* Controls */
 export const CloseIcon = make('CloseIcon', <path d="M6 6l12 12M18 6 6 18" />);
 export const BackIcon = make('BackIcon', <path d="m15 5-7 7 7 7" />);

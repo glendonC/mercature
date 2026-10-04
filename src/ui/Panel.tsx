@@ -2,7 +2,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cx, type Tone } from './cx';
 
 type PanelProps = HTMLAttributes<HTMLElement> & {
-  /** Light glass by default; charcoal for a dark surface. */
+  /** Charcoal glass by default, the app's surface over the map and photos; 'light' for a light one. */
   tone?: Tone;
   /** 'card' is the small card anchored to a spot on the map. */
   size?: 'panel' | 'card';
@@ -17,7 +17,7 @@ type PanelProps = HTMLAttributes<HTMLElement> & {
 
 /** A compact glass panel over the map. */
 export const Panel = forwardRef<HTMLElement, PanelProps>(function Panel({ tone, size, phone, scroll, enter, as: Tag = 'section', className, children, ...rest }, ref) {
-  return <Tag ref={ref as never} className={cx('ui-panel', className)} data-tone={tone === 'dark' ? 'dark' : undefined} data-size={size === 'card' ? 'card' : undefined}
+  return <Tag ref={ref as never} className={cx('ui-panel', className)} data-tone={tone === 'light' ? 'light' : 'dark'} data-size={size === 'card' ? 'card' : undefined}
     data-phone={phone} data-scroll={scroll || undefined} data-enter={enter || undefined} {...rest}>{children}</Tag>;
 });
 
@@ -34,16 +34,16 @@ export function PanelHead({ title, meta, leading, actions, as: Heading = 'h2', c
 }
 
 /** A group inside a panel, with a small muted heading and an optional action at its end. Hairlines part one section from the next. */
-export function Section({ title, action, children, className, label }: { title?: ReactNode; action?: ReactNode; children?: ReactNode; className?: string; label?: string }) {
+export function Section({ title, action, children, className, label, heading: Heading = 'h3' }: { title?: ReactNode; action?: ReactNode; children?: ReactNode; className?: string; label?: string; heading?: 'h2' | 'h3' | 'h4' }) {
   return <section className={cx('ui-section', className)} aria-label={label}>
-    {(title || action) && <div className="ui-section-head">{title ? <h3 className="ui-section-title">{title}</h3> : <span />}{action}</div>}
+    {(title || action) && <div className="ui-section-head">{title ? <Heading className="ui-section-title">{title}</Heading> : <span />}{action}</div>}
     {children}
   </section>;
 }
 
 /** The phone's bottom sheet: the map stays first, the sheet holds one thing at a time. */
 export const Sheet = forwardRef<HTMLElement, HTMLAttributes<HTMLElement> & { tone?: Tone }>(function Sheet({ tone, className, children, ...rest }, ref) {
-  return <aside ref={ref} className={cx('ui-sheet', className)} data-tone={tone === 'dark' ? 'dark' : undefined} {...rest}>
+  return <aside ref={ref} className={cx('ui-sheet', className)} data-tone={tone === 'light' ? 'light' : 'dark'} {...rest}>
     <span className="ui-sheet-grabber" aria-hidden="true" />
     {children}
   </aside>;

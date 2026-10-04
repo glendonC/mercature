@@ -46,6 +46,11 @@
 .kit-badges { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; padding: 6px 4px; }
 .kit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .kit-row + .kit-row { margin-top: 6px; }
+.kit-caption { margin: 10px 0 0; font-size: var(--font-xs); color: var(--muted); }
+.kit-caption:first-of-type { margin-top: 0; }
+.kit-specimen .kit-row > .ui-text-button:first-child { margin-inline-start: -10px; }
+.kit-ends { justify-content: space-between; }
+.kit-tools > .ui-text-button:first-child, .kit-foot > .ui-text-button:first-child { margin-inline-start: -10px; }
 .kit-rows { padding: 0 6px; }
 .kit-fields { display: grid; gap: 8px; }
 .kit-fields .ui-select { flex: 1; }

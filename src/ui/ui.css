@@ -2,8 +2,8 @@
    Targets keep a 44 px box; the visible shape is drawn smaller inside it. Text sits in its own span, so a screen's own button rules cannot reset it. */
 
 /* Panel */
-.ui-panel { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 2px 14px 8px; border-radius: var(--radius-panel); background: var(--glass-light); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-light-edge), var(--shadow-panel); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
-.ui-panel[data-tone=dark] { background: var(--glass-charcoal); box-shadow: var(--glass-charcoal-edge), 0 2px 6px -2px rgb(0 0 0 / 0.2), 0 18px 44px -10px rgb(10 12 14 / 0.42); }
+.ui-panel { position: relative; display: block; min-width: 0; padding: 2px 14px 8px; border-radius: var(--radius-panel); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
+.ui-panel[data-tone=light] { background: var(--glass-light); box-shadow: var(--glass-light-edge), var(--shadow-panel); }
 .ui-panel[data-size=card] { padding: 0 12px 6px; border-radius: 12px; }
 .ui-panel[data-scroll] { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ui-hair-strong) transparent; }
 .ui-panel[data-enter] { animation: ui-panel-in var(--motion-panel) var(--ease-out) both; }
@@ -52,10 +52,9 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-text-button:active::before, .ui-icon-button:active::before { background: var(--ui-press); }
 .ui-text-button:focus-visible, .ui-primary:focus-visible, .ui-icon-button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -6px; }
 .ui-button-label { font-size: var(--font-s); font-weight: 500; line-height: 1; letter-spacing: -0.005em; white-space: nowrap; color: var(--ui-ink); }
-.ui-button-icon { display: grid; place-items: center; margin-inline-start: -2px; color: var(--ui-ink); }
+.ui-button-icon { display: grid; place-items: center; flex: none; margin-inline-start: -2px; color: var(--ui-ink); }
 .ui-button-icon .ui-icon { width: 16px; height: 16px; }
 .ui-text-button[data-muted] .ui-button-label, .ui-text-button[data-muted] .ui-button-icon { color: var(--ui-muted); font-weight: 400; }
-.ui-text-button[data-flush] { margin-inline-start: -10px; }
 .ui-text-button:disabled, .ui-primary:disabled, .ui-icon-button:disabled { opacity: 0.4; cursor: default; }
 .ui-text-button:disabled::before, .ui-icon-button:disabled::before { background: none; }
 
@@ -69,8 +68,10 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-icon-button { width: var(--tap); padding: 0; border-radius: 50%; }
 .ui-icon-button::before { inset: 6px; }
 .ui-icon-button .ui-icon { width: 18px; height: 18px; }
-.ui-icon-button[data-surface=glass]::before { background: var(--glass-light); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-light-edge), var(--shadow-float); }
-.ui-icon-button[data-surface=glass]:hover::before { background: rgb(255 255 255 / 0.92); }
+.ui-icon-button[data-surface=glass]::before { background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); }
+.ui-icon-button[data-surface=glass]:hover::before { background: rgb(44 48 52 / 0.9); }
+.ui-icon-button[data-surface=glass] .ui-icon { color: #f2f3f4; }
+.ui-icon-button[data-surface=glass]:focus-visible { outline-color: var(--ink); }
 
 /* Tag, key hint */
 .ui-tag { display: inline-flex; align-items: center; gap: 4px; flex: none; height: 22px; padding: 0 7px; border: var(--hair-width) solid var(--ui-hair-strong); border-radius: var(--radius-xs); font-size: var(--font-xs); font-weight: 400; line-height: 1; white-space: nowrap; color: var(--ui-ink); }
@@ -166,15 +167,16 @@ textarea.ui-field { min-height: 104px; max-height: 240px; resize: vertical; }
 .ui-select > svg { position: absolute; right: 10px; color: var(--ui-muted); pointer-events: none; }
 
 /* Sheet: the phone's bottom sheet, and any panel that becomes one */
-.ui-sheet { position: absolute; z-index: 9; left: 0; right: 0; bottom: 0; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--glass-light); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
-.ui-sheet[data-tone=dark] { background: var(--glass-charcoal); box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); }
+.ui-sheet { position: absolute; z-index: 9; left: 0; right: 0; bottom: 0; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
+.ui-sheet[data-tone=light] { background: var(--glass-light); box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); }
 .ui-sheet-grabber { position: sticky; z-index: 1; top: 0; display: grid; place-items: center; height: 16px; margin: 0 -16px; }
 .ui-sheet-grabber::before, .ui-panel[data-phone=sheet]::before { content: ''; width: 36px; height: 4px; border-radius: 2px; background: var(--ui-hair-strong); }
 .ui-panel[data-phone=sheet]::before { display: none; }
 
 @media (max-width: 640px) {
-  .ui-panel[data-phone=sheet] { position: absolute; z-index: 9; inset: auto 0 0; width: auto; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); animation: none; }
-  .ui-panel[data-phone=sheet]::before { display: block; flex: none; margin: 6px auto 2px; }
+  .ui-panel[data-phone=sheet] { position: absolute; z-index: 9; inset: auto 0 0; width: auto; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); animation: none; }
+  .ui-panel[data-phone=sheet][data-tone=light] { box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); }
+  .ui-panel[data-phone=sheet]::before { display: block; margin: 6px auto 2px; }
   .ui-field { font-size: 16px; }
   .ui-segment .ui-button-label { font-size: var(--font-xs); }
 }

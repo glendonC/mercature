@@ -20,7 +20,7 @@ const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon],
   ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Check on site', I.LookIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon],
   ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['More', I.MoreIcon]];
 const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road' };
-const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'dark' ? 'dark' : 'light'; } catch { return 'light'; } };
+const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 
 function useHero() {
   const [data, setData] = useState<Destination | null>(null);
@@ -52,7 +52,7 @@ export default function Kit() {
 
   const inbox = <>
     <PanelHead title="Messages" meta="Qorikancha · 4 waiting" actions={<IconButton label="More"><I.MoreIcon /></IconButton>} />
-    <Section title="Found along the walk" action={<TextButton icon={<I.CopyIcon />} kbd="C">Route note</TextButton>}>
+    <Section title="Found along the walk" action={<TextButton icon={<I.CopyIcon />}>Route note</TextButton>}>
       <Legend items={[{ kind: 'possible', label: 'Steps 4' }, { kind: 'added', label: 'Kerb 1' }, { kind: 'no-photos', label: 'No photos 1' }, { kind: 'fixed', label: 'Fixed 0' }]} />
     </Section>
     <Section title="Messages">
@@ -65,7 +65,7 @@ export default function Kit() {
         })}
       </List>
     </Section>
-    <div className="kit-foot"><TextButton flush icon={<I.PlusIcon />} kbd="N">Add a message</TextButton><TextButton muted>Start over</TextButton></div>
+    <div className="kit-foot"><TextButton icon={<I.PlusIcon />}>Add a message</TextButton><TextButton muted icon={<I.RotateIcon />}>Start over</TextButton></div>
   </>;
 
   const card = lead && <Panel size="card" tone={tone} className="kit-card" enter aria-label="Calle Loreto">
@@ -81,11 +81,11 @@ export default function Kit() {
       {lead.photo && <figcaption>{lead.photo.creator}. CC BY-SA 4.0 · Mapillary</figcaption>}
     </figure>
     <Legend items={[{ mark: 'steps', barrier: true, icon: <I.StepsIcon />, label: 'Steps' }, { mark: 'kerb', icon: <I.KerbIcon />, label: 'Kerb' }]} />
-    <div className="kit-tools"><TextButton flush icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Note</TextButton><TextButton muted>Remove</TextButton></div>
+    <div className="kit-tools"><TextButton icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Note</TextButton><TextButton muted icon={<I.RemoveIcon />}>Remove</TextButton></div>
     <div className="kit-reply">
       <Segmented label="Reply in" value="ko" onChange={() => {}} options={[{ value: 'en', label: 'English' }, { value: 'es', label: 'Español', lang: 'es' }, { value: 'ko', label: '한국어', lang: 'ko' }]} />
       <Callout lang="ko">코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다.</Callout>
-      <PrimaryAction icon={<I.CopyIcon />} kbd="↵">Copy reply</PrimaryAction>
+      <PrimaryAction icon={<I.CopyIcon />} shortcut="mod+enter" onClick={() => {}}>Copy reply</PrimaryAction>
     </div>
   </Panel>;
 
@@ -95,7 +95,7 @@ export default function Kit() {
         onMarker={() => {}} onMap={() => {}} clearBottom={0} words={words} ariaLabel="Qorikancha" />}
       <header className="kit-bar">
         <span className="kit-brand">mercature</span>
-        <Segmented variant="tabs" caps label="Surface" value={tone} onChange={setTone} options={[{ value: 'light', label: 'Light glass' }, { value: 'dark', label: 'Charcoal glass' }]} />
+        <Segmented variant="tabs" caps label="Surface" value={tone} onChange={setTone} options={[{ value: 'dark', label: 'Charcoal glass' }, { value: 'light', label: 'Light glass' }]} />
         <span className="kit-keys"><Kbd>Esc</Kbd><span>Back</span></span>
       </header>
       {!narrow && card}
@@ -151,9 +151,14 @@ export default function Kit() {
         </div>
       </Specimen>
 
-      <Specimen title="Buttons" note="44 px targets, slim shapes. One primary per panel.">
-        <div className="kit-row"><PrimaryAction icon={<I.CopyIcon />} kbd="↵">Copy reply</PrimaryAction><PrimaryAction>Download 84 MB</PrimaryAction><PrimaryAction disabled>Read</PrimaryAction></div>
-        <div className="kit-row"><TextButton>Use without AI</TextButton><TextButton icon={<I.PlusIcon />} kbd="N">Add a message</TextButton><TextButton icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton muted>Start over</TextButton><TextButton disabled>Copy</TextButton></div>
+      <Specimen title="Buttons" note="Three kinds. Primary: one slim pill per panel, a key hint only where its shortcut is wired. Secondary: an icon and a label, quiet. Reset and remove: the same shape in muted ink. Text links only for credits.">
+        <p className="kit-caption">Primary</p>
+        <div className="kit-row"><PrimaryAction icon={<I.CopyIcon />}>Copy reply</PrimaryAction><PrimaryAction icon={<I.DownloadIcon />}>Download 84 MB</PrimaryAction><PrimaryAction icon={<I.MessageIcon />} disabled>Read message</PrimaryAction></div>
+        <p className="kit-caption">Secondary</p>
+        <div className="kit-row"><TextButton icon={<I.PlusIcon />}>Add a message</TextButton><TextButton icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Your note</TextButton><TextButton icon={<I.CopyIcon />}>Route note</TextButton><TextButton icon={<I.PointerIcon />}>Use without AI</TextButton><TextButton icon={<I.PinIcon />}>Filed on Calle Loreto</TextButton></div>
+        <p className="kit-caption">Reset and remove</p>
+        <div className="kit-row"><TextButton muted icon={<I.BackIcon />}>All messages</TextButton><TextButton muted icon={<I.RotateIcon />}>Start over</TextButton><TextButton muted icon={<I.RemoveIcon />}>Remove</TextButton><TextButton muted icon={<I.UndoIcon />}>Undo fix</TextButton><TextButton muted icon={<I.CloseIcon />}>Cancel</TextButton><TextButton muted icon={<I.CopyIcon />} disabled>Copy</TextButton></div>
+        <p className="kit-caption">Icon only</p>
         <div className="kit-row"><IconButton label="Back"><I.BackIcon /></IconButton><IconButton label="Close"><I.CloseIcon /></IconButton><IconButton label="Zoom in" surface="glass"><I.PlusIcon /></IconButton><IconButton label="Zoom out" surface="glass"><I.MinusIcon /></IconButton><IconButton label="Whole route" surface="glass"><I.FitIcon /></IconButton></div>
       </Specimen>
 
@@ -175,14 +180,14 @@ export default function Kit() {
 
       <Specimen title="Fields">
         <Quote lang="es">Algunas partes del recorrido fueron bien duras para mi papá con su bastón.</Quote>
-        <div className="kit-fields"><TextArea placeholder="Paste a visitor's message" aria-label="Visitor message" /><div className="kit-row"><Select aria-label="Language" defaultValue="es"><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option></Select><PrimaryAction>Read</PrimaryAction></div></div>
+        <div className="kit-fields"><TextArea placeholder="Paste a visitor's message" aria-label="Visitor message" /><div className="kit-row"><Select aria-label="Language" defaultValue="es"><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option></Select><PrimaryAction icon={<I.MessageIcon />}>Read message</PrimaryAction></div></div>
       </Specimen>
 
-      <Specimen title="Surfaces" note="Light glass for panels over the map. Charcoal for small dark surfaces, or panels if chosen.">
+      <Specimen title="Surfaces" note="Charcoal glass for every surface over the map or a photo. Light glass only where a page asks for it.">
         <div className="kit-surfaces">{(['light', 'dark'] as const).map(surface => <Panel key={surface} tone={surface} size="card" className="kit-mini">
           <PanelHead as="h3" title={surface === 'light' ? 'Light glass' : 'Charcoal glass'} meta="Calle Loreto · 340 m" actions={<IconButton label="Close"><I.CloseIcon /></IconButton>} />
           <Legend items={[{ kind: 'route', label: 'Walk' }, { kind: 'possible', label: 'Possible barrier' }, { kind: 'removed', label: 'Dismissed' }]} />
-          <div className="kit-row"><TextButton flush icon={<I.FixedIcon />}>Mark fixed</TextButton><PrimaryAction kbd="↵">Copy reply</PrimaryAction></div>
+          <div className="kit-row kit-ends"><TextButton icon={<I.FixedIcon />}>Mark fixed</TextButton><PrimaryAction icon={<I.CopyIcon />}>Copy reply</PrimaryAction></div>
         </Panel>)}</div>
       </Specimen>
 
