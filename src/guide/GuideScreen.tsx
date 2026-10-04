@@ -597,15 +597,19 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }, [walk, lang, routeSpots]);
 
   // The map keeps clear of the dialogue docked below it, and frames what the step is about once the dialogue has settled.
-  const [dockHeight, setDockHeight] = useState(0);
+  // On a wide screen the card sits at the left edge and her choices at the right, so the map frames its subject in the free middle.
+  const [frame, setFrame] = useState({ dock: 0, below: 0, left: 0, right: 0 });
+  const dockHeight = frame.dock;
   useLayoutEffect(() => {
     const host = screen.current, work = dock.current;
     if (!host || !work) return;
     // The line is a new element with each turn, so its size is watched afresh after every render.
     const measure = () => {
-      const line = host.querySelector<HTMLElement>('.ui-dialogue'), below = line?.offsetHeight ?? 0, above = work.offsetHeight;
+      const line = host.querySelector<HTMLElement>('.ui-dialogue'), below = line?.offsetHeight ?? 0, above = work.offsetHeight, box = host.getBoundingClientRect();
       host.style.setProperty('--dialogue', `${below}px`);
-      setDockHeight(below + (above ? above + 12 : 0));
+      const wide = box.width >= 1024, content = wide ? work.querySelector('.gs-content')?.getBoundingClientRect() : undefined, actions = wide ? work.querySelector('.gs-actions')?.getBoundingClientRect() : undefined;
+      const next = { dock: below + (above ? above + 12 : 0), below, left: content ? Math.round(content.right - box.left) : 0, right: actions ? Math.round(box.right - actions.left) : 0 };
+      setFrame(last => last.dock === next.dock && last.below === next.below && last.left === next.left && last.right === next.right ? last : next);
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -616,7 +620,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const inset = safeArea();
   // The map always keeps some room above the dialogue, however tall the dialogue grows, so the walk can still be framed.
   const top = (narrow ? 64 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - 180));
-  const insets = { top, right: 24 + inset.right, bottom: under(dockHeight), left: 24 + inset.left };
+  const sides = frame.left > 0 || frame.right > 0;
+  const insets = { top, right: Math.max(24 + inset.right, sides ? frame.right + 24 : 0), bottom: under(sides ? frame.below : dockHeight), left: Math.max(24 + inset.left, sides ? frame.left + 24 : 0) };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
     if (step.id === 'around' && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
     if (step.id === 'street' && step.found) return { kind: 'frame', points: step.found.line.map(point => walk.project(point as [number, number])) };
@@ -627,7 +632,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return at ? { kind: 'frame', points: [at] } : { kind: 'fit' };
   };
   const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked, step.id === 'street' && !!step.found]);
-  const aimTimer = useRef(0), settledDock = Math.round(dockHeight / 24);
+  const aimTimer = useRef(0), settledDock = [insets.left, insets.right, insets.bottom].map(value => Math.round(value / 24)).join();
   useEffect(() => {
     clearTimeout(aimTimer.current);
     aimTimer.current = window.setTimeout(() => {

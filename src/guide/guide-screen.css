@@ -75,6 +75,10 @@
   .gs-content, .gs-actions { flex: none; }
   .gs-card, .gs-photo, .gs-copybox { max-width: none; }
 }
+/* A wide screen: what the line is about at the left edge, her choices at the right edge, the map's subject in the free middle. */
+@media (min-width: 1024px) {
+  .gs-work { left: calc(20px + env(safe-area-inset-left, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); width: auto; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .gs-turn { animation: none; }
 }
