@@ -2,9 +2,9 @@
 .fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 /* While a replay covers the map its spots wait; once it lifts they arrive one after another in walking order.
-   Only the start of the animation holds, so the map's own fading of far markers returns when it ends. */
+   The animation has no end frame, so each marker settles at the map's own fading of far markers. */
 .route-map[data-arriving=wait] .route-markers { opacity: 0; }
-.route-map[data-arriving=go] .route-markers > .route-marker { animation: fx-arrive 460ms var(--ease) backwards; animation-delay: 80ms; }
+.route-map[data-arriving=go] .route-markers > .route-marker { animation: fx-arrive var(--motion-slow) var(--ease-out) backwards; animation-delay: 80ms; }
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(3) { animation-delay: 160ms; }
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(4) { animation-delay: 240ms; }
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(5) { animation-delay: 320ms; }
@@ -12,10 +12,10 @@
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(7) { animation-delay: 480ms; }
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(8) { animation-delay: 560ms; }
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(n + 9) { animation-delay: 640ms; }
-@keyframes fx-arrive { from { opacity: 0; translate: 0 -16px; scale: 0.55; } to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes fx-arrive { from { opacity: 0; translate: 0 -16px; scale: 0.55; } }
 
 /* An open spot breathes with the ring it already sends out, on the same beat. */
-.route-map:not([data-still]) .route-marker[data-state=open]:not([aria-pressed=true]) .route-marker-dot { animation: fx-breathe 2.4s var(--ease) infinite; }
+.route-map:not([data-still]) .route-marker[data-state=open]:not([aria-pressed=true]) .route-marker-dot { animation: fx-breathe 2.4s var(--ease-out) infinite; }
 @keyframes fx-breathe { 0%, 45%, 100% { scale: 1; } 14% { scale: 1.1; } }
 
 @media (prefers-reduced-motion: reduce) {
