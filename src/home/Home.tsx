@@ -19,7 +19,6 @@ export const covers = [
 ];
 export type SavedEntry = { id: string; title: string; kind: 'place' | 'plan' };
 type Props = {
-  onFarm: () => void;
   onDestination: (id: string) => void;
   saved?: SavedEntry[];
   onOpenSaved: (entry: SavedEntry) => void;

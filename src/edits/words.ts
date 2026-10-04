@@ -77,14 +77,15 @@ export function objectParticle(noun: string): string {
 /**
  * The visitor-facing line for a spot she has marked fixed. It reports that she recorded it,
  * with the date, and never says the way is clear, passable or safe.
+ * Inside the first 10 m it names the start of the walk, as the route note does, rather than "about 0 m".
  */
 export const UPDATE = {
   fixed: {
     en: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, about ${metres} m along the walk, as fixed.`,
+      `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, ${metres < 10 ? 'at the start of the walk' : `about ${metres} m along the walk`}, as fixed.`,
     es: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Actualización, ${date}: anotamos como ${FIXED_SUBJECT[kind].esDone} ${FIXED_SUBJECT[kind].es} ${where.es}, a unos ${metres} m del inicio.`,
+      `Actualización, ${date}: anotamos como ${FIXED_SUBJECT[kind].esDone} ${FIXED_SUBJECT[kind].es} ${where.es}, ${metres < 10 ? 'al inicio del recorrido' : `a unos ${metres} m del inicio`}.`,
     ko: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `업데이트 (${date}): 출발점에서 약 ${metres}m, ${where.ko} 근처 ${FIXED_SUBJECT[kind].ko}${objectParticle(FIXED_SUBJECT[kind].ko)} 수리 완료로 기록했습니다.`,
+      `업데이트 (${date}): ${metres < 10 ? '출발점' : `출발점에서 약 ${metres}m`}, ${where.ko} 근처 ${FIXED_SUBJECT[kind].ko}${objectParticle(FIXED_SUBJECT[kind].ko)} 수리 완료로 기록했습니다.`,
   },
 };

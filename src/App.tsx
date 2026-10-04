@@ -50,10 +50,6 @@ export default function App() {
     setError("");
   }
   const entries: SavedEntry[] = plans.map((p) => ({ id: p.id, title: p.title, kind: "plan" as const }));
-  function openFarm() {
-    setActive(workspace?.site === "noor-farm" ? "spatial" : "farm");
-    setError("");
-  }
   function openDestination(id: string) {
     setDestination(id);
     setActive("destination");
@@ -64,7 +60,6 @@ export default function App() {
       <div hidden={active !== "home"}>
         {active === "home" && (
           <Home
-            onFarm={openFarm}
             onDestination={openDestination}
             saved={entries}
             onOpenSaved={openPlan}
