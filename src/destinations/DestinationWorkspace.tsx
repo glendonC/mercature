@@ -5,15 +5,16 @@ import { Preparation } from '../preparation/Preparation';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, isDestinationId, loadDestination, type Cloud, type Destination, type DestinationId, type View } from './data';
 import GeographicMap from './GeographicMap';
 import RouteCanvas, { hasRouteCanvas } from './RouteCanvas';
+import type { MenuPlace } from '../home/Menu';
 import { CloseIcon, ExternalIcon, TargetIcon } from '../icons';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import './destinations.css';
-/** initial: records already read and replayed, so the inspection opens directly on the same map. */
-export type DestinationWorkspaceProps = { id: string; onHome: () => void; initial?: Destination };
-export default function DestinationWorkspace({id,onHome,initial}: DestinationWorkspaceProps) { return isDestinationId(id) ? <Session key={id} id={id} onHome={onHome} initial={initial?.id === id ? initial : undefined}/> : <Missing onHome={onHome}/>; }
+/** initial: records already read and replayed, so the inspection opens directly on the same map. onPlace: the menu's way to another place. */
+export type DestinationWorkspaceProps = { id: string; onHome: () => void; initial?: Destination; onPlace?: (place: MenuPlace) => void };
+export default function DestinationWorkspace({id,onHome,initial,onPlace}: DestinationWorkspaceProps) { return isDestinationId(id) ? <Session key={id} id={id} onHome={onHome} onPlace={onPlace} initial={initial?.id === id ? initial : undefined}/> : <Missing onHome={onHome}/>; }
 function Missing({onHome}: {onHome: () => void}) { const { t } = useLanguage(); return <main className="destination-loading"><p>{t('dest.notInCatalogue')}</p><button onClick={onHome}>{t('common.home')}</button></main>; }
-function Session({ id, onHome, initial }: {id:DestinationId;onHome:()=>void;initial?:Destination}) {
+function Session({ id, onHome, onPlace, initial }: {id:DestinationId;onHome:()=>void;onPlace?:(place: MenuPlace)=>void;initial?:Destination}) {
   const { t, lang, locale } = useLanguage();
   const [mapZoom, setMapZoom] = useState(1), [camera, setCamera] = useState({yaw:.55,pitch:.45,zoom:1});
   const [preparing, setPreparing] = useState(!initial), [preparationStage, setPreparationStage] = useState<'views' | 'scene'>('views'), [rendered, setRendered] = useState(false);
@@ -58,7 +59,7 @@ function Session({ id, onHome, initial }: {id:DestinationId;onHome:()=>void;init
       </> : <div className="preparation-empty"><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="m8 16 16-6 16 8 16-6v38l-16 6-16-8-16 6zM24 10v38m16-30v38" stroke="currentColor" strokeWidth="1.3"/></svg></div>}
     </Preparation>;
   }
-  if (data && hasRouteCanvas(data)) return <RouteCanvas data={data} asset={file => assetUrl(data, file)} onHome={onHome}/>;
+  if (data && hasRouteCanvas(data)) return <RouteCanvas data={data} asset={file => assetUrl(data, file)} onHome={onHome} onPlace={onPlace} settled={!!initial}/>;
   return <main className="destination-workspace">
     <header className="destination-header"><button onClick={onHome} aria-label={t('common.home')}>←</button><div><h1>{DESTINATIONS[id].name}</h1><span>{fromRecord(DESTINATIONS[id].place, lang)}</span></div><button onClick={() => credits.current?.showModal()}>{t('dest.sources')}</button></header>
     {!data ? <section className="destination-loading" aria-live="polite"><Companion working={!error}>{error || t('dest.reading')}</Companion>{error && <button onClick={() => setRetry(r => r + 1)}>{t('common.tryAgain')}</button>}</section> : <>

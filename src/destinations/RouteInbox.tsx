@@ -8,7 +8,7 @@ import { ROUTE_PLACES } from '../site/registry';
 import { useLanguage } from '../i18n';
 import { useEditWords } from '../i18n/edit';
 import { fromRecord } from '../i18n/records';
-import InterfaceLanguage from '../i18n/LanguageSwitch';
+import Menu, { type MenuPlace } from '../home/Menu';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import { EXAMPLES } from './examples';
@@ -49,8 +49,15 @@ function useNarrow() {
   return narrow;
 }
 
-/** The route screen: visitors' messages placed on the walk and answered in their language, on a map she can edit. */
-export default function RouteInbox({ data, asset, onHome }: { data: Destination; asset: (file: string) => string; onHome: () => void }) {
+/** The tallest a phone's sheet starts when the screen opens behind the reveal, so the map keeps the reveal's framing: mapInsets keeps its bottom at 180 up to here. */
+export const PEEK = 160;
+const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * The route screen: visitors' messages placed on the walk and answered in their language, on a map she can edit.
+ * settled: opened behind the reveal, which has already framed and leaned the same map.
+ */
+export default function RouteInbox({ data, asset, onHome, onPlace, settled = false }: { data: Destination; asset: (file: string) => string; onHome: () => void; onPlace?: (place: MenuPlace) => void; settled?: boolean }) {
   const { lang } = useLanguage();
   const editWords = useEditWords();
   const t = COPY[lang], w = t.inbox;
@@ -175,6 +182,24 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   const [pane, setPane] = useState<Pane>({ kind: 'inbox' });
   const paneNow = useRef(pane);
   paneNow.current = pane;
+  // On a phone behind the reveal, the sheet starts low and the map keeps the reveal's framing; a swipe or a tap lifts it.
+  const [peek, setPeek] = useState(settled);
+  const peeking = narrow && peek && pane.kind === 'inbox';
+  const refit = useRef(false);
+  useEffect(() => { if (pane.kind !== 'inbox') setPeek(false); }, [pane.kind]);
+  function lift(open: boolean) {
+    setPeek(!open); refit.current = true;
+    if (!open) sheet.current?.scrollTo({ top: 0 });
+  }
+  // Once the sheet has moved, the walk is framed again in the map left above it.
+  useEffect(() => {
+    if (!refit.current) return;
+    refit.current = false;
+    const timer = setTimeout(() => map.current?.fit(true), quiet() ? 0 : 260);
+    return () => clearTimeout(timer);
+  }, [peek]);
+  const swipe = useRef<{ id: number; y: number; handle: boolean } | null>(null);
+  const swiped = useRef(false);
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<Editing>(null);
   const [line, setLine] = useState('');
@@ -530,19 +555,29 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   }, [narrow]);
   const insets = mapInsets(narrow, sheetHeight);
 
-  return <main ref={root} className="route-inbox route-canvas" data-pane={pane.kind} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
+  const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
+  return <main ref={root} className="route-inbox route-canvas" data-pane={pane.kind} data-peek={peeking || undefined} style={{ '--peek': `${PEEK}px` } as CSSProperties} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
     <header className="ri-bar">
-      <button className="ri-icon" onClick={onHome} aria-label={t.home}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>
       <div className="ri-place"><h1>{DESTINATIONS[data.id].name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p></div>
-      <InterfaceLanguage className="ri-ui-lang" />
+      <Menu onHome={onHome} current={shownPlace} onPlace={place => { if (place !== shownPlace) (onPlace ?? onHome)(place); }} />
     </header>
-    <aside className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined}>
+    <aside className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined}
+      onPointerDown={event => { swiped.current = false; swipe.current = narrow && pane.kind === 'inbox' ? { id: event.pointerId, y: event.clientY, handle: !!(event.target as HTMLElement).closest('.ri-handle') } : null; }}
+      onPointerMove={event => {
+        const start = swipe.current; if (!start || start.id !== event.pointerId) return;
+        const dy = event.clientY - start.y;
+        if ((peeking && dy < -24) || (!peeking && start.handle && dy > 24)) { swipe.current = null; swiped.current = true; lift(peeking); }
+      }}
+      onPointerUp={() => { swipe.current = null; }} onPointerCancel={() => { swipe.current = null; }}
+      onClickCapture={event => { if (swiped.current) { swiped.current = false; event.stopPropagation(); event.preventDefault(); } }}
+      onFocus={event => { if (peeking && (event.target as HTMLElement).matches(':focus-visible')) lift(true); }}>
+      {narrow && pane.kind === 'inbox' && <button className="ri-handle" aria-label={w.messages} aria-expanded={!peeking} onClick={() => lift(peeking)} />}
       {content}
       {problem && <p className="ri-problem" role="alert">{problem}</p>}
       <p className="ri-credit">{t.creditsShort}</p>
     </aside>
     <div className="ri-map">
-      <RouteMap ref={map} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
+      <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={id => { const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
     </div>
   </main>;

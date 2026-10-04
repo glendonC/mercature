@@ -17,12 +17,11 @@
 .route-inbox .route-marker[data-state=open] .route-marker-dot::after { display: none; }
 
 /* Top: home, the place, the language */
-.ri-bar { position: absolute; z-index: 8; inset: 0 0 auto; display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 16px; background: linear-gradient(var(--ground) 35%, transparent); pointer-events: none; }
+.ri-bar { position: absolute; z-index: 8; inset: 0 0 auto; display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 12px 0 20px; background: linear-gradient(var(--ground) 35%, transparent); pointer-events: none; }
 .ri-bar > * { pointer-events: auto; }
 .ri-place { flex: 1; min-width: 0; text-shadow: var(--halo); }
 .ri-place h1 { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
 .ri-place p { margin: 0; font-size: 12px; color: var(--muted); }
-.ri-ui-lang { display: flex; }
 .ri-icon { display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
 .ri-icon:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
 
@@ -116,10 +115,18 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 
 @media (max-width: 640px) {
   .route-inbox { font-size: 15px; }
-  .ri-bar { height: 56px; padding: 0 6px; }
+  .ri-bar { height: 56px; padding: 0 4px 0 16px; }
   .route-inbox::before { content: ''; position: absolute; z-index: 4; inset: 0 0 auto; height: 110px; background: linear-gradient(var(--ground) 55%, transparent); pointer-events: none; }
   .ri-panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 58svh; padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: 18px 18px 0 0; border-bottom: 0; }
+  .ri-panel { transition: max-height 240ms var(--ease); }
   .ri-panel::before { content: ''; display: block; width: 36px; height: 4px; margin: 0 auto 6px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 16%, transparent); }
+  /* In the inbox the grabber is a button: a tap or a swipe lifts the sheet or lowers it to its peek. */
+  .route-inbox[data-pane=inbox] .ri-panel::before { display: none; }
+  .ri-handle { position: relative; display: block; width: 100%; height: 22px; margin: -8px 0 0; padding: 0; border: 0; border-radius: 0; background: none; touch-action: none; cursor: grab; }
+  .ri-handle::before { content: ''; position: absolute; inset: 0 -16px -22px; }
+  .ri-handle::after { content: ''; position: absolute; left: 50%; top: 10px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 16%, transparent); }
+  .ri-handle:focus-visible { outline-offset: -4px; }
+  .route-inbox[data-peek] .ri-panel { max-height: var(--peek); overflow: hidden; touch-action: none; }
   .route-inbox[data-pane=spot] .ri-panel, .route-inbox[data-pane=message] .ri-panel { max-height: 66svh; }
   .ri-guide { font-size: 14px; margin-bottom: 10px; }
   .ri-meta, .ri-row-meta, .ri-legend, .ri-photo figcaption, .ri-credit, .ri-langs button, .ri-pager, .ri-place p, .ri-lang, .ri-filed { font-size: var(--text-phone-min); }
@@ -129,6 +136,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .route-inbox .destination-map-credit { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .ri-panel { transition: none; }
   .ri-spark[data-working] { animation: none; }
   .ri-photo-image { transition: none; }
 }

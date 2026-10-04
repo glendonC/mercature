@@ -6,7 +6,7 @@ export type VisitorLang = 'en' | 'es' | 'ko';
 /** The route screen's strings. The Spanish is unreviewed by a native speaker. */
 export const COPY = {
   en: {
-    home: 'Home', workspace: 'Route workspace', walk: (from: string, m: number) => `From ${from}, ${m} m on foot`,
+    workspace: 'Route workspace', walk: (from: string, m: number) => `From ${from}, ${m} m on foot`,
     range: (from: number, to: number) => `${from} to ${to} m`, noPhotos: 'No photos here', mapRecord: 'OpenStreetMap record, unverified',
     map: { zoomIn: 'Zoom map in', zoomOut: 'Zoom map out', fit: 'Whole route', credit: '© OpenStreetMap contributors' }, creditsShort: '© OpenStreetMap. Photos: Mapillary, CC BY-SA 4.0',
     photoOf: (n: number, total: number) => `Photo ${n} of ${total}`, previous: 'Previous photo', next: 'Next photo', whole: 'Show the whole photo', closer: 'Show the marked part',
@@ -16,10 +16,10 @@ export const COPY = {
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
       messages: 'Messages', add: 'Add a message', example: 'Example', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
-      guide: "Tap a marker to see its photo, or open a visitor's message.",
+      guide: 'Tap a marker for its photo, or open a message.',
       found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Visitors raise', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
-      paste: 'Paste what a visitor sent you by WhatsApp, SMS or a review, in any language.', read: 'Read message', cancel: 'Cancel',
+      paste: 'Paste what a visitor wrote.', read: 'Read message', cancel: 'Cancel',
       about: 'About', reply: 'Reply', copyReply: 'Copy reply', filed: (spot: string) => `Filed on ${spot}`,
       line: { reading: 'Reading the message…', ready: 'Filed on the closest match. Tap another spot to move it.', unsure: 'Not sure which spot. Tap it on the map.', none: 'Not sure. Ask the visitor, or tap the spot on the map.', noSpot: 'This message is not about one spot.', manual: 'Tap the spot on the map.', remembered: 'The first spot is where you linked a similar message before.', linked: 'Filed. The reply below uses what your map says.' },
       visitors: (n: number) => n ? `${n} ${n === 1 ? 'message' : 'messages'} from visitors` : 'No visitor messages here yet',
@@ -30,7 +30,7 @@ export const COPY = {
     },
   },
   es: {
-    home: 'Inicio', workspace: 'Espacio de la ruta', walk: (from: string, m: number) => `Desde ${from === 'Plaza de Armas' ? 'la Plaza de Armas' : from}, ${m} m a pie`,
+    workspace: 'Espacio de la ruta', walk: (from: string, m: number) => `Desde ${from === 'Plaza de Armas' ? 'la Plaza de Armas' : from}, ${m} m a pie`,
     range: (from: number, to: number) => `${from} a ${to} m`, noPhotos: 'No hay fotos aquí', mapRecord: 'Registro de OpenStreetMap, sin verificar',
     map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' }, creditsShort: '© OpenStreetMap. Fotos: Mapillary, CC BY-SA 4.0',
     photoOf: (n: number, total: number) => `Foto ${n} de ${total}`, previous: 'Foto anterior', next: 'Foto siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
@@ -40,10 +40,10 @@ export const COPY = {
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
       messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
-      guide: 'Toca un marcador para ver su foto, o abre el mensaje de un visitante.',
+      guide: 'Toca un marcador para ver su foto, o abre un mensaje.',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',
-      paste: 'Pega lo que te envió un visitante por WhatsApp, SMS o una reseña, en cualquier idioma.', read: 'Leer mensaje', cancel: 'Cancelar',
+      paste: 'Pega lo que escribió un visitante.', read: 'Leer mensaje', cancel: 'Cancelar',
       about: 'Se refiere a', reply: 'Respuesta', copyReply: 'Copiar respuesta', filed: (spot: string) => `Ubicado en ${spot}`,
       line: { reading: 'Leyendo el mensaje…', ready: 'Ubicado en el punto más probable. Toca otro punto para moverlo.', unsure: 'Sin certeza del punto. Tócalo en el mapa.', none: 'Sin certeza. Pregunta al visitante o toca el punto en el mapa.', noSpot: 'Este mensaje no trata de un punto concreto.', manual: 'Toca el punto en el mapa.', remembered: 'El primer punto es donde antes enlazaste un mensaje parecido.', linked: 'Ubicado. La respuesta de abajo usa lo que dice tu mapa.' },
       visitors: (n: number) => n ? `${n} ${n === 1 ? 'mensaje' : 'mensajes'} de visitantes` : 'Aún no hay mensajes de visitantes aquí',

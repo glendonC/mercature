@@ -13,6 +13,7 @@ test('a prepared place opens from Home, from its package or its local record', a
   await expect(reveal).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', {name:'Check the passage'})).toHaveCount(0);
+  await page.locator('.menu-button').click();
   await page.getByRole('button', {name:'Home', exact:true}).click();
   // Without its local record Narikala is not offered on Home at all.
   expect(requested).toContain('/routes/tbilisi-narikala/route.json');
