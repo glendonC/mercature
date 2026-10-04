@@ -11,7 +11,7 @@ import './demo.css';
 const HERO = 'cusco-qorikancha';
 const StepIcon = ({ kind }: { kind: string }) => { const Icon = iconFor(kind) ?? PhotoIcon; return <Icon />; };
 
-/** ?ui=photo: the labelled photo at the sizes the guide gives it, over the hero walk's shipped views. ?view= opens one view. */
+/** ?ui=photo: the labelled photo at the sizes the guide gives it, over the hero walk's shipped views. ?view= opens one view, ?select=none clears the selection. */
 export default function PhotoDemo() {
   const { lang, setLang } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
@@ -28,7 +28,8 @@ export default function PhotoDemo() {
   const shown = useMemo(() => data && views[at] ? photoOf(data, views[at].id) : null, [data, views, at]);
   const findings = useMemo(() => shown?.marks.filter(m => m.finding) ?? [], [shown]);
   const [selected, setSelected] = useState<string | null>(null);
-  useEffect(() => setSelected(findings.find(m => m.flagged)?.id ?? findings[0]?.id ?? null), [findings]);
+  // ?select=none opens with nothing selected.
+  useEffect(() => setSelected(new URLSearchParams(location.search).get('select') === 'none' ? null : findings.find(m => m.flagged)?.id ?? findings[0]?.id ?? null), [findings]);
   const [replay, setReplay] = useState(0);
   const [traced, setTraced] = useState(false);
   if (error) return <main className="pd"><p role="alert">{error}</p></main>;
