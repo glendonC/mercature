@@ -11,7 +11,7 @@ test('a visitor message is filed on the spot she taps, counted on the map and an
   test.setTimeout(30000);
   // The published package only, as on any host without the local records.
   await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
-  await page.goto('/');
+  await page.goto('/?ui=inbox');
   await page.evaluate(() => localStorage.clear());
   await openRoute(page);
   await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
@@ -29,7 +29,7 @@ test('a visitor message is filed on the spot she taps, counted on the map and an
 
 test('a spot shows every mark with its legend, and removing it takes it out of the visitor note', async ({page}) => {
   test.setTimeout(30000);
-  await page.goto('/');
+  await page.goto('/?ui=inbox');
   await page.evaluate(() => localStorage.clear());
   await openRoute(page);
   await page.getByRole('button', {name:/^Plaza de Armas, 0 to 10 m/}).click();
@@ -47,7 +47,7 @@ test('a spot shows every mark with its legend, and removing it takes it out of t
 
 test('the panel comes before the map, so the keyboard reaches the messages first', async ({page}) => {
   test.setTimeout(30000);
-  await page.goto('/');
+  await page.goto('/?ui=inbox');
   await openRoute(page);
   const order = await page.evaluate(() => { const panel = document.querySelector('.ri-panel')!, marker = document.querySelector('.route-marker')!; return !!(panel.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_FOLLOWING); });
   expect(order).toBe(true);
@@ -63,7 +63,7 @@ test('the panel comes before the map, so the keyboard reaches the messages first
 test('a message tapped before the stored model is found is read once it is, and once placed its kept answer shows as read earlier', async ({page}) => {
   test.skip(!existsSync('public/models/multilingual-e5-small-latin-hangul'), 'The trimmed model is not in public/models.');
   test.setTimeout(90000);
-  await page.goto('/');
+  await page.goto('/?ui=inbox');
   await page.evaluate(() => localStorage.clear());
   await openRoute(page);
   await page.locator('.ri-row', {hasText:'Quick question'}).click();
@@ -89,7 +89,7 @@ test('a message tapped before the stored model is found is read once it is, and 
 
 test('the pager stays on a spot\'s map record page, so its photos can be reached again', async ({page}) => {
   test.setTimeout(30000);
-  await page.goto('/');
+  await page.goto('/?ui=inbox');
   await page.evaluate(() => localStorage.clear());
   await openRoute(page);
   await page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m/}).click();
