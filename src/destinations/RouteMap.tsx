@@ -64,6 +64,24 @@ const Overlay = memo(function Overlay({ walk, highlight, lens }: { walk: Walk; h
   </g>;
 });
 
+/** Moves apart markers whose targets would overlap on screen, so each keeps a whole one; a selected marker stays where it is. */
+function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
+  const out = points.map((p): Point => [p[0], p[1]]);
+  for (let pass = 0; pass < 24; pass++) {
+    let moved = false;
+    for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+      const dx = out[j][0] - out[i][0], dy = out[j][1] - out[i][1], d = Math.hypot(dx, dy);
+      if (d >= gap - 0.5 || (pinned[i] && pinned[j])) continue;
+      const ux = d > 0.01 ? dx / d : 0, uy = d > 0.01 ? dy / d : 1, push = gap - d, share = pinned[i] ? 0 : pinned[j] ? 1 : 0.5;
+      out[i] = [out[i][0] - ux * push * share, out[i][1] - uy * push * share];
+      out[j] = [out[j][0] + ux * push * (1 - share), out[j][1] + uy * push * (1 - share)];
+      moved = true;
+    }
+    if (!moved) break;
+  }
+  return out;
+}
+
 const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
@@ -289,10 +307,13 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
   }, [card, cardFor]);
-  const anchor = cardFor ? markers.find(m => m.id === cardFor) : null;
+  // Markers sit on their spots unless their 44 px targets would overlap; then they step apart, and a hairline leads back.
+  const spots = markers.map(marker => toScreen(marker.at)), apart = spread(spots, markers.map(marker => marker.selected), 46);
+  const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }));
+  const anchor = cardFor ? placed.find(p => p.marker.id === cardFor) : null;
   let cardStyle: { left: number; top: number } | null = null, leader: { left: number; top: number; width: number } | null = null;
   if (anchor && card && camera) {
-    const [sx, sy] = toScreen(anchor.at), gap = 30;
+    const [sx, sy] = anchor.at, gap = 30;
     const right = sx + gap + cardSize.width <= size.width - 16 || sx < size.width / 2;
     const left = right ? sx + gap : sx - gap - cardSize.width;
     const top = Math.max(insets.top, Math.min(size.height - insets.bottom - cardSize.height, sy - cardSize.height * 0.42));
@@ -302,7 +323,6 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // The flat map frames itself through the view box, which the reveal lands on; a leaning map is drawn in screen pixels.
   const flat = !view || view.view.lean < 0.001;
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
-  const placed = markers.map(marker => ({ marker, at: toScreen(marker.at) }));
   /** Markers that the lean pushes up under the place title recede with the haze. */
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   // Labels never cover a marker or each other; earlier labels win.
@@ -334,6 +354,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
     <div className="route-markers">
+      <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
       {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-hidden="true">
         <span className="route-marker-dot">{marker.rank ?? ''}</span>
       </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
