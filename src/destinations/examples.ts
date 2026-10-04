@@ -1,7 +1,7 @@
 /**
- * Example visitor messages for the demo inbox, labelled Example wherever they show.
- * They are synthetic messages from the language evaluation sets (scripts/language/route-messages.json
- * and memory-messages.json), written by a large language model for this project; none is a real visitor.
+ * Example visitor messages, labelled Example wherever they show.
+ * They are synthetic, from the language evaluation sets (scripts/language/route-messages.json
+ * and memory-messages.json), written by a large language model for this project. None is a real visitor.
  */
 /** translated: machine-translated into its language, and labelled so. */
 export type ExampleMessage = { readonly id: string; readonly language: string; readonly text: string; readonly translated?: true };

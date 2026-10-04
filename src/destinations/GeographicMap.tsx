@@ -13,7 +13,7 @@ export function captureOrder(photos: readonly Photo[]): Photo[] {
   return [...photos].sort((a, b) => (a.capturedAt ?? '￿').localeCompare(b.capturedAt ?? '￿'));
 }
 
-/** The route framing shared by the reveal and the inspection map: metres projected into an 800 by 500 view. */
+/** The tour route framing shared by the reveal and the inspection map: metres projected into an 800 by 500 view. */
 export function routeFrame(data: Destination, zoom = 1, focus?: Coordinate) {
   const origin: Coordinate = [data.origin[0], data.origin[1]];
   const withViews = data.photos.filter(photo => data.views.some(view => view.photoId === photo.id));
@@ -21,7 +21,7 @@ export function routeFrame(data: Destination, zoom = 1, focus?: Coordinate) {
   const minX = Math.min(...extent.map(p => p[0])), maxX = Math.max(...extent.map(p => p[0])), minY = Math.min(...extent.map(p => p[1])), maxY = Math.max(...extent.map(p => p[1]));
   const w = Math.max(maxX - minX, 40), h = Math.max(maxY - minY, 40), scale = Math.min(700 / w, 420 / h) * zoom;
   const centre = focus && zoom > 1 ? metres(focus, origin) : [(minX + maxX) / 2, (minY + maxY) / 2];
-  /** East and north metres in the route frame, as retained reconstruction points use. */
+  /** East and north metres in the route frame, as reconstruction points use. */
   const fromMetres = (east: number, north: number): Coordinate => [400 + (east - centre[0]) * scale, 250 - (north - centre[1]) * scale];
   const project = (point: Coordinate): Coordinate => { const p = metres(point, origin); return fromMetres(p[0], p[1]); };
   /** The coordinate under a point of the route frame, the inverse of project. */

@@ -8,7 +8,7 @@ export { esPlace };
 export type UiLang = UiLanguage;
 export type VisitorLang = 'en' | 'es' | 'ko';
 
-/** The route screen's strings. The Spanish is unreviewed by a native speaker. */
+/** Strings for the tour route screen and the message inbox. The Spanish is unreviewed by a native speaker. */
 export const COPY = {
   en: {
     workspace: 'Route workspace', walk: (from: string, m: number) => `From ${enPlace(from)}, ${m} m on foot`,
@@ -262,14 +262,14 @@ export const OSM_NOTE = {
 };
 export type OsmLine = keyof typeof OSM_NOTE;
 
-/** The way around the mapped steps, once she says it works. extra: metres longer than the walk, rounded. */
+/** The way around the mapped steps, once she says it works. extra: metres longer than the route, rounded. */
 export const AROUND_NOTE = {
   en: (w: Where, extra: number) => `There’s a way around the steps ${w.en}, about ${extra} m longer. We’ve checked it.`,
   es: (w: Where, extra: number) => `Hay un camino que evita los escalones ${w.es}, unos ${extra} m más largo. Ya lo revisamos.`,
   ko: (w: Where, extra: number) => `${w.ko} 근처 계단을 피해 가는 길이 있습니다. 약 ${extra}m 더 길며, 저희가 확인했습니다.`,
 };
 
-/** Altitude, for a walk above about 2,500 m. metres: the walk's height above sea level, never a difference between its ends. */
+/** Altitude, for a route above about 2,500 m. metres: the route's height above sea level, never a difference between its ends. */
 export const ALTITUDE_NOTE = {
   en: (metres: number) => `The route is at about ${metres.toLocaleString('en')} m above sea level; take it slowly.`,
   es: (metres: number) => `El recorrido está a unos ${metres.toLocaleString('es-419')} m sobre el nivel del mar; camine con calma.`,
@@ -301,7 +301,7 @@ export function enPlace(name: string): string {
 }
 
 /** Where a spot is, phrased per language from its landmark. */
-export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string; /** Street names as they are, without "Calle", for a walk outside a Spanish-speaking city. */ plain?: boolean }): Where {
+export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string; /** Street names as they are, without "Calle", for a route outside a Spanish-speaking city. */ plain?: boolean }): Where {
   if (!landmark) return { en: 'on the route', es: 'en el recorrido', ko: '경로' };
   const { name, kind } = landmark;
   if (kind === 'start') return { en: `at the ${name}`, es: `en la ${name}`, ko: name === 'Plaza de Armas' ? '아르마스 광장' : name };
@@ -317,7 +317,7 @@ export function where(landmark: { name: string; kind: 'start' | 'target' | 'buil
 
 /**
  * A best guess at the language of a pasted message, for the reply default only; the person can change it.
- * The walk's place names are Spanish, so they are set aside first and never count as Spanish.
+ * The route's place names are Spanish, so they are set aside first and never count as Spanish.
  * Spanish needs two cues, English wins ties, Quechua and other languages say so instead of passing as Spanish.
  */
 export function guessLanguage(text: string): string {

@@ -234,7 +234,7 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
   </section>;
 }
 
-type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** happy: a smile, only on good news (her change saved, a reply ready, the walk checked) */ mood?: 'happy'; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
+type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** happy: a smile, only on good news (her change saved, a reply ready, the tour route checked) */ mood?: 'happy'; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
 /**
  * The guide itself, on screen all the time: the bot floating free where the screen places it (64 px, 52 on a phone; --companion), never on the dialogue.
  * Its face follows what it really does, never at random: idle, eyes only (it looks around and blinks); talking while a page types, eyes and a light bob;

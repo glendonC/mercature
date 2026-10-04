@@ -91,7 +91,7 @@
 .kit-kind-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); box-shadow: 0 0 0 1.5px #fff; }
 .kit-kind-badge { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--kind-barrier); box-shadow: 0 0 0 1.5px #fff; }
 .kit-kind small { font-size: var(--font-xs); color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); }
-/* The revised stage: the guide in the map, the focus card with its choices beside it */
+/* The stage: the guide in the map, the focus card with its choices beside it */
 .kit-companion { position: absolute; z-index: 6; left: 58%; top: 30%; }
 .kit-focus { position: absolute; z-index: 8; left: 24px; top: 112px; display: grid; grid-template-columns: minmax(0, 420px) 220px; align-items: start; gap: 12px; max-height: calc(100% - 300px); }
 .kit-focus-card { max-height: 100%; overflow-y: auto; }

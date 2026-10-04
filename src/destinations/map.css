@@ -1,4 +1,4 @@
-/* The route map's own look, wherever it is shown: the canvas, or Home's backdrop. */
+/* The tour route map's own look, wherever it is shown: the canvas, or Home's backdrop. */
 .route-map { position: absolute; inset: 0; overflow: clip; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
 .route-map:active { cursor: grabbing; }
 .route-map .destination-map { position: absolute; inset: 0; height: auto; --map-ground: var(--ground, #eceeef); }
@@ -22,7 +22,7 @@
 /* Markers: a thin ring in the state colour around a small core, on a light glass disc; a square is the operator's own record */
 .route-marker { position: absolute; z-index: 2; display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; background: transparent; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
 .route-marker:focus-visible { outline: none; }
-/* Changed between the walk as recorded and the walk with her edits: a dashed ink ring with a white halo, a step outside the solid
+/* Changed between the route as recorded and the route with her edits: a dashed ink ring with a white halo, a step outside the solid
    selection ring, so a marker that is both shows the two together */
 .route-marker-changed { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: var(--changed-outline, 1.5px dashed var(--ink)); box-shadow: var(--changed-ring, 0 0 0 1.5px #fff), inset 0 0 0 1px rgb(255 255 255 / 0.7); pointer-events: none; transition: translate var(--motion-hover) var(--ease-out); }
 .route-marker:is(:focus-visible, [data-hovered]) .route-marker-changed { translate: 0 -3px; }
@@ -112,7 +112,7 @@
 .route-cameras .is-open-ring { stroke: var(--surface); stroke-width: 8px; opacity: 0.9; }
 .route-cameras .is-open { stroke-width: 5.5px; opacity: 0.6; }
 .route-overlay .route-photo-ring { stroke: var(--surface); stroke-width: 13px; }
-/* The start of a walk built from the map alone, which no spot marks */
+/* The start of a route built from the map alone, which no spot marks */
 .route-overlay .route-start-ring { fill: none; stroke: var(--ink); stroke-width: 11px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .route-overlay .route-start-core { fill: none; stroke: var(--surface); stroke-width: 5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .route-overlay .route-photo-at { stroke-width: 8px; }
@@ -145,7 +145,7 @@
   .route-marker-dot, .route-marker, .route-marker-changed, .route-marker-tag, .route-marker[data-gone] .route-marker-dot { transition: none; }
 }
 
-/* Zones along the walk: a soft clay glow where a barrier may be, a grey hatch where no photo was taken */
+/* Zones along the route: a soft clay glow where a barrier may be, a grey hatch where no photo was taken */
 .route-zones polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .route-zones .is-glow-wide { stroke: var(--blocked); stroke-width: 26px; opacity: 0.07; }
 .route-zones .is-glow { stroke: var(--blocked); stroke-width: 14px; opacity: 0.12; }
@@ -157,7 +157,7 @@
 .route-nudges line { stroke: color-mix(in srgb, var(--ink) 50%, transparent); stroke-width: 1; }
 .route-nudges circle { fill: var(--ink); stroke: var(--surface); stroke-width: 1; }
 
-/* Lines beside the walk, under it: a way around in a quieter blue, a street she added as a thin dashed ink line (map only) */
+/* Lines beside the route, under it: a way around in a quieter blue, a street she added as a thin dashed ink line (map only) */
 .route-paths polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .route-paths .route-path-halo { stroke: var(--surface); stroke-width: 7px; opacity: 0.85; }
 .route-paths [data-kind=around] .route-path-line { stroke: color-mix(in srgb, var(--reachable) 60%, var(--surface)); stroke-width: 3px; }
@@ -169,8 +169,8 @@
 .route-pick { position: absolute; z-index: 5; width: 24px; height: 24px; margin: -12px 0 0 -12px; border: 1.5px solid var(--ink); border-radius: 50%; background: rgb(255 255 255 / 0.4); box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7); transform: scaleY(var(--squash, 1)); pointer-events: none; }
 .route-pick::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: var(--ink); }
 
-/* Editing her map: the city dims while the walk stays bright, every spot breathes a thin outline to say it can be tapped, and a
-   faint ring follows a mouse along the walk where a tap adds a spot */
+/* Editing her map: the city dims while the route stays bright, every spot breathes a thin outline to say it can be tapped, and a
+   faint ring follows a mouse along the route where a tap adds a spot */
 .route-map .map-base, .route-map .route-labels { transition: opacity var(--motion-slow) var(--ease-in-out); }
 .route-map[data-editing] .map-base { opacity: 0.82; }
 .route-map[data-editing] .route-labels { opacity: 0.85; }

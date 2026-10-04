@@ -41,7 +41,7 @@ const initialScene = (): Scene => { try { const scene = new URLSearchParams(loca
 const REPLY_KO = '코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다. 현장 확인은 아직 하지 않았습니다.';
 const NOTE = 'Plaza de Armas to the Qorikancha ticket booth, 594 m.\nCalle Loreto, 340 m: steps recorded in a street photo and in OpenStreetMap. Not checked on site.\nHatunrumiyoq, 420 to 430 m: no street photos.\nTicket booth: a ramp was recorded on 3 Oct.\nThis note is made from street photos and OpenStreetMap. Ask staff before you go.';
 
-/** The review page for the shared primitives: the guide's dialogue over the real walk, then each part on its own. */
+/** The review page for the shared primitives: the guide's dialogue over the real tour route, then each part on its own. */
 export default function Kit() {
   const data = useHero();
   const narrow = useNarrow();

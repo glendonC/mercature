@@ -1,4 +1,4 @@
-/* The route screen: a full-bleed map and one compact charcoal glass panel, built from the shared parts in src/ui. */
+/* The message inbox: a full-bleed map and one compact charcoal glass panel, built from the shared parts in src/ui. */
 .route-inbox {
   --sheet: 0px;
   position: relative; height: 100svh; min-height: 520px; overflow: clip; isolation: isolate;
@@ -6,7 +6,7 @@
 }
 .ri-map { position: absolute; inset: 0; }
 .route-inbox .destination-map-controls { top: auto; right: auto; left: calc(20px + env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
-/* Nothing on the walk asks to be confirmed, so markers rest instead of pulsing. */
+/* Open markers hide the clay badge: nothing on the tour route asks to be confirmed. */
 .route-inbox .route-marker[data-state=open] .route-marker-dot::after { display: none; }
 
 /* Top: the place and the menu, over the map */
@@ -26,7 +26,7 @@
 .ri-lead { margin: 2px 0 8px; font-size: var(--font-s); }
 .ri-counts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .ri-scan { display: grid; gap: 2px; margin: 4px 0 0; }
-/* Model marks near the walk: one line with a chevron that turns down when the kinds are shown */
+/* Model marks near the route: one line with a chevron that turns down when the kinds are shown */
 .ri-scan-toggle { display: flex; align-items: center; gap: 4px; width: calc(100% + 12px); min-height: var(--tap); margin: 0 -6px; padding: 0 6px; border: 0; border-radius: var(--radius-s); background: none; color: var(--ui-muted); font: inherit; font-size: var(--font-xs); text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ri-scan-toggle > span { flex: 1; min-width: 0; }
 .ri-scan-toggle .ui-icon { flex: none; transition: rotate var(--motion-hover) var(--ease-out); }

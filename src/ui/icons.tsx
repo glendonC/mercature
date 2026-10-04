@@ -22,7 +22,7 @@ function make(name: string, body: ReactNode): Icon {
 
 const camera = <path d="M4.5 8h2.6l1.5-2.2h6.8L16.9 8h2.6a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />;
 
-/* What is on the walk */
+/* What is on the tour route */
 export const StepsIcon = make('StepsIcon', <path d="M3 19.5h4.5V15H12v-4.5h4.5V6H21" />);
 export const KerbIcon = make('KerbIcon', <path d="M3 8.5h8a1 1 0 0 1 1 1v5a1 1 0 0 0 1 1h8M14.5 19.5h2M19 19.5h2" />);
 export const CrossingIcon = make('CrossingIcon', <><path d="M3 5.5h18M3 18.5h18" /><rect x="4" y="9" width="2.5" height="6" rx="0.6" /><rect x="8.5" y="9" width="2.5" height="6" rx="0.6" /><rect x="13" y="9" width="2.5" height="6" rx="0.6" /><rect x="17.5" y="9" width="2.5" height="6" rx="0.6" /></>);

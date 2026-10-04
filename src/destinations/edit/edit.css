@@ -1,4 +1,4 @@
-/* What she records about a walk, as sections of the panel that hosts them: no box inside a box. */
+/* What she records about a tour route, as sections of the panel that hosts them: no box inside a box. */
 .edit-section .edit-where { margin: 0; font-size: var(--font-s); color: var(--ui-ink); }
 .edit-section .edit-quiet { margin: 0; font-size: var(--font-xs); line-height: var(--leading-read); color: var(--ui-muted); }
 .edit-section .edit-label { font-size: var(--font-xs); color: var(--ui-muted); }

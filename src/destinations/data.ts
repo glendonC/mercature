@@ -1,4 +1,4 @@
-/** Inspection adapter for the retained mercature-route/1 records and their published mercature-place/1 packages.
+/** Inspection adapter for mercature-route/1 records and their published mercature-place/1 packages.
  * It never supplies accepted geometry to the synthetic access solver. */
 import { ROUTE_PLACES } from '../site/registry';
 import { readWayAround } from '../routes/around';
@@ -16,11 +16,11 @@ export type View = { id: string; photoId: string; file: string; width: number; h
 export type Piece = { id: string; file: string; points: number; bytes: number; views: string[]; center: Coordinate; model: string; residual: number };
 export type MapFeature = { id: string; name: string; kind: string; points: Coordinate[]; holes: Coordinate[][] };
 /** A recorded observation: a model outline on one source photo, or an OpenStreetMap tag with no photo (viewId null). Never verified here.
- * position: where the build placed it on the walk (null for a tag); stretches: the stretches it spans. */
+ * position: where the build placed it on the tour route (null for a tag); stretches: the stretches it spans. */
 export type Finding = { id: string; viewId: string | null; photoId: string | null; label: string; concept: string; score: number | null; outline: Coordinate[]; verified: boolean; barrier: boolean; osm: Record<string, string> | null; position: Coordinate | null; stretches: number[] };
-/** Every finding the place records, its photo shipped or not, as a place on the walk (a tag has no position, only its stretches). */
+/** Every finding the place records, its photo shipped or not, as a place on the route (a tag has no position, only its stretches). */
 export type WalkFinding = Pick<Finding, 'id' | 'concept' | 'label' | 'barrier' | 'position' | 'stretches'>;
-/** One thing OpenStreetMap says along the walk, as src/osm/access.ts placed it: its kind and value on its stretches. Nobody has checked it on site. */
+/** One thing OpenStreetMap says along the route, as src/osm/access.ts placed it: its kind and value on its stretches. Nobody has checked it on site. */
 export type AccessTag = Pick<AccessFinding, 'id' | 'kind' | 'value' | 'concept' | 'label' | 'barrier' | 'position' | 'stretches'>;
 /** One thing SAM 3 outlined in one photo view; nobody has checked it. barrier: its kind can be a barrier (steps, kerb, broken pavement), drawn in clay.
  * flagged: one of the route's possible barriers (its finding says so). finding: the finding it is, or null.
@@ -30,12 +30,12 @@ export type ScanMark = { id: string; viewId: string; photoId: string; concept: s
 export type ScanKind = { concept: string; label: string; barrier: boolean; surface: boolean; marks: number; views: number; nearRoute: number };
 /** What the photo scan looked at and what it left out; its marks are Destination.marks. */
 export type Scan = { views: number; nearMetres: number; kinds: ScanKind[]; leftOut: { concept: string; label: string; marks: number; views: number; reason: string }[] };
-/** A 10 m piece of the walk, as the preparation run classified it from its photos. */
+/** A 10 m piece of the route, as the preparation run classified it from its photos. */
 export type Stretch = { index: number; from: number; to: number; status: 'clear' | 'barrier' | 'no-photos'; line: Coordinate[]; findings: string[]; views: string[] };
 export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; stretches: Stretch[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; walkFindings: WalkFinding[]; marks: ScanMark[]; scan: Scan | null; sources: { name: string; credit: string; licence: string; link: string | null }[];
-  /** The way around the walk's mapped steps that OpenStreetMap's router suggests, prepared with the package; null or absent when it has none, as for a walk built on this device. */
+  /** The way around the route's mapped steps that OpenStreetMap's router suggests, prepared with the package; null or absent when it has none, as for a route built on this device. */
   wayAround?: WayAround | null;
-  /** What OpenStreetMap says along the walk, kind by kind, from the record's osm.findings; absent when it has none. */
+  /** What OpenStreetMap says along the route, kind by kind, from the record's osm.findings; absent when it has none. */
   access?: AccessTag[] };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
@@ -61,7 +61,7 @@ export function localAsset(id: DestinationId, file: string, host = window.locati
   if (file !== 'route.json') path(file);
   return `/routes/${id}/${file}`;
 }
-/** Same bounded correction rule as the reference camera-pose adapter. */
+/** Longitude and latitude to local east and north metres. */
 export function metres(position: Coordinate, origin: Coordinate): Coordinate {
   const r = 6371008.8 * Math.PI / 180;
   return [(position[0] - origin[0]) * Math.cos(origin[1] * Math.PI / 180) * r, (position[1] - origin[1]) * r];
@@ -135,7 +135,7 @@ function parseRecord(value: unknown, expectedId: DestinationId, published: boole
     return { index, from: number(s.from_m, 0, 1e5), to: number(s.to_m, 0, 1e5), status, line: list(s.line, 2000).map(coordinate), findings: list(s.findings ?? [], 200).map(idText).filter(id => findingIds.has(id)), views: list(s.views ?? [], 400).map(idText).filter(id => views.some(view => view.id === id)) };
   });
   const inWalk = (indexes: number[]) => indexes.every(index => index < stretches.length) ? indexes : fail('A record names a stretch the walk does not have.');
-  // Every finding with its place on the walk, its photo shipped or not.
+  // Every finding with its place on the route, its photo shipped or not.
   const walkFindings: WalkFinding[] = list(root.findings, 3000).map(raw => {
     const f = record(raw);
     return { id: idText(f.id), concept: typeof f.concept === 'string' ? text(f.concept, 100) : '', label: text(f.label), barrier: f.barrier === true, position: f.position == null ? null : coordinate(f.position), stretches: inWalk(list(f.stretches ?? [], 200).map(index => whole(index, 1999))) };
@@ -157,7 +157,7 @@ function parseRecord(value: unknown, expectedId: DestinationId, published: boole
     kinds: list(scanRoot.kinds, 100).map(raw => { const k = record(raw); return { concept: text(k.concept, 100), label: text(k.label, 200), barrier: k.barrier === true, surface: k.surface === true, marks: whole(k.marks), views: whole(k.views), nearRoute: whole(k.near_route) }; }),
     leftOut: list(scanRoot.left_out ?? [], 100).map(raw => { const k = record(raw); return { concept: text(k.concept, 100), label: text(k.label, 200), marks: whole(k.marks), views: whole(k.views), reason: text(k.reason) }; }),
   };
-  // What OpenStreetMap says along the walk, kind by kind. A tag this reader does not know is left out rather than failing the place.
+  // What OpenStreetMap says along the route, kind by kind. A tag this reader does not know is left out rather than failing the place.
   const kinds = new Set<string>(ACCESS_KINDS.map(item => item.kind));
   const access: AccessTag[] = root.osm == null ? [] : list(record(root.osm).findings ?? [], 3000).flatMap(raw => {
     try {
@@ -200,7 +200,7 @@ async function loadPlace(id: DestinationId, signal?: AbortSignal): Promise<Desti
 }
 /**
  * The published package when one exists, which works on any host and offline once cached.
- * On this device's loopback address the retained local record also supplies its point pieces;
+ * On this device's loopback address the local record also supplies its point pieces;
  * without a package, only the local record can open the place.
  */
 export async function loadDestination(id: DestinationId, signal?: AbortSignal): Promise<Destination> {
@@ -214,7 +214,7 @@ export async function loadDestination(id: DestinationId, signal?: AbortSignal): 
   }
   return loadLocal(id, signal);
 }
-/** MRP1 layout adapted from the reference route/piece.ts decoder. */
+/** Reads an MRP1 point-piece file: positions, colours, and the view of each point. */
 export function decodeCloud(data: ArrayBuffer, expected: Piece): Cloud {
   const bytes = new Uint8Array(data), view = new DataView(data);
   if (data.byteLength < 8 || new TextDecoder().decode(bytes.subarray(0, 4)) !== 'MRP1') fail('Unrecognized reconstruction format.');

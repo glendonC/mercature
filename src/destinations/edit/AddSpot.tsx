@@ -7,7 +7,7 @@ import NoteField from './NoteField';
 import './edit.css';
 
 type Props = {
-  /** Where on the walk this spot would be, in the canvas's own words. */
+  /** Where on the tour route this spot would be, in the canvas's own words. */
   where: string;
   range: { from: number; to: number };
   onAdd: (kind: EditKind, note: OwnNote) => void;

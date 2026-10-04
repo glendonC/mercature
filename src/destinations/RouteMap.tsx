@@ -17,7 +17,7 @@ export type Insets = { top: number; right: number; bottom: number; left: number 
 /** open: a possible barrier nobody has answered; barrier: she says it is still there; fixed: she fixed it; not-barrier: she says it
  * is none; added: her own record of something the photos missed; osm: an OpenStreetMap record, drawn quietly on the ground. */
 export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'no-photos' | 'landmark' | 'clear' | 'fixed' | 'added' | 'osm';
-/** What OpenStreetMap records along a walk, as the place records name the kinds. */
+/** What OpenStreetMap records along a tour route, as the place records name the kinds. */
 export type OsmKind = 'steps' | 'handrail' | 'ramp' | 'surface' | 'smoothness' | 'kerb' | 'tactile_paving' | 'crossing' | 'gate' | 'bollard' | 'bench' | 'toilets' | 'lit' | 'wheelchair';
 export type MarkerIcon = OsmKind | 'path' | 'no-photos' | 'fixed' | 'added' | 'dismissed';
 export type Marker = {
@@ -32,7 +32,7 @@ export type Marker = {
   missing?: boolean;
   /** The kind it is, such as 'steps' or 'bench', as kindOf names it: the marker takes the kind's hue. */
   kind?: string;
-  /** It differs between the walk as recorded and the walk with her edits: a ring a step outside the selection ring. Say it in the label too. */
+  /** It differs between the route as recorded and the route with her edits: a ring a step outside the selection ring. Say it in the label too. */
   changed?: boolean;
   /** Not on the map in this view, such as a spot she added, before she added it: kept so it lifts away and drops back in. */
   gone?: boolean;
@@ -59,19 +59,19 @@ function crosses(points: Point[], r: Rect) {
     return true;
   });
 }
-/** A line beside the walk, in [lon, lat]: a way around the walk's mapped steps, or a street she added, which only the map shows. */
+/** A line beside the route, in [lon, lat]: a way around the route's mapped steps, or a street she added, which only the map shows. */
 export type MapPath = { id: string; kind: 'around' | 'street'; line: Coordinate[] };
-/** What the camera can show: the whole walk, some points (a spot's path, a finding, a message's spots), or a photo's view on the
+/** What the camera can show: the whole route, some points (a spot's path, a finding, a message's spots), or a photo's view on the
  * ground with any points, such as the spot it shows. */
 export type Shot = { kind: 'route' } | { kind: 'points'; points: Point[] } | { kind: 'photo'; view: string; points?: Point[] };
 export type MapHandle = {
-  /** The whole walk at its own bearing. */
+  /** The whole route at its own bearing. */
   fit: (animate?: boolean) => void;
   /** Moves the camera so a map point lands on a screen point, optionally closer in. */
   focus: (at: Point, screen: Point, zoom?: number) => void;
   /** Shows every given point inside the free part of the screen, never closer than a street. */
   frame: (points: Point[], free: Insets) => void;
-  /** Shows a shot whole inside the free part of the screen, the insets by default, never closer than a street. The whole walk
+  /** Shows a shot whole inside the free part of the screen, the insets by default, never closer than a street. The whole route
    * returns to its own bearing; points keep the bearing the map has; a photo's view turns the map only as far as it takes to look
    * up the screen, the way the photo looks. */
   show: (shot: Shot, free?: Insets, animate?: boolean) => void;
@@ -100,11 +100,11 @@ type Props = {
   /** Pixels at the bottom kept free of map words, for the guide line and any sheet. */
   clearBottom: number;
   words: MapWords;
-  /** A backdrop that only shows the walk: no pan, zoom or taps, and markers are plain dots. */
+  /** A backdrop that only shows the route: no pan, zoom or taps, and markers are plain dots. */
   still?: boolean;
   /** Starts at the leaned framing, with no flat first frame and no lean-in, for a map that opens with a leaned replay. */
   settled?: boolean;
-  /** A settled map raises its blocks from the walk outward as it first shows. */
+  /** A settled map raises its blocks from the route outward as it first shows. */
   riseIn?: boolean;
   /** Called with the map's projection whenever it changes, to draw in step with the map. It runs on every frame of a move. */
   onLens?: (lens: Lens) => void;
@@ -112,14 +112,14 @@ type Props = {
   onHover?: (markerId: string | null) => void;
   /** A marker the page points at, such as a hovered message row: drawn raised, without moving the camera. */
   hovered?: string | null;
-  /** The page asks her to tap a place: a crosshair, and a ring under a fine pointer where her tap would land, on the walk, or
+  /** The page asks her to tap a place: a crosshair, and a ring under a fine pointer where her tap would land, on the route, or
    * anywhere when 'free'. The tap still arrives through onMap. */
   picking?: boolean | 'free';
-  /** Lines beside the walk, drawn under it. "Whole route" shows them too. */
+  /** Lines beside the route, drawn under it. "Whole route" shows them too. */
   paths?: MapPath[];
-  /** With still: once it has leaned, the map slowly turns full circle about its walk until the first pointer, key, wheel or touch. */
+  /** With still: once it has leaned, the map slowly turns full circle about its route until the first pointer, key, wheel or touch. */
   turntable?: boolean;
-  /** Her map is open to edits: the city dims, every spot shows it can be tapped, and a mouse over the walk shows where a tap adds one. */
+  /** Her map is open to edits: the city dims, every spot shows it can be tapped, and a mouse over the route shows where a tap adds one. */
   editing?: boolean;
 };
 
@@ -135,8 +135,8 @@ function along(points: Point[], share: number): Point {
   }
   return points.at(-1) ?? [0, 0];
 }
-/** What OpenStreetMap records along a walk built from the map alone, as quiet markers: a node at its point, a way's tag at the middle
- * of the stretches it runs along, several on one stretch spread over it. Possible barriers are left out, since they are the walk's
+/** What OpenStreetMap records along a route built from the map alone, as quiet markers: a node at its point, a way's tag at the middle
+ * of the stretches it runs along, several on one stretch spread over it. Possible barriers are left out, since they are the route's
  * flagged spots already. */
 function recordsOf(data: Destination, walk: Walk): Marker[] {
   const tagged = data.findings.filter(finding => finding.osm && !finding.viewId && !finding.barrier && (finding.position || finding.stretches.length));
@@ -173,7 +173,7 @@ const LEAN_FOR = 1000;
 const TURN_AFTER = 4000, TURN_FOR = 75000, PAINT_EVERY = 33;
 /** While it turns, each spot's caption shows this long before the next one's. */
 const TELL_EVERY = 2500;
-/** Any input stops the turntable for the rest of the visit; the old inbox never turns. */
+/** Any input stops the turntable for the rest of the visit. The message inbox (?ui=inbox) never turns. */
 let turntableStopped = (() => { try { return new URLSearchParams(location.search).get('ui') === 'inbox'; } catch { return true; } })();
 /** A camera move; arc is how far it draws back halfway, so a long flight keeps both ends in sight. */
 type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number; arc?: number };
@@ -183,7 +183,7 @@ const Cameras = memo(function Cameras({ walk, open, lens }: { walk: Walk; open: 
   const dots = (points: Point[]) => points.map(c => { const p = lens ? lens.at(c) : c; return `M${p[0].toFixed(1)} ${p[1].toFixed(1)}h0`; }).join('');
   return <g className="route-cameras"><path d={dots(walk.cameras)} /><path d={dots(open)} className="is-open-ring" /><path d={dots(open)} className="is-open" /></g>;
 });
-/** Over the shared map's blue walk: the stretches without photos, the selected spot, and where the open photo was taken. */
+/** Over the shared map's blue route: the stretches without photos, the selected spot, and where the open photo was taken. */
 const Overlay = memo(function Overlay({ unseen, highlight, photo, start, lens }: { unseen: Run[]; highlight: Point[] | null; photo: Point | null; start: Point | null; lens: Lens | null }) {
   const to = lens ? (p: Point) => lens.at(p) : undefined, at = photo && (to ? to(photo) : photo), from = start && (to ? to(start) : start);
   return <g className="route-overlay">
@@ -194,7 +194,7 @@ const Overlay = memo(function Overlay({ unseen, highlight, photo, start, lens }:
   </g>;
 });
 
-/** Lines beside the walk, under it: a way around in a quieter blue, a street she added as a thin dashed line. */
+/** Lines beside the route, under it: a way around in a quieter blue, a street she added as a thin dashed line. */
 const Paths = memo(function Paths({ paths, lens }: { paths: { id: string; kind: MapPath['kind']; points: Point[] }[]; lens: Lens | null }) {
   const to = lens ? (p: Point) => lens.at(p) : undefined;
   return <g className="route-paths">{paths.map(path => <g key={path.id} data-kind={path.kind}>
@@ -202,7 +202,7 @@ const Paths = memo(function Paths({ paths, lens }: { paths: { id: string; kind: 
   </g>)}</g>;
 });
 
-/** The walk shaded by what was found: a soft clay glow where a barrier may be, a grey hatch where no photo was taken. */
+/** The route shaded by what was found: a soft clay glow where a barrier may be, a grey hatch where no photo was taken. */
 const Zones = memo(function Zones({ walk, unseen, glowing, lens }: { walk: Walk; unseen: Run[]; glowing: string; lens: Lens | null }) {
   const hatch = useId(), to = lens ? (p: Point) => lens.at(p) : undefined, ids = new Set(glowing.split(' '));
   return <g className="route-zones">
@@ -241,7 +241,7 @@ function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] =
 
 const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers: given, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false, editing = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
-  // A walk built from the map alone had no photos read anywhere, so its no-photos spots say nothing; what OpenStreetMap records
+  // A route built from the map alone had no photos read anywhere, so its no-photos spots say nothing; what OpenStreetMap records
   // along it shows instead, unless the page draws those itself, and its start is marked.
   // Judged by its stretches, since a replay hides photos until each lands; a backdrop shows only the markers it is given.
   const mapOnly = data.stretches.length > 0 && data.stretches.every(stretch => !stretch.views.length);
@@ -282,13 +282,13 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [data, walk]);
   const openDots = useMemo(() => openable.map(photo => photo.at), [openable]);
   const photoAt = useMemo(() => { const view = data.views.find(item => item.id === photoView), photo = view && data.photos.find(item => item.id === view.photoId); return photo ? walk.project(photo.position) : null; }, [data, walk, photoView]);
-  /** The runs of the walk no photo shows. A walk built from the map alone had no photos read at all, so it draws plain. */
+  /** The runs of the route no photo shows. A route built from the map alone had no photos read at all, so it draws plain. */
   const unseen = useMemo(() => data.photos.length ? walk.runs.filter(run => run.kind === 'no-photos') : [], [data, walk]);
   const frameOf = useMemo(() => routeFrame(data), [data]), perMetre = frameOf.scale;
   // Kept by what the lines are, so a page that builds them anew on every render does not move the camera.
   const pathsKey = JSON.stringify(paths);
   const drawn = useMemo(() => (JSON.parse(pathsKey) as MapPath[]).map(path => ({ id: path.id, kind: path.kind, points: path.line.map(walk.project) })), [pathsKey, walk]);
-  /** The whole route with the lines beside it, and a key for it; lines reaching far beyond the walk are left out, so it stays large. */
+  /** The whole route with the lines beside it, and a key for it; lines reaching far beyond the route are left out, so it stays large. */
   const whole = useMemo(() => {
     const span = (points: Point[]) => { const xs = points.map(p => p[0]), ys = points.map(p => p[1]); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1); };
     const near = drawn.filter(path => path.points.length && span([...reach, ...path.points]) <= span(reach) * 1.5);
@@ -308,7 +308,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const free: Box = { left, top, right: Math.max(left + 1, width - i.right - w * 0.05), bottom: Math.max(top + 1, height - i.bottom - h * 0.05) };
     return { flat, free, key: [width, height, i.top, i.right, i.bottom, i.left].join(' ') };
   }, [walk]);
-  /** The lean for a screen, turned to lay the walk across or stand it upright, whichever shows it larger in the free box the screen
+  /** The lean for a screen, turned to lay the route across or stand it upright, whichever shows it larger in the free box the screen
    * first has. It is kept for that screen size, so a sheet growing or shrinking never turns the map under her. */
   const aims = useRef(new Map<string, Tilt>());
   const tiltOf = useCallback((width: number, height: number): Tilt => {
@@ -327,7 +327,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
 
   // Fitting a leaning map takes a few passes, and every drag asks for the fit, so keep it per screen and lean.
   const fits = useRef(new Map<string, View>());
-  // The first framing shows the walk alone, as the reveal before it did; "Whole route" shows the lines beside it too.
+  // The first framing shows the route alone, as the reveal before it did; "Whole route" shows the lines beside it too.
   const fitCamera = useCallback((width: number, height: number, lean = goal.current, i?: Insets, beside = false): View => {
     const { flat, free, key } = fitFlat(width, height, i), points = beside && whole.key ? whole.points : reach, at = `${key} ${lean} ${beside ? whole.key : ''}`, known = fits.current.get(at);
     if (known) return known;
@@ -386,9 +386,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     tween.current = { from, to: target, started: performance.now(), duration: 520 + Math.min(400, Math.max(turning * 3, arc * 160)), ease: settle, arc };
     run();
   }, [run]);
-  // As close as nine times the whole walk, or 30 m across the screen for a long walk.
+  // As close as nine times the whole route, or 30 m across the screen for a long route.
   const limits = useCallback(() => { const fit = fitCamera(size.width, size.height).k; return { min: fit * 0.6, max: Math.max(fit * 9, Math.min(size.width, size.height) / (30 * perMetre)) }; }, [fitCamera, size, perMetre]);
-  /** Keeps the walk on screen whatever the person drags. */
+  /** Keeps the route on screen whatever the person drags. */
   const clamp = useCallback((c: View): View => {
     const { minX, minY, maxX, maxY } = walk.extent, { min, max } = limits(), k = Math.max(min, Math.min(max, c.k));
     const hw = size.width / 2 / k, hh = size.height / 2 / k;
@@ -407,7 +407,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  // The first size frames the whole walk; a new size keeps the camera in bounds.
+  // The first size frames the whole route; a new size keeps the camera in bounds.
   const fitted = useRef(false), measured = useRef('');
   useEffect(() => {
     if (!size.width || !size.height) return;
@@ -423,7 +423,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
 
   // The reveal lands on the flat map, which it can match; once it has gone, the map leans back.
   const [landed, setLanded] = useState(false);
-  /** As the map first leans or rises, its blocks go up from the walk outward. */
+  /** As the map first leans or rises, its blocks go up from the route outward. */
   const wave = useMemo(() => riseWave(data, walk, LEAN_FOR), [data, walk]);
   const rising = leanTween.current?.started ?? riseTween.current;
   /** While a replay covers this map its spots wait; once it lifts, or as the map leans in, they arrive in walking order. */
@@ -455,7 +455,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [landed, size, fitCamera, run]);
 
   const mounted = useRef(performance.now());
-  // The turntable: the leaned backdrop turns about the middle of its walk, held in the free box at a zoom that fits every bearing.
+  // The turntable: the leaned backdrop turns about the middle of its route, held in the free box at a zoom that fits every bearing.
   useEffect(() => {
     if (!still || !turntable || !leaning || !landed || turntableStopped || quiet() || !size.width || !size.height) return;
     const { width, height } = size, tilt = tiltOf(width, height), { free } = fitFlat(width, height), fit = fitCamera(width, height, 1);
@@ -562,7 +562,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const inner: Box = { left: free.left + mx, top: free.top + my + Math.min(22, h * 0.08), right: width - free.right - mx, bottom: height - free.bottom - my };
     const fit = fitCamera(width, height).k, at = (turn: number) => framing([...points, ...street], inner, lean, tilt, width, height, { ...current, turn }, { min: fit * 0.6, max: Infinity });
     // The flat map never turns. A photo's view turns the map to look up the screen; points keep the bearing the map has, unless
-    // the walk's own bearing shows them clearly larger.
+    // the route's own bearing shows them clearly larger.
     const kept = current.turn ?? 0;
     if (!lean || !sector) { const keep = at(kept), home = lean && kept ? at(0) : keep; go(clamp(home.k > keep.k * 1.2 ? home : keep), animate); return; }
     go(clamp(at(turnToward(sector.heading, tilt, kept))), animate);
@@ -587,7 +587,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const [pick, setPick] = useState<Point | null>(null);
   useEffect(() => { if (!picking && !editing) setPick(null); }, [picking, editing]);
 
-  // Drag to pan, pinch or wheel to zoom; a tap without movement selects the walk under it.
+  // Drag to pan, pinch or wheel to zoom; a tap without movement selects the route under it.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ moved: boolean; camera: View; x: number; y: number; spread: number } | null>(null);
   function local(event: ReactPointerEvent) { const r = box.current!.getBoundingClientRect(); return { x: event.clientX - r.left, y: event.clientY - r.top }; }
@@ -667,9 +667,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const flat = !view || view.view.lean < 0.001;
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
   const zoomBox: Rect | null = controls && bounds && controls.width ? { x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 } : null;
-  // The credit chip takes the bottom corner of the free map that the whole walk leaves clear, the right one when both are, judged
+  // The credit chip takes the bottom corner of the free map that the whole route leaves clear, the right one when both are, judged
   // at the whole-route framing with the chip open, so it never hops while the map moves or the chip folds. Where the open line
-  // would cover the walk either way, it folds sooner, before the light reaches the end of the walk.
+  // would cover the route either way, it folds sooner, before the light reaches the end of the route.
   const creditBottom = Math.max(4, clearBottom + 4), creditMiddle = size.height - creditBottom - 22, chip = (x: number, w: number): Rect => ({ x: x - 4, y: creditMiddle - 16, w: w + 8, h: 32 });
   const { left: creditLeft, crowded } = (() => {
     if (still || !camera) return { left: false, crowded: false };
@@ -687,7 +687,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Markers sit on their spots unless their 44 px targets would overlap, or a marker would cover the credit chip; then they step
   // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
   const clearOf = (lift: number): Rect[] => still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }], keepClear = clearOf(flat ? 0 : 11);
-  // An OpenStreetMap record or a stretch without photos, which the walk's grey dashes already show, stays on its spot, under the
+  // An OpenStreetMap record or a stretch without photos, which the route's grey dashes already show, stays on its spot, under the
   // others, and never pushes one aside unless it is the one chosen.
   const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => !marker.gone && ((marker.state !== 'osm' && marker.state !== 'no-photos') || marker.selected) ? [i] : []);
   const apart = [...spots], stepped = spread(standing.map(i => spots[i]), standing.map(i => markers[i].selected), 46, keepClear);
@@ -707,7 +707,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     if (sy > top + 12 && sy < top + cardSize.height - 12) leader = { left: right ? sx + 12 : left + cardSize.width, top: sy, width: gap - 12 };
   }
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
-  /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
+  /** Spots that may hold a barrier glow along the route until someone decides otherwise. */
   const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier').map(marker => marker.id).join(' ');
   /** Markers that the lean pushes up under the place title lose their tags; every marker's dot fades with the haze it stands in,
    * while its caption and count keep their full contrast. */
@@ -748,7 +748,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     return true;
   }) : [];
 
-  // The shared map's own zoom buttons drive this camera; level 1 is the whole walk.
+  // The shared map's own zoom buttons drive this camera; level 1 is the whole route.
   const zoomTo = (action: SetStateAction<number>) => {
     lastOpened.current = null;
     const fit = fitCamera(size.width, size.height), current = live.current ?? fit;

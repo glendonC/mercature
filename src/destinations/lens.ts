@@ -10,7 +10,7 @@ export type Tilt = {
   depth: number;
   /** Height of an ordinary block in metres, about two and a half storeys. Illustrative: no height is measured. */
   rise: number;
-  /** Screen angle the walk should run at, in degrees below the horizontal. */
+  /** Screen angle the tour route should run at, in degrees below the horizontal. */
   course: number;
   /** Most degrees the plane may turn to get there. */
   swing: number;
@@ -46,16 +46,16 @@ export const HAZE = { solid: 0.054, clear: 0.36 };
 /** How much of the haze covers a screen height, from 0 (clear) to 1 (solid ground), at a lean. */
 export const hazeAt = (y: number, height: number, lean: number) => lean * Math.max(0, Math.min(1, (HAZE.clear * height - y) / ((HAZE.clear - HAZE.solid) * height)));
 
-/** The yaw here is a default; aimed() sets it for each walk. */
+/** The yaw here is a default; aimed() sets it for each route. */
 export const TILT = {
   wide: { pitch: 50, yaw: 0, depth: 1150, rise: 8, course: 35, swing: 20 },
   phone: { pitch: 40, yaw: 0, depth: 900, rise: 8, course: 35, swing: 35 },
 } satisfies Record<string, Tilt>;
 
-/** Phones lean less and may turn further, so the walk can stand upright when that shows it larger. */
+/** Phones lean less and may turn further, so the route can stand upright when that shows it larger. */
 export const tiltFor = (width: number): Tilt => width > 640 ? TILT.wide : TILT.phone;
 
-/** Turns the plane so a walk from one point to another runs at the screen angle the tilt prefers, within its swing. */
+/** Turns the plane so a route from one point to another runs at the screen angle the tilt prefers, within its swing. */
 export function aimed(tilt: Tilt, from: Point, to: Point): Tilt {
   const fold = (degrees: number) => ((degrees % 180) + 270) % 180 - 90;
   const along = Math.atan2(to[1] - from[1], to[0] - from[0]) / RADIANS;

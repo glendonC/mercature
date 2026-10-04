@@ -1,10 +1,10 @@
 import type { Coordinate, Destination, Finding, MapFeature } from './data';
 import { routeFrame } from './GeographicMap';
 
-/** Units of the shared 800 by 500 route frame (see routeFrame), so markers and the map share one space. */
+/** Units of the shared 800 by 500 tour route frame (see routeFrame), so markers and the map share one space. */
 export type Point = [number, number];
 export type Landmark = { name: string; at: Point; kind: 'start' | 'target' | 'building' | 'street' };
-/** A place on the walk that needs a person: flagged stretches that share findings, or a run without photos. */
+/** A place on the route that needs a person: flagged stretches that share findings, or a run without photos. */
 export type Spot = {
   /** Stable key from the first stretch index. Decisions are stored per stretch, never per spot. */
   id: string;
@@ -29,7 +29,7 @@ export type Walk = {
   start: Landmark | null;
   target: Landmark;
   extent: { minX: number; minY: number; maxX: number; maxY: number };
-  /** Where a named place is: either end of the walk, a building's centre, or the part of a street nearest the walk. */
+  /** Where a named place is: either end of the route, a building's centre, or the part of a street nearest the route. */
   locate: (name: string) => Point | null;
 };
 
@@ -52,7 +52,7 @@ function inside(p: Point, ring: Point[]) {
   }
   return hit;
 }
-/** The point halfway along a polyline, so a marker sits on the walk itself. */
+/** The point halfway along a polyline, so a marker sits on the route itself. */
 export function midpoint(line: Point[]): Point {
   const total = line.slice(1).reduce((sum, p, i) => sum + distance(line[i], p), 0);
   let left = total / 2;
@@ -154,7 +154,7 @@ export function buildWalk(data: Destination): Walk {
   };
 }
 
-/** The stretch whose line passes closest to a map point, for selecting the walk anywhere. */
+/** The stretch whose line passes closest to a map point, for selecting the route anywhere. */
 export function nearestStretch(data: Destination, walk: Walk, at: Point): number | null {
   let best: { index: number; d: number } | null = null;
   for (const stretch of data.stretches) {

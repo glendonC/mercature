@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { cx } from './cx';
 import type { MarkKind } from './kinds';
 
-/** A short label: a language, an 'Example', a state. Dashed means made up. */
+/** A short label: a language, an 'Example', a state. Dashed means synthetic. */
 export function Tag({ tone = 'neutral', children, className, lang, title }: { tone?: 'neutral' | 'solid' | 'example' | 'route' | 'barrier' | 'unknown'; children: ReactNode; className?: string; lang?: string; title?: string }) {
   return <span className={cx('ui-tag', className)} data-tone={tone} lang={lang} title={title}>{children}</span>;
 }
@@ -12,7 +12,7 @@ export function Quote({ children, lang, className }: { children: ReactNode; lang
   return <blockquote className={cx('ui-quote', className)} lang={lang}>{children}</blockquote>;
 }
 
-/** Text the app made from its templates, such as a reply or the route note, in a soft box. */
+/** Text the app made from its templates, such as a reply or the tour route note, in a soft box. */
 export function Callout({ children, lang, className }: { children: ReactNode; lang?: string; className?: string }) {
   return <p className={cx('ui-callout', className)} lang={lang}>{children}</p>;
 }
@@ -24,7 +24,7 @@ export function Kbd({ children, decorative }: { children: ReactNode; decorative?
 
 /**
  * The legend's marks, drawn as the map and the photo draw them:
- * route, the walk in blue; possible, a possible barrier in clay; added, a spot she added; fixed, recorded as open;
+ * route, the route in blue; possible, a possible barrier in clay; added, a spot she added; fixed, recorded as open;
  * removed, dismissed in grey; no-photos, a stretch without photos; landmark; outline, a model outline on a photo;
  * mark, any other mark on a photo; selected, the ink outline with a white halo.
  * The outlines on a photo itself, with their chips, are drawn by LabelledPhoto in src/photo.

@@ -25,7 +25,7 @@ import { BackIcon, ChevronIcon, CloseIcon, CopyIcon, DownloadIcon, FixedIcon, Ke
 import Swap from '../fx/Swap';
 import './route-inbox.css';
 
-/** A place on the walk the panel can show: a spot of the walk, a plain stretch, a named landmark, or a spot she added. */
+/** A place on the tour route the panel can show: a spot of the route, a plain stretch, a named landmark, or a spot she added. */
 type Target = { kind: 'spot'; id: string } | { kind: 'stretch'; index: number } | { kind: 'landmark'; id: string } | { kind: 'added'; id: string };
 type Pane = { kind: 'inbox' } | { kind: 'paste' } | { kind: 'message'; id: string } | { kind: 'spot'; target: Target };
 type Editing = 'add' | 'fix' | 'note' | null;
@@ -57,7 +57,7 @@ function safeArea(): Insets {
 if (typeof window !== 'undefined') addEventListener('resize', () => { safe = null; });
 
 /**
- * Where the walk is framed: clear of the panel on wide screens and of the sheet on phones, inside the safe area.
+ * Where the route is framed: clear of the panel on wide screens and of the sheet on phones, inside the safe area.
  * The first fit uses no sheet height. The reveal frames with the same function, so the two stay matched on any device.
  */
 export const mapInsets = (narrow: boolean, sheetHeight = 0): Insets => {
@@ -82,13 +82,13 @@ export const PEEK = 160;
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * The route screen: visitors' messages placed on the walk and answered in their language, on a map she can edit.
+ * The message inbox: visitors' messages placed on the route and answered in their language, on a map she can edit.
  * settled: opened behind the reveal, which has already framed and leaned the same map.
  */
 export default function RouteInbox({ data, asset, onHome, onPlace, settled = false, spots, caption }: { data: Destination; asset: (file: string) => string; onHome: () => void; onPlace?: (place: MenuPlace) => void; settled?: boolean;
-  /** The spots of a walk built on this device, which the registry does not list. Keep the same object between renders. */
+  /** The spots of a route built on this device, which the registry does not list. Keep the same object between renders. */
   spots?: RoutePlace;
-  /** One plain line under the walk, such as where its findings came from. */
+  /** One plain line under the route, such as where its findings came from. */
   caption?: string }) {
   const { lang } = useLanguage();
   const editWords = useEditWords();
@@ -227,7 +227,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [peek, setPeek] = useState(settled);
   const peeking = narrow && peek && pane.kind === 'inbox';
   useEffect(() => { if (pane.kind !== 'inbox') setPeek(false); }, [pane.kind]);
-  // Once the sheet has moved, the walk is framed again in the map left above it.
+  // Once the sheet has moved, the route is framed again in the map left above it.
   function lift(open: boolean) {
     setPeek(!open); aim({ kind: 'fit' });
     if (!open) sheet.current?.scrollTo({ top: 0 });
@@ -286,7 +286,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [noteOpen, setNoteOpen] = useState(false);
   const [marksOpen, setMarksOpen] = useState(false), marksId = useId();
   const [sheetHeight, setSheetHeight] = useState(0);
-  // What the map shows for the open pane: the whole walk, or the spots an answer points to. On a phone it waits until the sheet has
+  // What the map shows for the open pane: the whole route, or the spots an answer points to. On a phone it waits until the sheet has
   // settled, since a new pane or an answer easing in changes its height, then frames them in the map the sheet leaves free, and
   // follows the sheet for a moment longer; a tap or wheel on the map, or a flight to one spot, lets it go.
   type Aim = { kind: 'fit' } | { kind: 'frame'; points: Point[] };
@@ -323,7 +323,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const screen: Point = narrow ? [width / 2, Math.max(150, (height - sheetHeight) * 0.55)] : [Math.max(260, (width - 400) * 0.5), height * 0.5];
     map.current.focus(at, screen, fitK * 1.8);
   }
-  /** The spots an answer points to, framed together; without any, the whole walk. */
+  /** The spots an answer points to, framed together; without any, the whole route. */
   function frameAll(keys: readonly string[]) {
     const points = keys.map(targetOf).filter((target): target is Target => !!target).map(pointOf).filter((point): point is Point => !!point);
     aim(points.length ? { kind: 'frame', points } : { kind: 'fit' });
@@ -458,7 +458,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   for (const message of review.messages) if (message.spot) filedCounts.set(message.spot, (filedCounts.get(message.spot) ?? 0) + 1);
   /** A marker's name says what she decided and how many visitors wrote about it, since its icon and count are not read aloud. */
   const named = (parts: (string | undefined)[], count: number) => [...parts.filter(Boolean), ...(count ? [w.visitors(count)] : [])].join(', ');
-  /** Captions name the kind and how far along the walk; the state is the marker's colour and icon. */
+  /** Captions name the kind and how far along the route; the state is the marker's colour and icon. */
   const along = (from: number) => Math.round(from) === 0 ? w.start : `${Math.round(from)} m`;
   const markers: Marker[] = walk.spots.map(spot => {
     const target: Target = { kind: 'spot', id: spot.id }, fix = isFixed(edits, spot.stretches), count = filedCounts.get(keyOf(target)) ?? 0;
@@ -588,7 +588,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   function copy(text: string) { navigator.clipboard.writeText(text).then(() => setSaid(w.copied), () => setSaid(t.copyFailed)); }
 
   // Panels
-  /** Every kind the model marked in the photos within a few metres of the walk, possible barriers first. */
+  /** Every kind the model marked in the photos within a few metres of the route, possible barriers first. */
   const scanned: LegendItem[] = [...(data.scan?.kinds ?? [])].filter(kind => kind.nearRoute > 0)
     .sort((a, b) => order(a.concept) - order(b.concept))
     .map(kind => { const Icon = iconFor(kind.concept); return { mark: markOf(kind.concept) ?? undefined, barrier: kind.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: `${fromRecord(kind.label, lang)} ${kind.nearRoute}` }; });
@@ -608,7 +608,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
       <span className="ri-meta">{w.flaggedSpots}</span>
       <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
-      {/* What the model marked near the walk is there to look into, not to read first: one line until it is opened. */}
+      {/* What the model marked near the route is there to look into, not to read first: one line until it is opened. */}
       {scanned.length > 0 && <div className="ri-scan">
         <button type="button" className="ri-scan-toggle" aria-expanded={marksOpen} aria-controls={marksId} onClick={() => setMarksOpen(open => !open)}>
           <span>{w.scanned} · {w.scannedKinds(scanned.length)}</span><ChevronIcon size={14} />
@@ -642,7 +642,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         : <TextButton muted icon={<RotateIcon />} onClick={() => setClearing(true)}>{w.startOver}</TextButton>)}
     </div>
   </>;
-  // The messages come first, since they are her work, and the summary of the walk follows them, in one order on every screen.
+  // The messages come first, since they are her work, and the summary of the route follows them, in one order on every screen.
   const inbox = <>
     <p className="ri-guide">{data.photos.length ? w.guide : w.guideMapOnly}</p>
     {messageList}{summary}
@@ -787,12 +787,12 @@ function KindMark({ kind }: { kind: Subject | 'noPhotos' }) {
   return <Icon size={14} />;
 }
 
-/** A mark drawn on a photo: from the scan, or a finding. barrier: its kind can be a barrier; flagged: one of the walk's possible barriers. */
+/** A mark drawn on a photo: from the scan, or a finding. barrier: its kind can be a barrier; flagged: one of the route's possible barriers. */
 export type PhotoMark = { id: string; concept: string; label: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; named?: boolean };
 const SURFACES: ReadonlySet<string> = new Set(['footway', 'cobblestones', 'road', 'crossing']);
 /** Kinds in the order the legend and the summary list them: possible barriers, then the ground. */
 const order = (concept: string) => { const kind = markOf(concept); const at = kind ? MARK_ORDER.indexOf(kind) : -1; return at < 0 ? MARK_ORDER.length : at; };
-/** Drawing order: the ground first and quiet, kinds that can be barriers above it, the walk's possible barriers on top. */
+/** Drawing order: the ground first and quiet, kinds that can be barriers above it, the route's possible barriers on top. */
 const layer = (mark: PhotoMark) => mark.flagged ? 3 : mark.barrier ? 2 : SURFACES.has(markOf(mark.concept) ?? '') ? 0 : 1;
 
 /** One legend entry per kind on the photo, possible barriers first, each with its hue and icon. */

@@ -7,7 +7,7 @@ export function spotState(spot: Spot, review: Review | null): MarkerState {
   return spot.kind === 'no-photos' ? 'no-photos' : (review && verdictOf(review, spot.stretches)) || 'open';
 }
 
-/** The walk's spots as map markers, for a map shown outside the route canvas. */
+/** The tour route's spots as map markers, for a map shown outside the route canvas. */
 export function spotMarkers(walk: Walk, review: Review | null, label: (spot: Spot) => string = spot => spot.id): Marker[] {
   return walk.spots.map(spot => ({ id: spot.id, at: spot.at, state: spotState(spot, review), selected: false, label: label(spot) }));
 }
