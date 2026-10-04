@@ -7,6 +7,7 @@
 import { along, distance, project, slice, toLine, type LonLat } from './geo.ts';
 import type { Street, Walked } from './services.ts';
 import { accessKinds, type AccessFinding } from '../osm/access.ts';
+import { esDe, esPlace } from '../i18n/names.ts';
 import type { RoutePlace, RouteSpot } from '../site/route.ts';
 import type { Coordinate, Destination, DestinationId, Finding, MapFeature, Stretch } from '../destinations/data.ts';
 
@@ -57,22 +58,22 @@ const KINDS: Record<string, { en: string; es: string; aliases: Record<string, st
   kerb: { en: 'Raised kerb', es: 'Bordillo alto', aliases: { en: ['kerb', 'curb', 'high curb', 'no ramp'], es: ['bordillo', 'sardinel', 'vereda alta', 'sin rampa'], ko: ['연석', '턱'] } },
   gate: { en: 'Gate', es: 'Portón', aliases: { en: ['gate', 'closed gate', 'fence'], es: ['portón', 'reja', 'puerta'], ko: ['문'] } },
   bollard: { en: 'Bollards', es: 'Bolardos', aliases: { en: ['bollard', 'posts', 'barrier'], es: ['bolardo', 'postes', 'barrera'], ko: ['볼라드', '기둥'] } },
-  wheelchair: { en: 'Marked not for wheelchairs', es: 'Marcado no apto para silla de ruedas', aliases: { en: ['wheelchair', 'not accessible', 'no wheelchair access'], es: ['silla de ruedas', 'no accesible'], ko: ['휠체어'] } },
+  wheelchair: { en: 'Marked not for wheelchairs', es: 'Marcado como no apto para silla de ruedas', aliases: { en: ['wheelchair', 'not accessible', 'no wheelchair access'], es: ['silla de ruedas', 'no accesible'], ko: ['휠체어'] } },
   smoothness: { en: 'Rough surface', es: 'Superficie irregular', aliases: { en: ['rough surface', 'uneven ground', 'broken pavement', 'potholes'], es: ['superficie irregular', 'piso irregular', 'vereda rota', 'baches'], ko: ['울퉁불퉁한 길'] } },
 };
 const ORDER = ['steps', 'kerb', 'gate', 'bollard', 'wheelchair', 'smoothness'];
 
 /** The end, street or building a run of stretches is at, on or near, for its name. */
 function placeOf(middle: number, at: LonLat, ends: { start: End; target: End; length: number }, streets: readonly Street[], ways: readonly MapFeature[], buildings: readonly MapFeature[]): { en: string; es: string; landmark: string } {
-  if (middle <= 40 && ends.start.name) return { en: `near ${ends.start.name}`, es: `cerca de ${ends.start.name}`, landmark: ends.start.name };
-  if (middle >= ends.length - 40 && ends.target.name) return { en: `near ${ends.target.name}`, es: `cerca de ${ends.target.name}`, landmark: ends.target.name };
+  if (middle <= 40 && ends.start.name) return { en: `near ${ends.start.name}`, es: `cerca ${esDe(esPlace(ends.start.name))}`, landmark: ends.start.name };
+  if (middle >= ends.length - 40 && ends.target.name) return { en: `near ${ends.target.name}`, es: `cerca ${esDe(esPlace(ends.target.name))}`, landmark: ends.target.name };
   const street = streets.find(s => s.from <= middle && middle <= s.to)?.name
     ?? ways.filter(w => w.name).map(w => ({ name: w.name, d: toLine(at, w.points) })).filter(w => w.d <= 6).sort((a, b) => a.d - b.d)[0]?.name;
-  if (street) return { en: `on ${street}`, es: `en ${street}`, landmark: street };
+  if (street) return { en: `on ${street}`, es: `en ${esPlace(street)}`, landmark: street };
   const building = buildings.filter(b => b.name).map(b => ({ name: b.name, d: toLine(at, b.points) })).filter(b => b.d <= 30).sort((a, b) => a.d - b.d)[0]?.name;
-  if (building) return { en: `near ${building}`, es: `cerca de ${building}`, landmark: building };
+  if (building) return { en: `near ${building}`, es: `cerca ${esDe(esPlace(building))}`, landmark: building };
   const way = ways.filter(w => w.name).map(w => ({ name: w.name, d: toLine(at, w.points) })).filter(w => w.d <= 30).sort((a, b) => a.d - b.d)[0]?.name;
-  if (way) return { en: `near ${way}`, es: `cerca de ${way}`, landmark: way };
+  if (way) return { en: `near ${way}`, es: `cerca ${esDe(esPlace(way))}`, landmark: way };
   return { en: 'on the walk', es: 'en el recorrido', landmark: '' };
 }
 

@@ -59,6 +59,7 @@ test('spots come from flagged stretches, both ends, the street it follows and th
   expect(place.id).toMatch(/^[A-Za-z0-9][A-Za-z0-9_.-]*$/);
   const flagged = spots.features.filter(s => s.stretches.length);
   expect(flagged.map(s => [s.stretches, s.name.en])).toEqual([[[4], 'Steps on Jirón Prueba (40 to 50 m)'], [[7], 'Raised kerb near Museo de Prueba (70 to 80 m)']]);
+  expect(flagged.map(s => s.name.es)).toEqual(['Escalones en el jirón Prueba (40 a 50 m)', 'Bordillo alto cerca del Museo de Prueba (70 a 80 m)']);
   expect(spots.features.filter(s => !s.stretches.length).map(s => s.landmark)).toEqual(['Plaza de Prueba', 'Museo de Prueba', 'Jirón Prueba', 'Casa de Prueba']);
   expect(new Set(spots.features.map(s => s.id)).size).toBe(spots.features.length);
   for (const spot of spots.features) {
