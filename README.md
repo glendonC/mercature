@@ -70,8 +70,8 @@ npm ci
 npm run dev
 ```
 
-Open [127.0.0.1:4173](http://127.0.0.1:4173) and choose **Qorikancha**, or search for **Noor's
-farm**. The first visit downloads the model once. To try the installable offline build, run
+Open [127.0.0.1:4173](http://127.0.0.1:4173) and choose **Open** on Qorikancha, or open
+**Noor's farm**, the example. The first visit downloads the model once. To try the installable offline build, run
 `npm run build` and `npm run preview`.
 
 ## Checks
