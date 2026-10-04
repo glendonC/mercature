@@ -177,15 +177,15 @@ textarea.ui-field { min-height: 104px; max-height: 240px; resize: vertical; }
 .ui-select select.ui-field { padding: 0 32px 0 12px; appearance: none; font-size: var(--font-s); line-height: 1; cursor: pointer; }
 .ui-select > svg { position: absolute; right: 10px; color: var(--ui-muted); pointer-events: none; }
 
-/* Sheet: the phone's bottom sheet, and any panel that becomes one */
-.ui-sheet { position: absolute; z-index: 9; left: 0; right: 0; bottom: 0; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
+/* Sheet: the phone's bottom sheet, and any panel that becomes one. Its words stay clear of the home indicator and a landscape notch; its height grows by the inset so the content keeps its room. */
+.ui-sheet { position: absolute; z-index: 9; left: 0; right: 0; bottom: 0; max-height: calc(var(--sheet-max, 62svh) + env(safe-area-inset-bottom, 0px)); overflow-y: auto; overscroll-behavior: contain; padding: 0 calc(16px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); color: var(--ui-ink); font-size: var(--font-s); line-height: var(--leading); }
 .ui-sheet[data-tone=light] { background: var(--glass-light); box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); }
 .ui-sheet-grabber { position: sticky; z-index: 1; top: 0; display: grid; place-items: center; height: 16px; margin: 0 -16px; }
 .ui-sheet-grabber::before, .ui-panel[data-phone=sheet]::before { content: ''; width: 36px; height: 4px; border-radius: 2px; background: var(--ui-hair-strong); }
 .ui-panel[data-phone=sheet]::before { display: none; }
 
 @media (max-width: 640px) {
-  .ui-panel[data-phone=sheet] { position: absolute; z-index: 9; inset: auto 0 0; width: auto; max-height: var(--sheet-max, 62svh); overflow-y: auto; overscroll-behavior: contain; padding: 0 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); animation: none; }
+  .ui-panel[data-phone=sheet] { position: absolute; z-index: 9; inset: auto 0 0; width: auto; max-height: calc(var(--sheet-max, 62svh) + env(safe-area-inset-bottom, 0px)); overflow-y: auto; overscroll-behavior: contain; padding: 0 calc(16px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--glass-charcoal-edge), 0 -10px 32px -12px rgb(0 0 0 / 0.4); animation: none; }
   .ui-panel[data-phone=sheet][data-tone=light] { box-shadow: var(--glass-light-edge), 0 -10px 32px -12px rgb(20 22 24 / 0.22); }
   .ui-panel[data-phone=sheet]::before { display: block; margin: 6px auto 2px; }
   .ui-field { font-size: 16px; }
