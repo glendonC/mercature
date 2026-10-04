@@ -113,30 +113,14 @@ ticket booth, built from public street photos and OpenStreetMap.
 
 ## How it works
 
-```mermaid
-flowchart LR
-  subgraph once["Prepared once per place, on a GPU"]
-    photos["Mapillary street photos"] --> sam["SAM 3 outlines"]
-    photos --> vggt["VGGT partial 3D"]
-    osm["OpenStreetMap and a route on foot from Valhalla"] --> stretches["10 m stretches"]
-    sam --> pkg[("Place package, a few MB")]
-    vggt --> pkg
-    stretches --> pkg
-  end
-  subgraph phone["On her phone, offline after one download"]
-    pkg --> guide["Guide: check spot by spot"]
-    msg["Visitor message"] --> model["multilingual-e5-small, 84 MB"]
-    model --> spot["Spot, or Not sure"]
-    guide --> her["Her answers and edits"]
-    spot --> her
-    her --> out["Reply and route note from fixed templates"]
-  end
-```
+<p align="center">
+  <img src="docs/assets/how-it-works.svg" width="840" alt="How it works. Once, on a GPU: Mapillary street photos, SAM 3 outlines, VGGT partial 3D and OpenStreetMap records, recorded once and never checked by a person, become a place package of static files, 4.3 MB for Qorikancha and 8.5 MB for Narikala. On her phone, offline: a message in English, Spanish or Korean goes through ONNX Runtime Web and three small heads to up to 3 ranked spots; a sure answer is filed on its spot, otherwise Not sure and she taps the spot; replies come from fixed templates; a memory on the device helps only messages that fail the language check. Her edits: her answers, Edit, Before and Now, and the route note and replies, stored on the device. Search for any place is the one online part, with no photos read">
+</p>
 
 - **Prepared once.** Large models ran once, on a GPU, when each route was prepared: SAM 3 outlined
-  what the street photos show, such as steps and kerbs, and VGGT built partial 3D from them. With OpenStreetMap's
-  records and a route on foot from Valhalla, they are packed into one package per place: 4.3 MB for
-  Qorikancha and 8.5 MB for Narikala.
+  what the street photos show, such as steps and kerbs, and VGGT built partial 3D from them. With
+  OpenStreetMap's records and a route on foot from Valhalla, they are packed into one package per
+  place: 4.3 MB for Qorikancha and 8.5 MB for Narikala.
 - **On the phone, everything else.** The app, the package and the model are static files. There is
   no server and no account; messages and her edits stay on the device.
 - **No retraining for a new place.** The model compares a message with each spot's names and the
