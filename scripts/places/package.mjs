@@ -59,7 +59,9 @@ for (let index = 1; index < record.stretches.length && reveal.length < REVEAL.co
   if (choice) reveal.push(choice.id);
 }
 
-rmSync(target, { recursive: true, force: true });
+// Only what this script writes is replaced; pieces/, the thinned 3D areas from scripts/pieces/thin.mjs, stays.
+rmSync(join(target, 'views'), { recursive: true, force: true });
+rmSync(join(target, 'place.json'), { force: true });
 mkdirSync(join(target, 'views'), { recursive: true });
 const shipped = new Map();
 const resize = (id, { size, quality }) => {
@@ -174,6 +176,8 @@ if (!existsSync(aroundFile)) throw new Error(`Missing ${aroundFile}; run node sc
 place.way_around = wayAroundFrom(JSON.parse(readFileSync(aroundFile, 'utf8')), recordWalk(record));
 for (const view of place.views) if (!place.photos.some(photo => photo.id === view.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`View ${view.id} has no credited photo.`);
 for (const mark of scan.marks) if (!place.photos.some(photo => photo.id === mark.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`Mark ${mark.id} has no credited photo.`);
+// The 3D areas, when scripts/pieces/thin.mjs has written them: a last key, so every key before it stays as it was.
+if (existsSync(join(target, 'pieces/space.json'))) place.space = 'pieces/space.json';
 writeFileSync(join(target, 'place.json'), `${JSON.stringify(place)}\n`);
 
 const bytes = readdirSync(target, { recursive: true }).map(name => join(target, name)).filter(path => statSync(path).isFile()).reduce((sum, path) => sum + statSync(path).size, 0);
