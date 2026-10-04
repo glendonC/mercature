@@ -62,7 +62,7 @@ test("a cold offline restart links a fresh Korean message by hand and reopens it
       .toBe(true);
 
     page = await start(true);
-    await page.getByRole("button", { name: /^Noor's farm/ }).click();
+    await page.goto(`${origin}?place=farm`);
     await page.getByRole("button", { name: "Enter", exact: true }).click();
     await page.getByRole("tab", { name: "Messages", exact: true }).click();
     const text = `커피 자루 때문에 시음 테이블로 가기 어려웠어요. ${crypto.randomUUID()}`;
