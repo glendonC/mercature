@@ -14,7 +14,9 @@ import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
-import { loadLines, mapPaths, saveLines, setCheck, wayAroundOf } from '../routes/lines';
+import { addStreet, buildStreet, loadLines, mapPaths, saveLines, setCheck, wayAroundOf, type NewStreet } from '../routes/lines';
+import { RouteTrouble } from '../routes/valhalla';
+import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { iconFor } from '../ui/icons';
 import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
@@ -43,6 +45,8 @@ type Step =
   | { id: 'propose'; proposal: Proposal }
   /** The way around a flight of steps that OpenStreetMap suggests, shown on the map, for her to say whether it works. */
   | { id: 'around'; at: number }
+  /** Another street she adds: she taps its start and end, and it is routed on foot. It is map only: no street photo was read on it. */
+  | { id: 'street'; from?: LonLat; to?: LonLat; found?: NewStreet; trouble?: string }
   | { id: 'note'; clearing?: boolean };
 
 const same = (a: Target | null, b: Target | null) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
@@ -425,7 +429,23 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (words) { go({ id: 'propose', proposal: { mode: 'add', text: words, target, kind: 'other', from: { id: 'missed' } } }); return; }
     go({ id: 'missed', here: target });
   }
-  function tapMap(at: Point, k: number) {
+  const routing = useRef<AbortController | null>(null);
+  function streetTap(lonLat: LonLat) {
+    if (step.id !== 'street' || step.found || (step.from && step.to)) return;
+    if (!step.from) { setStep({ id: 'street', from: lonLat }); return; }
+    const from = step.from, controller = new AbortController();
+    routing.current?.abort(); routing.current = controller;
+    setStep({ id: 'street', from, to: lonLat }); setBusy('reading');
+    buildStreet(from, lonLat, data.line, { signal: controller.signal }).then(found => {
+      if (controller.signal.aborted) return;
+      setBusy(null); setStep({ id: 'street', from, to: lonLat, found });
+    }, (error: unknown) => {
+      if (controller.signal.aborted) return;
+      setBusy(null); setStep({ id: 'street', trouble: error instanceof RouteTrouble ? error.kind : 'failed' });
+    });
+  }
+  function tapMap(at: Point, k: number, lonLat?: LonLat) {
+    if (step.id === 'street') { if (lonLat) streetTap(lonLat); return; }
     const index = nearestStretch(data, walk, at), stretch = index === null ? null : data.stretches[index];
     const distance = stretch ? Math.min(...stretch.line.map(walk.project).map(p => Math.hypot(p[0] - at[0], p[1] - at[1]))) : Infinity;
     if (!stretch || distance * k > 28) return;
@@ -557,13 +577,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const insets = { top, right: 24 + inset.right, bottom: under(dockHeight), left: 24 + inset.left };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
     if (step.id === 'around' && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
+    if (step.id === 'street' && step.found) return { kind: 'frame', points: step.found.line.map(point => walk.project(point as [number, number])) };
     if (item && !('spot' in item)) return item.points.length ? { kind: 'frame', points: item.points } : { kind: 'fit' };
     if (item) return { kind: 'frame', points: item.spot.path.length ? item.spot.path : [item.spot.at] };
     if (ranked.length) { const points = ranked.map(targetOf).filter((target): target is Target => !!target).map(pointOf).filter((point): point is Point => !!point); if (points.length) return { kind: 'frame', points }; }
     const at = selected && pointOf(selected);
     return at ? { kind: 'frame', points: [at] } : { kind: 'fit' };
   };
-  const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked]);
+  const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked, step.id === 'street' && !!step.found]);
   const aimTimer = useRef(0), settledDock = Math.round(dockHeight / 24);
   useEffect(() => {
     clearTimeout(aimTimer.current);
@@ -667,6 +688,19 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       return <li key={`${group.key} ${group.kind}`}><span>{s.insights[group.kind]({ spot: nameOf(target), count: group.count, kind })}</span><button type="button" className="gs-inline" onClick={() => select(target)}>{s.insights.chips.open}</button></li>;
     })}</ul>;
     chips = [{ id: 'next', label: s.insights.chips.next, primary: true, onClick: () => go({ id: 'missed' }) }];
+  } else if (step.id === 'street') {
+    const trouble = step.trouble === 'busy' ? s.street.busy : step.trouble === 'too-far' ? s.street.tooFar : step.trouble === 'too-long' ? s.street.tooLong : step.trouble === 'offline' ? s.street.offline : step.trouble ? s.street.failed : null;
+    const cancel: Chip = { id: 'cancel', label: s.street.chips.cancel, onClick: () => { routing.current?.abort(); setBusy(null); back(); } };
+    if (trouble) { lines.push(trouble); chips = [{ id: 'again', label: s.street.chips.again, primary: true, onClick: () => setStep({ id: 'street' }) }, cancel]; }
+    else if (step.found) {
+      const found = step.found;
+      lines.push(s.street.found({ metres: Math.round(found.lengthMetres), osm: found.findings.length }));
+      chips = [{ id: 'keep', label: s.street.chips.keep, primary: true, onClick: () => {
+        const next = addStreet(ways, found); setWays(next); if (!saveLines(next)) setProblem(s.notSaved);
+        go({ id: 'missed' }, s.street.kept({ street: found.name ?? found.streets[0] ?? s.street.chips.add }));
+      } }, { id: 'again', label: s.street.chips.again, onClick: () => setStep({ id: 'street' }) }, cancel];
+    } else if (step.from && step.to) { lines.push(s.street.routing); chips = [cancel]; }
+    else { lines.push(...(step.from ? [s.street.end] : [s.street.offer, s.street.start])); chips = [cancel]; }
   } else if (step.id === 'missed') {
     if (step.here) {
       const here = step.here;
@@ -674,7 +708,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips = kindChips(kind => go({ id: 'propose', proposal: { mode: 'add', text: '', target: here, kind, from: { id: 'missed' } } }));
     } else {
       lines.push(s.missed.ask);
-      chips = [{ id: 'done', label: s.missed.chips.done, primary: true, onClick: () => go({ id: 'note' }) }];
+      chips = [{ id: 'done', label: s.missed.chips.done, primary: true, onClick: () => go({ id: 'note' }) }, { id: 'street', label: s.street.chips.add, onClick: () => go({ id: 'street' }) }];
     }
     words = hear;
   } else if (step.id === 'around' && around) {
@@ -769,8 +803,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     <div className="gs-map">
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={id => { const target = markerTarget(id); if (target) select(target); }} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
-        picking={(step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || undefined}
-        paths={mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets)}
+        picking={step.id === 'street' && !step.found ? 'free' : (step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || undefined}
+        paths={[...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
     <Bot ref={bot} working={working} />
