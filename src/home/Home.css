@@ -85,6 +85,6 @@
   .site-home .home-photo { width: clamp(240px, 21vw, 300px); aspect-ratio: 2.7; }
 }
 
-/* The guide stands near the walk on the map, above the place photos, never on its own line. */
-.home-bot { position: absolute; z-index: 6; left: 63%; bottom: calc(var(--guide) + 220px + var(--safe-bottom)); }
+/* The guide stands near the walk on the map, above the place photos, never on its own line, and under the search's answers. */
+.home-bot { position: absolute; z-index: 4; left: 63%; bottom: calc(var(--guide) + 220px + var(--safe-bottom)); }
 @media (max-width: 639px) { .home-bot { left: auto; right: calc(24px + var(--safe-right)); bottom: auto; top: 46%; } }

@@ -95,7 +95,7 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
   // The same place can come back several times (a square, its outline, its centre): one row each.
-  return found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && distance(other.position, item.position) < 400) === i);
+  return found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && (item.broad || distance(other.position, item.position) < 400)) === i);
 }
 
 /** A named street the walk follows, from the walk's own turn by turn directions, in metres along it. */
@@ -154,7 +154,8 @@ export async function overpass(query: string, signal?: AbortSignal, seconds = 12
   finally { clearTimeout(timer); stop.abort(); }
 }
 
-async function overpassAt(server: string, query: string, signal: AbortSignal | undefined, seconds: number): Promise<{ elements: OsmElement[]; fetchedAt: string }> {
+/** One Overpass query on one server, with no second try. */
+export async function overpassAt(server: string, query: string, signal: AbortSignal | undefined, seconds: number): Promise<{ elements: OsmElement[]; fetchedAt: string }> {
   const body = await ask(server, { method: 'POST', body: new URLSearchParams({ data: query }) }, signal, seconds) as { elements?: unknown; remark?: unknown } | null;
   // Overpass answers 200 with a remark when it ran out of time or memory, and the elements are then incomplete.
   if (!body || !Array.isArray(body.elements) || /runtime error/i.test(String(body.remark ?? ''))) throw new SearchTrouble('busy');
