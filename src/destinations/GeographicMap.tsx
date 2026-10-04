@@ -1,6 +1,6 @@
 import { useId, useMemo, type Dispatch, type ReactNode, type Ref, type SetStateAction } from 'react';
 import { metres, type Coordinate, type Destination, type Photo } from './data';
-import type { Lens } from './lens';
+import { HAZE, type Lens } from './lens';
 import type { Point } from './walk';
 import { useLanguage } from '../i18n';
 import './map.css';
@@ -188,8 +188,8 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
     {!lens && <rect width="800" height="500" className="map-ground"/>}
     {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} label={name => name || t('map.building')}/> : base}
     {lens && <>
-      <defs><linearGradient id={fog} x1="0" y1="0" x2="0" y2="1"><stop offset="0.15" className="map-fog-far"/><stop offset="1" className="map-fog-clear"/></linearGradient></defs>
-      <rect width={lens.width} height={lens.height * 0.36} fill={`url(#${fog})`} opacity={lens.view.lean} pointerEvents="none"/>
+      <defs><linearGradient id={fog} x1="0" y1="0" x2="0" y2="1"><stop offset={HAZE.solid / HAZE.clear} className="map-fog-far"/><stop offset="1" className="map-fog-clear"/></linearGradient></defs>
+      <rect width={lens.width} height={lens.height * HAZE.clear} fill={`url(#${fog})`} opacity={lens.view.lean} pointerEvents="none"/>
     </>}
     {underlay}
     <g className="map-route"><polyline points={line(data.line)} pathLength={1} className="map-route-halo"/><polyline points={line(data.line)} pathLength={1} className="map-route-line"/></g>

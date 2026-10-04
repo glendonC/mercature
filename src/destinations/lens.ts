@@ -34,6 +34,11 @@ const RADIANS = Math.PI / 180;
 /** Blocks ease toward this many pixels at most, so a close view stays readable and tall stays taller than low. */
 const TALLEST = 46;
 
+/** The far plane fades into the ground colour: fully down to this share of the screen height, clear again by this share. */
+export const HAZE = { solid: 0.054, clear: 0.36 };
+/** How much of the haze covers a screen height, from 0 (clear) to 1 (solid ground), at a lean. */
+export const hazeAt = (y: number, height: number, lean: number) => lean * Math.max(0, Math.min(1, (HAZE.clear * height - y) / ((HAZE.clear - HAZE.solid) * height)));
+
 /** The yaw here is a default; aimed() sets it for each walk. */
 export const TILT = {
   wide: { pitch: 50, yaw: 0, depth: 1150, rise: 8, course: 35, swing: 20 },

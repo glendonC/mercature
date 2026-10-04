@@ -1,7 +1,7 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 import type { Destination } from './data';
 import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
-import { aimed, framing, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
+import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
 import './destinations.css';
 import './map.css';
 import type { Point, Walk } from './walk';
@@ -346,8 +346,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // The flat map frames itself through the view box, which the reveal lands on; a leaning map is drawn in screen pixels.
   const flat = !view || view.view.lean < 0.001;
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
-  /** Markers that the lean pushes up under the place title recede with the haze. */
+  /** Markers that the lean pushes up under the place title lose their tags; every marker fades with the haze it stands in. */
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
+  const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
   // Labels never cover a marker or each other; earlier labels win.
   const taken: { x: number; y: number; w: number; h: number }[] = placed.map(p => ({ x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }));
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
@@ -379,11 +380,11 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     </div>
     <div className="route-markers">
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
-      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-hidden="true">
+      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1], opacity: faded(marker, at) }} aria-hidden="true">
         <span className="route-marker-dot">{marker.rank ?? ''}</span>
         {!!marker.count && <span className="route-marker-count">{marker.count > 99 ? '99+' : marker.count}</span>}
       </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
-        data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
+        data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1], opacity: faded(marker, at) }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
         <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
         {!!marker.count && <span className="route-marker-count" aria-hidden="true">{marker.count > 99 ? '99+' : marker.count}</span>}
         {marker.tag && <span className="route-marker-tag" aria-hidden="true">{marker.tag}</span>}
