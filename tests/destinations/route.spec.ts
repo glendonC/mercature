@@ -1,9 +1,9 @@
 import {test, expect, type Page} from '@playwright/test';
 
-async function openRoute(page: Page) {
+async function openRoute(page: Page, tabs = true) {
   await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
   await page.getByRole('button', {name:'Skip', exact:true}).click();
-  await expect(page.getByRole('tab', {name:'Place', exact:true})).toHaveAttribute('aria-selected', 'true');
+  if (tabs) await expect(page.getByRole('tab', {name:'Place', exact:true})).toHaveAttribute('aria-selected', 'true');
 }
 
 test('a decision on a recorded photo is kept by stretch and writes the visitor note', async ({page}) => {
@@ -45,4 +45,19 @@ test('the keyboard opens a card at its Close button, returns to the marker and r
   const panel = page.getByRole('tabpanel', {name:'Messages'});
   await expect(panel.getByRole('textbox', {name:'Visitor message'})).toBeVisible();
   expect(await panel.evaluate(view => !!(view.querySelector('textarea')!.compareDocumentPosition(view.querySelector('.route-marker')!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+});
+
+test('the new route screen files a visitor message on the spot she taps and counts it on the map', async ({page}) => {
+  test.setTimeout(30000);
+  await page.goto('/?ui=v2');
+  await page.evaluate(() => localStorage.clear());
+  await openRoute(page, false);
+  await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
+  await page.getByRole('button', {name:'Use without AI', exact:true}).click();
+  await expect(page.getByText('Tap the spot on the map.')).toBeVisible();
+  await page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m/}).click();
+  await expect(page.getByText('Filed. The reply below uses what your map says.')).toBeVisible();
+  await expect(page.getByRole('button', {name:'Calle Loreto, 340 to 350 m, 1 message from visitors'})).toBeVisible();
+  const review = await page.evaluate(() => JSON.parse(localStorage.getItem('mercature.route-review.v1.cusco-qorikancha')!));
+  expect(review.messages[0]).toMatchObject({id:'example-es-hard', spot:'steps-340-350', answer:null});
 });

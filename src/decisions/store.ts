@@ -112,7 +112,7 @@ export const startOver = (review: Review): Review => ({ ...review, decisions: {}
 export const verdictOf = (review: Review, stretches: readonly number[]): Verdict | null =>
   stretches.length ? review.decisions[String(stretches[0])]?.verdict ?? null : null;
 
-export function logMessage(review: Review, message: Omit<LoggedMessage, 'id' | 'at'>, id = crypto.randomUUID(), at = new Date().toISOString()): Review {
+export function logMessage(review: Review, message: Omit<LoggedMessage, 'id' | 'at'>, id: string = crypto.randomUUID(), at = new Date().toISOString()): Review {
   return { ...review, messages: [{ ...message, id, at }, ...review.messages] };
 }
 

@@ -8,6 +8,7 @@ import { ROUTE_PLACES } from '../site/registry';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import RouteMap, { type MapHandle, type Marker } from './RouteMap';
+import RouteInbox from './RouteInbox';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot, type Walk } from './walk';
 import { spotState } from './markers';
 import { useLanguage } from '../i18n';
@@ -43,8 +44,15 @@ function useNarrow() {
   return narrow;
 }
 
+/** The new route screen while it is checked: ?ui=v2 shows the inbox on the walk. */
+const V2 = (() => { try { return new URLSearchParams(location.search).get('ui') === 'v2'; } catch { return false; } })();
+type Props = { data: Destination; asset: (file: string) => string; onHome: () => void };
+export default function RouteCanvas(props: Props) {
+  return V2 ? <RouteInbox {...props} /> : <RouteWorkspace {...props} />;
+}
+
 /** The route workspace: one persistent map, with places, messages and changes as views over it. */
-export default function RouteCanvas({ data, asset, onHome }: { data: Destination; asset: (file: string) => string; onHome: () => void }) {
+function RouteWorkspace({ data, asset, onHome }: Props) {
   const [tab, setTab] = useState<Tab>('place');
   const { lang } = useLanguage();
   const t = COPY[lang];
