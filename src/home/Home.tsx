@@ -4,17 +4,23 @@ import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
 import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destination } from '../destinations/data';
 import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
+import RouteInbox from '../destinations/RouteInbox';
 import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
 import { isFixed, loadEdits } from '../edits/store';
 import { useLanguage } from '../i18n';
+import { fromRecord } from '../i18n/records';
 import Menu from './Menu';
 import Places from './Places';
+import Search from './Search';
+import { toDestination, type Built } from '../search/build';
+import type { Prepared } from '../search/prepared';
+import { listWalks, loadWalk, type SavedWalk } from '../search/store';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
-  { id: 'tbilisi-narikala', area: 'Tbilisi', name: 'Narikala', aliases: 'Narikala fortress cable car', image: narikala, author: 'shankar s.', year: 2016, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Looking_towards_Narikala_Fortress_from_the_cable_car_station.jpg' },
+  { id: 'tbilisi-narikala', area: 'Tbilisi', name: 'Narikala', aliases: 'Narikala fortress Narikala castle cable car Old Tbilisi Sololaki Betlemi Ateshgah Surb Gevork Kala Georgia ნარიყალა Нарикала', image: narikala, author: 'shankar s.', year: 2016, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Looking_towards_Narikala_Fortress_from_the_cable_car_station.jpg' },
   { id: 'kathmandu-swayambhu', area: 'Kathmandu', name: 'Swayambhu', aliases: 'Swayambhunath monkey temple stupa', image: swayambhu, author: 'Jorge Láscar', year: 2014, license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', source: 'https://commons.wikimedia.org/wiki/File:Stairs_with_365_steps_to_climb_to_Swayambhunath_(17209517714).jpg' },
 ];
 export type SavedEntry = { id: string; title: string; kind: 'place' | 'plan' };
@@ -62,13 +68,15 @@ function useHero(): { data: Destination | null; walk: Walk | null; markers: Mark
 }
 const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
 /** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
-function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLElement | null>): Insets {
+function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLElement | null>, search: RefObject<HTMLElement | null>): Insets {
   const [insets, setInsets] = useState<Insets>({ top: 96, right: 24, bottom: 220, left: 24 });
   useLayoutEffect(() => {
     const fit = () => {
       const wide = window.innerWidth >= 640, text = words.current?.getBoundingClientRect(), row = places.current?.getBoundingClientRect();
+      // On a phone the walk sits below the search field and its line, not under them.
+      const field = search.current?.querySelector('.home-search-note')?.getBoundingClientRect();
       const next: Insets = {
-        top: wide ? 96 : text ? text.bottom + 16 : 96,
+        top: wide ? 96 : Math.max(text?.bottom ?? 80, field?.bottom ?? 0) + 16,
         right: 24,
         bottom: row ? Math.max(24, window.innerHeight - row.top + 16) : 24,
         left: wide && text ? text.right + 32 : 16,
@@ -78,37 +86,72 @@ function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLEle
     fit();
     const observer = new ResizeObserver(fit);
     if (words.current) observer.observe(words.current);
+    if (search.current) observer.observe(search.current);
     if (places.current) observer.observe(places.current);
     window.addEventListener('resize', fit);
     return () => { observer.disconnect(); window.removeEventListener('resize', fit); };
-  }, [words, places]);
+  }, [words, places, search]);
   return insets;
 }
+/** The history entry a walk built on this device adds while it is open, so Back returns Home and a return to Home reopens it. */
+const walkOf = (state: unknown): string | null => (state as { mercatureWalk?: unknown } | null)?.mercatureWalk as string ?? null;
+/** Walks built on this device: the ones kept here, and the one open in the route screen. */
+function useWalks() {
+  const [kept, setKept] = useState<SavedWalk[]>([]);
+  const [open, setOpen] = useState<{ built: Built; data: Destination; kept: boolean } | null>(null);
+  const refresh = () => { void listWalks().then(setKept); };
+  const show = (built: Built | null, kept = true) => {
+    if (!built) { setOpen(null); return; }
+    try { setOpen({ built, data: toDestination(built.place), kept }); } catch { setOpen(null); }
+  };
+  useEffect(() => {
+    refresh();
+    const reopen = () => { const id = walkOf(history.state); if (!id) show(null); else void loadWalk(id).then(show); };
+    reopen();
+    addEventListener('popstate', reopen);
+    return () => removeEventListener('popstate', reopen);
+  }, []);
+  function openWalk(built: Built, kept = true) {
+    if (walkOf(history.state) === built.place.id) history.replaceState({ mercatureWalk: built.place.id }, '');
+    else history.pushState({ mercatureWalk: built.place.id }, '');
+    show(built, kept); refresh();
+  }
+  function closeWalk() { if (walkOf(history.state)) history.back(); else setOpen(null); refresh(); }
+  return { kept, open, openWalk, closeWalk, openKept: (id: string) => void loadWalk(id).then(built => { if (built) openWalk(built); }) };
+}
 export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
-  const { t, rich } = useLanguage();
+  const { t, rich, lang } = useLanguage();
   const words = useRef<HTMLDivElement>(null);
   const places = useRef<HTMLElement>(null);
+  const search = useRef<HTMLDivElement>(null);
   const openable = useOpenable();
   const hero = useHero();
-  const insets = useFree(words, places);
+  const walks = useWalks();
+  const insets = useFree(words, places, search);
+  const prepared: Prepared[] = useMemo(() => covers.filter(cover => openable(cover.id)).map(cover => ({ id: cover.id, name: cover.name, area: fromRecord(cover.area, lang), aliases: `${cover.area} ${cover.aliases}` })), [openable, lang]);
   const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
   const status = !hero.data ? null : hero.flagged === 0 ? t('home.noFlaggedSpots') : hero.flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: hero.flagged });
+  if (walks.open) return <RouteInbox key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
+    spots={walks.open.built.spots} caption={walks.open.kept ? t('search.mapOnlyLong') : `${t('search.mapOnlyLong')} ${t('search.notKept')}`}/>;
   return <main className="welcome-shell site-home" aria-label={t('home.label')}>
     {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
-    <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
+    <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1>
+      <div ref={search}><Search prepared={prepared} onPrepared={onDestination} onWalk={walks.openWalk}/></div>
+    </div>
     <Places label={t('home.onPhone')} savedLabel={t('home.onDevice')}
       places={[
-        { id: HERO, name: DESTINATIONS[HERO].name, image: qorikancha, label: t('home.explore', { name: covers[0].name, area: covers[0].area }),
-          meta: [covers[0].area, hero.data && t('common.metres', { m: Math.round(hero.data.lengthMetres) }), status].filter(Boolean).join(' · '),
+        { id: HERO, name: DESTINATIONS[HERO].name, image: qorikancha, label: t('home.explore', { name: covers[0].name, area: fromRecord(covers[0].area, lang) }),
+          meta: [fromRecord(covers[0].area, lang), hero.data && t('common.metres', { m: Math.round(hero.data.lengthMetres) }), status].filter(Boolean).join(' · '),
           onOpen: () => onDestination(HERO) },
-        ...others.map(cover => ({ id: cover.id, name: cover.name, image: cover.image, meta: cover.area,
-          label: t('home.explore', { name: cover.name, area: cover.area }), onOpen: () => onDestination(cover.id) })),
+        ...others.map(cover => ({ id: cover.id, name: cover.name, image: cover.image, meta: fromRecord(cover.area, lang),
+          label: t('home.explore', { name: cover.name, area: fromRecord(cover.area, lang) }), onOpen: () => onDestination(cover.id) })),
       ]}
-      saved={saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))}/>
+      saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: `${walk.area ? `${walk.area} · ` : ''}${t('search.mapOnly')}`, onOpen: () => walks.openKept(walk.id) })),
+        ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
   </main>;
 }

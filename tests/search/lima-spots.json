@@ -1,0 +1,212 @@
+{
+ "id": "walk-museo-de-arte-de-lima-i3r909",
+ "folder": "",
+ "features": [
+  {
+   "id": "steps-30-40",
+   "stretches": [
+    3
+   ],
+   "landmark": "Plaza San Martín",
+   "name": {
+    "en": "Steps near Plaza San Martín (30 to 40 m)",
+    "es": "Escalones cerca de Plaza San Martín (30 a 40 m)"
+   },
+   "description": "Steps near Plaza San Martín, from OpenStreetMap tags that nobody has verified (OpenStreetMap says: 5 steps); no street photos were read here.",
+   "aliases": {
+    "en": [
+     "steps",
+     "stairs",
+     "staircase",
+     "Plaza San Martín"
+    ],
+    "es": [
+     "escalones",
+     "escaleras",
+     "gradas",
+     "Plaza San Martín"
+    ],
+    "ko": [
+     "계단"
+    ]
+   }
+  },
+  {
+   "id": "gate-1180-1190",
+   "stretches": [
+    118
+   ],
+   "landmark": "Avenida Paseo de la República",
+   "name": {
+    "en": "Gate near Avenida Paseo de la República (1180 to 1190 m)",
+    "es": "Portón cerca de Avenida Paseo de la República (1180 a 1190 m)"
+   },
+   "description": "Gate near Avenida Paseo de la República, from OpenStreetMap tags that nobody has verified (OpenStreetMap says: gate); no street photos were read here.",
+   "aliases": {
+    "en": [
+     "gate",
+     "closed gate",
+     "fence",
+     "Avenida Paseo de la República"
+    ],
+    "es": [
+     "portón",
+     "reja",
+     "puerta",
+     "Avenida Paseo de la República"
+    ],
+    "ko": [
+     "문"
+    ]
+   }
+  },
+  {
+   "id": "plaza-san-martin",
+   "stretches": [],
+   "landmark": "Plaza San Martín",
+   "name": {
+    "en": "Plaza San Martín",
+    "es": "Plaza San Martín"
+   },
+   "description": "Plaza San Martín, where this walk starts.",
+   "aliases": {
+    "en": [
+     "start",
+     "starting point",
+     "beginning",
+     "Plaza San Martín"
+    ],
+    "es": [
+     "inicio",
+     "salida",
+     "punto de partida",
+     "Plaza San Martín"
+    ],
+    "ko": [
+     "출발점"
+    ]
+   }
+  },
+  {
+   "id": "museo-de-arte-de-lima",
+   "stretches": [],
+   "landmark": "Museo de Arte de Lima",
+   "name": {
+    "en": "Museo de Arte de Lima",
+    "es": "Museo de Arte de Lima"
+   },
+   "description": "Museo de Arte de Lima, where this walk ends.",
+   "aliases": {
+    "en": [
+     "end of the walk",
+     "destination",
+     "arrival",
+     "entrance",
+     "Museo de Arte de Lima"
+    ],
+    "es": [
+     "llegada",
+     "destino",
+     "entrada",
+     "Museo de Arte de Lima"
+    ],
+    "ko": [
+     "도착지",
+     "입구"
+    ]
+   }
+  },
+  {
+   "id": "jiron-de-la-union",
+   "stretches": [],
+   "landmark": "Jirón de la Unión",
+   "name": {
+    "en": "Jirón de la Unión",
+    "es": "Jirón de la Unión"
+   },
+   "description": "Jirón de la Unión, a street this walk follows.",
+   "aliases": {
+    "en": [
+     "street",
+     "Jirón de la Unión"
+    ],
+    "es": [
+     "calle",
+     "Jirón de la Unión"
+    ]
+   }
+  },
+  {
+   "id": "edificio-rimac",
+   "stretches": [],
+   "landmark": "Edificio Rímac",
+   "name": {
+    "en": "Edificio Rímac",
+    "es": "Edificio Rímac"
+   },
+   "description": "Edificio Rímac, beside the walk.",
+   "aliases": {
+    "en": [
+     "Edificio Rímac"
+    ],
+    "es": [
+     "Edificio Rímac"
+    ]
+   }
+  },
+  {
+   "id": "compania-de-bomberos-salvadora-lima-no-10",
+   "stretches": [],
+   "landmark": "Compañía de Bomberos Salvadora Lima Nº 10",
+   "name": {
+    "en": "Compañía de Bomberos Salvadora Lima Nº 10",
+    "es": "Compañía de Bomberos Salvadora Lima Nº 10"
+   },
+   "description": "Compañía de Bomberos Salvadora Lima Nº 10, beside the walk.",
+   "aliases": {
+    "en": [
+     "Compañía de Bomberos Salvadora Lima Nº 10"
+    ],
+    "es": [
+     "Compañía de Bomberos Salvadora Lima Nº 10"
+    ]
+   }
+  },
+  {
+   "id": "general-jose-de-san-martin",
+   "stretches": [],
+   "landmark": "General José de San Martín",
+   "name": {
+    "en": "General José de San Martín",
+    "es": "General José de San Martín"
+   },
+   "description": "General José de San Martín, beside the walk.",
+   "aliases": {
+    "en": [
+     "General José de San Martín"
+    ],
+    "es": [
+     "General José de San Martín"
+    ]
+   }
+  },
+  {
+   "id": "museo-de-arte-italiano",
+   "stretches": [],
+   "landmark": "Museo de Arte Italiano",
+   "name": {
+    "en": "Museo de Arte Italiano",
+    "es": "Museo de Arte Italiano"
+   },
+   "description": "Museo de Arte Italiano, beside the walk.",
+   "aliases": {
+    "en": [
+     "Museo de Arte Italiano"
+    ],
+    "es": [
+     "Museo de Arte Italiano"
+    ]
+   }
+  }
+ ]
+}
