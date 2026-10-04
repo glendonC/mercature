@@ -14,7 +14,7 @@ import { fromRecord } from '../i18n/records';
 import Menu from './Menu';
 import Places from './Places';
 import Search, { type Again, type GuideLine } from './Search';
-import { Dialogue } from '../ui';
+import { Companion, Dialogue } from '../ui';
 import { SCRIPT } from '../guide/script';
 import { toDestination, type Built } from '../search/build';
 import type { Prepared } from '../search/prepared';
@@ -142,6 +142,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   });
   // What the guide says while she searches, the walk being built drawn behind it, and the last walk built, which can take another start.
   const [line, setLine] = useState<GuideLine | null>(null);
+  const [talking, setTalking] = useState(false);
   const [preview, setPreview] = useState<Built | null>(null);
   const [again, setAgain] = useState<Again | null>(null);
   const shown = useMemo(() => { if (!preview) return null; try { const data = toDestination(preview.place), walk = buildWalk(data); return { data, walk, markers: spotMarkers(walk, null) }; } catch { return null; } }, [preview]);
@@ -173,6 +174,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
       ]}
       saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: [t('search.mapOnly'), walk.area].filter(Boolean).join(' · '), onOpen: () => walks.openKept(walk.id) })),
         ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
-    <Dialogue className="home-guide" label={t('home.guide')} lang={lang}>{line?.text ?? SCRIPT[lang].home.greet}</Dialogue>
+    <Companion className="home-bot" talking={talking}/>
+    <Dialogue className="home-guide" label={t('home.guide')} lang={lang} say={line?.text ?? SCRIPT[lang].home.greet} onTalking={setTalking} continueLabel={t('home.more')}/>
   </main>;
 }

@@ -56,6 +56,7 @@ export const es = {
   'home.onDevice': 'En este dispositivo',
   'home.savedPlan': 'Plan de mejora',
   'home.savedPlace': 'Fotos y notas',
+  'home.more': 'Más',
   'home.guide': 'Guía',
   'search.label': 'Buscar un lugar',
   'search.ask': 'Buscar “{words}” en OpenStreetMap',
