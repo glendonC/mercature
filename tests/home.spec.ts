@@ -7,8 +7,9 @@ test('home offers the prepared walk itself, and nothing to upload', async ({page
   // Only places with a prepared model are offered; the farm example is not one of them.
   await expect(page.getByRole('button', {name:/Noor/})).toHaveCount(0);
   const walk = page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true});
-  await expect(walk).toContainText('594 m');
-  await expect(walk).toContainText('5 spots to check');
+  // A card says only where the place is.
+  await expect(walk).toContainText('Cusco');
+  await expect(walk).not.toContainText('594 m');
   await walk.click();
   await expect(page.getByRole('region', {name:'Qorikancha', exact:true})).toBeVisible();
 });

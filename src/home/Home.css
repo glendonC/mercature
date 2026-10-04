@@ -95,5 +95,6 @@
 }
 
 /* A small label over the place photos: what is there to open. */
-.home-ready { margin: 26px 0 4px 4px; font-size: var(--font-xs); font-weight: 500; color: var(--muted); text-shadow: var(--halo); }
-@media (max-width: 639px) { .home-ready { margin-bottom: 2px; } }
+/* The headline and the search are one unit; a clear break, then the places with their label close above them. */
+.home-ready { margin: 56px 0 10px 4px; font-size: var(--font-xs); font-weight: 500; color: var(--muted); text-shadow: var(--halo); }
+@media (max-width: 639px) { .home-ready { margin-bottom: 10px; } }
