@@ -57,11 +57,6 @@
    layer sends a ring over the ground */
 .route-marker:is(:focus-visible, [data-hovered]) .route-marker-dot { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink); }
 .route-marker:is(:focus-visible, [data-hovered]) .route-marker-tag { opacity: 1; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 35%, transparent), 0 2px 8px rgb(20 22 24 / 0.12); }
-@media (hover: hover) {
-  .route-marker:hover .route-marker-dot { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink); }
-  .route-marker:hover .route-marker-tag { opacity: 1; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 35%, transparent), 0 2px 8px rgb(20 22 24 / 0.12); }
-  .route-map[data-lean] .route-marker:hover .route-marker-dot { translate: 0 -15px; }
-}
 @keyframes route-pulse { 0% { opacity: 0.55; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.5); } }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
 .route-card-slot { position: absolute; z-index: 6; width: 340px; }

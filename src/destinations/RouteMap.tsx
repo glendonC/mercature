@@ -298,10 +298,23 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const creditText = credit ? words.credit : '© OSM';
 
   // The marker raised by a fine pointer or keyboard focus, as the map sees it, so a page that does not point at markers itself
-  // still gets the raise and the motion layer's ring; a marker the page points at comes first.
+  // still gets the raise and the motion layer's ring; a marker the page points at comes first. Only a pointer that really moves
+  // raises one: a marker sliding under a still pointer as the camera flies does not, nor any for a moment after one is chosen.
   const [pointed, setPointed] = useState<string | null>(null);
+  const pointedNow = useRef<string | null>(null), moving = useRef<PointerEvent | null>(null), quietUntil = useRef(0);
+  useEffect(() => {
+    if (still) return;
+    let last: [number, number] | null = null;
+    // Captured first, so a marker hearing the same move knows whether the pointer went anywhere.
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' || (last && Math.abs(event.clientX - last[0]) + Math.abs(event.clientY - last[1]) < 1)) return;
+      last = [event.clientX, event.clientY]; moving.current = event;
+    };
+    addEventListener('pointermove', move, { capture: true, passive: true });
+    return () => removeEventListener('pointermove', move, { capture: true });
+  }, [still]);
   const lifted = hovered ?? (markers.some(marker => marker.id === pointed) ? pointed : null);
-  const point = (id: string | null) => { setPointed(id); onHover?.(id); };
+  const raise = (id: string | null) => { if (pointedNow.current === id) return; pointedNow.current = id; setPointed(id); onHover?.(id); };
 
   // The selected marker, or the one last opened while it is still in view, stays in the free band between the place title
   // and the guide, or any sheet, as they change. Panning or the whole route lets the last one go.
@@ -516,9 +529,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
         </>;
         const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
-          : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => onMarker(marker.id)}
-            onPointerEnter={event => { if (event.pointerType !== 'touch') point(marker.id); }} onPointerLeave={event => { if (event.pointerType !== 'touch') point(null); }}
-            onFocus={event => { if (event.currentTarget.matches(':focus-visible')) point(marker.id); }} onBlur={() => point(null)}>{inside}</button>;
+          : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
+            onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
+            onFocus={event => { if (event.currentTarget.matches(':focus-visible')) raise(marker.id); }} onBlur={() => { if (pointedNow.current === marker.id) raise(null); }}>{inside}</button>;
       })}
     </div>
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}
