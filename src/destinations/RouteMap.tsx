@@ -571,7 +571,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
   const quietly = (marker: Marker) => marker.state === 'osm' && !marker.selected && marker.id !== lifted;
   const own = new Map(placed.filter(p => !quietly(p.marker)).map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
-  const taken: Rect[] = [...own.values()];
+  const taken: Rect[] = [...own.values()], boxes = new Set(taken);
   if (zoomBox) taken.push(zoomBox);
   if (!still) taken.push(chip(creditX, creditWidth));
   const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
@@ -584,7 +584,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
         const rect = { x: side === 'right' ? at[0] + 14 : at[0] - 14 - w, y: y - h / 2, w, h };
         // A caption stays in the part of the map the page keeps free, so a panel over the map never hides one.
         if (rect.x < Math.max(8, insets.left - 24) || rect.x + w > size.width - Math.max(8, insets.right - 24) || rect.y + h > size.height - clearBottom || (!raised && rect.y < insets.top - 4) || rect.y < 4) return false;
-        if (taken.some(other => other !== own.get(marker.id) && overlaps(other, rect))) return false;
+        // The chosen marker's caption may cover other markers; every other caption keeps clear of them.
+        if (taken.some(other => other !== own.get(marker.id) && !(marker.selected && boxes.has(other)) && overlaps(other, rect))) return false;
         taken.push(rect);
         return true;
       });
