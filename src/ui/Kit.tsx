@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, Callout, IconButton, Kbd, Legend, MARK_ORDER, markOf, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, GROUND_KINDS, KIND_ORDER, kindOf, Callout, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -19,7 +19,8 @@ const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon],
   ['Broken pavement', I.BrokenPavementIcon], ['Road', I.RoadIcon], ['On the path', I.PathIcon], ['Landmark', I.LandmarkIcon], ['No photos', I.NoPhotosIcon], ['Photo', I.PhotoIcon], ['Fixed', I.FixedIcon], ['Added by you', I.AddedIcon],
   ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon], ['Start over', I.RotateIcon], ['Undo', I.UndoIcon], ['Use without AI', I.PointerIcon], ['Filed on a spot', I.PinIcon], ['Download', I.DownloadIcon], ['Skip', I.SkipIcon], ['Enter', I.EnterIcon], ['Done', I.CheckIcon],
   ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['Menu', I.MenuIcon], ['More', I.MoreIcon]];
-const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road' };
+const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road',
+  steep: 'Steep slope', gate: 'Gate', handrail: 'Handrail', ramp: 'Ramp', bench: 'Bench', lighting: 'Street light', toilets: 'Toilets' };
 const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 
 function useHero() {
@@ -74,7 +75,7 @@ export default function Kit() {
       <div className="kit-photo-frame">
         <img src={assetUrl(data!, lead.view.file)} alt="Steps" />
         <svg viewBox={`0 0 ${lead.view.width} ${lead.view.height}`} preserveAspectRatio="none" aria-hidden="true">
-          {lead.marks.sort((a, b) => Number(a.barrier) - Number(b.barrier)).map(f => { const points = f.outline.map(p => p.join(',')).join(' '), mark = markOf(f.concept) ?? undefined; return <g key={f.id}>
+          {lead.marks.sort((a, b) => Number(a.barrier) - Number(b.barrier)).map(f => { const points = f.outline.map(p => p.join(',')).join(' '), mark = kindOf(f.concept) ?? undefined; return <g key={f.id}>
             <polygon className="ui-mark-halo" data-barrier={f.barrier || undefined} points={points} /><polygon className="ui-mark" data-mark={mark} data-barrier={f.barrier || undefined} points={points} /></g>; })}
         </svg>
       </div>
@@ -109,6 +110,16 @@ export default function Kit() {
     </div>
 
     <div className="kit-sheet-body">
+      <Specimen wide title="Kinds" note="Every kind its own hue, on a dark casing, always with its icon and name. Ground kinds are dashed and quieter. A possible barrier is a clay badge and a heavier line, never a tint. No kind is blue, clay or mid grey.">
+        <div className="kit-kinds">
+          {KIND_ORDER.map(kind => { const Icon = I.iconOfKind(kind), barrier = kind === 'steps' || kind === 'kerb'; return <div key={kind} className="kit-kind" data-mark={kind}>
+            <svg viewBox="0 0 120 36" aria-hidden="true"><path className="ui-mark-halo" data-barrier={barrier || undefined} d="M6 26C30 26 34 10 60 10s30 16 54 16" /><path className="ui-mark" data-mark={kind} data-barrier={barrier || undefined} d="M6 26C30 26 34 10 60 10s30 16 54 16" style={{ fill: 'none' }} /></svg>
+            <span className="kit-kind-chip" data-tone="dark"><span className="kit-kind-dot" />{barrier && <span className="kit-kind-badge" />}<Icon size={16} /><span>{MARK_NAMES[kind]}</span></span>
+            <small>{GROUND_KINDS.has(kind) ? 'ground, dashed' : barrier ? 'possible barrier' : 'feature'}</small>
+          </div>; })}
+        </div>
+      </Specimen>
+
       <Specimen title="Type" note="Outfit 300, 400, 500. Nothing below 13 px.">
         <ul className="kit-type">
           <li><span style={{ fontSize: 'var(--font-xl)', letterSpacing: 'var(--tracking-title)' }}>Qorikancha</span><small>22 · a screen</small></li>

@@ -1,5 +1,5 @@
 import type { ReactNode, SVGProps } from 'react';
-import { markOf, type MarkKind } from './kinds';
+import { kindOf, markOf, type Kind, type MarkKind } from './kinds';
 
 /** Thin line icons on a 24 px grid. The stroke stays near 1.4 px on screen at any size, so a 14 px marker glyph reads as well as a 20 px row icon. */
 export type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'> & { size?: number; title?: string };
@@ -31,6 +31,20 @@ export const FootwayIcon = make('FootwayIcon', <><circle cx="13.5" cy="4.3" r="1
 export const BollardIcon = make('BollardIcon', <path d="M9 20.5V8a3 3 0 0 1 6 0v12.5M9 11.5h6M6.5 20.5h11" />);
 export const BrokenPavementIcon = make('BrokenPavementIcon', <><rect x="3.5" y="6" width="17" height="12" rx="1.5" /><path d="m10.5 6 2 4-2.5 2.5 2.5 5.5" /></>);
 export const RoadIcon = make('RoadIcon', <path d="M6.5 20.5 10 3.5M17.5 20.5 14 3.5M12 6v1.5M12 11v2M12 16.5v2.5" />);
+/** A rail beside the way, on its posts. */
+export const HandrailIcon = make('HandrailIcon', <path d="M3.5 11 20.5 5M7 9.8V20M17 6.2V20M3.5 20h17" />);
+/** A gentle wedge to wheel up. */
+export const RampIcon = make('RampIcon', <><path d="M3.5 19.5h17v-7.5Z" /><circle cx="8" cy="9" r="2.2" /></>);
+/** A slope too steep to be easy: a sharp wedge and its angle. */
+export const SteepIcon = make('SteepIcon', <path d="M3.5 19.5h17V5.5ZM15.5 19.5a4 4 0 0 0-1.1-2.9" />);
+/** Two posts and the bars between them. */
+export const GateIcon = make('GateIcon', <path d="M5 20.5V4.5M19 20.5V4.5M5 8.5h14M5 14h14M9.7 8.5V14M14.3 8.5V14" />);
+/** A seat, its back and legs. */
+export const BenchIcon = make('BenchIcon', <path d="M5 7.5h14M3.5 12.5h17M6 12.5v6M18 12.5v6M6 7.5v5M18 7.5v5" />);
+/** A street lamp. */
+export const LightingIcon = make('LightingIcon', <path d="M8 20.5V7a3 3 0 0 1 3-3h4.5M13.5 7h4l-2-3M6 20.5h4" />);
+/** Toilets: a seat and its tank, seen from the side. */
+export const ToiletsIcon = make('ToiletsIcon', <path d="M6.5 4h4.5v7.5H6.5ZM4 11.5h15.5a6 6 0 0 1-6 6h-.5l.7 3H8.3l.6-3.2A6 6 0 0 1 4 11.5Z" />);
 /** Something on the walking path, of no named kind: a spot on a winding way. */
 export const PathIcon = make('PathIcon', <><path d="M7 21c0-3.6 10-4.6 10-9S7 6.6 7 3" /><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none" /></>);
 export const LandmarkIcon = make('LandmarkIcon', <path d="M12 3.5 4 8h16ZM5.5 10.5v7M10 10.5v7M14 10.5v7M18.5 10.5v7M3.5 20.5h17" />);
@@ -77,11 +91,14 @@ export const HomeIcon = make('HomeIcon', <path d="M4 10 12 3.5l8 6.5v10a.5.5 0 0
 export const MenuIcon = make('MenuIcon', <path d="M4.5 7h15M4.5 12h15M4.5 17h15" />);
 export const MoreIcon = make('MoreIcon', <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" strokeWidth={3} />);
 
-const MARK_ICONS: Record<MarkKind, Icon> = { steps: StepsIcon, kerb: KerbIcon, broken: BrokenPavementIcon, bollard: BollardIcon, crossing: CrossingIcon, footway: FootwayIcon, cobblestones: CobblestonesIcon, road: RoadIcon };
+const MARK_ICONS: Record<Kind, Icon> = { steps: StepsIcon, kerb: KerbIcon, broken: BrokenPavementIcon, bollard: BollardIcon, crossing: CrossingIcon, footway: FootwayIcon, cobblestones: CobblestonesIcon, road: RoadIcon,
+  steep: SteepIcon, gate: GateIcon, handrail: HandrailIcon, ramp: RampIcon, bench: BenchIcon, lighting: LightingIcon, toilets: ToiletsIcon };
 /** The icon for a mark kind. */
 export const iconOfMark = (kind: MarkKind): Icon => MARK_ICONS[kind];
+/** The icon for any kind a place names. */
+export const iconOfKind = (kind: Kind): Icon => MARK_ICONS[kind];
 /** The icon for a finding's concept, as the place package names it ('steps', 'highway=steps', 'kerb', ...). */
 export function iconFor(concept: string): Icon | null {
-  const kind = markOf(concept);
+  const kind = kindOf(concept);
   return kind ? MARK_ICONS[kind] : null;
 }

@@ -133,21 +133,33 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-swatch[data-kind=mark]::before { inset: 0; border-radius: 2.5px; background: #6f7479; outline: 1.5px dashed #fff; outline-offset: -2.5px; }
 .ui-swatch[data-kind=selected]::before { inset: 2px; background: var(--surface); box-shadow: 0 0 0 1.5px var(--ink), 0 0 0 3px var(--surface); }
 
-/* Marks on a photo: one hue per kind; a possible barrier is drawn heavier. Use on SVG polygons: class ui-mark, data-mark, data-barrier. */
-[data-mark=steps] { --mark: var(--mark-steps); }
-[data-mark=kerb] { --mark: var(--mark-kerb); }
-[data-mark=broken] { --mark: var(--mark-broken); }
-[data-mark=bollard] { --mark: var(--mark-bollard); }
-[data-mark=crossing] { --mark: var(--mark-crossing); }
-[data-mark=footway] { --mark: var(--mark-footway); }
-[data-mark=cobblestones] { --mark: var(--mark-cobblestones); }
-[data-mark=road] { --mark: var(--mark-road); }
+/* Kinds on a photo: every kind its own hue on a dark casing; ground kinds dashed and quieter; a possible barrier drawn heavier, its status a clay badge.
+   Use on SVG polygons: class ui-mark (and ui-mark-halo under it for the casing), data-mark, data-barrier. */
+[data-mark=steps] { --mark: var(--kind-steps); }
+[data-mark=kerb] { --mark: var(--kind-kerb); }
+[data-mark=broken] { --mark: var(--kind-broken); }
+[data-mark=steep] { --mark: var(--kind-steep); }
+[data-mark=bollard] { --mark: var(--kind-bollard); }
+[data-mark=gate] { --mark: var(--kind-gate); }
+[data-mark=handrail] { --mark: var(--kind-handrail); }
+[data-mark=ramp] { --mark: var(--kind-ramp); }
+[data-mark=bench] { --mark: var(--kind-bench); }
+[data-mark=lighting] { --mark: var(--kind-lighting); }
+[data-mark=toilets] { --mark: var(--kind-toilets); }
+[data-mark=crossing] { --mark: var(--kind-crossing); --dash: var(--dash-crossing); }
+[data-mark=cobblestones] { --mark: var(--kind-cobblestones); --dash: var(--dash-cobblestones); }
+[data-mark=footway] { --mark: var(--kind-footway); --dash: var(--dash-footway); }
+[data-mark=road] { --mark: var(--kind-road); --dash: var(--dash-road); }
 .ui-mark { fill: color-mix(in srgb, var(--mark, var(--unknown)) 14%, transparent); stroke: var(--mark, var(--unknown)); stroke-width: 1.75px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.ui-mark[data-barrier] { fill: color-mix(in srgb, var(--mark, var(--blocked)) 26%, transparent); stroke-width: 2.75px; }
-.ui-mark-halo { fill: none; stroke: rgb(255 255 255 / 0.6); stroke-width: 3.75px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.ui-mark-halo[data-barrier] { stroke: rgb(255 255 255 / 0.9); stroke-width: 5px; }
+:where(.ui-mark)[data-mark] { stroke-dasharray: var(--dash, none); }
+.ui-mark[data-barrier] { fill: color-mix(in srgb, var(--mark, var(--unknown)) 22%, transparent); stroke-width: 3px; }
+.ui-mark-halo { fill: none; stroke: var(--kind-casing); stroke-width: 3.75px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ui-mark-halo[data-barrier] { stroke-width: 5.5px; }
 .ui-swatch[data-kind][data-mark]::before { inset: 0; border-radius: 2.5px; outline: 0; background: color-mix(in srgb, var(--mark) 18%, transparent); box-shadow: inset 0 0 0 1.5px var(--mark); }
-.ui-swatch[data-kind][data-mark][data-barrier]::before { background: color-mix(in srgb, var(--mark) 32%, transparent); box-shadow: inset 0 0 0 2px var(--mark); }
+.ui-swatch[data-kind][data-mark]:is([data-mark=crossing], [data-mark=cobblestones], [data-mark=footway], [data-mark=road])::before { box-shadow: none; outline: 1.5px dashed var(--mark); outline-offset: -1.5px; }
+.ui-swatch[data-kind][data-mark][data-barrier]::before { background: color-mix(in srgb, var(--mark) 26%, transparent); box-shadow: inset 0 0 0 2px var(--mark); }
+/* A possible barrier's badge: a small clay dot ringed in white */
+.ui-swatch[data-kind][data-mark][data-barrier]::after { content: ''; position: absolute; top: -3px; right: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--kind-barrier); box-shadow: 0 0 0 1px #ffffff; }
 .ui-legend .ui-swatch[data-mark] + .ui-icon { margin-inline-start: -2px; }
 
 /* A spot on the map: its kind as an icon in its meaning's colour */

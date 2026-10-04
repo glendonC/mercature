@@ -110,15 +110,44 @@
   --shadow-float: 0 1px 2px rgb(20 22 24 / 0.06), 0 4px 12px -2px rgb(20 22 24 / 0.1);
   --shadow-panel: 0 2px 6px -2px rgb(20 22 24 / 0.08), 0 16px 40px -10px rgb(20 22 24 / 0.22);
   --shadow-panel-dark: 0 2px 6px -2px rgb(0 0 0 / 0.2), 0 18px 44px -10px rgb(10 12 14 / 0.42);
-  /* Marks on a photo: the clay family for kinds that can be barriers, quiet hues for the ground around them, never blue */
-  --mark-steps: var(--blocked);
-  --mark-kerb: #c97a45;
-  --mark-broken: #7d3a12;
-  --mark-crossing: #9a8cb0;
-  --mark-bollard: #8f8279;
-  --mark-footway: #8c9c7c;
-  --mark-cobblestones: #b39a66;
-  --mark-road: #7d8186;
+  /* Kinds: every kind its own hue, drawn light on a dark casing (a line on a photo, the dot on a chip, a marker's glyph on charcoal),
+     always beside its icon and its name. No kind is blue (the way), clay (a possible barrier) or mid grey (unknown).
+     A possible barrier is a clay badge and a heavier line, never a tint. Ground kinds are dashed and quieter. */
+  --kind-steps: #b48cff;
+  --kind-kerb: #f2d13b;
+  --kind-broken: #ff7a9c;
+  --kind-steep: #c3e356;
+  --kind-bollard: #8ee6c9;
+  --kind-gate: #f37adb;
+  --kind-handrail: #33d1d6;
+  --kind-ramp: #5fd47a;
+  --kind-bench: #d9a877;
+  --kind-lighting: #fff3b0;
+  --kind-toilets: #f4f5f6;
+  --kind-crossing: #e9edf2;
+  --kind-cobblestones: #dcc08f;
+  --kind-footway: #c5d1b8;
+  --kind-road: #b9aea3;
+  --dash-crossing: 8 3 2 3;
+  --dash-cobblestones: 1 3;
+  --dash-footway: 6 4;
+  --dash-road: 2 4;
+  /* For a kind a new place names before it has its own hue, in this order */
+  --kind-spare-1: #e5b8ff;
+  --kind-spare-2: #b5f5d8;
+  --kind-spare-3: #ffc2d1;
+  --kind-spare-4: #f5e6a8;
+  --kind-casing: rgb(10 12 14 / 0.78);
+  --kind-barrier: #e0905f;
+  /* The older names, now the kind hues */
+  --mark-steps: var(--kind-steps);
+  --mark-kerb: var(--kind-kerb);
+  --mark-broken: var(--kind-broken);
+  --mark-crossing: var(--kind-crossing);
+  --mark-bollard: var(--kind-bollard);
+  --mark-footway: var(--kind-footway);
+  --mark-cobblestones: var(--kind-cobblestones);
+  --mark-road: var(--kind-road);
   /* The selection: an ink outline with a white halo */
   --select-ring: 0 0 0 1.5px var(--ink), 0 0 0 4px var(--surface);
   /* Motion */

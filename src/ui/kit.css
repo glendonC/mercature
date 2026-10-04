@@ -68,3 +68,11 @@
   .kit-sheet-body { padding: 20px 12px 48px; }
   .kit-meaning { grid-template-columns: 1fr; }
 }
+.kit-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.kit-kind { display: grid; gap: 6px; padding: 8px; border-radius: 10px; background: linear-gradient(135deg, #8d8578, #b9b2a6 45%, #5f5a52); }
+.kit-kind svg { width: 100%; height: 36px; }
+.kit-kind-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; justify-self: start; height: 28px; padding: 0 10px 0 8px; border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge); color: #f2f3f4; font-size: var(--font-xs); font-weight: 500; }
+.kit-kind-chip .ui-icon { color: var(--mark); }
+.kit-kind-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); box-shadow: 0 0 0 1.5px #fff; }
+.kit-kind-badge { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--kind-barrier); box-shadow: 0 0 0 1.5px #fff; }
+.kit-kind small { font-size: var(--font-xs); color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); }
