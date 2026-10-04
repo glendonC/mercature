@@ -10,7 +10,6 @@ import { useChanges } from '../fx/changes';
 import type { Point, Walk } from './walk';
 import { AddedIcon, FixedIcon, KerbIcon, LookIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
 
-export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
 export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
 export type MarkerIcon = 'steps' | 'kerb' | 'path' | 'no-photos' | 'fixed' | 'added' | 'check' | 'dismissed';
@@ -478,7 +477,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
   /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
   const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier' || marker.state === 'check').map(marker => marker.id).join(' ');
-  /** Markers that the lean pushes up under the place title lose their tags; every marker fades with the haze it stands in. */
+  /** Markers that the lean pushes up under the place title lose their tags; every marker's dot fades with the haze it stands in,
+   * while its caption and count keep their full contrast. */
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
   // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
@@ -546,7 +546,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
             onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
