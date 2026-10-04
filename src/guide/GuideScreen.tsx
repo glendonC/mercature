@@ -733,20 +733,19 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return [...(walk.start ? [{ name: name(walk.start.name), at: walk.start.at, dy: 20 }] : []), { name: name(walk.target.name), at: walk.target.at, dy: 22 }, ...walk.landmarks.filter(l => l.kind === 'building' || l.kind === 'street').map(l => ({ name: routeSpots.find(spot => !spot.stretches.length && spot.landmark === l.name)?.name[lang] ?? (l.kind === 'street' && calle && !/^calle /i.test(l.name) ? `Calle ${l.name}` : l.name), at: l.at }))];
   }, [walk, lang, routeSpots]);
 
-  // The map keeps clear of the dialogue docked below it, and frames what the step is about once the dialogue has settled.
-  // On a wide screen the card sits at the left edge and her choices at the right, so the map frames its subject in the free middle.
-  const [frame, setFrame] = useState({ dock: 0, below: 0, left: 0, right: 0 });
+  // The map keeps clear of the dialogue docked below it, with the card and her choices centred over it, and frames what the step is
+  // about once the dialogue has settled.
+  const [frame, setFrame] = useState({ dock: 0, below: 0 });
   const dockHeight = frame.dock;
   useLayoutEffect(() => {
     const host = screen.current, work = dock.current;
     if (!host || !work) return;
     // The line is a new element with each turn, so its size is watched afresh after every render.
     const measure = () => {
-      const line = host.querySelector<HTMLElement>('.ui-dialogue'), below = line?.offsetHeight ?? 0, above = work.offsetHeight, box = host.getBoundingClientRect();
+      const line = host.querySelector<HTMLElement>('.ui-dialogue'), below = line?.offsetHeight ?? 0, above = work.offsetHeight;
       host.style.setProperty('--dialogue', `${below}px`);
-      const wide = box.width >= 1024, content = wide ? work.querySelector('.gs-content')?.getBoundingClientRect() : undefined, actions = wide ? work.querySelector('.gs-actions')?.getBoundingClientRect() : undefined;
-      const next = { dock: below + (above ? above + 12 : 0), below, left: content ? Math.round(content.right - box.left) : 0, right: actions ? Math.round(box.right - actions.left) : 0 };
-      setFrame(last => last.dock === next.dock && last.below === next.below && last.left === next.left && last.right === next.right ? last : next);
+      const next = { dock: below + (above ? above + 12 : 0), below };
+      setFrame(last => last.dock === next.dock && last.below === next.below ? last : next);
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -758,8 +757,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // The map always keeps some room above the dialogue, however tall the dialogue grows, so the walk can still be framed.
   // On a phone the Edit row sits under the header, so the map's free area starts below it; a short strip above the card still frames the spot.
   const top = (narrow ? 112 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - (narrow ? 90 : 180)));
-  const sides = frame.left > 0 || frame.right > 0;
-  const insets = { top, right: Math.max(24 + inset.right, sides ? frame.right + 24 : 0), bottom: under(sides ? frame.below : dockHeight), left: Math.max(24 + inset.left, sides ? frame.left + 24 : 0) };
+  const insets = { top, right: 24 + inset.right, bottom: under(dockHeight), left: 24 + inset.left };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
     if ((step.id === 'around' || (step.id === 'check' && step.around === 'match')) && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
     if (step.id === 'street' && step.found) return { kind: 'frame', points: step.found.line.map(point => walk.project(point as [number, number])) };
@@ -1042,8 +1040,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   const turn = `${JSON.stringify(step)} ${ack}`;
 
-  // The bot is out in the map on every step: beside the spot the conversation is about, on the side away from its caption, and
-  // travelling with the camera; with no spot it waits at the free map's lower left, just above the dialogue.
+  // The bot is beside the spot the line is about, on the side away from its caption, travelling with the camera. With no spot it
+  // stands beside its line as on Home: 12 px left of the line, or of Back where Back hangs, level with the line's foot. A phone has
+  // no room there, so it waits at the free map's lower left, just above the dialogue.
   const lens = useRef<Lens | null>(null);
   const focusTarget = selected ?? (ranked.length ? targetOf(ranked[0]) : null);
   const botAim = useRef({ focus: null as Point | null, insets });
@@ -1053,6 +1052,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!element || !host) return;
     const box = host.getBoundingClientRect(), size = element.offsetWidth || 52, { focus, insets: free } = botAim.current;
     const at = focus && lens.current ? lens.current.at(focus) : null;
+    const place = (x: number, y: number) => { element.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`; element.dataset.placed = ''; };
+    // The line is read from its layout box, so its entrance lift never moves the bot.
+    const dialogue = host.querySelector<HTMLElement>('.ui-dialogue'), line = dialogue?.querySelector<HTMLElement>('.ui-dialogue-line'), back = dialogue?.querySelector<HTMLElement>('.ui-dialogue-back');
+    if (!at && dialogue && line?.offsetWidth) {
+      const frame = dialogue.getBoundingClientRect(), left = frame.left + line.offsetLeft, hung = back?.getBoundingClientRect();
+      const x = Math.min(left, hung?.width && hung.right <= left + 1 ? hung.left : Infinity) - box.left - 12 - size;
+      if (x >= 8) { place(x, frame.top + line.offsetTop + line.offsetHeight - box.top - size); return; }
+    }
     const away = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"], .route-marker[data-rank="1"]')?.dataset.side === 'left' ? 1 : -1;
     const right = box.width - free.right - size, bottom = box.height - free.bottom - size;
     const fit = ([x, y]: [number, number]): [number, number] => [Math.max(free.left - 12, Math.min(right + 12, x)), Math.max(free.top, Math.min(bottom, y))];
@@ -1063,11 +1070,18 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       ? [[at[0] + away * gap - size / 2, at[1] - size - 20], [at[0] - away * gap - size / 2, at[1] - size - 20], [at[0] + away * (gap + 12) - size / 2, at[1] - size / 2], [at[0] + away * gap - size / 2, at[1] + 20], [at[0] - size / 2, at[1] - size - 36]]
       : [[free.left + 24, box.height - free.bottom - 24 - size], [free.left + 24, box.height - free.bottom - 96 - size], [free.left + 96, box.height - free.bottom - 24 - size], [free.left + 24, free.top + 16]];
     const [x, y] = places.map(fit).find(clear) ?? fit(places[0]);
-    element.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-    element.dataset.placed = '';
+    place(x, y);
   }, []);
   const onLens = useCallback((next: Lens) => { lens.current = next; placeBot(); }, [placeBot]);
-  useLayoutEffect(() => { placeBot(); });
+  // Each turn brings a new line, whose size is watched afresh, since the box fits its words.
+  useLayoutEffect(() => {
+    placeBot();
+    const line = screen.current?.querySelector('.ui-dialogue-line');
+    if (!line) return;
+    const watch = new ResizeObserver(placeBot);
+    watch.observe(line);
+    return () => watch.disconnect();
+  });
   useEffect(() => { addEventListener('resize', placeBot); return () => removeEventListener('resize', placeBot); }, [placeBot]);
   // A number key picks that choice, as in a game, unless she is typing.
   const choicesNow = useRef(chips); choicesNow.current = chips;

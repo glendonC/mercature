@@ -16,17 +16,17 @@
 .gs-edits { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12px); display: flex; align-items: center; gap: 8px; width: max-content; translate: -50% 0; }
 .gs-edits .gs-edit { position: relative; width: max-content; }
 
-/* Above the shared dialogue at the bottom (src/ui), only when a step has them: what the line is about on the left and her choices
-   stacked on the right. The space between them lets taps through to the map. */
-.gs-work { position: absolute; z-index: 9; left: 50%; bottom: calc(var(--dialogue, 120px) + 12px); width: min(820px, 100% - 32px); max-height: calc(100% - var(--dialogue, 120px) - 150px - env(safe-area-inset-top, 0px));
+/* Above the shared dialogue at the bottom (src/ui), only when a step has them: what the line is about and her choices, one group
+   centred over the line. The space around them lets taps through to the map. */
+.gs-work { position: absolute; z-index: 9; left: 50%; bottom: calc(var(--dialogue, 120px) + 12px); width: min(640px, 100% - 32px); max-height: calc(100% - var(--dialogue, 120px) - 150px - env(safe-area-inset-top, 0px));
   display: flex; transform: translateX(-50%); pointer-events: none; }
-.gs-turn { display: flex; align-items: flex-end; justify-content: flex-end; gap: 14px; width: 100%; min-height: 0; animation: gs-turn-in var(--motion-panel) var(--ease-out) both; }
-.gs-work[data-content] .gs-turn { justify-content: space-between; }
+.gs-turn { display: flex; align-items: flex-end; justify-content: center; gap: 14px; width: 100%; min-height: 0; animation: gs-turn-in var(--motion-panel) var(--ease-out) both; }
+.gs-work[data-content] .gs-turn { justify-content: center; gap: 12px; }
 .gs-turn > * { pointer-events: auto; }
 @keyframes gs-turn-in { from { opacity: 0; translate: 0 6px; } }
 .gs-content { flex: 0 1 460px; min-width: 0; max-height: 100%; overflow-y: auto; scrollbar-width: none; border-radius: 14px; }
 .gs-content::-webkit-scrollbar { display: none; }
-.gs-actions { display: grid; align-content: end; gap: 4px; flex: 0 0 300px; min-width: 0; }
+.gs-actions { display: grid; align-content: end; gap: 4px; flex: 0 0 min(320px, 100%); min-width: 0; }
 .gs-back { justify-self: end; min-height: 32px; padding: 0 8px; border: 0; border-radius: var(--radius-s); background: none; color: var(--muted); font: inherit; font-size: var(--font-xs); text-shadow: var(--halo); cursor: pointer; }
 .gs-back:hover { color: var(--ink); }
 .gs-back:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
@@ -82,10 +82,6 @@
   .gs-turn, .gs-work[data-content] .gs-turn { flex-direction: column; align-items: stretch; gap: 8px; overflow-y: auto; scrollbar-width: none; }
   .gs-content, .gs-actions { flex: none; }
   .gs-card, .gs-photo, .gs-copybox { max-width: none; }
-}
-/* A wide screen: what the line is about at the left edge, her choices at the right edge, the map's subject in the free middle. */
-@media (min-width: 1024px) {
-  .gs-work { left: calc(20px + env(safe-area-inset-left, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); width: auto; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gs-turn { animation: none; }
