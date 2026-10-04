@@ -8,6 +8,7 @@ import type { AuthoredViewState } from "./preparation/Preparation";
 import FarmReady from "./preparation/FarmReady";
 import RecordedReveal from "./preparation/RecordedReveal";
 import { isDestinationId } from "./destinations/data";
+import type { MenuPlace } from "./home/Menu";
 import { useLanguage } from "./i18n";
 const planStore = createPlanStore();
 function initialSaved() {
@@ -41,16 +42,23 @@ export default function App() {
     setError("");
   }
   const entries: SavedEntry[] = plans.map((p) => ({ id: p.id, title: p.title, kind: "plan" as const }));
+  function openFarm() {
+    setActive(workspace?.site === "noor-farm" ? "spatial" : "farm");
+    setError("");
+  }
+  function openDestination(id: string) {
+    setDestination(id);
+    setActive("destination");
+    setError("");
+  }
+  const openPlace = (place: MenuPlace) => place === "noor-farm" ? openFarm() : openDestination(place);
   return (
     <>
       <div hidden={active !== "home"}>
         {active === "home" && (
           <Home
-            onFarm={() => {
-              setActive(workspace?.site === "noor-farm" ? "spatial" : "farm");
-              setError("");
-            }}
-            onDestination={(id) => { setDestination(id); setActive("destination"); setError(""); }}
+            onFarm={openFarm}
+            onDestination={openDestination}
             saved={entries}
             onOpenSaved={openPlan}
           />
@@ -73,7 +81,7 @@ export default function App() {
         </div>
       )}
       {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
-      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} />)}
+      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openPlace} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} onPlace={openPlace} />)}
       {error && (
         <div className="app-error" role="alert">
           {error}

@@ -6,6 +6,7 @@ import { hasRouteCanvas } from '../destinations/RouteCanvas';
 import { mapInsets } from '../destinations/RouteInbox';
 import RouteMap from '../destinations/RouteMap';
 import type { MapWords } from '../destinations/GeographicMap';
+import type { MenuPlace } from '../home/Menu';
 import type { Lens } from '../destinations/lens';
 import { buildWalk, type Point, type Walk } from '../destinations/walk';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
@@ -90,7 +91,7 @@ function chooseCards(data: Destination): Card[] {
 }
 
 /** Replays how a recorded place was built, step by step, then opens its inspection on the same map. */
-export default function RecordedReveal({ id, onHome, onOpen }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void }) {
+export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void; onPlace?: (place: MenuPlace) => void }) {
   const { t, rich, lang, locale } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
   const [failed, setFailed] = useState(false);
@@ -302,7 +303,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     barriers: barriers === 1 ? rich('reveal.build.barrier', { count: <strong>1</strong> }) : spots > 1 ? rich('reveal.build.barriersAt', { count: <strong>{barriers}</strong>, spots: <strong>{spots}</strong> }) : rich('reveal.build.barriers', { count: <strong>{barriers}</strong> }),
   }[step.id];
   return <div className="reveal-host" ref={root}>
-    {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
+    {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data} onPlace={onPlace}/>}
     {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${leaned ? ' is-leaned' : ''}`} data-phase={phase} data-step={step?.id ?? 'none'} role="region" aria-label={name} style={{ ...(walkStep && { '--walk-at': `${walkStep.at}ms`, '--walk-for': `${walkStep.until - walkStep.at}ms` }), '--free-left': `${insets.left}px`, '--free-right': `${insets.right}px` } as CSSProperties}>
       {data && <>
         {leaned && walk ? <div className="reveal-map is-leaned" ref={mapBox}>
