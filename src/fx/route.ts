@@ -8,7 +8,7 @@ import type { Point } from '../destinations/walk';
 
 /** A marker's colour by what it means: clay a possible barrier, blue the way, grey anything unknown or dismissed. */
 export function meaning(state: string): keyof Palette {
-  return state === 'open' || state === 'barrier' ? 'barrier' : state === 'clear' || state === 'fixed' ? 'way' : 'unknown';
+  return state === 'open' || state === 'barrier' || state === 'added' ? 'barrier' : state === 'clear' || state === 'fixed' ? 'way' : 'unknown';
 }
 
 /** The flow's beads in screen pixels at its reference scale: length, gap and speed per second; and how often it redraws. */

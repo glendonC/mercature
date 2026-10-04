@@ -6,11 +6,11 @@ export type Change = 'fixed' | 'unfixed' | 'added' | 'removed' | 'restored';
 export type Changed = { change: Change; was: string | null; at: number };
 
 /** States that mean a possible barrier, drawn in clay. */
-const POSSIBLE = new Set(['open', 'barrier']);
+const POSSIBLE = new Set(['open', 'barrier', 'added']);
 
 /** The change an edit makes between a marker's last state and its state now; a marker first seen is a spot she added when it is a possible barrier. */
 export function changeOf(before: string | undefined, now: string): Change | null {
-  if (before === undefined) return now === 'barrier' ? 'added' : null;
+  if (before === undefined) return now === 'barrier' || now === 'added' ? 'added' : null;
   if (before === now) return null;
   if (now === 'fixed') return POSSIBLE.has(before) ? 'fixed' : null;
   if (now === 'not-barrier') return POSSIBLE.has(before) ? 'removed' : null;
