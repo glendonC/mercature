@@ -6,12 +6,15 @@
  *   4. After a cold restart with no network, the route opens and the model answers a Korean message.
  *   node scripts/release/proof.mjs [url] [--serve dist] [--out dir]
  * With --serve, the build is served like GitHub Pages under the URL's path and the server is
- * stopped before the offline restart. Screenshots and report.json go to the out directory.
+ * stopped before the offline restart. The offline restart also sends every request, the service
+ * worker's own included, to a proxy that drops it. Screenshots and report.json go to the out directory.
  */
 import { chromium } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
 const option = name => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
@@ -40,14 +43,20 @@ async function startServer() {
   }
   throw new Error(`Nothing is serving ${base.href}.`);
 }
-if (serve) await startServer();
 
-const profile = await mkdtemp(resolve('.local/release/profile-'));
+// setOffline does not stop the service worker's own fetches; this proxy refuses them, and counts them.
+let dropped = 0;
+const sink = createServer(socket => { dropped++; socket.destroy(); });
+await new Promise(done => sink.listen(0, '127.0.0.1', done));
+const proxy = { server: `http://127.0.0.1:${sink.address().port}`, bypass: '<-loopback>' };
+
+let profile = null;
 let context;
 async function launch(offline) {
   await context?.close();
   context = await chromium.launchPersistentContext(profile, {
     headless: true, viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow',
+    ...(offline ? { proxy } : {}),
   });
   await context.setOffline(offline);
   const phase = offline ? 'offline' : 'online';
@@ -110,6 +119,8 @@ async function ask(page) {
 const matches = answer => answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(EXPECTED.spots) && answer.spots.every(spot => !spot.pressed);
 
 try {
+  if (serve) await startServer();
+  profile = await mkdtemp(join(tmpdir(), 'mercature-proof-'));
   // Online, first visit on a fresh profile.
   let page = await launch(false);
   const first = await page.goto(base.href);
@@ -168,7 +179,11 @@ try {
   if (server) { server.kill(); server = null; }
   page = await launch(true);
   const offline = await page.goto(base.href);
-  check('offline start is served by the service worker', !!offline?.fromServiceWorker(), `${offline?.status()} from service worker: ${offline?.fromServiceWorker()}`);
+  // The server is out of reach: the worker's own update check goes to the proxy and is refused.
+  const refused = dropped;
+  const update = await page.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration?.update()).then(() => 'reached', () => 'refused'));
+  check('offline start is served by the service worker', !!offline?.fromServiceWorker() && update === 'refused' && dropped > refused,
+    `${offline?.status()} from service worker: ${offline?.fromServiceWorker()}; worker update check ${update} by the proxy`);
   await openRoute(page);
   await page.screenshot({ path: resolve(out, 'route-offline-390.png') });
   const again = await ask(page);
@@ -182,7 +197,8 @@ try {
 } finally {
   await context?.close();
   server?.kill();
-  await rm(profile, { recursive: true, force: true });
+  sink.close();
+  if (profile) await rm(profile, { recursive: true, force: true });
 }
 
 report.finished = new Date().toISOString();

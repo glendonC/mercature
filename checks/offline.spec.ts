@@ -1,22 +1,43 @@
 import { test, expect, chromium, type BrowserContext } from "@playwright/test";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { createServer, type AddressInfo } from "node:net";
 import path from "node:path";
 const origin = `http://127.0.0.1:${process.env.MERCATURE_PORT ?? "4173"}/`;
 test("a cold offline restart links a fresh Korean message by hand and reopens its saved fix exactly", async () => {
   await mkdir(".local", { recursive: true });
   const profile = await mkdtemp(path.resolve(".local/offline-browser-"));
   let context: BrowserContext | undefined;
-  // Every start is a cold browser launch on the same profile, so offline only the service worker can serve the app.
+  // setOffline does not stop the service worker's own fetches, so offline starts also send every
+  // request through a proxy that drops it: with the server out of reach, only the worker's cache can serve the app.
+  let dropped = 0;
+  const sink = createServer((socket) => {
+    dropped++;
+    socket.destroy();
+  });
+  await new Promise<void>((resolve) => sink.listen(0, "127.0.0.1", resolve));
+  const proxy = { server: `http://127.0.0.1:${(sink.address() as AddressInfo).port}`, bypass: "<-loopback>" };
+  // Every start is a cold browser launch on the same profile.
   const start = async (offline: boolean) => {
     await context?.close();
     context = await chromium.launchPersistentContext(profile, {
       headless: true,
       viewport: { width: 1280, height: 720 },
+      ...(offline ? { proxy } : {}),
     });
     await context.setOffline(offline);
     const page = context.pages()[0] ?? (await context.newPage());
     const response = await page.goto(origin);
-    if (offline) expect(response!.fromServiceWorker()).toBe(true);
+    if (offline) {
+      expect(response!.fromServiceWorker()).toBe(true);
+      // The server is out of reach: the worker's own update check goes to the proxy and is refused.
+      const before = dropped;
+      const update = await page.evaluate(() =>
+        navigator.serviceWorker.getRegistration().then((registration) => registration?.update()).then(() => "reached", () => "refused"),
+      );
+      expect(update).toBe("refused");
+      expect(dropped).toBeGreaterThan(before);
+      await expect(page.locator("#root > *").first(), "the app renders from the worker's cache").toBeVisible();
+    }
     return page;
   };
   try {
@@ -71,6 +92,7 @@ test("a cold offline restart links a fresh Korean message by hand and reopens it
     await expect(page.getByLabel("Original visitor message")).toHaveValue(text);
   } finally {
     await context?.close();
+    sink.close();
     await rm(profile, { recursive: true, force: true });
   }
 });
