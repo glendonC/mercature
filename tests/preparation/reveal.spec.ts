@@ -41,7 +41,7 @@ test('the Qorikancha reveal replays how the walk was built and opens the inspect
   await expect(reveal).not.toContainText(/recorded|unverified|outlined|GPU/i);
   // A short replay may already be handing off on its own; Skip only works while it plays. Either way it lands on the canvas map.
   const skip = page.getByRole('button', {name:'Skip', exact:true});
-  if (await skip.isEnabled()) await skip.click();
+  await skip.click({timeout: 1000}).catch(() => {});
   await expect(reveal).toBeHidden({timeout: 10000});
   await expect(page.getByRole('heading', {name:'Qorikancha', exact:true})).toBeVisible();
   await expect(page.getByRole('region', {name:'Geographic source map'})).toBeVisible();
