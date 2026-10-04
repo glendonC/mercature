@@ -398,7 +398,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     if (!marker.tag || !camera) continue;
     const y = at[1] - (flat ? 0 : 11), raised = marker.selected || marker.id === hovered, forms = [...new Set([marker.tag, marker.tag.split(' · ')[0]])];
     for (const text of forms) {
-      const w = Math.round(text.length * (size.width > 640 ? 6.4 : 7) + 18 + (marker.icon ? 15 : 0) + (marker.count ? 26 : 0)), h = size.width > 640 ? 22 : 24;
+      const w = Math.round(text.length * 7 + 18 + (marker.icon ? 15 : 0) + (marker.count ? 26 : 0)), h = size.width > 640 ? 23 : 24;
       const side = (['right', 'left'] as const).find(side => {
         const rect = { x: side === 'right' ? at[0] + 14 : at[0] - 14 - w, y: y - h / 2, w, h };
         // A caption stays in the part of the map the page keeps free, so a panel over the map never hides one.
