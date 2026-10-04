@@ -266,6 +266,15 @@ try {
   const license = await fetch(new URL(licensePath, base)).then(async response => ({ status: response.status, text: await response.text() }), () => ({ status: 'failed', text: '' }));
   check('model license is served beside the weights', license.status === 200 && license.text === await readFile('licenses/multilingual-e5-small-MIT.txt', 'utf8'), `${license.status} ${licensePath}`);
   check('no request left the app origin', report.offsite.length === 0, report.offsite.map(item => item.url).join(', '));
+  // The offline app is whatever the worker kept: its page must load a main script kept beside it, and the model's code.
+  const shell = await page.evaluate(async () => {
+    const name = (await caches.keys()).find(key => key.startsWith('mercature-app-'));
+    const cache = await caches.open(name);
+    const kept = (await cache.keys()).map(request => new URL(request.url).pathname.split('/').pop());
+    const main = (await (await cache.match(new URL('./', location.href).href, { ignoreVary: true }))?.text())?.match(/assets\/(index-[\w-]+\.js)/)?.[1] ?? null;
+    return { name, main, mainKept: kept.includes(main), encoderKept: kept.some(file => /^encoder-[\w-]+\.js$/.test(file)) };
+  });
+  check('the kept app is one build with the model code', shell.mainKept && shell.encoderKept, `${shell.name}: page loads ${shell.main}, ${shell.mainKept ? 'kept' : 'NOT kept'}; encoder chunk ${shell.encoderKept ? 'kept' : 'NOT kept'}`);
   report.stored = await page.evaluate(async () => {
     const name = (await caches.keys()).find(key => key.startsWith('mercature-model-'));
     const cache = await caches.open(name);
