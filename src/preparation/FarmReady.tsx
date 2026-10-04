@@ -9,6 +9,8 @@ import { solveScene } from '../spatial/solver';
 import type { Project, Result } from '../spatial/contracts';
 import type { AuthoredViewState } from './Preparation';
 import { useLanguage } from '../i18n';
+import { PrimaryAction, TextButton } from '../ui';
+import { DownloadIcon, EnterIcon, HomeIcon, RotateIcon } from '../ui/icons';
 import './farm-ready.css';
 
 /** When each row starts its work, so a person can follow it. The work itself is real and unpadded. */
@@ -164,10 +166,10 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
       <ol className="farm-ready-steps" aria-label={t('farm.kicker')}>{rows.map(row => <li key={row.id} data-state={row.state} data-step={row.id}>
         <Mark/><span className="step-label">{row.label}</span><span className="step-value">{row.value}</span>
         {row.id === 'model' && step >= 2 && model.kind === 'downloading' && <span className="step-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, model.loaded / Math.max(1, model.total) * 100)}%` }}/></span>}
-        {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <button className="step-action" onClick={download}>{t('common.tryAgain')}</button> : !!downloadSize && <button className="step-action" onClick={download}>{t('farm.download', { size: megabytes(downloadSize) })}</button>)}
+        {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <TextButton className="step-action" icon={<RotateIcon/>} onClick={download}>{t('common.tryAgain')}</TextButton> : !!downloadSize && <TextButton className="step-action" icon={<DownloadIcon/>} onClick={download}>{t('farm.download', { size: megabytes(downloadSize) })}</TextButton>)}
       </li>)}</ol>
       {error && <p className="guide-error" role="alert">{error}</p>}
-      <div className="canvas-actions"><button ref={enterButton} onClick={error ? onHome : enter}>{t(error ? 'common.returnHome' : 'common.enter')}</button></div>
+      <div className="farm-ready-actions"><PrimaryAction ref={enterButton} icon={error ? <HomeIcon/> : <EnterIcon/>} onClick={error ? onHome : enter}>{t(error ? 'common.returnHome' : 'common.enter')}</PrimaryAction></div>
     </div>}
     dialogue={<><div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">{t('common.guide')}</span></Companion></div><p role="status">{line}</p></>}/>;
 }

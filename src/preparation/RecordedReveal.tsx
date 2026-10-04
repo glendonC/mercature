@@ -15,6 +15,8 @@ import { fromRecord, possibleFromRecord } from '../i18n/records';
 import { walkMarks, type Mark } from './marks';
 import RevealFx from '../fx/RevealFx';
 import { photosShown, type Beats } from '../fx/build';
+import { TextButton } from '../ui';
+import { SkipIcon } from '../ui/icons';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
@@ -332,7 +334,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           <p>{fromRecord(DESTINATIONS[id].place, lang)}</p>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : spot.w)} y2={spot.top + (spot.top > spot.y ? 0 : spot.h)}/>; })}</svg>
-        {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top }}>
+        {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} data-tone="dark" className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top }}>
           <div className="reveal-photo" style={{ aspectRatio: `${card.view.width} / ${card.view.height}` }}>
             <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
@@ -340,7 +342,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           <figcaption><strong>{possibleFromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
         {phase === 'play' && step && <p className="reveal-say" key={step.id}>{GLYPHS[step.id]}<span>{say}</span></p>}
-        <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</button></footer>
+        <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
     </div>}
