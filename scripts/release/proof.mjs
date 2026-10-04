@@ -114,7 +114,7 @@ async function openRoute(page, name) {
     await page.waitForTimeout(2500);
     await page.screenshot({ path: resolve(out, `${name}.png`) });
   }
-  if (await skip.isVisible()) await skip.click();
+  await skip.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
   await page.locator(SCREEN).waitFor();
 }
 
@@ -179,7 +179,7 @@ try {
   await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
   const skipNarikala = page.getByRole('button', { name: 'Skip', exact: true });
   await skipNarikala.waitFor();
-  if (await skipNarikala.isVisible()) await skipNarikala.click();
+  await skipNarikala.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
   await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor();
   const gulua = await page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
   page.off('response', onNarikala);
@@ -279,14 +279,14 @@ try {
   await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
   const skipAgain = page.getByRole('button', { name: 'Skip', exact: true });
   await skipAgain.waitFor();
-  if (await skipAgain.isVisible()) await skipAgain.click();
+  await skipAgain.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
   const narikalaAgain = await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor({ timeout: 15_000 }).then(() => page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 })).then(() => true, () => false);
   await page.screenshot({ path: resolve(out, 'narikala-again-390.png') });
   check(inMemory ? 'Narikala opens again' : 'Narikala opens offline after one online visit', narikalaAgain, narikalaAgain ? 'Data Gulua Rise marker shown' : 'not shown');
   check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
   const screen = await context?.pages()[0]?.evaluate(() => [document.querySelector('.ui-dialogue')?.textContent, ...[...document.querySelectorAll('.ui-choice')].map(choice => choice.textContent)].join(' | ').slice(0, 300)).catch(() => '');
-  check('proof ran to the end', false, `${error instanceof Error ? error.message.split('\n')[0] : String(error)}${screen ? `; screen: ${screen}` : ''}`);
+  check('proof ran to the end', false, `${error instanceof Error ? error.message.split('\n').slice(0, 3).join(' ') : String(error)}${screen ? `; screen: ${screen}` : ''}`);
   await context?.pages()[0]?.screenshot({ path: resolve(out, 'failure.png') }).catch(() => undefined);
 } finally {
   await context?.close();
