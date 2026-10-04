@@ -23,7 +23,7 @@ import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type Mark
 import { LabelledPhoto, photoOf } from '../photo';
 import Swap from '../fx/Swap';
 import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
-import { Bot, Options, Typed, type Chip } from './Say';
+import { Bot, Options, type Chip } from './Say';
 import './guide.css';
 import './guide-screen.css';
 
@@ -223,7 +223,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!named) return fallback;
     const landmark = routeSpots.find(item => !item.stretches.length && item.landmark === named.landmark);
     return {
-      en: bare(named.name.en).match(/\b(at|near|on|by)\b.*$/)?.[0] ?? fallback.en,
+      en: bare(named.name.en).match(/\b(at|near|on|by)\b.*$/)?.[0].replace(/^(at|near|on|by) (?!the )(.+)$/, (_, by: string, name: string) => `${by} ${enPlace(name)}`) ?? fallback.en,
       es: bare(named.name.es).match(/\b(en|cerca)\b.*$/)?.[0] ?? fallback.es,
       ko: spot.from === 0 && walk.start ? routeSpots.find(item => !item.stretches.length && item.landmark === walk.start!.name)?.aliases.ko?.[0] ?? where(walk.start, names).ko : landmark?.aliases.ko?.[0] ?? fallback.ko,
     };
@@ -638,7 +638,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = ack ? [ack] : [];
-  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null;
+  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '';
   const kindChips = (pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => EDIT_KINDS.map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
   const helloChips: Chip[] = [
     ...(items.length ? [{ id: 'check', label: s.hello.chips.check, primary: step.id === 'hello', onClick: () => go({ id: 'check', at: 0 }) }] : []),
@@ -684,7 +684,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       if (step.at === 0 && !ack) lines.push(s.messages.intro({ total: rows.length }));
       lines.push(s.messages.arrived({ n: step.at + 1, total: rows.length, language }));
       const first = answer?.candidates.map(targetOf).find((target): target is Target => !!target) ?? null;
-      if (busy === 'download') lines.push(model.status === 'downloading' ? s.model.downloading({ done: Math.round(model.loadedBytes / 1e6), total: Math.round(model.totalBytes / 1e6) }) : s.model.reading);
+      if (busy === 'download') { if (model.status === 'downloading') progress = s.model.downloading({ done: Math.round(model.loadedBytes / 1e6), total: Math.round(model.totalBytes / 1e6) }); else lines.push(s.model.reading); }
       else if (reading === row.id || (!message && ai)) lines.push(s.model.reading);
       else if (!message && !ai) {
         lines.push(unkept === 'not-kept' ? s.model.notKept : unkept === 'stopped' ? s.model.stopped : downloadBytes === null || model.status === 'failed' ? s.model.failed : s.model.download({ mb: Math.max(1, Math.round((downloadBytes ?? 0) / 1e6)) }));
@@ -827,11 +827,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   useEffect(() => { addEventListener('resize', placeBot); return () => removeEventListener('resize', placeBot); }, [placeBot]);
   // A number key picks that choice, as in a game, unless she is typing.
   const choicesNow = useRef(chips); choicesNow.current = chips;
+  const talk = useRef<((talking: boolean) => void) | null>(null);
+  const sayKey = lines.join('\n');
+  useLayoutEffect(() => { screen.current?.toggleAttribute('data-ready', !sayKey || working); }, [sayKey, working]);
   useEffect(() => {
     const pick = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey || (event.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable]')) return;
       const n = Number(event.key);
-      const chip = Number.isInteger(n) && n >= 1 && n <= 9 ? choicesNow.current[n - 1] : undefined;
+      const chip = Number.isInteger(n) && n >= 1 && n <= 9 && screen.current?.hasAttribute('data-ready') ? choicesNow.current[n - 1] : undefined;
       if (chip && !chip.disabled) { event.preventDefault(); chip.onClick(); }
     };
     addEventListener('keydown', pick);
@@ -851,7 +854,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         paths={[...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
-    <Bot ref={bot} working={working} />
+    <Bot ref={bot} working={working} talk={talk} />
     <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
       <div key={turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}
@@ -861,10 +864,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         </div>}
       </div>
     </div>
-    <Dialogue key={`line ${turn}`} label={t.workspace} lang={lang} meta={step.id === 'check' && item ? s.check.progress({ n: step.at + 1, total: items.length }) : undefined}
+    <Dialogue key={`line ${turn}`} say={lines} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} advanceAfter={1400} label={t.workspace} lang={lang} meta={step.id === 'check' && item ? s.check.progress({ n: step.at + 1, total: items.length }) : undefined}
       working={busy === 'reading'} workingLabel={s.model.reading}
       composer={words ? <Composer label={s.input.placeholder} sendLabel={s.input.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
-      <Typed lines={lines} lang={lang} />
+      {progress && <p className="gs-progress">{progress}</p>}
       {problem && <p className="gs-problem" role="alert">{problem}</p>}
     </Dialogue>
   </main>;

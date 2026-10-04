@@ -28,6 +28,9 @@
 .gs-back:hover { color: var(--ink); }
 .gs-back:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
 .gs-problem { margin: 4px 0 0; font-size: var(--font-xs); color: var(--ui-error); }
+.gs-progress { margin: 4px 0 0; font-size: var(--font-xs); color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+/* Her choices wait until the guide's last page is whole; they keep their place meanwhile, so nothing jumps. */
+.guide-screen:not([data-ready]) .guide-choices { visibility: hidden; }
 
 /* Cards that open above the dialogue: charcoal glass, white words */
 .gs-card { width: 100%; max-width: 560px; margin: 0; padding: 8px 12px 10px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); color: var(--ui-ink); }

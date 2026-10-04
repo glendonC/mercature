@@ -1,7 +1,4 @@
-/* The guide's own parts on top of the shared dialogue in src/ui: the typed words, the bot out in the map, and the number keys on her choices. */
-.guide-typed { display: grid; gap: 4px; }
-.guide-typed p { margin: 0; }
-::highlight(guide-untyped) { color: transparent; }
+/* The guide's own parts on top of the shared dialogue in src/ui: the bot out in the map, and the number keys on her choices. */
 
 .guide-bot { position: absolute; z-index: 6; left: 0; top: 0; pointer-events: none; visibility: hidden; transition: transform 420ms var(--ease-out); will-change: transform; }
 .guide-bot[data-placed] { visibility: visible; }

@@ -240,6 +240,8 @@ export type Script = {
   /** Clearing everything she did on this place, after she confirms. */
   restart: { chip: string; ask: string; yes: string; no: string };
   back: string;
+  /** The screen reader's name for the mark that turns to the next page of a line. */
+  more: string;
   notSaved: string;
 };
 
@@ -494,6 +496,7 @@ const en: Script = {
   input: { placeholder: 'Type in your own words', send: 'Send' },
   restart: { chip: 'Start over', ask: 'Clear everything you’ve done on this walk?', yes: 'Clear it', no: 'Keep it' },
   back: 'Back',
+  more: 'More',
   notSaved: 'That change didn’t save on this device.',
 };
 
@@ -727,6 +730,7 @@ const es: Script = {
   input: { placeholder: 'Escribe con tus palabras', send: 'Enviar' },
   restart: { chip: 'Empezar de nuevo', ask: '¿Borro todo lo que hiciste en este recorrido?', yes: 'Sí, borrar', no: 'No, conservar' },
   back: 'Volver',
+  more: 'Más',
   notSaved: 'Ese cambio no se guardó en este dispositivo.',
 };
 
