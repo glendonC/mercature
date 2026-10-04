@@ -526,7 +526,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
-    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} markers={markers} hover={lifted} photoView={photoView} changes={changes} />}
+    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} markers={markers} hover={lifted} changes={changes} />}
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>

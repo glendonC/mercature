@@ -28,6 +28,9 @@ export type Lens = {
   ground: (s: Point) => Point;
   /** Screen pixels per map unit around a map point. */
   scale: (p: Point) => number;
+  /** How far a ground point lies inside the nearest depth the lens draws faithfully; below zero it is too close to the viewer, so a
+   * shape on the ground is cut there before it is drawn. */
+  near: (p: Point) => number;
   /** The tilt it leans with, so a layer can lift things off the ground in step with it. */
   tilt: Tilt;
 };
@@ -80,7 +83,8 @@ export function lens(view: View, tilt: Tilt, width: number, height: number): Len
     const a = at(p), b = at([p[0] + 1, p[1]]), c = at([p[0], p[1] + 1]);
     return Math.sqrt(Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])));
   };
-  return { view, width, height, at, ground, scale, tilt };
+  const near = (p: Point) => d * 0.8 - ((p[0] - view.x) * view.k * sy + (p[1] - view.y) * view.k * cy) * sp;
+  return { view, width, height, at, ground, scale, near, tilt };
 }
 
 /** The view at one lean that centres the points in a screen box and fills it, within zoom limits. */

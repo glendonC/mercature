@@ -6,8 +6,8 @@
 .route-map .map-route-halo { stroke-width: 10px; vector-effect: non-scaling-stroke; }
 .route-map .map-route-line { stroke-width: 4px; vector-effect: non-scaling-stroke; }
 .route-map .map-scale, .route-map .map-north { display: none; }
-/* The motion layer draws the open photo's view as a camera where it was taken. */
-.route-map .map-heading { display: none; }
+/* What the open photo looks at: a quiet sector on the ground from where it was taken, one apex, its edges hairline */
+.route-map .map-heading { fill: color-mix(in srgb, var(--ink) 9%, transparent); stroke: color-mix(in srgb, var(--ink) 70%, transparent); stroke-width: 1px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .route-overlay polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .route-overlay .route-unseen-cover { stroke: var(--surface); stroke-width: 6px; stroke-linecap: butt; }
 .route-overlay .route-unseen { stroke: var(--unknown); stroke-width: 4px; stroke-dasharray: 3 5; stroke-linecap: butt; }

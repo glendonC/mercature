@@ -81,6 +81,16 @@ function planOf(data: Destination, project: (point: Coordinate) => Coordinate) {
   return { buildings, streets, paths, steps };
 }
 type Plan = ReturnType<typeof planOf>;
+/** The part of a shape on the ground the lens can draw faithfully: whatever comes closer to the viewer than its near depth is cut off. */
+function nearSide(polygon: Point[], lens: Lens): Point[] {
+  const out: Point[] = [];
+  polygon.forEach((a, i) => {
+    const b = polygon[(i + 1) % polygon.length], da = lens.near(a), db = lens.near(b);
+    if (da >= 0) out.push(a);
+    if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+  });
+  return out;
+}
 const xy = (p: Point) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
 const shape = (points: Point[]) => `M${points.map(xy).join('L')}Z`;
 
@@ -185,11 +195,13 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
   const selectedHeading = selectedView?.heading ?? selectedPhoto?.heading;
   const scaleMetres = zoom > 1 ? 20 : 50;
   const target = project(data.target.position);
-  /** The camera's field of view on the ground, from the selected photo's position along its heading. */
+  /** What the open photo looks at, on the ground: from where it was taken, along its recorded compass direction, as wide as its field
+   * of view (90 degrees for a cut from a panorama, 65 for a photo, as its marks were cast) and as deep as its marks reach, 30 m. */
   const wedge = selectedPhoto && selectedHeading != null ? (() => {
-    const [x, y] = frame(selectedPhoto.position), turn = selectedHeading * Math.PI / 180, c = Math.cos(turn), s = Math.sin(turn);
-    return ([[0, 0], [-14, -31], [14, -31]] as Point[]).map(([u, v]): Point => [x + u * c - v * s, y + u * s + v * c]);
+    const [x, y] = frame(selectedPhoto.position), half = (selectedView?.heading != null ? 90 : 65) / 2, reach = 30 * scale;
+    return [[x, y] as Point, ...Array.from({ length: 13 }, (_, i): Point => { const a = (selectedHeading - half + 2 * half * i / 12) * Math.PI / 180; return [x + Math.sin(a) * reach, y - Math.cos(a) * reach]; })];
   })() : null;
+  const seenWedge = wedge && lens ? nearSide(wedge, lens).map(p => lens.at(p)) : wedge;
   return <section className={`destination-map ${className}`} hidden={hidden} aria-label={t('map.label')}><svg ref={svgRef} viewBox={lens ? `0 0 ${lens.width} ${lens.height}` : viewBox} role="group" aria-label={t('map.svg')}>
     {!lens && <rect width="800" height="500" className="map-ground"/>}
     {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} riseOf={riseOf} label={name => name || t('map.building')}/> : base}
@@ -205,7 +217,7 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
       const chosen = selectedPhoto?.id === photo.id;
       return <g key={photo.id} role="button" tabIndex={0} aria-label={t('map.inspect', { creator: photo.creator, date: photo.capturedAt?.slice(0, 10) ?? t('map.unknownDate') })} aria-pressed={chosen} onClick={() => onSelect(viewId)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(viewId); } }}><circle cx={point[0]} cy={point[1]} r={12 * grow} fill="transparent"/><circle cx={point[0]} cy={point[1]} r={(chosen ? 6 : 3.2) * grow} className={chosen ? 'map-camera-view is-selected' : 'map-camera-view'}/></g>;
     })}</g>
-    {wedge && <path d={shape(lens ? wedge.map(p => lens.at(p)) : wedge)} className="map-heading" pointerEvents="none"/>}
+    {seenWedge && seenWedge.length > 2 && <path d={shape(seenWedge)} className="map-heading" pointerEvents="none"/>}
     <g transform={`translate(${target.join(' ')})${lens ? ` scale(${Math.min(1.3, size(data.target.position))})` : ''}`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>
     {children}
     {!lens && !still && <><g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text></>}
