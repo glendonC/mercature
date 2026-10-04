@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { QORIKANCHA_PLACE } from '../../src/site/route';
-import { addSpot, addedSpot, clearFixed, isFixed, markFixed, ownNote, parseEdits, removeSpot, setNote, NOTE_LIMIT, NO_NOTE, type Edits } from '../../src/edits/store';
+import { addSpot, addedSpot, clearFixed, isFixed, markFixed, ownNote, parseEdits, removeSpot, setNote, EDIT_KINDS, NOTE_LIMIT, NO_NOTE, type Edits } from '../../src/edits/store';
 import { addedFeature, fixedLine, noteForPassage, ownNoteLines, withEdits, type Locate } from '../../src/edits/place';
 
 const empty: Edits = { schema: 'mercature-route-edits/1', place: 'cusco-qorikancha', added: [], fixed: {}, notes: {}, seq: 0 };
@@ -85,13 +85,21 @@ test('the merged place keeps the authored spots and their order, and changes onl
   expect(new Set(merged.features.map(feature => feature.id)).size).toBe(merged.features.length);
 });
 
-test('a fixed spot reports her record and its date, and claims nothing else', () => {
+test('a fixed spot says she recorded it, never that the way is clear', () => {
   const where = { en: 'near Loreto', es: 'cerca de Loreto', ko: '로레토' };
-  expect(fixedLine('steps', where, 215.4, at, 'en')).toBe('Update, October 4, 2026: steps near Loreto, about 215 m along the walk, have been fixed.');
-  expect(fixedLine('kerb', where, 95, at, 'en')).toContain('has been fixed');
-  expect(fixedLine('steps', where, 215, at, 'es')).toContain('4 de octubre de 2026');
-  expect(fixedLine('steps', where, 215, at, 'ko')).toContain('수리되었습니다');
-  for (const language of ['en', 'es', 'ko'] as const) expect(fixedLine('steps', where, 215, at, language)).not.toMatch(/we fixed|arreglamos|passable|safe/i);
+  expect(fixedLine('steps', where, 215.4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, about 215 m along the walk, as fixed.');
+  expect(fixedLine('kerb', where, 95, at, 'en')).toBe('Update, October 4, 2026: we recorded the kerb near Loreto, about 95 m along the walk, as fixed.');
+  expect(fixedLine('steps', where, 215, at, 'es')).toBe('Actualización, 4 de octubre de 2026: registramos los escalones cerca de Loreto, a unos 215 m del inicio, como arreglados.');
+  expect(fixedLine('kerb', where, 215, at, 'es')).toContain('el bordillo cerca de Loreto, a unos 215 m del inicio, como arreglado.');
+  expect(fixedLine('steps', where, 215, at, 'ko')).toBe('업데이트 (2026년 10월 4일): 출발점에서 약 215m, 로레토 근처 계단을 수리 완료로 기록했습니다.');
+  // Every kind keeps its Korean object particle, and no line claims the way is clear.
+  for (const kind of EDIT_KINDS) {
+    expect(fixedLine(kind, where, 215, at, 'ko'), kind).not.toContain('은(는)');
+    expect(fixedLine(kind, where, 215, at, 'ko'), kind).toMatch(/(을|를) 수리 완료로 기록했습니다\.$/);
+    for (const language of ['en', 'es', 'ko'] as const) {
+      expect(fixedLine(kind, where, 215, at, language), kind).not.toMatch(/we fixed|arreglamos|passable|accessible|safe|지나갈 수 있|안전/i);
+    }
+  }
 });
 
 test('her words reach only the note written in their own language', () => {

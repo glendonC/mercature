@@ -54,16 +54,35 @@ export function recordDate(at: string, language: VisitorLang): string {
 }
 
 /**
- * The visitor-facing line for a spot she has fixed. It reports her record and its date,
- * and claims nothing about width, slope or who can pass.
+ * How a fixed spot is named in a visitor's language, with the agreement each one needs.
+ * Spanish carries its own participle; Korean takes an object particle chosen by the final consonant.
+ */
+const FIXED_SUBJECT: Readonly<Record<EditKind, { en: string; es: string; esDone: string; ko: string }>> = {
+  steps: { en: 'the steps', es: 'los escalones', esDone: 'arreglados', ko: '계단' },
+  kerb: { en: 'the kerb', es: 'el bordillo', esDone: 'arreglado', ko: '연석' },
+  narrow: { en: 'the narrow part', es: 'el paso angosto', esDone: 'arreglado', ko: '좁은 구간' },
+  other: { en: 'what was in the way', es: 'el obstáculo', esDone: 'arreglado', ko: '장애물' },
+};
+
+/** 을 after a syllable that ends in a consonant, 를 after one that ends in a vowel. */
+export function objectParticle(noun: string): string {
+  const last = noun.trim().at(-1) ?? '';
+  const code = last.charCodeAt(0);
+  if (code < 0xac00 || code > 0xd7a3) return '을';
+  return (code - 0xac00) % 28 ? '을' : '를';
+}
+
+/**
+ * The visitor-facing line for a spot she has marked fixed. It reports that she recorded it,
+ * with the date, and never says the way is clear, passable or safe.
  */
 export const UPDATE = {
   fixed: {
     en: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Update, ${date}: ${KIND_WORDS[kind].en} ${where.en}, about ${metres} m along the walk, ${KIND_WORDS[kind].plural ? 'have' : 'has'} been fixed.`,
+      `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, about ${metres} m along the walk, as fixed.`,
     es: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Actualización, ${date}: ${KIND_WORDS[kind].es} ${where.es}, a unos ${metres} m del inicio, ${KIND_WORDS[kind].plural ? 'ya están arreglados' : 'ya está arreglado'}.`,
+      `Actualización, ${date}: registramos ${FIXED_SUBJECT[kind].es} ${where.es}, a unos ${metres} m del inicio, como ${FIXED_SUBJECT[kind].esDone}.`,
     ko: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `업데이트 (${date}): 출발점에서 약 ${metres}m, ${where.ko} 근처 ${KIND_WORDS[kind].ko}은(는) 수리되었습니다.`,
+      `업데이트 (${date}): 출발점에서 약 ${metres}m, ${where.ko} 근처 ${FIXED_SUBJECT[kind].ko}${objectParticle(FIXED_SUBJECT[kind].ko)} 수리 완료로 기록했습니다.`,
   },
 };
