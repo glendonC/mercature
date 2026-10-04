@@ -8,7 +8,7 @@ export type Tilt = {
   yaw: number;
   /** Viewing distance in pixels; a smaller one is a stronger perspective. */
   depth: number;
-  /** Height of the drawn blocks in metres. Every building gets the same height; none is measured. */
+  /** Height of an ordinary block in metres, about two and a half storeys. Illustrative: no height is measured. */
   rise: number;
   /** Screen angle the walk should run at, in degrees below the horizontal. */
   course: number;
@@ -31,13 +31,13 @@ export type Lens = {
 };
 
 const RADIANS = Math.PI / 180;
-/** Blocks never stand taller than this many pixels, so a close view stays readable. */
-const HIGHEST = 12;
+/** Blocks ease toward this many pixels at most, so a close view stays readable and tall stays taller than low. */
+const TALLEST = 46;
 
 /** The yaw here is a default; aimed() sets it for each walk. */
 export const TILT = {
-  wide: { pitch: 50, yaw: 0, depth: 1150, rise: 5, course: 35, swing: 20 },
-  phone: { pitch: 40, yaw: 0, depth: 900, rise: 5, course: 35, swing: 35 },
+  wide: { pitch: 50, yaw: 0, depth: 1150, rise: 8, course: 35, swing: 20 },
+  phone: { pitch: 40, yaw: 0, depth: 900, rise: 8, course: 35, swing: 35 },
 } satisfies Record<string, Tilt>;
 
 /** Phones lean less and may turn further, so the walk can stand upright when that shows it larger. */
@@ -57,7 +57,7 @@ export function lens(view: View, tilt: Tilt, width: number, height: number): Len
   const cp = Math.cos(pitch), sp = Math.sin(pitch), cy = Math.cos(yaw), sy = Math.sin(yaw);
   const cx = width / 2, cz = height / 2;
   const at = (p: Point, up = 0): Point => {
-    const ex = (p[0] - view.x) * view.k, ey = (p[1] - view.y) * view.k, h = Math.min(up * view.k, HIGHEST) * view.lean;
+    const ex = (p[0] - view.x) * view.k, ey = (p[1] - view.y) * view.k, h = TALLEST * Math.tanh(up * view.k / TALLEST) * view.lean;
     const rx = ex * cy - ey * sy, ry = ex * sy + ey * cy;
     // Anything this close to the viewer is far below the screen; holding it there keeps its shape finite.
     const z = Math.min(ry * sp + h * cp, d * 0.9), s = d / (d - z);

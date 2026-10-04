@@ -44,12 +44,31 @@ function band(line: Point[], half: number): Point[][] {
   });
   return parts.map(turned);
 }
+/** How much taller than an ordinary block a named building is drawn: churches, then convents and palaces. Illustrative only. */
+const STATURE: [RegExp, number][] = [[/\b(catedral|cathedral|iglesia|church|capilla|chapel|templo|bas[ií]lica)\b/i, 2.5], [/\b(convento|monasterio|convent|monastery|palacio|palace|municipalidad)\b/i, 1.5]];
+const inside = (p: Point, ring: Point[]) => {
+  let hit = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) if ((ring[i][1] > p[1]) !== (ring[j][1] > p[1]) && p[0] < (ring[j][0] - ring[i][0]) * (p[1] - ring[i][1]) / (ring[j][1] - ring[i][1]) + ring[i][0]) hit = !hit;
+  return hit;
+};
 /** The map's own geometry in route-frame units, kept for drawing through a lens. */
 function planOf(data: Destination, project: (point: Coordinate) => Coordinate) {
-  const buildings = data.buildings.map(feature => ({ id: feature.id, name: feature.name, rings: [feature.points, ...feature.holes].map((ring, i) => {
-    const points = open(ring.map(project));
-    return { points, hole: i > 0, turn: Math.sign(area(points)) };
-  }) }));
+  const buildings = data.buildings.map(feature => {
+    const stature = STATURE.find(([pattern]) => pattern.test(feature.name))?.[1] ?? 1;
+    return { id: feature.id, name: feature.name, stature, rings: [feature.points, ...feature.holes].map((ring, i) => {
+      const points = open(ring.map(project));
+      return { points, hole: i > 0, turn: Math.sign(area(points)), buried: [] as boolean[] };
+    }) };
+  });
+  // A wall against a neighbour at least as tall is inside the block; it is never seen, so it is never drawn.
+  for (const building of buildings) for (const ring of building.rings) {
+    const outward = ring.turn * (ring.hole ? -1 : 1);
+    ring.buried = ring.points.map((a, i) => {
+      const b = ring.points[(i + 1) % ring.points.length], length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const probe: Point = [(a[0] + b[0]) / 2 + (b[1] - a[1]) / length * outward * 0.6, (a[1] + b[1]) / 2 - (b[0] - a[0]) / length * outward * 0.6];
+      return buildings.some(other => other !== building && other.stature >= building.stature && inside(probe, other.rings[0].points) && !other.rings.slice(1).some(hole => inside(probe, hole.points)));
+    });
+  }
   const streets: Point[][] = [], paths: Point[][] = [], steps: Point[][] = [];
   for (const way of data.ways) {
     const line = way.points.map(project);
@@ -63,19 +82,33 @@ type Plan = ReturnType<typeof planOf>;
 const xy = (p: Point) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
 const shape = (points: Point[]) => `M${points.map(xy).join('L')}Z`;
 
-/** The ground drawn through a lens: streets, then low blocks for buildings, walls before roofs. */
+/** The ground drawn through a lens: streets, then each block from the farthest to the nearest, walls before its roof. */
 function Ground({ plan, lens, rise, label }: { plan: Plan; lens: Lens; rise: number; label: (name: string) => string }) {
-  // Walls facing away sit under their own roof; the rest take light from the left.
-  let lit = '', shade = '';
-  for (const building of plan.buildings) for (const ring of building.rings) {
-    const base = ring.points.map(p => lens.at(p)), top = ring.points.map(p => lens.at(p, rise)), outward = ring.turn * (ring.hole ? -1 : 1);
-    for (let i = 0; i < base.length; i++) {
-      const j = (i + 1) % base.length, wall = [base[i], base[j], top[j], top[i]], facing = area(wall);
-      if (facing * outward <= 0) continue;
-      const dx = base[j][0] - base[i][0], dy = base[j][1] - base[i][1], right = dy * outward / Math.max(1e-6, Math.hypot(dx, dy)) > 0.35;
-      const d = shape(facing > 0 ? wall : wall.reverse());
-      if (right) shade += d; else lit += d;
+  const blocks = plan.buildings.flatMap(building => {
+    const up = rise * building.stature, walls = { lit: '', front: '', shade: '' };
+    // A block wholly off screen is not drawn; one just below the edge may still rise into view.
+    const outline = building.rings[0].points.map(p => lens.at(p)), margin = 60;
+    if (outline.every(p => p[0] < -margin) || outline.every(p => p[0] > lens.width + margin) || outline.every(p => p[1] < -margin) || outline.every(p => p[1] > lens.height + margin * 2.5)) return [];
+    for (const ring of building.rings) {
+      const base = ring.points.map(p => lens.at(p)), top = ring.points.map(p => lens.at(p, up)), outward = ring.turn * (ring.hole ? -1 : 1);
+      for (let i = 0; i < base.length; i++) {
+        const j = (i + 1) % base.length, wall = [base[i], base[j], top[j], top[i]], facing = area(wall);
+        // A wall turned away from the viewer sits under its own roof.
+        if (ring.buried[i] || facing * outward <= 0) continue;
+        // Light from the upper left: walls facing left are lit, walls facing the viewer are mid, walls facing right are in shade.
+        const across = (base[j][1] - base[i][1]) * outward / Math.max(1e-6, Math.hypot(base[j][0] - base[i][0], base[j][1] - base[i][1]));
+        walls[across < -0.4 ? 'lit' : across > 0.4 ? 'shade' : 'front'] += shape(facing > 0 ? wall : wall.reverse());
+      }
     }
+    const centre = building.rings[0].points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]).map(v => v / building.rings[0].points.length) as Point;
+    return [{ building, walls, depth: lens.at(centre)[1], roof: building.rings.map(ring => shape(ring.points.map(p => lens.at(p, up)))).join('') }];
+  }).sort((a, b) => a.depth - b.depth);
+  // Blocks of one height can share paths, walls before roofs; a taller one keeps its own place in the depth order.
+  const runs: { key: string; landmark: boolean; walls: typeof blocks[number]['walls']; roofs: { id: string; name: string; d: string }[] }[] = [];
+  for (const { building, walls, roof } of blocks) {
+    const last = runs.at(-1), landmark = building.stature > 1;
+    if (last && !landmark && !last.landmark) { last.walls.lit += walls.lit; last.walls.front += walls.front; last.walls.shade += walls.shade; last.roofs.push({ id: building.id, name: building.name, d: roof }); }
+    else runs.push({ key: building.id, landmark, walls: { ...walls }, roofs: [{ id: building.id, name: building.name, d: roof }] });
   }
   const fill = (polygons: Point[][]) => polygons.map(polygon => shape(polygon.map(p => lens.at(p)))).join('');
   const streets = fill(plan.streets) + fill(plan.paths);
@@ -83,9 +116,12 @@ function Ground({ plan, lens, rise, label }: { plan: Plan; lens: Lens; rise: num
   return <g className="map-base">
     <path d={streets} className="map-way-area"/>
     {steps}
-    <path d={lit} className="map-walls"/>
-    <path d={shade} className="map-walls is-shaded"/>
-    {plan.buildings.map(building => <path key={building.id} d={building.rings.map(ring => shape(ring.points.map(p => lens.at(p, rise)))).join('')} fillRule="evenodd" className="map-building"><title>{label(building.name)}</title></path>)}
+    {runs.map(({ key, landmark, walls, roofs }) => <g key={key} className={landmark ? 'map-block is-landmark' : 'map-block'}>
+      <path d={walls.lit} className="map-walls is-lit"/>
+      <path d={walls.front} className="map-walls"/>
+      <path d={walls.shade} className="map-walls is-shaded"/>
+      {roofs.map(roof => <path key={roof.id} d={roof.d} fillRule="evenodd" className="map-building"><title>{label(roof.name)}</title></path>)}
+    </g>)}
     {/* The flat map draws its streets over the buildings; that copy fades as the blocks rise. */}
     {lens.view.lean < 0.25 && <g opacity={1 - lens.view.lean * 4}><path d={streets} className="map-way-area"/>{steps}</g>}
   </g>;

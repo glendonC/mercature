@@ -40,9 +40,16 @@
 .route-map[data-still], .route-map[data-still]:active { touch-action: auto; cursor: default; }
 .route-map[data-still] .route-marker { pointer-events: none; }
 
-/* Leaning: streets, low blocks with lit and shaded walls, and a haze toward the horizon */
-.map-walls { fill: #c1c7cb; }
-.map-walls.is-shaded { fill: #a9b0b6; }
+/* Leaning: streets, then blocks with crisp roofs and walls in three tones of light from the left, a faint stone on landmarks,
+   and a haze toward the horizon. Roofs ease from the flat map's grey as the map leans. */
+.route-map[data-lean] .map-building { fill: #e4e7e9; stroke: #a3abb1; stroke-width: 0.9; stroke-linejoin: round; transition: fill 0.6s, stroke 0.6s; }
+.map-walls { fill: #b3bac0; }
+.map-walls.is-lit { fill: #cdd2d6; }
+.map-walls.is-shaded { fill: #959ea5; }
+.route-map[data-lean] .is-landmark .map-building { fill: #efe9df; stroke: #b5a998; }
+.is-landmark .map-walls { fill: #c9bdab; }
+.is-landmark .map-walls.is-lit { fill: #ddd4c6; }
+.is-landmark .map-walls.is-shaded { fill: #aa9d89; }
 .map-way-area { fill: #fff; }
 .map-fog-far { stop-color: var(--map-ground); }
 .map-fog-clear { stop-color: var(--map-ground); stop-opacity: 0; }
