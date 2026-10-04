@@ -434,7 +434,7 @@ export const es = {
   'spatial.closeEvidence': 'Cerrar evidencia',
   'spatial.removed': 'Quitado en esta propuesta.',
   'spatial.records': 'Ejemplo. Nada aquí se midió.',
-  'spatial.start': 'Inicio',
+  'spatial.start': 'Salida',
   'spatial.inspect': 'Revisar {label}',
   'spatial.planView': 'Vista de plano',
   'spatial.spatialView': 'Vista espacial',
