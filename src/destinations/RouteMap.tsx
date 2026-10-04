@@ -110,6 +110,8 @@ type Props = {
   picking?: boolean | 'free';
   /** Lines beside the walk, drawn under it. "Whole route" shows them too. */
   paths?: MapPath[];
+  /** With still: once it has leaned, the map slowly turns full circle about its walk until the first pointer, key, wheel or touch. */
+  turntable?: boolean;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -129,6 +131,10 @@ const settle = (t: number) => 1 - Math.pow(1 - t, 3);
 const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 /** How long the map takes to lean back once the reveal has landed on it. */
 const LEAN_FOR = 1000;
+/** The turntable starts this long after the map first shows, takes this long per turn, and paints at most every this many ms. */
+const TURN_AFTER = 4000, TURN_FOR = 75000, PAINT_EVERY = 33;
+/** Any input stops the turntable for the rest of the visit; the old inbox never turns. */
+let turntableStopped = (() => { try { return new URLSearchParams(location.search).get('ui') === 'inbox'; } catch { return true; } })();
 /** A camera move; arc is how far it draws back halfway, so a long flight keeps both ends in sight. */
 type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number; arc?: number };
 
@@ -192,7 +198,7 @@ function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] =
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -375,6 +381,36 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     leanTween.current = { from: live.current.lean, to: 1, started: now };
     run();
   }, [landed, size, fitCamera, run]);
+
+  const mounted = useRef(performance.now());
+  // The turntable: the leaned backdrop turns about the middle of its walk, held in the free box at a zoom that fits every bearing.
+  useEffect(() => {
+    if (!still || !turntable || !leaning || !landed || turntableStopped || quiet() || !size.width || !size.height) return;
+    const { width, height } = size, tilt = tiltOf(width, height), { free } = fitFlat(width, height), fit = fitCamera(width, height, 1);
+    const { minX, minY, maxX, maxY } = walk.extent, middle: Point = [(minX + maxX) / 2, (minY + maxY) / 2];
+    const k = Math.min(...Array.from({ length: 24 }, (_, i) => framing(reach, free, 1, tilt, width, height, { ...fit, turn: i * 15 }).k)) * 0.94;
+    const screen: Point = [(free.left + free.right) / 2, (free.top + free.bottom) / 2], born = mounted.current;
+    let frame = 0, last = 0, spun = 0, from: View | null = null;
+    const stop = (event: Event) => {
+      if (event.type === 'pointermove' && ((event as PointerEvent).pointerType !== 'mouse' || !((event as PointerEvent).movementX || (event as PointerEvent).movementY))) return;
+      turntableStopped = true; cancelAnimationFrame(frame); off();
+    };
+    const kinds = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
+    const off = () => kinds.forEach(kind => removeEventListener(kind, stop, { capture: true }));
+    kinds.forEach(kind => addEventListener(kind, stop, { capture: true, passive: true }));
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      if (now - born < TURN_AFTER || tween.current || leanTween.current || now - last < PAINT_EVERY) return;
+      // A hidden tab pauses the frames; the turn takes up where it left off rather than jumping.
+      spun += last ? Math.min(now - last, 100) : 0; last = now;
+      from ??= live.current ?? fit;
+      const turn = (from.turn ?? 0) + 360 * spun / TURN_FOR, aim = place(middle, screen, k, 1, turn), e = sway(Math.min(1, spun / 3000));
+      const next = { x: from.x + (aim.x - from.x) * e, y: from.y + (aim.y - from.y) * e, k: from.k * Math.pow(k / from.k, e), lean: 1, turn };
+      live.current = next; setCamera(next);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(frame); off(); };
+  }, [still, turntable, leaning, landed, size, tiltOf, fitFlat, fitCamera, walk, reach, place]);
 
   // The map credit of a map people use: the full line at first, folded to a small chip after the first move or a few seconds;
   // a tap opens it again.

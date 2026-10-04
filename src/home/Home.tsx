@@ -155,7 +155,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   return <main ref={shell} className="welcome-shell site-home" aria-label={t('home.label')}>
     {shown ? <RouteMap key={shown.data.id} still data={shown.data} walk={shown.walk} photoView="" markers={shown.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={shown.data.target.name}/>
-      : hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
+      : hero.data && hero.walk && <RouteMap still turntable data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
