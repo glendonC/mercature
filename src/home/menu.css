@@ -18,9 +18,10 @@
   .menu-panel { position: absolute; top: 72px; right: 4vw; width: min(360px, 92vw); max-height: min(72svh, 640px); }
 }
 .menu-source { margin: 0 0 6px; font-size: var(--font-xs); line-height: var(--leading-read); color: var(--ui-muted); }
+/* One source to a row, each link a full 44 px target, with the text where it was. */
 .menu-covers { margin: 2px 0 4px; padding: 0; list-style: none; font-size: var(--font-xs); line-height: var(--leading-read); color: var(--ui-muted); }
-.menu-covers li + li { margin-top: 2px; }
-.menu-covers a { display: inline-block; min-height: 24px; color: var(--ui-ink); }
+.menu-covers li { display: flex; flex-wrap: wrap; align-items: center; gap: 0 5px; min-height: var(--tap); }
+.menu-covers a { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--ui-ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .menu-dialog[open], .menu-dialog[open]::backdrop { animation: none; }

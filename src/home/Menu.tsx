@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { DESTINATIONS } from '../destinations/data';
 import { LANGS, LANG_NAMES, useLanguage, type Lang } from '../i18n';
 import { List, Panel, PanelHead, Row, Section, Segmented, IconButton, TextButton } from '../ui';
-import { CloseIcon, HomeIcon, MoreIcon } from '../ui/icons';
+import { CloseIcon, HomeIcon, MenuIcon } from '../ui/icons';
 import { covers } from './Home';
 import './menu.css';
 
@@ -27,7 +27,7 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
   const close = () => sheet.current?.close();
   const go = (run: () => void) => { close(); run(); };
   return <>
-    <IconButton label={t('home.menu')} className={`menu-button ${className}`.trim()} onClick={() => sheet.current?.showModal()}><MoreIcon/></IconButton>
+    <IconButton label={t('home.menu')} className={`menu-button ${className}`.trim()} onClick={() => sheet.current?.showModal()}><MenuIcon/></IconButton>
     <dialog ref={sheet} className="menu-dialog" aria-label={t('home.menu')} onClick={event => { if (event.target === sheet.current) close(); }}>
       <Panel size="card" phone="sheet" scroll className="menu-panel">
         <PanelHead title={t('home.menu')} actions={<IconButton label={t('home.closeMenu')} onClick={close}><CloseIcon/></IconButton>}/>
