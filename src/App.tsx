@@ -32,7 +32,6 @@ export default function App() {
     key: string;
     plan?: ImprovementPlan;
     project?: Project;
-    site?: string;
     initialViewState?: AuthoredViewState;
   } | null>(null);
   const [error, setError] = useState(initial.error);
@@ -82,7 +81,7 @@ export default function App() {
           />
         </div>
       )}
-      {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, site: "noor-farm", initialViewState}); setActive("spatial"); }} />}
+      {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, initialViewState}); setActive("spatial"); }} />}
       {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} onPlace={openDestination} />)}
       {error && (
         <div className="app-error" role="alert">
