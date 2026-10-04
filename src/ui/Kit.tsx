@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { IconButton, Kbd, Legend, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
+import { Callout, IconButton, Kbd, Legend, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -82,7 +82,7 @@ export default function Kit() {
     <div className="kit-tools"><TextButton flush icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Note</TextButton><TextButton muted>Remove</TextButton></div>
     <div className="kit-reply">
       <Segmented label="Reply in" value="ko" onChange={() => {}} options={[{ value: 'en', label: 'English' }, { value: 'es', label: 'Español', lang: 'es' }, { value: 'ko', label: '한국어', lang: 'ko' }]} />
-      <p className="kit-reply-text" lang="ko">코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다.</p>
+      <Callout lang="ko">코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다.</Callout>
       <PrimaryAction icon={<I.CopyIcon />} kbd="↵">Copy reply</PrimaryAction>
     </div>
   </Panel>;
@@ -168,6 +168,7 @@ export default function Kit() {
       </Specimen>
 
       <Specimen title="Fields">
+        <Quote lang="es">Algunas partes del recorrido fueron bien duras para mi papá con su bastón.</Quote>
         <div className="kit-fields"><TextArea placeholder="Paste a visitor's message" aria-label="Visitor message" /><div className="kit-row"><Select aria-label="Language" defaultValue="es"><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option></Select><PrimaryAction>Read</PrimaryAction></div></div>
       </Specimen>
 

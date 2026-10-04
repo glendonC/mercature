@@ -10,9 +10,8 @@
 .kit-foot { display: flex; align-items: center; justify-content: space-between; border-top: var(--hair-width) solid var(--ui-hair); }
 .kit-foot > :last-child { margin-inline-end: -10px; }
 .kit-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px; }
-.kit-reply { display: grid; justify-items: start; gap: 4px; margin-top: 2px; padding-top: 4px; border-top: var(--hair-width) solid var(--ui-hair); }
-.kit-reply .ui-segmented { margin-inline-start: -2px; }
-.kit-reply-text { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--ui-fill); box-shadow: inset 0 0 0 var(--hair-width) var(--ui-hair); font-size: var(--font-m); line-height: var(--leading-read); }
+.kit-reply { display: grid; justify-items: stretch; gap: 4px; margin-top: 2px; padding-top: 4px; border-top: var(--hair-width) solid var(--ui-hair); }
+.kit-reply .ui-segmented { justify-self: start; margin-inline-start: -2px; }
 .kit-reply .ui-primary { justify-self: end; margin-inline-end: -4px; }
 .kit-photo { margin: 2px 0 6px; }
 .kit-photo-frame { position: relative; overflow: hidden; aspect-ratio: 1 / var(--ratio, 0.75); border-radius: 10px; background: #d9dcde; }

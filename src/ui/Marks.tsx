@@ -6,6 +6,16 @@ export function Tag({ tone = 'neutral', children, className, lang, title }: { to
   return <span className={cx('ui-tag', className)} data-tone={tone} lang={lang} title={title}>{children}</span>;
 }
 
+/** A visitor's own words, set off by a hairline rule. */
+export function Quote({ children, lang, className }: { children: ReactNode; lang?: string; className?: string }) {
+  return <blockquote className={cx('ui-quote', className)} lang={lang}>{children}</blockquote>;
+}
+
+/** Text the app made from its templates, such as a reply or the route note, in a soft box. */
+export function Callout({ children, lang, className }: { children: ReactNode; lang?: string; className?: string }) {
+  return <p className={cx('ui-callout', className)} lang={lang}>{children}</p>;
+}
+
 /** A key that does the same thing, hidden on touch screens. */
 export function Kbd({ children }: { children: ReactNode }) {
   return <kbd className="ui-kbd">{children}</kbd>;
