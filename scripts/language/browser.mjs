@@ -102,7 +102,7 @@ try {
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
     await page.evaluate(place => window.languageCheck.prepareSite(place), placeName),
   ];
-  // One spot added to the walk: only that spot should be embedded.
+  // One spot added to the tour route: only that spot should be embedded.
   if (placeName === 'route') {
     result.addedSpot = [
       await page.evaluate(() => window.languageCheck.prepareSite('route-plus')),

@@ -1,7 +1,7 @@
 /**
  * Evaluate the shipped heads and thresholds on one split with fresh inference for every message.
  * Usage: node scripts/language/evaluate.mjs [dev|test|route] [--place <id>]. The held-out split ("test") is for the
- * single preregistered run; thresholds are never changed after it. "route" scores a recorded walk's messages
+ * single preregistered run; thresholds are never changed after it. "route" scores a recorded tour route's messages
  * against that place with the same farm-trained heads, as a transfer test: Qorikancha by default, or another
  * place in ROUTE_MESSAGES with --place.
  */
@@ -16,7 +16,7 @@ import { FARM_FEATURES, HEADS_PATH, VARIANT, asExpected, categoryLabels, concern
 
 const SPLITS = ['train', 'dev', 'test', 'route'];
 const split = process.argv.slice(2).find(arg => SPLITS.includes(arg)) ?? 'dev';
-/** Each place's labelled walk messages. */
+/** Each place's labelled route messages. */
 const ROUTE_MESSAGES = { 'cusco-qorikancha': './route-messages.json', 'tbilisi-narikala': './narikala-messages.json' };
 const flag = process.argv.indexOf('--place'), placeId = flag > 0 ? process.argv[flag + 1] : 'cusco-qorikancha';
 if (!Object.hasOwn(ROUTE_MESSAGES, placeId) || !ROUTE_PLACES[placeId]) throw new Error(`--place must be one of: ${Object.keys(ROUTE_MESSAGES).join(', ')}.`);

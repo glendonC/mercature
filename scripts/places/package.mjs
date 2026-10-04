@@ -23,7 +23,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const source = join(root, '.local/routes', id);
 const target = join(root, 'public/places', routePlace.folder);
 const REVEAL = { count: 20, every: 3, size: 480, quality: 72 };
-// A walk with many photo findings ships them smaller; outlines keep the retained view's pixels, since the app scales each image to its view.
+// A tour route with many photo findings ships them smaller; outlines keep the retained view's pixels, since the app scales each image to its view.
 const FINDING = { budget: 3_000_000, size: 720, quality: 45 };
 const SOURCES = ['mapillary', 'openstreetmap', 'valhalla', 'sam3'];
 
@@ -160,7 +160,7 @@ const place = {
   route_spots: routePlace.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })),
   scan,
 };
-// What OpenStreetMap says along the walk, placed on its stretches by src/osm/access.ts, the module a browser uses for a new walk.
+// What OpenStreetMap says along the route, placed on its stretches by src/osm/access.ts, the module a browser uses for a new route.
 // A new key at the end, so every key before it stays as it was.
 const answer = JSON.parse(readFileSync(osmFile, 'utf8'));
 const access = accessFindings(answer.elements, record.stretches.map(s => ({ index: s.index, line: s.line })), { nearMetres: record.rules.near_m });
@@ -169,7 +169,7 @@ place.osm = {
   note: 'What OpenStreetMap says along the walk, never checked by a person. Widths and inclines are left out. Only steps are a possible barrier, as in the findings.',
   kinds: accessKinds(access), findings: access,
 };
-// The way around the walk's mapped steps, built by src/routes/around.ts from the answers scripts/routes/around.mjs keeps.
+// The way around the route's mapped steps, built by src/routes/around.ts from the answers scripts/routes/around.mjs keeps.
 // A new key after osm, so every key before it stays as it was.
 const aroundFile = join(root, '.local/routes-around', `${id}.json`);
 if (!existsSync(aroundFile)) throw new Error(`Missing ${aroundFile}; run node scripts/routes/around.mjs ${id} first.`);

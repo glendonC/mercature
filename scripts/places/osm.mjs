@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Asks Overpass once for what OpenStreetMap says along a recorded walk and keeps the answer in .local/osm/<id>.json,
+// Asks Overpass once for what OpenStreetMap says along a recorded tour route and keeps the answer in .local/osm/<id>.json,
 // which package.mjs reads, so packaging itself needs no network and the same answer gives the same bytes.
 // Usage: node scripts/places/osm.mjs <id>. Data © OpenStreetMap contributors, ODbL 1.0.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

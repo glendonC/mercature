@@ -3,7 +3,7 @@ import { FARM_FEATURES } from '../../../src/site/inventory';
 import { QORIKANCHA_PLACE } from '../../../src/site/route';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, rememberedCount, understand } from '../../../src/language/understand';
 
-/** The walk with one spot added the way the operator adds one, to time an edit of the place. */
+/** The tour route with one spot added the way the operator adds one, to time an edit of the place. */
 const added = {
   id: 'added-1',
   name: { en: 'Steps near Loreto (210 to 220 m)', es: 'Escalones cerca de Loreto (210 a 220 m)' },

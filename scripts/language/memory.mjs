@@ -3,7 +3,7 @@
  *   node scripts/language/memory.mjs calibrate   farm training and dev families only
  *   node scripts/language/memory.mjs dev         dev families against training examples, a dry run of the evaluation
  *   node scripts/language/memory.mjs test        held-out farm messages, once, after the freeze
- *   node scripts/language/memory.mjs route       Qorikancha walk messages, once, after the freeze
+ *   node scripts/language/memory.mjs route       Qorikancha tour route messages, once, after the freeze
  * With --restricted, as the app runs after the held-out run: only messages that fail the language
  * check use the memory.
  * A memory holds k confirmed examples per spot, drawn from messages disjoint from the scored ones,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Asks Valhalla and Overpass once for the way around a recorded walk's mapped steps and keeps the raw requests and
+// Asks Valhalla and Overpass once for the way around a recorded tour route's mapped steps and keeps the raw requests and
 // answers in .local/routes-around/<id>.json, which scripts/places/package.mjs reads, so packaging needs no network and
 // the same answers give the same bytes. The record built from them goes to .local/routes-around/<id>.way_around.json to read.
 // Usage: node scripts/routes/around.mjs <id>. Routing by the FOSSGIS Valhalla server; data © OpenStreetMap contributors, ODbL 1.0.

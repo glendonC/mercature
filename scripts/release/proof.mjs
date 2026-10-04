@@ -1,6 +1,6 @@
 /**
  * Phone-width proof of a deployed build, local or live:
- *   1. Home, Narikala and its 3D from its published package, then the Qorikancha reveal and route from its own, at 390 px.
+ *   1. Home, Narikala and its 3D from its published package, then the Qorikancha reveal and route from its own published package, at 390 px.
  *   2. The model downloads from the app's own origin, never from the Hub, and its MIT license is served beside it.
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
@@ -33,7 +33,7 @@ const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-
 const app = inbox ? new URL('?ui=inbox', base).href : base.href;
 // What a place shows once its reveal is skipped.
 const SCREEN = inbox ? `.ri-row[data-row="example-ko-steps"]` : '.guide-screen .ui-dialogue';
-// The Korean demo message, the inbox's Korean Example: steps by the church were too steep for the writer's mother.
+// The Korean Example message: steps by the church were too steep for the writer's mother.
 const ROW = 'example-ko-steps';
 const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.';
 // The measured answer: a problem, but not sure; spots steps-340-350, steps-130-140 and qorikancha-ticket-booth, as the inbox names them.
@@ -120,7 +120,6 @@ async function openRoute(page, name) {
   await page.locator(SCREEN).waitFor();
 }
 
-/** The open message once its answer shows: the kind from the meta line, the ranked spots under About. */
 /** Taps through the guide's pages, as she does, until her choices show; the guide never turns a page by itself. */
 async function readThrough(page) {
   if (inbox) return;
@@ -149,6 +148,7 @@ async function answerOf(page, started) {
     const spots = (message.answer.candidates ?? []).map((id, i) => ({ rank: String(i + 1), label: id, choice: labels[i] ?? null, pressed: false }));
     return { quote: message.text, kind, spots, filed: message.spot, seconds: (Date.now() - started) / 1000 };
   }
+  // The open message once its answer shows: the kind from the meta line, the ranked spots under About.
   await page.locator('.ri-about').waitFor({ timeout: 5 * 60_000 });
   const answer = await page.evaluate(() => ({
     quote: document.querySelector('.ri-quote')?.textContent ?? null,

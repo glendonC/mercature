@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Thins the 3D areas VGGT built from a walk's street photos (.local/routes/<id>/pieces/*.bin, MRP1) to a phone budget
+// Thins the 3D areas VGGT built from a tour route's street photos (.local/routes/<id>/pieces/*.bin, MRP1) to a phone budget
 // and writes them to public/places/<folder>/pieces/: one MRQ1 file per placed area and space.json, which lists them.
 // Usage: node scripts/pieces/thin.mjs <id> [folder]. No network; the same input gives the same bytes.
 //
@@ -8,7 +8,7 @@
 // in it), with the voxel size chosen so the area lands near TARGET points. Points are shuffled with a seed, so any
 // prefix is an even sample.
 //
-// MRQ1, little-endian: 'MRQ1', uint32 n, float32 x0 y0 z0 (east, north, up metres in the walk's frame), float32 step,
+// MRQ1, little-endian: 'MRQ1', uint32 n, float32 x0 y0 z0 (east, north, up metres in the route's frame), float32 step,
 // then n uint16 x y z (position = corner + q * step), then n uint8 r g b from the photos.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -123,8 +123,8 @@ function encode(points, seed) {
   return bytes;
 }
 
-/** Where the ground lies along the walk, for drawing the line and the marks on the areas: every 2 m of the walk,
- * a low quantile of the heights within 1.5 m, then filled in along the walk where no area reaches. Display only. */
+/** Where the ground lies along the route, for drawing the line and the marks on the areas: every 2 m of the route,
+ * a low quantile of the heights within 1.5 m, then filled in along the route where no area reaches. Display only. */
 function groundProfile(clouds) {
   const CELL = 1.5, grid = new Map(), key = (x, y) => `${Math.floor(x / CELL)},${Math.floor(y / CELL)}`;
   for (const cloud of clouds) for (let i = 0; i < cloud.n; i++) {
@@ -171,7 +171,7 @@ mkdirSync(target, { recursive: true });
 const clouds = [], pieces = [];
 for (const spot of joined) {
   const cloud = readPiece(spot);
-  // The ground along the walk comes from every area placed closely enough, shown or not.
+  // The ground along the route comes from every area placed closely enough, shown or not.
   if (spot.piece.residual_rms_m <= MAX_RESIDUAL_M) clouds.push(cloud);
   if (leftOut[spot.id]) continue;
   const { points, voxel, dense: kept } = thin(cloud);
