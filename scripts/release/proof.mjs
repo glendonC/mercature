@@ -192,7 +192,8 @@ async function openSpace(page, expected) {
   const onFailed = request => { if (/\/pieces\//.test(request.url())) pieces.push(`failed ${name(request.url())}`); };
   page.on('response', onPiece);
   page.on('requestfailed', onFailed);
-  await page.locator('.route-marker[aria-label^="Sololaki ridge, 210 to 420 m"]').first().click({ force: true });
+  // A DOM click opens the spot's card in both engines; WebKit's pointer click can land on the map instead.
+  await page.locator('.route-marker[aria-label^="Sololaki ridge, 210 to 420 m"]').first().evaluate(marker => marker.click());
   const three = page.getByRole('group', { name: 'Show the photo or the 3D' }).getByRole('button', { name: '3D', exact: true });
   await three.click();
   await page.locator('.space3d-canvas').waitFor();
