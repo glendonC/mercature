@@ -217,6 +217,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
     return { hello: say.hello(slots), photos: say.photos(slots), walk: say.walk(slots), reading: say.reading(slots), marks: say.marks(slots) };
   }, [data, walk, marks, lang, id]);
   const steps = useMemo(() => data ? schedule(data, marks, cards.length, leaned, lines) : [], [data, marks, cards.length, leaned, lines]);
+  /** The walk's flagged spots, the guide's count of what is left to check. */
+  const flagged = useMemo(() => data ? (walk ?? buildWalk(data)).spots.filter(spot => spot.kind === 'flagged').length : 0, [data, walk]);
   const stepOf = (id: StepId) => steps.find(item => item.id === id);
   /** The build layer's beats, on its clock. */
   const beats = useMemo<Beats>(() => {
@@ -382,11 +384,12 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const at = (id: StepId) => { const index = steps.findIndex(item => item.id === id); return index >= 0 && !!step && steps.indexOf(step) >= index; };
   const metresText = data ? t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) }) : '';
   type Figure = { id: keyof typeof GLYPHS; value: string; label: string };
+  const toCheck = flagged === 0 ? t('home.noFlaggedSpots') : flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: flagged.toLocaleString(locale) });
   const figures: Figure[] = !data ? [] : ([
-    at('photos') && { id: 'photos', value: shown.toLocaleString(locale), label: t(shown === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: shown.toLocaleString(locale) }) },
+    at('photos') && { id: 'photos', value: t(shown === 1 ? 'reveal.figure.photo' : 'reveal.figure.photos', { count: shown.toLocaleString(locale) }), label: t(shown === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: shown.toLocaleString(locale) }) },
     at('walk') && { id: 'walk', value: metresText, label: t('reveal.build.walk', { length: metresText, route }) },
-    (at('reading') || at('marks')) && placedCount > 0 && { id: 'marks', value: placedCount.toLocaleString(locale), label: t(placedCount === 1 ? 'reveal.build.mark' : 'reveal.build.marks', { count: placedCount.toLocaleString(locale) }) },
-    at('barriers') && { id: 'barriers', value: barriers.toLocaleString(locale), label: barriers === 1 ? t('reveal.build.barrier', { count: 1 }) : spots > 1 ? t('reveal.build.barriersAt', { count: barriers, spots }) : t('reveal.build.barriers', { count: barriers }) },
+    // The spots to check, by the guide's own rule (the walk's flagged spots), once the last step is in; the marks and outlines are not counted here
+    (quiet || phase !== 'play' || step === steps.at(-1)) && { id: 'barriers', value: toCheck, label: toCheck },
   ] as (Figure | false)[]).filter((figure): figure is Figure => !!figure);
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data} onPlace={onPlace}/>}

@@ -110,6 +110,8 @@ export const es = {
   'reveal.route.narikala': 'de la estación superior del teleférico a la puerta de la fortaleza',
   'reveal.opening': 'Abriendo {name}',
   'reveal.areas': '{shown} de {total} áreas en 3D',
+  'reveal.figure.photos': '{count} fotos',
+  'reveal.figure.photo': '{count} foto',
   'reveal.build.photos': '{count} fotos de la calle en este recorrido',
   'reveal.build.photo': '{count} foto de la calle en este recorrido',
   'reveal.build.walk': '{length}, {route}',

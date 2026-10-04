@@ -106,6 +106,8 @@ export const en = {
   'reveal.route.narikala': 'Narikala cable car top station to the fortress gate',
   'reveal.opening': 'Opening {name}',
   'reveal.areas': '{shown} of {total} areas in 3D',
+  'reveal.figure.photos': '{count} photos',
+  'reveal.figure.photo': '{count} photo',
   'reveal.build.photos': '{count} street photos of this route',
   'reveal.build.photo': '{count} street photo of this route',
   'reveal.build.walk': '{length}, {route}',

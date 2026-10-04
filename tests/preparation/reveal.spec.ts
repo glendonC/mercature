@@ -32,8 +32,8 @@ test('the Qorikancha reveal replays how the walk was built and opens the inspect
   // The counts sit in small figures under the place's name, each as it is placed.
   await expect(reveal.getByRole('img', {name: /^\d+ street photos of this route$/})).toBeVisible();
   // Every mark the package records, not only those whose photos are published.
-  await expect(reveal.getByRole('img', {name: '52 marks along the route'})).toBeVisible();
-  await expect(reveal.getByRole('img', {name: '8 might be barriers, at 5 spots'})).toBeVisible();
+  await expect(reveal.getByRole('img', {name: '5 spots to check'})).toBeVisible();
+  await expect(reveal.getByRole('img', {name: /marks along the route|might be barriers/})).toHaveCount(0);
   // The guide speaks in plain words: it never counts photos or marks, and never says how the walk was built.
   const lines = await said();
   expect(lines.length).toBeGreaterThan(2);
