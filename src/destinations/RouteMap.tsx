@@ -5,6 +5,7 @@ import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens,
 import './destinations.css';
 import './map.css';
 import type { Point, Walk } from './walk';
+import { AddedIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, RemoveIcon, RoadIcon, StepsIcon, type Icon } from '../ui/icons';
 
 export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
@@ -14,19 +15,14 @@ export type Marker = {
   id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number;
   /** A short caption beside the marker, such as "Steps · 340 m". Where it would collide it shortens to the part before " · ", or hides. */
   tag?: string;
-  /** A small icon before the caption. */
-  icon?: MarkerIcon;
+  /** A small icon before the caption: one of the marker kinds, or any icon from the shared set, such as iconFor(concept). */
+  icon?: MarkerIcon | Icon;
   /** Visitor messages filed at this spot, shown with the caption, or as a small count when the caption is hidden. Say it in the label too. */
   count?: number;
 };
-/** Thin stroke icons on a 12 by 12 grid. */
-const ICONS: Record<MarkerIcon, string> = {
-  steps: 'M1.5 10.5h3v-3h3v-3h3', kerb: 'M1 9.5h4.5v-4H11', path: 'M3.6 10.5 5.2 1.5M8.4 10.5 6.8 1.5',
-  'no-photos': 'M2 4.5h1.8l1-1.5h2.4l1 1.5H10v5H2zM1.5 1.5l9 9', fixed: 'M2.5 6.2 4.8 8.5 9.5 3.5', added: 'M6 2.5v7M2.5 6h7',
-  check: 'M5 1.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M7.4 7.4l3 3', dismissed: 'M3 3l6 6M9 3l-6 6',
-};
-const BUBBLE = 'M2 2.5h8V8H6.2L3.8 10V8H2z';
-const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 12 12" aria-hidden="true"><path d={d} /></svg>;
+/** Check on site: a lens over the spot, drawn like the shared set until it has one. */
+const CheckIcon: Icon = ({ size = 18 }) => <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={Math.min(2.25, Math.max(1.5, 33.6 / size))} strokeLinecap="round" strokeLinejoin="round" className="ui-icon" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /></svg>;
+const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: RoadIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, check: CheckIcon, dismissed: RemoveIcon };
 type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 export type MapHandle = {
@@ -443,11 +439,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
       {placed.map(({ marker, at }) => {
         const caption = captions.get(marker.id), count = marker.count ? marker.count > 99 ? '99+' : String(marker.count) : '';
+        const Glyph = typeof marker.icon === 'string' ? ICONS[marker.icon] : marker.icon;
         const inside = <>
           <span className="route-marker-ping" aria-hidden="true" />
           <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
-          {caption && <span className="route-marker-tag" aria-hidden="true">{marker.icon && <Icon d={ICONS[marker.icon]} />}{caption.text}{count && <span className="route-marker-said"><Icon d={BUBBLE} />{count}</span>}</span>}
+          {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
         const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === hovered || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
