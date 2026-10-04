@@ -19,6 +19,8 @@ import { iconFor } from '../ui/icons';
 import AddSpot from './edit/AddSpot';
 import MarkFixed from './edit/MarkFixed';
 import OwnNoteEditor from './edit/OwnNote';
+import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, markOf, type LegendItem } from '../ui';
+import { BackIcon, ChevronIcon, CloseIcon, CopyIcon, DownloadIcon, FixedIcon, KerbIcon, MessageIcon, MoreIcon, NoPhotosIcon, NoteIcon, PathIcon, PinIcon, PlusIcon, PointerIcon, PraiseIcon, ProblemIcon, QuestionIcon, RemoveIcon, RotateIcon, StepsIcon, UndoIcon, AddedIcon } from '../ui/icons';
 import './route-inbox.css';
 
 /** A place on the walk the panel can show: a spot of the walk, a plain stretch, a named landmark, or a spot she added. */
@@ -450,43 +452,39 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
 
   const inbox = <>
     <p className="ri-guide">{w.guide}</p>
-    <section className="ri-summary" aria-label={w.found}>
-      <p className="ri-meta">{w.found}</p>
-      <ul className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <li key={kind}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></li>)}</ul>
+    <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
+      <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
       {raised.length > 0 && <p className="ri-raised"><span className="ri-meta">{w.raised}</span> {raised.map(([key, n]) => `${nameOfKey(key)} (${n})`).join(' · ')}</p>}
       {note && <div className="ri-note">
         <span>{w.note}</span>
-        <div className="ri-langs" role="group" aria-label={w.note}>{VISITOR_LANGS.map(item => <button key={item.id} aria-pressed={noteLang === item.id} onClick={() => setNoteLang(item.id)} lang={item.id}>{item.id.toUpperCase()}</button>)}</div>
-        <button className="ri-text" onClick={() => copy(note)}>{w.copy}</button>
+        <Segmented label={w.note} value={noteLang} onChange={setNoteLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.id.toUpperCase(), lang: item.id }))} />
+        <TextButton icon={<CopyIcon />} onClick={() => copy(note)}>{w.copy}</TextButton>
       </div>}
-    </section>
-    <h2 className="ri-heading">{w.messages}</h2>
-    <ul className="ri-list">{rows.map(row => {
-      const message = messageOf(row.id), answer = message?.answer;
-      return <li key={row.id}><button className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)}>
-        <span className="ri-lang" lang={row.language === 'other' ? undefined : row.language}>{row.language.toUpperCase()}</span>
-        <span className="ri-row-main">
-          <span className="ri-excerpt" lang={row.language === 'other' ? undefined : row.language}>{row.text}</span>
-          <span className="ri-row-meta">{row.example && <em>{w.example}</em>}{message ? message.spot ? nameOfKey(message.spot) : w.notFiled : w.unread}</span>
-        </span>
-        {answer?.kind && answer.status === 'ready' ? <KindIcon kind={answer.kind} /> : message ? <KindIcon kind={null} /> : null}
-      </button></li>;
-    })}</ul>
+    </Section>
+    <Section heading="h2" title={w.messages}>
+      <List inset>{rows.map(row => {
+        const message = messageOf(row.id), answer = message?.answer, said = row.language === 'other' ? undefined : row.language;
+        return <Row key={row.id} className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)}
+          icon={<Tag tone="solid" lang={said}>{row.language.toUpperCase()}</Tag>} label={<span lang={said}>{row.text}</span>}
+          detail={message ? message.spot ? nameOfKey(message.spot) : w.notFiled : w.unread} meta={row.example ? <Tag tone="example">{w.example}</Tag> : null}
+          trailing={answer?.kind && answer.status === 'ready' ? <KindIcon kind={answer.kind} /> : message ? <KindIcon kind={null} /> : null} />;
+      })}</List>
+    </Section>
     <div className="ri-foot">
-      <button className="ri-text" onClick={() => setPane({ kind: 'paste' })}>+ {w.add}</button>
+      <TextButton icon={<PlusIcon />} onClick={() => setPane({ kind: 'paste' })}>{w.add}</TextButton>
       {(review.messages.length > 0 || Object.keys(review.decisions).length > 0 || edits.added.length > 0 || Object.keys(edits.fixed).length > 0) && (clearing
-        ? <span className="ri-confirm">{w.startOverAsk} <button className="ri-text" onClick={() => { commit(startOver); edit(clearEdits); if (place) void forgetPlace(place.id); setClearing(false); }}>{w.clear}</button><button className="ri-text ri-muted" onClick={() => setClearing(false)}>{w.keep}</button></span>
-        : <button className="ri-text ri-muted" onClick={() => setClearing(true)}>{w.startOver}</button>)}
+        ? <span className="ri-confirm">{w.startOverAsk} <TextButton muted icon={<RotateIcon />} onClick={() => { commit(startOver); edit(clearEdits); if (place) void forgetPlace(place.id); setClearing(false); }}>{w.clear}</TextButton><TextButton muted icon={<CloseIcon />} onClick={() => setClearing(false)}>{w.keep}</TextButton></span>
+        : <TextButton muted icon={<RotateIcon />} onClick={() => setClearing(true)}>{w.startOver}</TextButton>)}
     </div>
   </>;
 
   const pastePane = <>
     <Back onClick={home} label={w.back} />
     <p className="ri-lead">{w.paste}</p>
-    <textarea className="ri-input" value={draft} maxLength={500} placeholder={t.messagePlaceholder} aria-label={t.message} onChange={event => { setDraft(event.target.value); setDraftLang(guessLanguage(event.target.value)); }} />
+    <TextArea className="ri-input" value={draft} maxLength={500} placeholder={t.messagePlaceholder} aria-label={t.message} onChange={event => { setDraft(event.target.value); setDraftLang(guessLanguage(event.target.value)); }} />
     <div className="ri-actions">
-      <select className="ri-select" value={draftLang} aria-label={t.language} onChange={event => setDraftLang(event.target.value)}>{MESSAGE_LANGS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-      <button className="ri-primary" disabled={!draft.trim()} onClick={paste}>{w.read}</button>
+      <Select className="ri-select" value={draftLang} aria-label={t.language} onChange={event => setDraftLang(event.target.value)}>{MESSAGE_LANGS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</Select>
+      <PrimaryAction icon={<MessageIcon />} shortcut="mod+enter" disabled={!draft.trim()} onClick={paste}>{w.read}</PrimaryAction>
     </div>
   </>;
 
@@ -499,26 +497,23 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const isExample = shown.id.startsWith('example-'), earlier = !!answer && readNow !== shown.id && pending?.id !== shown.id;
     return <>
       <Back onClick={home} label={w.back} />
-      <p className="ri-row-meta">{isExample && <em>{w.example}</em>}<span className="ri-lang">{language.toUpperCase()}</span>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : `${t.kinds[answer.kind]}?`}</>}{earlier && <> · {w.readEarlier}</>}</p>
-      <blockquote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</blockquote>
+      <p className="ri-row-meta">{isExample && <Tag tone="example">{w.example}</Tag>}<Tag tone="solid">{language.toUpperCase()}</Tag>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : `${t.kinds[answer.kind]}?`}</>}{earlier && <> · {w.readEarlier}</>}</p>
+      <Quote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</Quote>
       {!message && !ai && <div className="ri-actions">
-        {(downloadBytes || model.status === 'downloading') ? <button className="ri-primary" disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</button> : null}
-        <button className="ri-text" onClick={() => withoutAi(shown.id, shown.text, language)}>{t.withoutAi}</button>
+        {(downloadBytes || model.status === 'downloading') ? <PrimaryAction icon={<DownloadIcon />} disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</PrimaryAction> : null}
+        <TextButton icon={<PointerIcon />} onClick={() => withoutAi(shown.id, shown.text, language)}>{t.withoutAi}</TextButton>
       </div>}
       {line && <Assistant working={busy === 'reading' || busy === 'download'} text={busy === 'download' ? t.downloading : line} />}
-      {answer && answer.candidates.length > 0 && <>
-        <h2 className="ri-heading">{w.about}</h2>
-        <ol className="ri-list ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <li key={key}>
-          <button className="ri-row" aria-pressed={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)}><span className="ri-rank">{index + 1}</span><span className="ri-row-main">{nameOf(target)}</span>{message?.spot === key && <span className="ri-filed">{w.placed}</span>}</button>
-        </li>; })}</ol>
-      </>}
-      {message?.spot && !answer?.candidates.includes(message.spot) && <p className="ri-filedline"><button className="ri-text" onClick={() => { const target = targetOf(message.spot!); if (target) openSpot(target); }}>{w.filed(nameOfKey(message.spot))}</button></p>}
-      {message && <>
-        <h2 className="ri-heading">{w.reply}</h2>
-        <div className="ri-langs" role="group" aria-label={w.reply}>{VISITOR_LANGS.map(item => <button key={item.id} aria-pressed={replyIn === item.id} onClick={() => setReplyLang(item.id)} lang={item.id}>{item.label}</button>)}</div>
-        <p className="ri-reply" lang={replyIn}>{replyText(message, replyIn)}</p>
-        <div className="ri-actions"><button className="ri-primary" onClick={() => copy(replyText(message, replyIn))}><CopyIcon />{w.copyReply}</button>{said && <span className="ri-said" role="status">{said}</span>}</div>
-      </>}
+      {answer && answer.candidates.length > 0 && <Section heading="h2" title={w.about}>
+        <List ordered className="ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <Row key={key} className="ri-row" selected={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)}
+          icon={<span className="ri-rank">{index + 1}</span>} label={<span className="ri-row-main">{nameOf(target)}</span>} meta={message?.spot === key ? <span className="ri-filed">{w.placed}</span> : null} />; })}</List>
+      </Section>}
+      {message?.spot && !answer?.candidates.includes(message.spot) && <p className="ri-filedline"><TextButton icon={<PinIcon />} onClick={() => { const target = targetOf(message.spot!); if (target) openSpot(target); }}>{w.filed(nameOfKey(message.spot))}</TextButton></p>}
+      {message && <Section heading="h2" title={w.reply}>
+        <Segmented label={w.reply} value={replyIn} onChange={setReplyLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.label, lang: item.id }))} />
+        <Callout className="ri-reply" lang={replyIn}>{replyText(message, replyIn)}</Callout>
+        <div className="ri-actions ri-copy"><PrimaryAction icon={<CopyIcon />} shortcut="mod+enter" onClick={() => copy(replyText(message, replyIn))}>{w.copyReply}</PrimaryAction>{said && <span className="ri-said" role="status">{said}</span>}</div>
+      </Section>}
     </>;
   })();
 
@@ -538,24 +533,26 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     return <>
       <Back onClick={home} label={w.back} />
       <h2 className="ri-title">{name}</h2>
-      <p className="ri-row-meta">{mine && <em>{editWords.addedBy}</em>}{fix && <em>{editWords.fixedOn(recordDate(fix.at, lang))}</em>}{gone && <em>{w.removed}</em>}{clear && w.clearHere}{spot?.kind === 'no-photos' && t.noPhotos}</p>
+      <p className="ri-row-meta">{mine && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}{clear && w.clearHere}{spot?.kind === 'no-photos' && t.noPhotos}</p>
       {view && <PhotoWithMarks view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={outlines} lead={shown} t={t}
         pager={evidence.length > 1 ? { at: Math.min(page, evidence.length - 1), total: evidence.length, go: setPage } : null} />}
       {shown?.osm && !shown.viewId && <p className="ri-row-meta">{fromRecord(shown.label, lang)} · {t.mapRecord}</p>}
-      {view && outlines.length > 0 && <ul className="ri-legend">{[...new Map([...outlines].sort((a, b) => Number(b.barrier) - Number(a.barrier)).map(f => [f.concept, f])).values()].map(f => <li key={f.concept}><span className={`ri-swatch${f.barrier ? '' : ' is-quiet'}`} aria-hidden="true" />{fromRecord(f.label, lang)}</li>)}<li className="ri-meta">{w.suggestion}</li></ul>}
-      <h2 className="ri-heading">{w.visitors(filed.length)}</h2>
-      {filed.length > 0 && <ul className="ri-list">{filed.map(message => <li key={message.id}><button className="ri-row" onClick={() => void read(message.id, message.text, message.language)}><span className="ri-lang">{message.language.toUpperCase()}</span><span className="ri-row-main"><span className="ri-excerpt" lang={message.language === 'other' ? undefined : message.language}>{message.text}</span></span></button></li>)}</ul>}
+      {view && outlines.length > 0 && <div className="ri-legend"><Legend items={legendOf(outlines, lang)} /><span className="ri-meta">{w.suggestion}</span></div>}
+      <Section heading="h2" title={w.visitors(filed.length)}>
+        {filed.length > 0 && <List inset>{filed.map(message => { const said = message.language === 'other' ? undefined : message.language; return <Row key={message.id} className="ri-row" onClick={() => void read(message.id, message.text, message.language)}
+          icon={<Tag tone="solid" lang={said}>{message.language.toUpperCase()}</Tag>} label={<span lang={said}>{message.text}</span>} />; })}</List>}
+      </Section>
       {own?.text && editing !== 'note' && <p className="ri-own"><span className="ri-meta">{editWords.yourNote}</span> {own.text}</p>}
       {editing === 'add' && clear ? <AddSpot words={editWords} where={locate(target.index).landmark} range={{ from: Math.round(data.stretches[target.index].from), to: Math.round(data.stretches[target.index].to) }} guess={noteLanguage}
           onAdd={(kind, text) => { const next = addSpot(latestEdits.current, target.index, kind, text); edit(() => next); setEditing(null); const id = next.added[next.added.length - 1]?.id; if (id) openSpot({ kind: 'added', id }, false); }} onCancel={() => setEditing(null)} />
         : editing === 'fix' ? <MarkFixed words={editWords} spot={name} date={recordDate(new Date().toISOString(), lang)} guess={noteLanguage} onFix={text => { edit(edits => markFixed(edits, stretches, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
         : editing === 'note' ? <OwnNoteEditor words={editWords} value={own ?? undefined} guess={noteLanguage} onSave={text => { edit(edits => setNote(edits, key, text)); setEditing(null); }} onCancel={() => setEditing(null)} />
         : <div className="ri-tools">
-          {clear && <button className="ri-text" onClick={() => setEditing('add')}>+ {w.addHere}</button>}
-          {(flagged || mine) && !fix && !gone && <button className="ri-text" onClick={() => setEditing('fix')}>{editWords.fix}</button>}
-          {fix && <button className="ri-text ri-muted" onClick={() => edit(edits => clearFixed(edits, stretches))}>{editWords.undoFix}</button>}
-          {!clear && <button className="ri-text" onClick={() => setEditing('note')}>{editWords.yourNote}</button>}
-          {flagged && !fix && <button className="ri-text ri-muted" onClick={() => commit(review => decide(review, stretches, gone ? null : 'not-barrier'))}>{gone ? w.restore : w.remove}</button>}
+          {clear && <TextButton icon={<PlusIcon />} onClick={() => setEditing('add')}>{w.addHere}</TextButton>}
+          {(flagged || mine) && !fix && !gone && <TextButton icon={<FixedIcon />} onClick={() => setEditing('fix')}>{editWords.fix}</TextButton>}
+          {fix && <TextButton muted icon={<UndoIcon />} onClick={() => edit(edits => clearFixed(edits, stretches))}>{editWords.undoFix}</TextButton>}
+          {!clear && <TextButton icon={<NoteIcon />} onClick={() => setEditing('note')}>{editWords.yourNote}</TextButton>}
+          {flagged && !fix && <TextButton muted icon={gone ? <UndoIcon /> : <RemoveIcon />} onClick={() => commit(review => decide(review, stretches, gone ? null : 'not-barrier'))}>{gone ? w.restore : w.remove}</TextButton>}
         </div>}
     </>;
   })();
@@ -577,7 +574,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <div className="ri-place"><h1>{DESTINATIONS[data.id].name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p></div>
       <Menu onHome={onHome} current={shownPlace} onPlace={place => { if (place !== shownPlace) (onPlace ?? onHome)(place); }} />
     </header>
-    <aside className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined}
+    <Panel as="aside" phone="sheet" scroll className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined}
       onPointerDown={event => { swiped.current = false; swipe.current = narrow && pane.kind === 'inbox' ? { id: event.pointerId, y: event.clientY, handle: !!(event.target as HTMLElement).closest('.ri-handle') } : null; }}
       onPointerMove={event => {
         const start = swipe.current; if (!start || start.id !== event.pointerId) return;
@@ -590,7 +587,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {narrow && pane.kind === 'inbox' && <button className="ri-handle" aria-label={w.messages} aria-expanded={!peeking} onClick={() => lift(peeking)} />}
       {content}
       {problem && <p className="ri-problem" role="alert">{problem}</p>}
-    </aside>
+    </Panel>
     <div className="ri-map">
       <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={id => { const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
@@ -598,12 +595,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   </main>;
 }
 
-function CopyIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" /></svg>;
-}
-
 function Back({ onClick, label }: { onClick: () => void; label: string }) {
-  return <button className="ri-back" onClick={onClick}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>{label}</button>;
+  return <TextButton className="ri-back" muted icon={<BackIcon />} onClick={onClick}>{label}</TextButton>;
 }
 
 /** The model's voice where it acts: a small mark and one line. */
@@ -612,12 +605,19 @@ function Assistant({ text, working }: { text: string; working: boolean }) {
 }
 
 function KindIcon({ kind }: { kind: 'problem' | 'praise' | 'question' | null }) {
-  const path = kind === 'problem' ? 'M12 4 21 20H3Z M12 10v4 M12 17h.01' : kind === 'praise' ? 'm12 4 2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.3 6.9 19l1.2-5.6L4 9.6l5.6-.6Z' : kind === 'question' ? 'M9.2 9a3 3 0 1 1 4.3 2.7c-.9.4-1.5 1.2-1.5 2.1V15 M12 18h.01' : 'M5 12h.01 M12 12h.01 M19 12h.01';
-  return <svg className="ri-kind" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={path} /></svg>;
+  const Icon = kind === 'problem' ? ProblemIcon : kind === 'praise' ? PraiseIcon : kind === 'question' ? QuestionIcon : MoreIcon;
+  return <Icon className="ri-kind" size={16} />;
 }
 
 function KindMark({ kind }: { kind: Subject | 'noPhotos' }) {
-  return <span className={`ri-dot is-${kind}`} aria-hidden="true" />;
+  const Icon = kind === 'steps' ? StepsIcon : kind === 'kerb' ? KerbIcon : kind === 'path' ? PathIcon : NoPhotosIcon;
+  return <Icon size={14} />;
+}
+
+/** One legend entry per kind on the photo, possible barriers first, each with its hue and icon. */
+function legendOf(marks: readonly Finding[], lang: UiLang): LegendItem[] {
+  const kinds = new Map([...marks].sort((a, b) => Number(b.barrier) - Number(a.barrier)).map(f => [f.concept, f]));
+  return [...kinds.values()].map(f => { const Icon = iconFor(f.concept); return { mark: markOf(f.concept) ?? undefined, barrier: f.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: fromRecord(f.label, lang) }; });
 }
 
 /** Frames a small outline closely so a person can judge it; a tap shows the whole photo. */
@@ -643,16 +643,16 @@ function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t }: { v
   const image = <div className="ri-photo-image" style={{ transform: zoom && !whole ? zoom : undefined }}>
     {failed ? <span className="ri-photo-missing" /> : <img src={asset(view.file)} alt={lead ? fromRecord(lead.label, lang) : ''} onError={() => setFailed(true)} />}
     {!failed && drawn.length > 0 && <svg viewBox={`0 0 ${view.width} ${view.height}`} preserveAspectRatio="none" aria-hidden="true">
-      {drawn.map(f => <polygon key={f.id} className={f.barrier ? 'ri-outline' : 'ri-outline is-quiet'} points={f.outline.map(p => p.join(',')).join(' ')} />)}
+      {drawn.map(f => { const points = f.outline.map(p => p.join(',')).join(' '), barrier = f.barrier || undefined; return <g key={f.id}><polygon className="ui-mark-halo" data-barrier={barrier} points={points} /><polygon className="ui-mark" data-mark={markOf(f.concept) ?? undefined} data-barrier={barrier} points={points} /></g>; })}
     </svg>}
   </div>;
   return <figure className="ri-photo" style={{ '--ratio': view.height / view.width } as CSSProperties}>
     <div className="ri-photo-box">
       {zoom ? <button className="ri-photo-frame" aria-pressed={whole} onClick={() => setWhole(value => !value)} aria-label={whole ? t.closer : t.whole}>{image}</button> : <div className="ri-photo-frame">{image}</div>}
       {pager && <div className="ri-pager">
-        <button className="ri-icon" aria-label={t.previous} onClick={() => pager.go((pager.at + pager.total - 1) % pager.total)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg></button>
+        <IconButton label={t.previous} onClick={() => pager.go((pager.at + pager.total - 1) % pager.total)}><BackIcon size={16} /></IconButton>
         <span>{t.photoOf(pager.at + 1, pager.total)}</span>
-        <button className="ri-icon" aria-label={t.next} onClick={() => pager.go((pager.at + 1) % pager.total)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg></button>
+        <IconButton label={t.next} onClick={() => pager.go((pager.at + 1) % pager.total)}><ChevronIcon size={16} /></IconButton>
       </div>}
     </div>
     {photo && <figcaption>{photo.creator}{date ? `, ${date}` : ''}. CC BY-SA 4.0 · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</figcaption>}
