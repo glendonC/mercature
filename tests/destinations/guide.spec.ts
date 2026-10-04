@@ -21,7 +21,7 @@ test('the guide goes through the walk, and her answer takes a spot off her map',
 
 test('a visitor message she files herself gets a reply in the visitor language, with Copy inside it', async ({page}) => {
   test.setTimeout(30000);
-  await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
+  await page.route('**/routes/cusco-qorikancha/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await openGuide(page);

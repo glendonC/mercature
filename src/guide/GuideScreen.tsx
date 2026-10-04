@@ -16,7 +16,7 @@ import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../dest
 import type { Lens } from '../destinations/lens';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { iconFor } from '../ui/icons';
-import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, markOf, type MarkKind } from '../ui';
+import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf } from '../photo';
 import Swap from '../fx/Swap';
 import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
@@ -503,7 +503,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const state: MarkerState = fix ? 'fixed' : removed(spot.stretches) ? 'not-barrier' : spot.kind === 'no-photos' ? 'no-photos' : fromAnswer ?? 'open';
     const subject = subjectOf(spot), tag = `${spot.kind === 'no-photos' ? t.inbox.kinds.noPhotos : t.inbox.kinds[subject]} · ${along(spot.from)}`;
     const icon = state === 'fixed' ? 'fixed' : state === 'not-barrier' ? 'dismissed' : state === 'no-photos' ? 'no-photos' : subject === 'path' ? iconFor(spot.findings[0]?.concept ?? '') ?? 'path' : subject;
-    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, label: [spotName(spot), ...(count ? [t.inbox.visitors(count)] : [])].join(', ') };
+    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, kind: kindOf(spot.findings[0]?.concept ?? '') ?? undefined, label: [spotName(spot), ...(count ? [t.inbox.visitors(count)] : [])].join(', ') };
   });
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
@@ -564,8 +564,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     aimTimer.current = window.setTimeout(() => {
       const aim = aimFor(), handle = map.current;
       if (!handle) return;
-      if (aim.kind === 'fit') handle.fit(true);
-      else handle.frame(aim.points, { ...insets, bottom: under(dock.current?.offsetHeight ?? 300) + 8 });
+      handle.show(aim.kind === 'fit' ? { kind: 'route' } : { kind: 'points', points: aim.points }, insets);
     }, 220);
     return () => clearTimeout(aimTimer.current);
   }, [aimKey, narrow, settledDock]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -756,6 +755,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     <div className="gs-map">
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={id => { const target = markerTarget(id); if (target) select(target); }} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
+        picking={(step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || undefined}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
     <Bot ref={bot} working={working} />
