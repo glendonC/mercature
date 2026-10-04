@@ -51,6 +51,14 @@ type Step =
 
 const same = (a: Target | null, b: Target | null) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 const bare = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
+/** A thing's words from the script with the definite article, such as "a kerb" to "the kerb" or "escalones" to "los escalones". */
+function definite(words: string, lang: 'en' | 'es'): string {
+  if (lang === 'en') return /^something /.test(words) ? `what’s ${words.slice(10)}` : words.replace(/^(an?|the) /, '').replace(/^/, 'the ');
+  if (/^(algo|lo) que /.test(words)) return words.replace(/^algo/, 'lo');
+  const plain = words.replace(/^(una?|el|la|los|las) /, '');
+  const article = /^una /.test(words) ? 'la' : /^un /.test(words) ? 'el' : /^(escalones|baños|bordillos)\b/.test(plain) ? 'los' : /^obras\b/.test(plain) ? 'las' : /^acera\b/.test(plain) ? 'la' : 'el';
+  return `${article} ${plain}`;
+}
 const subjectOf = (spot: Spot): Subject => spot.findings.some(f => /steps/.test(f.concept)) ? 'steps' : spot.findings.some(f => f.concept === 'kerb') ? 'kerb' : 'path';
 const subjectOfKind = (kind: EditKind): Subject => kind === 'steps' ? 'steps' : kind === 'kerb' ? 'kerb' : 'path';
 const kindOfSubject = (subject: Subject): EditKind => subject === 'steps' ? 'steps' : subject === 'kerb' ? 'kerb' : 'other';
@@ -257,10 +265,20 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const stretch = data.stretches[target.index];
     return t.range(Math.round(stretch.from), Math.round(stretch.to));
   }
-  /** A spot as words inside a line: what is there and where, for a flagged spot; its name otherwise. */
+  /** A spot as words inside a line, with its article and never a range of metres: "the steps on Calle Loreto", "the Qorikancha ticket booth". */
   function spotWords(target: Target): string {
     const spot = target.kind === 'spot' ? spotById(target.id) : null;
-    return spot?.kind === 'flagged' ? `${s.words.access[accessOfSpot(spot)]} ${whereOf(spot)[lang]}` : nameOf(target);
+    if (spot) return `${definite(s.words.access[accessOfSpot(spot)], lang)} ${whereOf(spot)[lang]}`;
+    if (target.kind === 'added') { const one = added(target.id); if (one) return `${definite(s.words.added[one.kind], lang)} ${nearOf(one.stretch)[lang]}`; }
+    if (target.kind === 'landmark') { const name = nameOf(target); return lang === 'es' ? esPlace(name) : enPlace(name); }
+    return target.kind === 'stretch' ? `${lang === 'es' ? 'el recorrido' : 'the walk'} ${nearOf(target.index)[lang]}` : nameOf(target);
+  }
+  /** What a choice or a marker calls a spot: its kind and how far along, as on the map, or a landmark's name. */
+  function tagOf(target: Target): string {
+    const spot = target.kind === 'spot' ? spotById(target.id) : null;
+    if (spot) return `${spot.kind === 'no-photos' ? t.inbox.kinds.noPhotos : t.inbox.kinds[subjectOf(spot)]} · ${along(spot.from)}`;
+    const one = target.kind === 'added' ? added(target.id) : null;
+    return one ? `${s.words.kinds[one.kind]} · ${along(data.stretches[one.stretch].from)}` : nameOf(target);
   }
   function nearOf(stretch: number): Where {
     const near = locate(stretch).landmark;
@@ -279,6 +297,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const at = pointOf(target);
     return at ? nearestStretch(data, walk, at) : null;
   }
+  const along = (from: number) => Math.round(from) === 0 ? t.inbox.start : `${Math.round(from)} m`;
   const removed = (stretches: readonly number[]) => verdictOf(review, stretches) === 'not-barrier';
   const monthOf = (iso: string | null | undefined) => { const date = iso ? new Date(iso) : null; return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat(lang === 'es' ? 'es-PE' : 'en-GB', { month: 'long', year: 'numeric' }).format(date) : ''; };
 
@@ -541,19 +560,18 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     : step.id === 'missed' ? step.here ?? null : step.id === 'propose' ? step.proposal.target : null;
   const filedCounts = new Map<string, number>();
   for (const message of review.messages) if (message.spot) filedCounts.set(message.spot, (filedCounts.get(message.spot) ?? 0) + 1);
-  const along = (from: number) => Math.round(from) === 0 ? t.inbox.start : `${Math.round(from)} m`;
   const markers: Marker[] = walk.spots.map(spot => {
     const target: Target = { kind: 'spot', id: spot.id }, fix = isFixed(edits, spot.stretches), count = filedCounts.get(keyOf(target)) ?? 0;
     const said = answerOf(edits, spot.id), fromAnswer = said ? stateOfAnswer(said.answer) : null;
     const state: MarkerState = fix ? 'fixed' : removed(spot.stretches) ? 'not-barrier' : spot.kind === 'no-photos' ? 'no-photos' : fromAnswer ?? 'open';
-    const subject = subjectOf(spot), tag = `${spot.kind === 'no-photos' ? t.inbox.kinds.noPhotos : t.inbox.kinds[subject]} · ${along(spot.from)}`;
+    const subject = subjectOf(spot), tag = tagOf(target);
     const icon = state === 'fixed' ? 'fixed' : state === 'not-barrier' ? 'dismissed' : state === 'no-photos' ? 'no-photos' : subject === 'path' ? iconFor(spot.findings[0]?.concept ?? '') ?? 'path' : subject;
     return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, kind: kindOf(spot.findings[0]?.concept ?? '') ?? undefined, label: [spotName(spot), ...(count ? [t.inbox.visitors(count)] : [])].join(', ') };
   });
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
     if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count,
-      tag: `${s.words.kinds[spot.kind]} · ${along(data.stretches[spot.stretch].from)}`, icon: fix ? 'fixed' : 'added', label: addedName(spot.id) });
+      tag: tagOf(target), icon: fix ? 'fixed' : 'added', label: addedName(spot.id) });
   }
   const extra = [...ranked.map(targetOf), selected].filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch'));
   for (const target of extra) {
@@ -628,7 +646,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   ];
 
   if (step.id === 'hello') {
-    lines.push(s.hello.greet(walkSlots), data.views.length ? s.hello.walk(walkSlots) : s.hello.mapOnly(walkSlots));
+    lines.push(...(settled ? [] : [s.hello.greet(walkSlots)]), data.views.length ? s.hello.walk(walkSlots) : s.hello.mapOnly(walkSlots));
     chips = helloChips;
     words = hear;
   } else if (step.id === 'check' && item) {
@@ -675,7 +693,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       } else if (message?.spot) { const target = targetOf(message.spot); lines.push(s.messages.filed({ spot: target ? spotWords(target) : message.spot })); }
       else if (!readable(row.text) && !message?.spot) lines.push(s.messages.unreadable);
       else if (step.another || !answer) lines.push(s.messages.tap);
-      else if (first && answer.remembered) lines.push(s.messages.remembered({ spot: spotWords(first) }), s.messages.spot({ spot: spotWords(first) }));
+      else if (first && answer.remembered) lines.push(s.messages.remembered({ spot: spotWords(first) }));
       else if (first && answer.status === 'ready') lines.push(s.messages.spot({ spot: spotWords(first) }));
       else if (first) lines.push(s.messages.unsure);
       else lines.push(answer.kind ? s.messages.noSpot : s.messages.unplaced);
@@ -683,7 +701,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         if (message.spot) chips.push({ id: 'reply', label: s.reply.copy, primary: true, onClick: () => go({ id: 'reply', at: step.at }) });
         else {
           if (first && (answer?.status === 'ready' || answer?.remembered) && !step.another) chips.push({ id: 'yes', label: s.messages.chips.yes, primary: true, onClick: () => file(step.at, first) });
-          else if (first && !step.another) for (const [i, key] of answer!.candidates.entries()) { const target = targetOf(key); if (target) chips.push({ id: `c${i}`, label: `${i + 1}. ${nameOf(target)}`, onClick: () => file(step.at, target) }); }
+          else if (first && !step.another) for (const [i, key] of answer!.candidates.entries()) { const target = targetOf(key); if (target) chips.push({ id: `c${i}`, label: tagOf(target), onClick: () => file(step.at, target) }); }
           if (first && !step.another) chips.push({ id: 'another', label: s.messages.chips.another, onClick: () => setStep({ ...step, another: true }) });
           chips.push({ id: 'noSpot', label: s.messages.chips.noSpot, onClick: () => file(step.at, null) });
         }
@@ -705,7 +723,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const target = targetOf(group.key); if (!target) return null;
       const spot = target.kind === 'spot' ? spotById(target.id) : null;
       const kind = spot?.kind === 'flagged' ? s.words.access[accessOfSpot(spot)] : target.kind === 'added' ? s.words.added[added(target.id)?.kind ?? 'other'] : '';
-      return <li key={`${group.key} ${group.kind}`}><span>{s.insights[group.kind]({ spot: nameOf(target), count: group.count, kind })}</span><button type="button" className="gs-inline" onClick={() => select(target)}>{s.insights.chips.open}</button></li>;
+      return <li key={`${group.key} ${group.kind}`}><span>{s.insights[group.kind]({ spot: spotWords(target), count: group.count, kind })}</span><button type="button" className="gs-inline" onClick={() => select(target)}>{s.insights.chips.open}</button></li>;
     })}</ul>;
     chips = [{ id: 'next', label: s.insights.chips.next, primary: true, onClick: () => go({ id: 'missed' }) }];
   } else if (step.id === 'street') {
