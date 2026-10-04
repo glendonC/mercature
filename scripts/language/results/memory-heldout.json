@@ -1,0 +1,2851 @@
+{
+  "mode": "test",
+  "protocol": {
+    "examplesPerSpot": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "memories": {
+      "qu": [
+        "qu"
+      ],
+      "all": [
+        "en",
+        "es",
+        "ko",
+        "qu"
+      ]
+    },
+    "draws": {
+      "calibrate": 10,
+      "dev": 20,
+      "test": 20,
+      "route": 20
+    },
+    "seed": {
+      "calibrate": "calibrate",
+      "dev": "dev",
+      "test": "heldout",
+      "route": "route"
+    },
+    "calibration": {
+      "queries": "every farm training and dev message (English, Spanish, Korean and Quechua), with examples from its own family left out",
+      "objective": "right first spots gained minus 3 times right first spots lost, over both memories, k = 1 to 3 and all draws",
+      "groups": "messages that pass the language check (English, Spanish, Korean), compared by embedding cosine, and those that do not, compared by spelling-sketch cosine; each pair chosen on its own messages",
+      "grid": {
+        "supported": {
+          "similarity": [
+            0.8,
+            0.805,
+            0.81,
+            0.815,
+            0.82,
+            0.825,
+            0.83,
+            0.835,
+            0.84,
+            0.845,
+            0.85,
+            0.855,
+            0.86,
+            0.865,
+            0.87,
+            0.875,
+            0.88,
+            0.885,
+            0.89,
+            0.895,
+            0.9,
+            0.905,
+            0.91,
+            0.915,
+            0.92,
+            0.925,
+            0.93,
+            0.935,
+            0.94,
+            0.945,
+            0.95,
+            0.955,
+            0.96,
+            0.965,
+            0.97,
+            0.975,
+            0.98
+          ],
+          "lead": [
+            0,
+            0.005,
+            0.01,
+            0.015,
+            0.02,
+            0.03,
+            0.04,
+            0.05
+          ]
+        },
+        "unsupported": {
+          "similarity": [
+            0.05,
+            0.075,
+            0.1,
+            0.125,
+            0.15,
+            0.175,
+            0.2,
+            0.225,
+            0.25,
+            0.275,
+            0.3,
+            0.325,
+            0.35,
+            0.375,
+            0.4,
+            0.425,
+            0.45,
+            0.475,
+            0.5,
+            0.525,
+            0.55,
+            0.575,
+            0.6,
+            0.625,
+            0.65,
+            0.675,
+            0.7,
+            0.725,
+            0.75,
+            0.775,
+            0.8,
+            0.825,
+            0.85,
+            0.875,
+            0.9,
+            0.925,
+            0.95
+          ],
+          "lead": [
+            0,
+            0.01,
+            0.02,
+            0.03,
+            0.05,
+            0.075,
+            0.1,
+            0.15,
+            0.2
+          ]
+        }
+      },
+      "ties": "the higher similarity, then the higher lead"
+    },
+    "ship": [
+      "With no examples, every decision equals the published run (88 of 88 held-out, 44 of 44 route).",
+      "Quechua: on the held-out farm messages with a Quechua memory, the right spot comes first for at least 3 more of the 16 messages naming one at k = 3 (mean over draws), and top-3 does not fall.",
+      "English, Spanish and Korean: for each language, place, memory and k, the mean over draws of top-1, top-3 and as-expected answers is not below k = 0, and confident wrong answers are not above it."
+    ]
+  },
+  "limits": {
+    "supported": {
+      "similarity": 0.935,
+      "lead": 0.005
+    },
+    "unsupported": {
+      "similarity": 0.5,
+      "lead": 0
+    }
+  },
+  "pool": {
+    "terrace": {
+      "en": 7,
+      "es": 7,
+      "ko": 7,
+      "qu": 7
+    },
+    "entrance-gate": {
+      "en": 6,
+      "es": 6,
+      "ko": 6,
+      "qu": 6
+    },
+    "welcome-sign": {
+      "en": 4,
+      "es": 4,
+      "ko": 4,
+      "qu": 4
+    },
+    "bench": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "viewpoint": {
+      "en": 5,
+      "es": 5,
+      "ko": 5,
+      "qu": 5
+    },
+    "shade-tree": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "drying-beds": {
+      "en": 5,
+      "es": 5,
+      "ko": 5,
+      "qu": 5
+    },
+    "wheelbarrow": {
+      "en": 4,
+      "es": 4,
+      "ko": 4,
+      "qu": 4
+    },
+    "muddy-patch": {
+      "en": 4,
+      "es": 4,
+      "ko": 4,
+      "qu": 4
+    },
+    "steps-to-rows": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "tasting-hut": {
+      "en": 6,
+      "es": 6,
+      "ko": 6,
+      "qu": 6
+    },
+    "roasting-shed": {
+      "en": 4,
+      "es": 4,
+      "ko": 4,
+      "qu": 4
+    },
+    "coffee-sacks": {
+      "en": 6,
+      "es": 6,
+      "ko": 6,
+      "qu": 6
+    },
+    "flower-pots": {
+      "en": 4,
+      "es": 4,
+      "ko": 4,
+      "qu": 4
+    },
+    "tasting-table": {
+      "en": 6,
+      "es": 6,
+      "ko": 6,
+      "qu": 6
+    },
+    "water-tank": {
+      "en": 6,
+      "es": 6,
+      "ko": 6,
+      "qu": 6
+    },
+    "restroom": {
+      "en": 7,
+      "es": 7,
+      "ko": 7,
+      "qu": 7
+    }
+  },
+  "checks": {
+    "identicalWithoutMemory": "88/88",
+    "regressions": [
+      "all k=1 ko top1 14.95 < 15",
+      "all k=2 ko top1 14.85 < 15"
+    ],
+    "quechua": {
+      "top1AtZero": 5,
+      "top1AtThree": 9.4,
+      "top3AtZero": 10,
+      "top3AtThree": 13.75,
+      "withPlace": 16,
+      "improved": true
+    }
+  },
+  "results": {
+    "qu": {
+      "0": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 5,
+          "top3": 10,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 7.3,
+            "min": 5,
+            "max": 9
+          },
+          "top3": {
+            "mean": 12.2,
+            "min": 11,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 3.65,
+            "min": 1,
+            "max": 6
+          },
+          "changed": {
+            "mean": 3.65,
+            "min": 1,
+            "max": 6
+          },
+          "falseTriggers": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 2.5,
+            "min": 1,
+            "max": 4
+          },
+          "lost": {
+            "mean": 0.2,
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      "2": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 8.8,
+            "min": 7,
+            "max": 10
+          },
+          "top3": {
+            "mean": 13.4,
+            "min": 13,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 5.2,
+            "min": 3,
+            "max": 7
+          },
+          "changed": {
+            "mean": 5.2,
+            "min": 3,
+            "max": 7
+          },
+          "falseTriggers": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 3.95,
+            "min": 3,
+            "max": 5
+          },
+          "lost": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      "3": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 9.4,
+            "min": 8,
+            "max": 10
+          },
+          "top3": {
+            "mean": 13.75,
+            "min": 13,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 6.35,
+            "min": 5,
+            "max": 7
+          },
+          "changed": {
+            "mean": 6.35,
+            "min": 5,
+            "max": 7
+          },
+          "falseTriggers": {
+            "mean": 1.1,
+            "min": 1,
+            "max": 2
+          },
+          "gained": {
+            "mean": 4.5,
+            "min": 4,
+            "max": 5
+          },
+          "lost": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    "all": {
+      "0": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 5,
+          "top3": 10,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 14.95,
+            "min": 14,
+            "max": 15
+          },
+          "top3": 15,
+          "ready": {
+            "mean": 9.95,
+            "min": 9,
+            "max": 10
+          },
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": {
+            "mean": 0.05,
+            "min": 0,
+            "max": 1
+          },
+          "changed": {
+            "mean": 0.05,
+            "min": 0,
+            "max": 1
+          },
+          "falseTriggers": {
+            "mean": 0.05,
+            "min": 0,
+            "max": 1
+          },
+          "gained": 0,
+          "lost": {
+            "mean": 0.05,
+            "min": 0,
+            "max": 1
+          }
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 7.3,
+            "min": 5,
+            "max": 9
+          },
+          "top3": {
+            "mean": 12.2,
+            "min": 11,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 3.65,
+            "min": 1,
+            "max": 6
+          },
+          "changed": {
+            "mean": 3.65,
+            "min": 1,
+            "max": 6
+          },
+          "falseTriggers": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 2.5,
+            "min": 1,
+            "max": 4
+          },
+          "lost": {
+            "mean": 0.2,
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      "2": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 14.85,
+            "min": 14,
+            "max": 15
+          },
+          "top3": 15,
+          "ready": {
+            "mean": 9.85,
+            "min": 9,
+            "max": 10
+          },
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          },
+          "changed": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          },
+          "falseTriggers": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          },
+          "gained": 0,
+          "lost": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          }
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 8.8,
+            "min": 7,
+            "max": 10
+          },
+          "top3": {
+            "mean": 13.4,
+            "min": 13,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 5.2,
+            "min": 3,
+            "max": 7
+          },
+          "changed": {
+            "mean": 5.2,
+            "min": 3,
+            "max": 7
+          },
+          "falseTriggers": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 3.95,
+            "min": 3,
+            "max": 5
+          },
+          "lost": {
+            "mean": 0.15,
+            "min": 0,
+            "max": 1
+          }
+        }
+      },
+      "3": {
+        "en": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 16,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 20,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 16,
+          "top3": 16,
+          "ready": 6,
+          "readyWrong": 1,
+          "expected": 21,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": 15,
+          "top3": 15,
+          "ready": 10,
+          "readyWrong": 3,
+          "expected": 18,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 22,
+          "withPlace": 16,
+          "top1": {
+            "mean": 9.4,
+            "min": 8,
+            "max": 10
+          },
+          "top3": {
+            "mean": 13.75,
+            "min": 13,
+            "max": 14
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 21,
+          "remembered": {
+            "mean": 6.35,
+            "min": 5,
+            "max": 7
+          },
+          "changed": {
+            "mean": 6.35,
+            "min": 5,
+            "max": 7
+          },
+          "falseTriggers": {
+            "mean": 1.1,
+            "min": 1,
+            "max": 2
+          },
+          "gained": {
+            "mean": 4.5,
+            "min": 4,
+            "max": 5
+          },
+          "lost": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    }
+  },
+  "changes": {
+    "qu": {
+      "0": {},
+      "1": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 12,
+          "first": {
+            "muddy-patch": 4,
+            "steps-to-rows": 8
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 16,
+          "first": {
+            "steps-to-rows": 13,
+            "water-tank": 3
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 6,
+          "first": {
+            "roasting-shed": 6
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 8,
+          "first": {
+            "welcome-sign": 4,
+            "tasting-table": 4
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 17,
+          "first": {
+            "steps-to-rows": 17
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 4,
+          "first": {
+            "entrance-gate": 4
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 10,
+          "first": {
+            "steps-to-rows": 10
+          }
+        }
+      },
+      "2": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 15,
+          "first": {
+            "muddy-patch": 8,
+            "steps-to-rows": 7
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 11,
+          "first": {
+            "roasting-shed": 11
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 15,
+          "first": {
+            "steps-to-rows": 15
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 10,
+          "first": {
+            "welcome-sign": 7,
+            "tasting-table": 3
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 13,
+          "first": {
+            "entrance-gate": 13
+          }
+        }
+      },
+      "3": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 20,
+          "first": {
+            "muddy-patch": 12,
+            "steps-to-rows": 8
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 15,
+          "first": {
+            "roasting-shed": 15
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 17,
+          "first": {
+            "welcome-sign": 15,
+            "tasting-table": 2
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 15,
+          "first": {
+            "entrance-gate": 15
+          }
+        }
+      }
+    },
+    "all": {
+      "0": {},
+      "1": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 12,
+          "first": {
+            "muddy-patch": 4,
+            "steps-to-rows": 8
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 16,
+          "first": {
+            "steps-to-rows": 13,
+            "water-tank": 3
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 6,
+          "first": {
+            "roasting-shed": 6
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 8,
+          "first": {
+            "welcome-sign": 4,
+            "tasting-table": 4
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 17,
+          "first": {
+            "steps-to-rows": 17
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 4,
+          "first": {
+            "entrance-gate": 4
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 10,
+          "first": {
+            "steps-to-rows": 10
+          }
+        },
+        "f022-ko": {
+          "lang": "ko",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "steps-to-rows",
+          "draws": 1,
+          "first": {
+            "coffee-sacks": 1
+          }
+        }
+      },
+      "2": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 15,
+          "first": {
+            "muddy-patch": 8,
+            "steps-to-rows": 7
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 11,
+          "first": {
+            "roasting-shed": 11
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 15,
+          "first": {
+            "steps-to-rows": 15
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 10,
+          "first": {
+            "welcome-sign": 7,
+            "tasting-table": 3
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 13,
+          "first": {
+            "entrance-gate": 13
+          }
+        },
+        "f022-ko": {
+          "lang": "ko",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "steps-to-rows",
+          "draws": 3,
+          "first": {
+            "coffee-sacks": 3
+          }
+        }
+      },
+      "3": {
+        "f008-qu": {
+          "lang": "qu",
+          "places": [],
+          "before": "shade-tree",
+          "draws": 20,
+          "first": {
+            "muddy-patch": 12,
+            "steps-to-rows": 8
+          }
+        },
+        "f022-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f037-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f062-qu": {
+          "lang": "qu",
+          "places": [
+            "roasting-shed"
+          ],
+          "before": "tasting-table",
+          "draws": 15,
+          "first": {
+            "roasting-shed": 15
+          }
+        },
+        "f065-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-to-rows"
+          ],
+          "before": "coffee-sacks",
+          "draws": 20,
+          "first": {
+            "steps-to-rows": 20
+          }
+        },
+        "f013-qu": {
+          "lang": "qu",
+          "places": [
+            "welcome-sign"
+          ],
+          "before": "welcome-sign",
+          "draws": 17,
+          "first": {
+            "welcome-sign": 15,
+            "tasting-table": 2
+          }
+        },
+        "f047-qu": {
+          "lang": "qu",
+          "places": [
+            "entrance-gate"
+          ],
+          "before": "muddy-patch",
+          "draws": 15,
+          "first": {
+            "entrance-gate": 15
+          }
+        }
+      }
+    }
+  },
+  "spelling": {
+    "qu": {
+      "0": {
+        "recalls": 0,
+        "right": 0,
+        "sharedWord": 0,
+        "sharedName": 0,
+        "words": {}
+      },
+      "1": {
+        "recalls": 73,
+        "right": 54,
+        "sharedWord": 71,
+        "sharedName": 4,
+        "words": {
+          "karqan": 11,
+          "ancha": 25,
+          "uraykuna": 3,
+          "hank'ana": 6,
+          "wasimanta": 6,
+          "uyaykuman": 6,
+          "kastilla": 8,
+          "mana": 7,
+          "simipipas": 4,
+          "rumi": 27,
+          "hap'ikunapaq": 20,
+          "kanchu": 20,
+          "llusk'achu": 7,
+          "kicharikurqan": 2,
+          "hatun": 3,
+          "qillqasqa": 4
+        }
+      },
+      "2": {
+        "recalls": 104,
+        "right": 86,
+        "sharedWord": 97,
+        "sharedName": 3,
+        "words": {
+          "karqan": 22,
+          "ancha": 35,
+          "rumi": 29,
+          "uraykuna": 11,
+          "hank'ana": 11,
+          "wasimanta": 11,
+          "uyaykuman": 11,
+          "hap'ikunapaq": 24,
+          "kanchu": 24,
+          "kastilla": 10,
+          "mana": 7,
+          "simipipas": 7,
+          "llusk'achu": 14,
+          "kicharikurqan": 6,
+          "qillqasqa": 3
+        }
+      },
+      "3": {
+        "recalls": 127,
+        "right": 105,
+        "sharedWord": 119,
+        "sharedName": 2,
+        "words": {
+          "karqan": 32,
+          "ancha": 40,
+          "rumi": 20,
+          "llusk'achu": 20,
+          "uraykuna": 20,
+          "hank'ana": 15,
+          "wasimanta": 15,
+          "uyaykuman": 15,
+          "hap'ikunapaq": 20,
+          "kanchu": 20,
+          "kastilla": 17,
+          "mana": 15,
+          "simipipas": 15,
+          "kicharikurqan": 7,
+          "qillqasqa": 2
+        }
+      }
+    },
+    "all": {
+      "0": {
+        "recalls": 0,
+        "right": 0,
+        "sharedWord": 0,
+        "sharedName": 0,
+        "words": {}
+      },
+      "1": {
+        "recalls": 73,
+        "right": 54,
+        "sharedWord": 71,
+        "sharedName": 4,
+        "words": {
+          "karqan": 11,
+          "ancha": 25,
+          "uraykuna": 3,
+          "hank'ana": 6,
+          "wasimanta": 6,
+          "uyaykuman": 6,
+          "kastilla": 8,
+          "mana": 7,
+          "simipipas": 4,
+          "rumi": 27,
+          "hap'ikunapaq": 20,
+          "kanchu": 20,
+          "llusk'achu": 7,
+          "kicharikurqan": 2,
+          "hatun": 3,
+          "qillqasqa": 4
+        }
+      },
+      "2": {
+        "recalls": 104,
+        "right": 86,
+        "sharedWord": 97,
+        "sharedName": 3,
+        "words": {
+          "karqan": 22,
+          "ancha": 35,
+          "rumi": 29,
+          "uraykuna": 11,
+          "hank'ana": 11,
+          "wasimanta": 11,
+          "uyaykuman": 11,
+          "hap'ikunapaq": 24,
+          "kanchu": 24,
+          "kastilla": 10,
+          "mana": 7,
+          "simipipas": 7,
+          "llusk'achu": 14,
+          "kicharikurqan": 6,
+          "qillqasqa": 3
+        }
+      },
+      "3": {
+        "recalls": 127,
+        "right": 105,
+        "sharedWord": 119,
+        "sharedName": 2,
+        "words": {
+          "karqan": 32,
+          "ancha": 40,
+          "rumi": 20,
+          "llusk'achu": 20,
+          "uraykuna": 20,
+          "hank'ana": 15,
+          "wasimanta": 15,
+          "uyaykuman": 15,
+          "hap'ikunapaq": 20,
+          "kanchu": 20,
+          "kastilla": 17,
+          "mana": 15,
+          "simipipas": 15,
+          "kicharikurqan": 7,
+          "qillqasqa": 2
+        }
+      }
+    }
+  },
+  "browserCheck": {
+    "examples": [
+      {
+        "id": "f053-en",
+        "text": "We had no trouble at all getting around the terrace with my wheelchair.",
+        "spot": "terrace"
+      },
+      {
+        "id": "x034-es",
+        "text": "Mientras esperábamos en la terraza, dos perros se la pasaron saltándoles encima a los niños y nadie los llamó.",
+        "spot": "terrace"
+      },
+      {
+        "id": "x047-ko",
+        "text": "테라스에 앉을 데가 하나도 없어서 계속 서 있었어요",
+        "spot": "terrace"
+      },
+      {
+        "id": "f003-qu",
+        "text": "Pata pampapi allpaqa manapuni kuskachu, wachukunawan t'uquchakunawan hunt'a kashan. Taytaypa purichinanqa sapa kutillan chaykunapi hap'ichikurqan.",
+        "spot": "terrace"
+      },
+      {
+        "id": "f049-en",
+        "text": "The wooden gate was stuck shut when we arrived and we had to wait outside until someone came to open it.",
+        "spot": "entrance-gate"
+      },
+      {
+        "id": "f057-es",
+        "text": "Cuesta mucho ver el portón desde la carretera, no hay ninguna señal que diga que es la finca. Pasamos de largo dos veces.",
+        "spot": "entrance-gate"
+      },
+      {
+        "id": "x019-ko",
+        "text": "도착했는데 입구 문이 꽉 끼어서 안 열리더라고요. 누르 님이 와서 억지로 열어 주실 때까지 밖에서 기다렸어요.",
+        "spot": "entrance-gate"
+      },
+      {
+        "id": "x019-qu",
+        "text": "Chayaptiykuqa punku wichq'asqa hark'akusqa karqan, manataq yaykuyta atirqaykuchu; hawapi suyanayku karqan Noor kallpawan kicharinankama.",
+        "spot": "entrance-gate"
+      },
+      {
+        "id": "f061-en",
+        "text": "That painted board you see as you come in is all in Spanish, we had no clue what it said.",
+        "spot": "welcome-sign"
+      },
+      {
+        "id": "x014-es",
+        "text": "El letrero de bienvenida está solo en español y mis amigos extranjeros no entendieron nada. Podrían ponerlo también en inglés.",
+        "spot": "welcome-sign"
+      },
+      {
+        "id": "x027-ko",
+        "text": "지난번엔 환영 간판이 다 바래서 거의 안 보였는데 새로 칠하셨네요. 훨씬 잘 보여요!",
+        "spot": "welcome-sign"
+      },
+      {
+        "id": "x027-qu",
+        "text": "Qayna kutipi hamuqkunata napaykuq qillqaqa llimp'in anchata chinkapusqa karqan, chaymi yaqa mana ñawinchay atikurqanchu. Anchatan kusikuni musuqmanta llimp'isqa kasqanmanta.",
+        "spot": "welcome-sign"
+      },
+      {
+        "id": "f014-en",
+        "text": "Last time the bench wobbled a lot, but now it's fixed and solid. My grandma sat there happily for ages.",
+        "spot": "bench"
+      },
+      {
+        "id": "x031-es",
+        "text": "La banca larga de madera del camino está coja y tiene una tabla rota, así que no había dónde sentarse mientras esperábamos.",
+        "spot": "bench"
+      },
+      {
+        "id": "f014-ko",
+        "text": "지난번엔 벤치가 많이 흔들렸는데 이번엔 고쳐져서 튼튼하더라고요. 할머니가 한참 편하게 앉아 계셨어요.",
+        "spot": "bench"
+      },
+      {
+        "id": "f014-qu",
+        "text": "Ñawpaq kutipi k'ullu tiyanaqa anchata kuyukurqan, kunanqa allichasqañan, takyasqataq kashan. Hatun mamayqa chaypi kusisqa unaytapuni tiyarqan.",
+        "spot": "bench"
+      },
+      {
+        "id": "f066-en",
+        "text": "The ground sloping down to the lookout is loose gravel, felt like I could slide right off the edge.",
+        "spot": "viewpoint"
+      },
+      {
+        "id": "x006-es",
+        "text": "Qué bacán la vista desde el mirador, nos quedamos como 20 minutos mirando el valle sin decir nada.",
+        "spot": "viewpoint"
+      },
+      {
+        "id": "x006-ko",
+        "text": "전망대에서 본 계곡 뷰 진짜 미쳤다 ㅋㅋ 20분 동안 멍하니 보고만 있었음",
+        "spot": "viewpoint"
+      },
+      {
+        "id": "x045-qu",
+        "text": "Qhawanapiqa sach'a k'allmakuna rikuyta hark'anku, manan imapas rikukunchu",
+        "spot": "viewpoint"
+      },
+      {
+        "id": "f042-en",
+        "text": "Resting under the big shade tree with a cup of coffee was pure bliss.",
+        "spot": "shade-tree"
+      },
+      {
+        "id": "f025-es",
+        "text": "Bajo el árbol de sombra no hay dónde sentarse, así que los mayores del grupo estuvieron de pie todo el tiempo.",
+        "spot": "shade-tree"
+      },
+      {
+        "id": "f025-ko",
+        "text": "그늘 나무 밑에 앉을 데가 없어서 일행 중 어르신들이 내내 서 계셨어요.",
+        "spot": "shade-tree"
+      },
+      {
+        "id": "f042-qu",
+        "text": "Hatun sach'aq llantunpi huk tasacha kafiwan samakuyqa ch'uya kusikuymi karqan.",
+        "spot": "shade-tree"
+      },
+      {
+        "id": "f034-en",
+        "text": "So many flies buzzing aroud the drying beds, the kids were swatting them the whole time.",
+        "spot": "drying-beds"
+      },
+      {
+        "id": "f076-es",
+        "text": "Me encantó ver los granos secándose en las camas de secado, Noor explicó todo el proceso súper bien.",
+        "spot": "drying-beds"
+      },
+      {
+        "id": "x023-ko",
+        "text": "건조대에 원두 말리는 거 구경하는 게 진짜 재밌었어요. 누르 님이 과정을 하나하나 잘 설명해 주셨어요.",
+        "spot": "drying-beds"
+      },
+      {
+        "id": "f076-qu",
+        "text": "Huqarisqa ch'akichinakunapi kafi rurukuna ch'akishaqta rikuspa anchatan kusikurqani, Noormi kafi imaynatachus ruwakun, chay llapanta sumaqllata sut'incharqan.",
+        "spot": "drying-beds"
+      },
+      {
+        "id": "x030-en",
+        "text": "someone left that one-wheeled cart for hauling stuff right across the path, we had to lift it out of the way ourselves",
+        "spot": "wheelbarrow"
+      },
+      {
+        "id": "x030-es",
+        "text": "Alguien dejó ese carrito de una sola rueda para cargar cosas atravesado en el camino, tuvimos que moverlo nosotros.",
+        "spot": "wheelbarrow"
+      },
+      {
+        "id": "x041-ko",
+        "text": "손수레가 길을 막고 있어서 겨우 지나갔어요",
+        "spot": "wheelbarrow"
+      },
+      {
+        "id": "x037-qu",
+        "text": "Karritillata huk waqtapi churasqata rikurqayku; manan ni pisillatapas hark'awarqankuchu, muyuykuspalla yallirqayku.",
+        "spot": "wheelbarrow"
+      },
+      {
+        "id": "f030-en",
+        "text": "The muddy stretch used to be a nightmare, but Noor has put gravel down and now it's easy to walk.",
+        "spot": "muddy-patch"
+      },
+      {
+        "id": "f030-es",
+        "text": "Antes la parte del barro era terrible, pero Noor le echó ripio y ahora se camina fácil.",
+        "spot": "muddy-patch"
+      },
+      {
+        "id": "f030-ko",
+        "text": "예전엔 진흙 구간이 정말 최악이었는데 Noor 씨가 자갈을 깔아서 이제 걷기 편해요.",
+        "spot": "muddy-patch"
+      },
+      {
+        "id": "x043-qu",
+        "text": "T'uru pampaqa ancha llusk'apunin karqan, yaqa urmarqani",
+        "spot": "muddy-patch"
+      },
+      {
+        "id": "x025-en",
+        "text": "The stone stairs down to the coffee plants are steep and slick with moss, and there's no railing to hold.",
+        "spot": "steps-to-rows"
+      },
+      {
+        "id": "x048-es",
+        "text": "¿Las escaleras para bajar al cafetal son muy empinadas?",
+        "spot": "steps-to-rows"
+      },
+      {
+        "id": "x001-ko",
+        "text": "비가 많이 와서 커피밭으로 내려가는 돌계단 걱정했는데 하나도 안 미끄러웠어요.",
+        "spot": "steps-to-rows"
+      },
+      {
+        "id": "x048-qu",
+        "text": "¿Kaphi wachukunaman uraykuna patakunaqa ancha qhatachu?",
+        "spot": "steps-to-rows"
+      },
+      {
+        "id": "f026-en",
+        "text": "The little building just before the tasting has a high step at the door, I couldn't get up it with my bad knee.",
+        "spot": "tasting-hut"
+      },
+      {
+        "id": "x035-es",
+        "text": "Antes el escalón para entrar a la casita de cata era altísimo para mi silla de ruedas, ahora hay una rampita. ¡Gracias!",
+        "spot": "tasting-hut"
+      },
+      {
+        "id": "x049-ko",
+        "text": "시음 오두막 가는 표지판이 없어서 헤맸어요",
+        "spot": "tasting-hut"
+      },
+      {
+        "id": "f055-qu",
+        "text": "¿Watukuqkunaqa kafi mallina chhukllaman haykuyta atinkuchu, icha llamk'aqkunallapaqchu?",
+        "spot": "tasting-hut"
+      },
+      {
+        "id": "x017-en",
+        "text": "Smoke from the roasting shed kept blowing straight at us, my eyes were watering the whole time.",
+        "spot": "roasting-shed"
+      },
+      {
+        "id": "f071-es",
+        "text": "En la puerta de la tostaduría hay un aviso, pero la letra es tan chiquita que no se entiende si se puede entrar o no.",
+        "spot": "roasting-shed"
+      },
+      {
+        "id": "f002-ko",
+        "text": "로스팅 창고에서 Noor 씨가 원두 볶는 거 구경한 게 제일 좋았어요. 냄새가 진짜 끝내줘요! 먼 길 온 보람이 있었네요.",
+        "spot": "roasting-shed"
+      },
+      {
+        "id": "x017-qu",
+        "text": "Kaphi hank'ana wasimanta q'usñiqa wayrawan apasqa chiqanta uyaykuman chayamuchkarqan; chaymi ñawiy tukuy pacha waqachkarqan.",
+        "spot": "roasting-shed"
+      },
+      {
+        "id": "f019-en",
+        "text": "The stacked coffee sacks take up half the passage, I could barely squeeze thru with my cane.",
+        "spot": "coffee-sacks"
+      },
+      {
+        "id": "x007-es",
+        "text": "Pasamos sin ningún problema al lado de los sacos de café, aunque íbamos con mochilas grandes.",
+        "spot": "coffee-sacks"
+      },
+      {
+        "id": "f019-ko",
+        "text": "커피 포대가 쌓여 있어서 통로가 반밖에 안 남았어요. 지팡이 짚고 겨우 지나갔어요.",
+        "spot": "coffee-sacks"
+      },
+      {
+        "id": "f073-qu",
+        "text": "Ñawpaq kaq watukuyniykupiqa kafi kutamakunan ñanpa kuskanta hark'asharqan, kay kutipiqa huk waqtamanña astasqa karqan. ¡Aswan allinmi!",
+        "spot": "coffee-sacks"
+      },
+      {
+        "id": "f007-en",
+        "text": "I was worried about the big flower pots after reading reviews, but they didn't narrow the passage at all. The stroller fit fine.",
+        "spot": "flower-pots"
+      },
+      {
+        "id": "x029-es",
+        "text": "Entre las macetas grandes de barro había espacio de sobra, pasé con mi silla de ruedas sin drama.",
+        "spot": "flower-pots"
+      },
+      {
+        "id": "x029-ko",
+        "text": "큰 토분들 사이에 공간이 넉넉해서 휠체어로도 쉽게 지나갔어요.",
+        "spot": "flower-pots"
+      },
+      {
+        "id": "f035-qu",
+        "text": "Hatun llink'i mankakunaqa anchatan ñanta k'ullkuyachinku, chaymi ruedasniyuq sillayqa manan yalliyta atirqanchu. Huk runan hukninta astanan karqan.",
+        "spot": "flower-pots"
+      },
+      {
+        "id": "x028-en",
+        "text": "No water to drink at the tasting table and nowhere to wash hands before we tasted. After that long walk we really needed it.",
+        "spot": "tasting-table"
+      },
+      {
+        "id": "f015-es",
+        "text": "Al final, donde probamos los cafés, no alcanzaban las sillas y la mitad del grupo se quedó parada.",
+        "spot": "tasting-table"
+      },
+      {
+        "id": "f015-ko",
+        "text": "마지막에 커피 맛보는 자리에 의자가 모자라서 절반은 서서 마셨어요.",
+        "spot": "tasting-table"
+      },
+      {
+        "id": "x015-qu",
+        "text": "Mallina misapi tiyakuyqa manan hayk'appas sasachu karqan; llapan pusaqniykupaq tiyanakuna ayparqan.",
+        "spot": "tasting-table"
+      },
+      {
+        "id": "x050-en",
+        "text": "The water tank tap is broken, can't wash hands",
+        "spot": "water-tank"
+      },
+      {
+        "id": "x013-es",
+        "text": "¿El agua del tanque grande de concreto se puede tomar, o mejor llevamos nuestras botellas?",
+        "spot": "water-tank"
+      },
+      {
+        "id": "x050-ko",
+        "text": "물탱크 수도꼭지가 고장 나서 손을 못 씻었어요",
+        "spot": "water-tank"
+      },
+      {
+        "id": "f074-qu",
+        "text": "Maki mayllakunanchik tankipiqa manan habun karqanchu, yakullan.",
+        "spot": "water-tank"
+      },
+      {
+        "id": "x022-en",
+        "text": "Took us forever to find the restroom, there's no sign pointing to it anywhere.",
+        "spot": "restroom"
+      },
+      {
+        "id": "x012-es",
+        "text": "La vez pasada el baño no tenía jabón ni papel, esta vez estaba todo completo y limpio. ¡Gracias por escucharnos, Noor!",
+        "spot": "restroom"
+      },
+      {
+        "id": "f009-ko",
+        "text": "화장실 상태가 좀 별로였어요. 더럽고 냄새도 심해서요. 손님 받기 전에 한 번씩 청소해 주시면 좋겠어요.",
+        "spot": "restroom"
+      },
+      {
+        "id": "x012-qu",
+        "text": "Qayna kutiqa hisp'ana wasipi manan habunpas papilpas karqanchu; kay kutitaq tukuy imapas hunt'a, llimphutaq karqan. ¡Añaychayki, Noor, uyariwarqankiku!",
+        "spot": "restroom"
+      }
+    ],
+    "decisions": {
+      "f001-en": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "bench",
+          "muddy-patch"
+        ]
+      },
+      "f001-es": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "tasting-hut",
+          "steps-to-rows"
+        ]
+      },
+      "f001-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "entrance-gate",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f001-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "tasting-hut",
+          "welcome-sign"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f005-en": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f005-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f005-ko": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "shade-tree",
+          "muddy-patch",
+          "bench"
+        ]
+      },
+      "f005-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "shade-tree"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f008-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "steps-or-slope",
+        "candidates": [
+          "muddy-patch",
+          "entrance-gate",
+          "steps-to-rows"
+        ]
+      },
+      "f008-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f008-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "wheelbarrow",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f008-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "shade-tree",
+          "flower-pots"
+        ],
+        "reason": "remembered"
+      },
+      "f013-en": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "bench",
+          "viewpoint"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f013-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "entrance-gate",
+          "wheelbarrow"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f013-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "tasting-table",
+          "bench"
+        ]
+      },
+      "f013-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "restroom",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f017-en": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "restroom",
+          "steps-to-rows",
+          "entrance-gate"
+        ]
+      },
+      "f017-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "steps-to-rows",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f017-ko": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [
+          "restroom",
+          "viewpoint",
+          "bench"
+        ]
+      },
+      "f017-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f020-en": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "shade-tree",
+          "welcome-sign"
+        ]
+      },
+      "f020-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "welcome-sign",
+          "steps-to-rows"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f020-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "steps-to-rows",
+          "muddy-patch"
+        ]
+      },
+      "f020-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "viewpoint",
+          "welcome-sign",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f022-en": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "tasting-table"
+        ]
+      },
+      "f022-es": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "tasting-table",
+          "coffee-sacks"
+        ]
+      },
+      "f022-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "viewpoint",
+          "muddy-patch"
+        ]
+      },
+      "f022-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f024-en": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f024-es": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f024-ko": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f024-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f029-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f029-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f029-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f029-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f031-en": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "welcome-sign",
+          "water-tank"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f031-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "welcome-sign",
+          "water-tank"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f031-ko": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "facilities",
+        "candidates": [
+          "restroom",
+          "drying-beds",
+          "welcome-sign"
+        ]
+      },
+      "f031-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "bench",
+          "muddy-patch",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f037-en": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "roasting-shed",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f037-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "tasting-table"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f037-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "terrace",
+          "shade-tree"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f037-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "tasting-table"
+        ],
+        "reason": "remembered"
+      },
+      "f041-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "signs-or-language",
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "entrance-gate"
+        ]
+      },
+      "f041-es": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "signs-or-language",
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "restroom"
+        ]
+      },
+      "f041-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "wheelbarrow",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f041-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f047-en": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "welcome-sign",
+          "entrance-gate",
+          "terrace"
+        ]
+      },
+      "f047-es": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "entrance-gate",
+          "welcome-sign",
+          "steps-to-rows"
+        ]
+      },
+      "f047-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "entrance-gate",
+          "welcome-sign",
+          "restroom"
+        ]
+      },
+      "f047-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "muddy-patch",
+          "drying-beds",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f050-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "muddy-patch",
+          "entrance-gate"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f050-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "terrace",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f050-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "muddy-patch",
+          "viewpoint"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f050-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f051-en": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f051-es": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "tasting-hut",
+          "coffee-sacks"
+        ]
+      },
+      "f051-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "coffee-sacks",
+          "steps-to-rows"
+        ]
+      },
+      "f051-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f056-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "restroom",
+          "muddy-patch"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f056-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "restroom",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f056-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "bench",
+          "viewpoint",
+          "restroom"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f056-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "tasting-hut",
+          "bench"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f060-en": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "bench",
+          "terrace",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f060-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "restroom",
+          "bench",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f060-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f060-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "drying-beds",
+          "tasting-hut",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f062-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [
+          "roasting-shed",
+          "muddy-patch",
+          "drying-beds"
+        ]
+      },
+      "f062-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "roasting-shed",
+          "restroom",
+          "tasting-hut"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f062-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "roasting-shed",
+          "restroom",
+          "bench"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f062-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "roasting-shed",
+          "tasting-table",
+          "coffee-sacks"
+        ],
+        "reason": "remembered"
+      },
+      "f065-en": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "tasting-table",
+          "coffee-sacks"
+        ]
+      },
+      "f065-es": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "drying-beds"
+        ]
+      },
+      "f065-ko": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "coffee-sacks",
+          "viewpoint"
+        ]
+      },
+      "f065-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "coffee-sacks",
+          "tasting-table",
+          "drying-beds"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f067-en": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f067-es": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f067-ko": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f067-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "f069-en": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "muddy-patch",
+          "viewpoint"
+        ]
+      },
+      "f069-es": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "muddy-patch"
+        ],
+        "reason": "unclear-place"
+      },
+      "f069-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "viewpoint"
+        ]
+      },
+      "f069-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "wheelbarrow",
+          "welcome-sign",
+          "roasting-shed"
+        ],
+        "reason": "unclear-kind"
+      },
+      "f072-en": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f072-es": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "f072-ko": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "steps-to-rows",
+          "roasting-shed",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-place"
+      },
+      "f072-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "tasting-table",
+          "drying-beds",
+          "coffee-sacks"
+        ],
+        "reason": "unclear-kind"
+      }
+    }
+  }
+}

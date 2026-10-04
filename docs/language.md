@@ -192,6 +192,25 @@ Frozen before any held-out farm message or route message was scored with a memor
 - **Reported per language:** right spot first and in the top three (mean over draws, worst and best draw), confident answers and confident wrong answers, answers as expected, answers the memory changed, false triggers (the memory put a spot first that the message is not about, including messages about no spot), right first spots gained and lost, and for spelling matches whether the message shares a word, or a spot's name or alias, with its closest kept example.
 - **Ship rule:** (1) with no examples every decision equals the published runs, 88 of 88 and 44 of 44, in Node and in the browser; (2) Quechua: with the Quechua memory at k = 3, the right spot comes first for at least 3 more of the 16 held-out Quechua farm messages naming one (mean over draws), and top-3 does not fall; (3) English, Spanish and Korean: for each language, place, memory and k, the mean over draws of top-1, top-3 and answers as expected is not below k = 0, and confident wrong answers are not above it.
 
+### Results
+
+One run each of `node scripts/language/memory.mjs test` and `route` with the frozen rule (`scripts/language/results/memory-heldout.json`, `memory-route.json`). **The frozen rule did not pass the ship rule:** Quechua improved as required, but one Korean message lost its right first spot in a few draws.
+
+Right spot first on the held-out farm messages, memory with examples in all four languages, mean of 20 draws (worst to best draw):
+
+| Examples per spot | English (16) | Spanish (16) | Korean (16) | Quechua (16) | Quechua top-3 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0 | 15 | 16 | 15 | 5 | 10 |
+| 1 | 15 | 16 | 14.95 (14 to 15) | 7.3 (5 to 9) | 12.2 (11 to 14) |
+| 2 | 15 | 16 | 14.85 (14 to 15) | 8.8 (7 to 10) | 13.4 (13 to 14) |
+| 3 | 15 | 16 | 15 | 9.4 (8 to 10) | 13.75 (13 to 14) |
+
+- **Quechua.** On the machine-translated Quechua test messages, the right spot came first for 9.4 of 16 at k = 3, against 5 without a memory: 3 more were required. With a Quechua-only memory the figures are the same, since English, Spanish and Korean examples never won a Quechua message. At k = 3 the memory made 6.35 suggestions per draw on the 22 Quechua messages, 1.1 of them with a wrong first spot, and cost a right first spot 0.1 times per draw. Of its 127 spelling matches over the 20 draws, 105 named the right spot. They rest on shared words, mostly content words (*rumi*, stone; *hap'ikunapaq*, something to hold; *hank'ana*, roasting) and common grammar words (*ancha*, very; *karqan*, was); only 2 of 127 share a spot's name or alias.
+- **English and Spanish.** The memory changed no answer. Confident answers, confident wrong answers and answers as expected stayed the same in all three languages.
+- **The failure.** f022-ko, a Korean negation (the stone steps down to the coffee rows were not slippery at all), got the coffee sacks first instead of the steps, by embedding, in 1 of 20 draws at k = 1 and 3 of 20 at k = 2, as *Not sure* (`remembered`). The ship rule allows no drop in mean top-1 for any language, memory and k.
+- **Qorikancha walk.** No English (9 of 10), Spanish (9 of 10) or Korean (10 of 11) answer changed at any k. Quechua went from 1 of 3 to 1.85, 2.6 and 3 of 3 at k = 1, 2 and 3; three messages are too few to claim anything. Unlike on the farm, all 40 spelling matches at k = 3 shared a street or landmark name with the kept example (Plaza de Armas, Loreto, Maruri).
+- **Same in the browser.** With no examples, Chromium gave the same decisions as Node for 88 of 88 held-out and 44 of 44 route messages, reason included. With 68 and 56 kept examples (all four languages, k = 1, first draw) they agreed again on 88 of 88 and 44 of 44; the examples survived an offline restart, and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout.json`, `browser-memory-route.json`).
+
 ### Limits
 
 - **Tiny samples.** 16 Quechua farm messages naming a spot and 3 on the route. One message more or less moves the Quechua figures by 6 points on the farm and 33 on the route.
@@ -251,7 +270,7 @@ An earlier trial with the same encoder accepted a feature only when its cosine s
 
 ## Reproduce
 
-Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`) and the memory's calibration (`memory-calibration.json`). Each has every decision, ranking and timing.
+Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`), and the memory's calibration, held-out, route and Chromium runs (`memory-calibration.json`, `memory-heldout.json`, `memory-route.json`, `browser-memory-heldout.json`, `browser-memory-route.json`). Each has every decision, ranking and timing.
 
 
 Node 24 or newer, from the repository root:
@@ -268,6 +287,9 @@ node scripts/language/verify-trim.mjs
 npx vite build --config scripts/language/harness/vite.config.ts
 node scripts/language/browser.mjs dev
 node scripts/language/memory.mjs calibrate
+node scripts/language/memory.mjs test
+node scripts/language/memory.mjs route
+node scripts/language/browser.mjs test
 ```
 
 `provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `trim.mjs` writes the trimmed encoder to `public/models/` (not in version control), where the app serves it; it needs [uv](https://docs.astral.sh/uv/) to run the ONNX edit with `onnx` and `numpy`. `evaluate.mjs` takes `--variant latin-hangul` to evaluate it. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium (the trimmed files if `public/models/` has them, otherwise the Hub URLs, redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.
