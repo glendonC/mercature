@@ -28,8 +28,7 @@
 .route-marker[data-state=open] .route-marker-dot::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--blocked); opacity: 0; animation: route-pulse 2.4s var(--ease) infinite; }
 .route-marker[data-state=barrier] .route-marker-dot, .route-marker[data-state=fixed] .route-marker-dot { border-radius: 3px; }
 .route-marker[data-state=barrier] .route-marker-dot::before { width: 6px; height: 6px; border-radius: 1px; }
-.route-marker[data-state=check] .route-marker-dot { border: 1.5px dashed var(--blocked); box-shadow: 0 1px 4px rgb(20 22 24 / 0.14); }
-.route-marker[data-state=check] .route-marker-dot::before, .route-marker[data-state=not-barrier] .route-marker-dot::before { display: none; }
+.route-marker[data-state=not-barrier] .route-marker-dot::before { display: none; }
 .route-marker[data-state=not-barrier] .route-marker-dot { --ring: var(--unknown); width: 12px; height: 12px; }
 .route-marker[data-state=no-photos] .route-marker-dot { --ring: var(--unknown); width: 13px; height: 13px; }
 .route-marker[data-state=no-photos] .route-marker-dot::before { width: 9px; height: 1.5px; border-radius: 1px; transform: rotate(-45deg); }
@@ -48,7 +47,7 @@
 .route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.8); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: var(--ink); pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
 .route-marker[data-side=left] .route-marker-tag { left: auto; right: calc(50% + 14px); }
 .route-marker-tag .ui-icon { flex: none; color: var(--ring-ink, var(--ink)); }
-.route-marker:is([data-state=open], [data-state=barrier], [data-state=check]) { --ring-ink: var(--blocked); }
+.route-marker:is([data-state=open], [data-state=barrier]) { --ring-ink: var(--blocked); }
 .route-marker:is([data-state=fixed], [data-state=clear]) { --ring-ink: var(--reachable); }
 .route-marker:is([data-state=no-photos], [data-state=not-barrier]) { --ring-ink: var(--unknown); }
 .route-marker-said { display: inline-flex; align-items: center; gap: 3px; margin-left: 3px; color: var(--muted); font-variant-numeric: tabular-nums; }

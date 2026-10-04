@@ -8,11 +8,11 @@ import RouteFx from '../fx/RouteFx';
 import { riseWave } from '../fx/rise';
 import { useChanges } from '../fx/changes';
 import type { Point, Walk } from './walk';
-import { AddedIcon, FixedIcon, KerbIcon, LookIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
+import { AddedIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
 
 export type Insets = { top: number; right: number; bottom: number; left: number };
-export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
-export type MarkerIcon = 'steps' | 'kerb' | 'path' | 'no-photos' | 'fixed' | 'added' | 'check' | 'dismissed';
+export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
+export type MarkerIcon = 'steps' | 'kerb' | 'path' | 'no-photos' | 'fixed' | 'added' | 'dismissed';
 export type Marker = {
   id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number;
   /** A short caption beside the marker, such as "Steps · 340 m". Where it would collide it shortens to the part before " · ", or hides. */
@@ -22,7 +22,7 @@ export type Marker = {
   /** Visitor messages filed at this spot, shown with the caption, or as a small count when the caption is hidden. Say it in the label too. */
   count?: number;
 };
-const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, check: LookIcon, dismissed: RemoveIcon };
+const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, dismissed: RemoveIcon };
 type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 /** Whether a line through screen points, or a single point, passes through a box. */
@@ -476,7 +476,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
   /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
-  const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier' || marker.state === 'check').map(marker => marker.id).join(' ');
+  const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier').map(marker => marker.id).join(' ');
   /** Markers that the lean pushes up under the place title lose their tags; every marker's dot fades with the haze it stands in,
    * while its caption and count keep their full contrast. */
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
