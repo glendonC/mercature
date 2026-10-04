@@ -169,7 +169,7 @@
   --chat-leading: 1.45;
   --chat-gap: 8px;
   --choice-height: 40px;
-  --companion: 44px;
+  --companion: 64px;
   --line-surface: rgb(27 30 33 / 0.88);
   --line-ink: #ffffff;
   --line-muted: rgb(255 255 255 / 0.74);
@@ -199,6 +199,7 @@
 @media (max-width: 640px) {
   :root {
     --chat-edge: 16px;
+    --companion: 52px;
     --chat-top: 64px;
   }
 }

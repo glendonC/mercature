@@ -169,16 +169,16 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
   </section>;
 }
 
-type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; size?: number; className?: string; style?: CSSProperties };
+type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
 /**
- * The guide out in the world: the bot small, in a charcoal glass disc with a white ring, floating where the screen places it, never on the dialogue.
+ * The guide itself, on screen all the time: the bot floating free where the screen places it (64 px, 52 on a phone; --companion), never on the dialogue.
  * talking: it speaks while a page types (its mouth shows and it bobs), then idles and looks around. working: a thin arc turns around it.
  * Leave children out for the guide's own bot.
  */
-export function Companion({ children, working, talking, size = 36, className, style }: CompanionProps) {
+export function Companion({ children, working, talking, size, className, style }: CompanionProps) {
   const [color] = useState(() => (typeof document !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue('--field').trim()) || 'gray');
   return <span className={cx('ui-companion', className)} data-working={working || undefined} data-talking={talking || undefined} style={style} aria-hidden="true">
-    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking ? 'mouth' : 'eyes'} size={size} color={color}
+    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking ? 'mouth' : 'eyes'} size={size ?? 'var(--companion)'} color={color}
       shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />}</span>
   </span>;
 }
