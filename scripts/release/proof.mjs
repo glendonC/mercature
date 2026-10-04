@@ -1,6 +1,6 @@
 /**
  * Phone-width proof of a deployed build, local or live:
- *   1. Home, the Qorikancha reveal and the route from its published package, at 390 px.
+ *   1. Home, Narikala from its published package, then the Qorikancha reveal and route from its own, at 390 px.
  *   2. The model downloads from the app's own origin, never from the Hub, and its MIT license is served beside it.
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
@@ -150,6 +150,22 @@ try {
   check('manifest icons are served', manifest.icons.every(icon => icon.status === 200) && ['192x192', '512x512'].every(size => manifest.icons.some(icon => icon.sizes === size)) && manifest.appleTouchIcon === 200,
     manifest.icons.map(icon => `${icon.sizes} ${icon.purpose} ${icon.status}`).join(', '));
   await page.screenshot({ path: resolve(out, 'home-390.png') });
+
+  // Narikala opens from its own package, then Home again for Qorikancha.
+  const narikala = [];
+  const onNarikala = response => { if (/\/places\//.test(response.url())) narikala.push(`${response.status()} ${new URL(response.url()).pathname}`); };
+  page.on('response', onNarikala);
+  await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
+  const skipNarikala = page.getByRole('button', { name: 'Skip', exact: true });
+  await skipNarikala.waitFor();
+  if (await skipNarikala.isVisible()) await skipNarikala.click();
+  await page.locator('.route-inbox').waitFor();
+  const gulua = await page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
+  page.off('response', onNarikala);
+  await page.screenshot({ path: resolve(out, 'narikala-390.png') });
+  check('Narikala opens from its published package', gulua && narikala.includes(`200 ${base.pathname}places/narikala/place.json`),
+    `${narikala.filter(line => line.endsWith('place.json')).join(', ')}; Data Gulua Rise marker ${gulua ? 'shown' : 'missing'}`);
+  await page.goto(base.href);
 
   const placeRequests = [];
   page.on('response', response => { if (/\/places\/|\/routes\//.test(response.url())) placeRequests.push(`${response.status()} ${new URL(response.url()).pathname}`); });
