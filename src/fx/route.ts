@@ -1,11 +1,10 @@
 import type { Effect } from './FxCanvas';
 import type { FxScene } from './scene';
-import { slice, type Seen } from './space';
+import { slice } from './space';
 import { clamp01, dot, easeInOut, easeOut, line, mix, palette, rgba, ring, within, type Palette } from './paint';
 import type { Destination } from '../destinations/data';
 import type { Point } from '../destinations/walk';
 
-type Rgb = Palette['way'];
 
 /** A marker's colour by what it means: clay a possible barrier, blue the way, grey anything unknown or dismissed. */
 export function meaning(state: string): keyof Palette {
@@ -70,64 +69,6 @@ export function sawStretches(scene: FxScene, data: Destination, stretches: reado
   const from = Math.min(...covered.map(s => s.from)) - 10 * scene.unit, to = Math.max(...covered.map(s => s.to)) + 10 * scene.unit;
   for (const photo of scene.photos) if (photo.s >= from && photo.s <= to && photo.d <= 12 * scene.unit) ids.add(photo.id);
   return ids;
-}
-
-/** Where a photo was taken and which way it faced, and what it saw, as colours across its width. */
-export type Shot = { id: string; at: Point; heading: number; colours: Rgb[] | null };
-
-/** Sixteen colours across a photo, left to right, kept mostly to their lightness so stone never reads as clay. */
-export function columns(image: HTMLImageElement, count = 16): Rgb[] | null {
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = count; canvas.height = 12;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) return null;
-    context.drawImage(image, 0, 0, count, 12);
-    const pixels = context.getImageData(0, 0, count, 12).data, out: Rgb[] = [];
-    for (let column = 0; column < count; column++) {
-      const sum = [0, 0, 0];
-      for (let row = 0; row < 12; row++) for (let k = 0; k < 3; k++) sum[k] += pixels[(row * count + column) * 4 + k];
-      const mean = sum.map(v => v / 12) as Rgb, grey = 0.299 * mean[0] + 0.587 * mean[1] + 0.114 * mean[2];
-      out.push(mix([grey, grey, grey], mean, 0.3));
-    }
-    return out;
-  } catch {
-    return null;
-  }
-}
-
-/** The half angle and length of the view, the same as the map's own wedge: a sketch of a direction, not a measured field of view. */
-const HALF = Math.atan2(14, 31), REACH = 31;
-
-/**
- * The open photo's view, laid on the ground where it was taken, in the photo's own light and shade inside an ink outline.
- * A new photo swings it over.
- */
-export function camera(to: Shot, from: Shot | null, started: number, { grow = 400, swing = 520 } = {}): Effect {
-  return ({ ctx, project, now }) => {
-    const colours = palette(), t = now - started;
-    const g = from ? 1 : easeOut(clamp01(t / grow)), w = from ? easeInOut(clamp01(t / swing)) : 1;
-    const turn = from ? ((to.heading - from.heading + 540) % 360) - 180 : 0;
-    const at: Point = from ? [from.at[0] + (to.at[0] - from.at[0]) * w, from.at[1] + (to.at[1] - from.at[1]) * w] : to.at;
-    const heading = (from ? from.heading + turn * w : to.heading) * Math.PI / 180;
-    const forward: Point = [Math.sin(heading), -Math.cos(heading)], side: Point = [Math.cos(heading), Math.sin(heading)];
-    const ray = (a: number, r: number): Point => [at[0] + (forward[0] * Math.cos(a) + side[0] * Math.sin(a)) * r, at[1] + (forward[1] * Math.cos(a) + side[1] * Math.sin(a)) * r];
-    const reach = REACH * g, apex = project(at), tint = w < 0.5 && from ? from.colours : to.colours;
-    const slices = tint?.length ?? 1;
-    for (let i = 0; i < slices; i++) {
-      const a0 = -HALF + 2 * HALF * i / slices, a1 = -HALF + 2 * HALF * (i + 1) / slices, rgb = tint?.[i] ?? colours.ink;
-      const p0 = project(ray(a0, reach)), p1 = project(ray(a1, reach)), mid = project(ray((a0 + a1) / 2, reach));
-      const fill = ctx.createLinearGradient(apex[0], apex[1], mid[0], mid[1]);
-      fill.addColorStop(0, rgba(rgb, 0)); fill.addColorStop(1, rgba(rgb, tint ? 0.42 * g : 0.12 * g));
-      ctx.beginPath(); ctx.moveTo(apex[0], apex[1]); ctx.lineTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
-    }
-    const arc: Seen[] = Array.from({ length: 25 }, (_, i) => project(ray(-HALF + 2 * HALF * i / 24, reach)));
-    line(ctx, [apex, arc[0]], rgba(colours.ink, 0.55 * g), 1);
-    line(ctx, [apex, arc[arc.length - 1]], rgba(colours.ink, 0.55 * g), 1);
-    line(ctx, arc, rgba(colours.surface, 0.9 * g), 3.5);
-    line(ctx, arc, rgba(colours.ink, 0.8 * g), 1.25);
-    return t < (from ? swing : grow);
-  };
 }
 
 /** One ring over the ground from a marker: the pointer has just reached it, or an edit has just settled it. */
