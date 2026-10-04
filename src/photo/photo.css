@@ -14,10 +14,10 @@
 .lp [data-kind=steps] { --hue: var(--kind-steps, #b48cff); }
 .lp [data-kind=kerb] { --hue: var(--kind-kerb, #f2d13b); }
 .lp [data-kind=broken] { --hue: var(--kind-broken, #ff7a9c); }
-.lp [data-kind=bollard] { --hue: var(--kind-bollard, #33d1d6); }
+.lp [data-kind=bollard] { --hue: var(--kind-bollard, #8ee6c9); }
 .lp [data-kind=steep] { --hue: var(--kind-steep, #c3e356); }
 .lp [data-kind=gate] { --hue: var(--kind-gate, #f37adb); }
-.lp [data-kind=handrail] { --hue: var(--kind-handrail, #8ee6c9); }
+.lp [data-kind=handrail] { --hue: var(--kind-handrail, #33d1d6); }
 .lp [data-kind=ramp] { --hue: var(--kind-ramp, #5fd47a); }
 .lp [data-kind=bench] { --hue: var(--kind-bench, #d9a877); }
 .lp [data-kind=lighting] { --hue: var(--kind-lighting, #fff3b0); }

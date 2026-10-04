@@ -60,13 +60,13 @@ export function nearestOn(points: readonly Point[], p: Point): Point {
   return best;
 }
 
-/** Spots beside an outline: around its bounds, around its outermost points and points along it, and inside a large one. */
-function candidates(points: readonly Point[], b: Box, w: number, h: number): Box[] {
-  const cx = b.x + b.w / 2, cy = b.y + b.h / 2, above = b.y - h - GAP, below = b.y + b.h + GAP, right = b.x + b.w + GAP, left = b.x - w - GAP;
+/** Spots beside an outline: around its bounds, around points along it, and inside a large one; `reach` sets them further out. */
+function candidates(points: readonly Point[], b: Box, w: number, h: number, reach = GAP): Box[] {
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2, above = b.y - h - reach, below = b.y + b.h + reach, right = b.x + b.w + reach, left = b.x - w - reach;
   const spots: [number, number][] = [[b.x, above], [cx - w / 2, above], [b.x + b.w - w, above], [b.x, below], [cx - w / 2, below], [b.x + b.w - w, below],
     [right, cy - h / 2], [left, cy - h / 2], [right, b.y], [left, b.y], [right, b.y + b.h - h], [left, b.y + b.h - h]];
   const step = Math.max(1, Math.floor(points.length / 8)), keys = points.filter((_, i) => i % step === 0);
-  for (const [x, y] of keys) spots.push([x - w / 2, y - h - GAP], [x - w / 2, y + GAP], [x + GAP, y - h / 2], [x - w - GAP, y - h / 2]);
+  for (const [x, y] of keys) spots.push([x - w / 2, y - h - reach], [x - w / 2, y + reach], [x + reach, y - h / 2], [x - w - reach, y - h / 2]);
   if (b.w > w * 1.6 && b.h > h * 2.6) spots.push([cx - w / 2, cy - h / 2], [b.x + GAP * 2, b.y + GAP * 2], [b.x + b.w - w - GAP * 2, b.y + b.h - h - GAP * 2]);
   return spots.map(([x, y]) => ({ x, y, w, h }));
 }
@@ -89,16 +89,21 @@ export function placeLabels(items: readonly LabelIn[], frame: { w: number; h: nu
     if (!overlaps(b, view) || item.points.length < 3 || (!item.force && free >= budget)) { hidden.push(item.id); continue; }
     const small = b.w * b.h < item.w * item.h * 6;
     let best: { box: Box; inner: boolean } | null = null, bestCost = Infinity;
-    for (const raw of candidates(item.points, b, item.w, item.h)) {
-      const box = { ...raw, x: Math.min(frame.w - raw.w - MARGIN, Math.max(MARGIN, raw.x)), y: Math.min(frame.h - raw.h - MARGIN, Math.max(MARGIN, raw.y)) };
-      if (box.x < 0 || box.y < 0) continue;
-      if (placed.some(p => !clear(p.box, box)) || avoid.some(a => !clear(a, box)) || coversOutline(box, item.points)) continue;
-      const centre: Point = [box.x + box.w / 2, box.y + box.h / 2], inner = within(centre, item.points);
-      if (inner && small) continue;
-      let cost = inner ? 4 : gapTo(nearestOn(item.points, centre), box);
-      for (const o of outlines) if (o.id !== item.id && overlaps(o.box, box) && coversOutline(box, o.points)) cost += weighty.has(o.id) ? 40 : 12;
-      cost += (Math.abs(box.x - raw.x) + Math.abs(box.y - raw.y)) * 0.02;
-      if (cost < bestCost) { bestCost = cost; best = { box, inner }; }
+    // Near spots with clear targets first, then spots further out; a mark that matters may then sit closer to a neighbour.
+    const tries: [number, (a: Box, b: Box) => boolean][] = [[GAP, clear], [GAP * 5, clear], ...(weighty.has(item.id) ? [[GAP, (a: Box, c: Box) => !overlaps(a, c, MARGIN)] as [number, (a: Box, b: Box) => boolean]] : [])];
+    for (const [reach, apart] of tries) {
+      for (const raw of candidates(item.points, b, item.w, item.h, reach)) {
+        const box = { ...raw, x: Math.min(frame.w - raw.w - MARGIN, Math.max(MARGIN, raw.x)), y: Math.min(frame.h - raw.h - MARGIN, Math.max(MARGIN, raw.y)) };
+        if (box.x < 0 || box.y < 0) continue;
+        if (placed.some(p => !apart(p.box, box)) || avoid.some(a => !clear(a, box)) || coversOutline(box, item.points)) continue;
+        const centre: Point = [box.x + box.w / 2, box.y + box.h / 2], inner = within(centre, item.points);
+        if (inner && small) continue;
+        let cost = inner ? 4 : gapTo(nearestOn(item.points, centre), box);
+        for (const o of outlines) if (o.id !== item.id && overlaps(o.box, box) && coversOutline(box, o.points)) cost += weighty.has(o.id) ? 40 : 12;
+        cost += (Math.abs(box.x - raw.x) + Math.abs(box.y - raw.y)) * 0.02;
+        if (cost < bestCost) { bestCost = cost; best = { box, inner }; }
+      }
+      if (best) break;
     }
     if (!best && item.force) best = { box: { x: Math.min(frame.w - item.w - MARGIN, Math.max(MARGIN, b.x)), y: Math.min(frame.h - item.h - MARGIN, Math.max(MARGIN, b.y - item.h - GAP)), w: item.w, h: item.h }, inner: false };
     if (!best) { hidden.push(item.id); continue; }
