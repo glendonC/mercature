@@ -27,7 +27,7 @@ type Props = {
 const HERO = 'cusco-qorikancha';
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 /** Places that open here: a published package on any host, a local record only where it answers on this device. */
-function useOpenable(): (id: string) => boolean {
+export function useOpenable(): (id: string) => boolean {
   const [local, setLocal] = useState<ReadonlySet<string>>(new Set());
   useEffect(() => {
     if (!LOOPBACK.includes(location.hostname)) return;

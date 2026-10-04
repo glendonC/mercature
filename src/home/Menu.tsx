@@ -3,7 +3,7 @@ import { DESTINATIONS } from '../destinations/data';
 import { LANGS, LANG_NAMES, useLanguage, type Lang } from '../i18n';
 import { List, Panel, PanelHead, Row, Section, Segmented, IconButton, TextButton } from '../ui';
 import { CloseIcon, HomeIcon, MenuIcon } from '../ui/icons';
-import { covers } from './Home';
+import { covers, useOpenable } from './Home';
 import './menu.css';
 
 /** The places any screen can reach from the menu. */
@@ -26,6 +26,8 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
   const sheet = useRef<HTMLDialogElement>(null);
   const close = () => sheet.current?.close();
   const go = (run: () => void) => { close(); run(); };
+  // Credit the covers this device can show: a place that opens here, nothing a deployed screen never draws.
+  const openable = useOpenable();
   return <>
     <IconButton label={t('home.menu')} className={`menu-button ${className}`.trim()} onClick={() => sheet.current?.showModal()}><MenuIcon/></IconButton>
     <dialog ref={sheet} className="menu-dialog" aria-label={t('home.menu')} onClick={event => { if (event.target === sheet.current) close(); }}>
@@ -44,7 +46,7 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
           <p className="menu-source">{t('home.sourcePhotos')}</p>
           <p className="menu-source">{t('home.sourceModel')}</p>
           <p className="menu-source">{t('home.creditsNote')}</p>
-          <ul className="menu-covers">{covers.map(item => <li key={item.name}>
+          <ul className="menu-covers">{covers.filter(item => openable(item.id)).map(item => <li key={item.name}>
             <a href={item.source} target="_blank" rel="noreferrer">{item.name}</a> · {item.author}, {item.year} · <a href={item.licenseUrl} target="_blank" rel="noreferrer">{item.license}</a>
           </li>)}</ul>
         </Section>
