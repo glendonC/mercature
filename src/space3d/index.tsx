@@ -67,8 +67,9 @@ export function PhotoOr3D({ data, stretches, children, markers, onMarker, onMark
 }) {
   const { lang } = useLanguage(), words = WORDS[lang === 'es' ? 'es' : 'en'];
   const space = useSpace(data), here = covers(space, stretches);
-  // The choice is kept per spot outside the component, so a screen that remounts it keeps what she chose.
-  const key = `${data.id}:${stretches.join(',')}`, shown = choices.get(key) ?? 'photo';
+  // Her choice holds for the place, outside the component: a screen that remounts it, or a tap in the 3D that moves the conversation to
+  // another spot, keeps her in the view she chose wherever the 3D reaches.
+  const key = data.id, shown = choices.get(key) ?? 'photo';
   const [, redraw] = useState(0);
   const setShown = (value: 'photo' | 'space') => { choices.set(key, value); redraw(n => n + 1); };
   const [broken, setBroken] = useState(false);
