@@ -39,7 +39,8 @@ type Step =
   | { id: 'check'; at: number; tapping?: Answer; kind?: true }
   | { id: 'checkEnd' }
   | { id: 'message'; at: number; another?: boolean }
-  | { id: 'reply'; at: number }
+  /** ask: nobody could place the message, so the reply asks the visitor where it was. */
+  | { id: 'reply'; at: number; ask?: true }
   | { id: 'insights' }
   | { id: 'missed'; here?: Target }
   | { id: 'propose'; proposal: Proposal }
@@ -391,7 +392,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.id === 'message') setStep({ ...step, another: true });
   }
   /** Her tap files the message on a spot; the model learns from it when the spot is one it can suggest. */
-  function file(at: number, target: Target | null) {
+  function file(at: number, target: Target | null, ask?: true) {
     const row = rows[at]; if (!row) return;
     const key = target ? keyOf(target) : null;
     if (!messageOf(row.id)) commit(review => logMessage(review, { text: row.text, language: row.language, answer: null, spot: key }, row.id));
@@ -399,7 +400,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const learns = !!key && !!place?.features.some(feature => feature.id === key);
     if (learns && place) void remember(row.text, place, key!);
     setReplyLang(null);
-    go({ id: 'reply', at }, target ? `${s.messages.filed({ spot: spotWords(target) })}${learns ? ` ${s.messages.learned}` : ''}` : '');
+    go({ id: 'reply', at, ...(ask ? { ask } : {}) }, target ? `${s.messages.filed({ spot: spotWords(target) })}${learns ? ` ${s.messages.learned}` : ''}` : '');
   }
   const [replyLang, setReplyLang] = useState<VisitorLang | null>(null);
   const [noteLang, setNoteLang] = useState<VisitorLang>(lang);
@@ -489,7 +490,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
 
   // Visitor-facing text, from fixed templates and her own records only
-  function replyText(message: LoggedMessage, language: VisitorLang) {
+  function replyText(message: LoggedMessage, language: VisitorLang, ask?: boolean) {
+    if (ask) return REPLY_MORE.askWhere[language];
     const answer = message.answer;
     if (answer?.status === 'ready' && answer.kind === 'praise') return REPLY.praise[language]();
     if (answer?.status === 'ready' && answer.kind === 'question') return REPLY.question[language]();
@@ -700,9 +702,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       if (message && !chips.length) {
         if (message.spot) chips.push({ id: 'reply', label: s.reply.copy, primary: true, onClick: () => go({ id: 'reply', at: step.at }) });
         else {
+          // Asking the visitor where is always offered when the spot is uncertain, and comes first when nobody could place it.
+          const ask: Chip = { id: 'askWhere', label: s.messages.chips.askWhere, onClick: () => file(step.at, null, true) };
+          const sure = !!first && (answer?.status === 'ready' || !!answer?.remembered);
+          if (!first || step.another) chips.push({ ...ask, primary: true });
           if (first && (answer?.status === 'ready' || answer?.remembered) && !step.another) chips.push({ id: 'yes', label: s.messages.chips.yes, primary: true, onClick: () => file(step.at, first) });
           else if (first && !step.another) for (const [i, key] of answer!.candidates.entries()) { const target = targetOf(key); if (target) chips.push({ id: `c${i}`, label: tagOf(target), onClick: () => file(step.at, target) }); }
-          if (first && !step.another) chips.push({ id: 'another', label: s.messages.chips.another, onClick: () => setStep({ ...step, another: true }) });
+          if (first && !step.another) chips.push({ id: 'another', label: s.messages.chips.another, onClick: () => setStep({ ...step, another: true }) }, ...(sure ? [] : [ask]));
           chips.push({ id: 'noSpot', label: s.messages.chips.noSpot, onClick: () => file(step.at, null) });
         }
       }
@@ -714,7 +720,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     } else {
       const message = current, replyIn = replyLang ?? replyLanguage(row.language);
       lines.push(s.reply.say({ n: step.at + 1, total: rows.length, language: s.words.languages[replyIn] ?? replyIn }));
-      if (message) { const text = replyText(message, replyIn); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={s.reply.copy} copiedLabel={s.reply.copied} />; }
+      if (message) { const text = replyText(message, replyIn, step.ask); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={s.reply.copy} copiedLabel={s.reply.copied} />; }
       chips = [{ id: 'next', label: step.at + 1 < rows.length ? s.messages.chips.next : s.check.chips.next, primary: true, onClick: () => go(nextMessage(step.at)) }];
     }
   } else if (step.id === 'insights') {

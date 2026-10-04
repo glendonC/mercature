@@ -185,7 +185,9 @@ export type Script = {
     /** Pasting a message that just came in. */
     paste: string;
     read: string;
-    chips: { yes: string; another: string; noSpot: string; next: string; skip: string; paste: string };
+    chips: { yes: string; another: string; noSpot: string; next: string; skip: string; paste: string;
+      /** Nobody could place the message: the reply asks the visitor where it was. */
+      askWhere: string };
   };
   reply: {
     say: (s: MessageSlots) => string;
@@ -445,7 +447,7 @@ const en: Script = {
     translated: 'Machine-translated',
     paste: 'Paste what the visitor wrote',
     read: 'Read it',
-    chips: { yes: 'Yes, that spot', another: 'No, another spot', noSpot: 'Not about a spot', next: 'Next message', skip: 'Later', paste: 'Paste a message' },
+    chips: { yes: 'Yes, that spot', another: 'No, another spot', noSpot: 'Not about a spot', next: 'Next message', skip: 'Later', paste: 'Paste a message', askWhere: 'Ask them where' },
   },
   reply: {
     say: s => `Here’s a reply in ${s.language}. Copy it when you’re ready.`,
@@ -677,7 +679,7 @@ const es: Script = {
     translated: 'Traducción automática',
     paste: 'Pega lo que escribió el visitante',
     read: 'Leer',
-    chips: { yes: 'Sí, ese punto', another: 'No, otro punto', noSpot: 'No es de un punto', next: 'Siguiente mensaje', skip: 'Después', paste: 'Pegar un mensaje' },
+    chips: { yes: 'Sí, ese punto', another: 'No, otro punto', noSpot: 'No es de un punto', next: 'Siguiente mensaje', skip: 'Después', paste: 'Pegar un mensaje', askWhere: 'Preguntarle dónde' },
   },
   reply: {
     say: s => `Aquí tienes una respuesta en ${s.language}. Cópiala cuando quieras.`,
