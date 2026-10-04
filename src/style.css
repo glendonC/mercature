@@ -157,6 +157,19 @@
   --motion-slow: var(--slow);
   --ease-out: var(--ease);
   --ease-in-out: cubic-bezier(0.45, 0, 0.2, 1);
+  /* The guide's dialogue: one clean line at the bottom, as a game shows it. One hierarchy and one rhythm: the line 15 px, a choice 14 px,
+     meta 13 px; 8 px between the line and her field, 4 px between choices. */
+  --chat-width: 640px;
+  --chat-edge: 24px;
+  --chat-top: 72px;
+  --chat-text: var(--font-m);
+  --chat-leading: 1.45;
+  --chat-gap: 8px;
+  --choice-height: 40px;
+  --companion: 44px;
+  --line-surface: rgb(27 30 33 / 0.88);
+  --line-ink: #ffffff;
+  --line-muted: rgb(255 255 255 / 0.74);
 
   /* What sits on a surface; a charcoal surface flips these */
   --ui-ink: var(--ink);
@@ -178,6 +191,12 @@
 @media (min-resolution: 2dppx) {
   :root {
     --hair-width: 0.5px;
+  }
+}
+@media (max-width: 640px) {
+  :root {
+    --chat-edge: 12px;
+    --chat-top: 64px;
   }
 }
 /* A light surface, also inside a charcoal one */

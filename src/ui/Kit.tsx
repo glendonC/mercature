@@ -1,20 +1,15 @@
+import { BotAvatar } from 'bot-avatars';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { assetUrl, loadDestination, type Destination } from '../destinations/data';
 import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, GROUND_KINDS, KIND_ORDER, kindOf, Callout, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Section, Quote, Segmented, Select, Sheet, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
 const HERO = 'cusco-qorikancha';
-const MESSAGES = [
-  { lang: 'ko', text: '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.', spot: 'Calle Loreto', kind: I.ProblemIcon },
-  { lang: 'es', text: 'Algunas partes del recorrido fueron bien duras para mi papá con su bastón.', spot: null, kind: I.ProblemIcon },
-  { lang: 'en', text: 'Quick question: is the Qorikancha ticket booth step-free from the street?', spot: 'Ticket booth', kind: I.QuestionIcon },
-  { lang: 'qu', text: 'Calle Loreto Maruriwan tupasqanpi kaq rumi patakuna sinchi sayaq.', spot: null, kind: null },
-] as const;
 const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon], ['Crossing', I.CrossingIcon], ['Cobblestones', I.CobblestonesIcon], ['Footway', I.FootwayIcon], ['Bollard', I.BollardIcon],
   ['Broken pavement', I.BrokenPavementIcon], ['Road', I.RoadIcon], ['On the path', I.PathIcon], ['Landmark', I.LandmarkIcon], ['No photos', I.NoPhotosIcon], ['Photo', I.PhotoIcon], ['Fixed', I.FixedIcon], ['Added by you', I.AddedIcon],
   ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon], ['Start over', I.RotateIcon], ['Undo', I.UndoIcon], ['Use without AI', I.PointerIcon], ['Filed on a spot', I.PinIcon], ['Download', I.DownloadIcon], ['Skip', I.SkipIcon], ['Enter', I.EnterIcon], ['Done', I.CheckIcon],
@@ -34,11 +29,31 @@ function useNarrow() {
   return narrow;
 }
 
-/** The review page for the shared primitives: the parts in place over the real walk, then each part on its own. */
+const SCENES = [
+  { value: 'check', label: 'Check' },
+  { value: 'message', label: 'Message' },
+  { value: 'reply', label: 'Reply' },
+  { value: 'note', label: 'Note' },
+  { value: 'reading', label: 'Reading' },
+] as const;
+type Scene = (typeof SCENES)[number]['value'];
+const initialScene = (): Scene => { try { const scene = new URLSearchParams(location.search).get('scene'); return SCENES.some(item => item.value === scene) ? scene as Scene : 'check'; } catch { return 'check'; } };
+const REPLY_KO = '코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다. 현장 확인은 아직 하지 않았습니다.';
+const NOTE = 'Plaza de Armas to the Qorikancha ticket booth, 594 m.\nCalle Loreto, 340 m: steps recorded in a street photo and in OpenStreetMap. Not checked on site.\nHatunrumiyoq, 420 to 430 m: no street photos.\nTicket booth: a ramp was recorded on 3 Oct.\nThis note is made from street photos and OpenStreetMap. Ask staff before you go.';
+
+/** The guide, as the route screen draws it: the bot in the app's field grey. */
+function Guide({ working }: { working?: boolean }) {
+  const narrow = useNarrow();
+  const [color] = useState(() => getComputedStyle(document.documentElement).getPropertyValue('--field').trim() || 'gray');
+  return <BotAvatar type="blob" state={working ? 'working' : 'default'} size={36} color={color} shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />;
+}
+
+/** The review page for the shared primitives: the guide's dialogue over the real walk, then each part on its own. */
 export default function Kit() {
   const data = useHero();
   const narrow = useNarrow();
-  const [tone, setTone] = useState<Tone>(initialTone);
+  const [tone] = useState<Tone>(initialTone);
+  const [scene, setScene] = useState<Scene>(initialScene);
   const walk = useMemo(() => data && buildWalk(data), [data]);
   const markers = useMemo(() => walk ? spotMarkers(walk, loadReview(HERO).review) : [], [walk]);
   const lead = useMemo(() => {
@@ -48,29 +63,11 @@ export default function Kit() {
     const photo = view && data.photos.find(p => p.id === view.photoId);
     return finding && view ? { finding, view, photo, marks: data.findings.filter(f => f.viewId === view.id && f.outline.length > 2) } : null;
   }, [data]);
-  const insets = narrow ? { top: 84, right: 16, bottom: 330, left: 16 } : { top: 90, right: 430, bottom: 70, left: 380 };
+  const insets = narrow ? { top: 84, right: 16, bottom: 300, left: 16 } : { top: 90, right: 60, bottom: 90, left: 620 };
   const words = { zoomIn: 'Zoom in', zoomOut: 'Zoom out', fit: 'Whole route', credit: '© OpenStreetMap contributors' };
 
-  const inbox = <>
-    <PanelHead title="Messages" meta="Qorikancha · 4 waiting" actions={<IconButton label="More"><I.MoreIcon /></IconButton>} />
-    <Section title="Found along the walk" action={<TextButton icon={<I.CopyIcon />}>Route note</TextButton>}>
-      <Legend items={[{ kind: 'possible', label: 'Steps 4' }, { kind: 'added', label: 'Kerb 1' }, { kind: 'no-photos', label: 'No photos 1' }, { kind: 'fixed', label: 'Fixed 0' }]} />
-    </Section>
-    <Section title="Messages">
-      <List inset>
-        {MESSAGES.map((message, index) => {
-          const Kind = message.kind;
-          return <Row key={index} selected={index === 0} icon={<Tag tone="solid" lang={message.lang}>{message.lang.toUpperCase()}</Tag>}
-            label={<span lang={message.lang}>{message.text}</span>} detail={message.spot ? `On ${message.spot}` : 'Not filed'}
-            meta={index < 2 ? <Tag tone="example">Example</Tag> : null} trailing={Kind ? <Kind size={16} /> : null} />;
-        })}
-      </List>
-    </Section>
-    <div className="kit-foot"><TextButton icon={<I.PlusIcon />}>Add a message</TextButton><TextButton muted icon={<I.RotateIcon />}>Start over</TextButton></div>
-  </>;
-
-  const card = lead && <Panel size="card" tone={tone} className="kit-card" enter aria-label="Calle Loreto">
-    <PanelHead as="h3" title="Calle Loreto" meta="340 to 350 m · 2 messages" actions={<IconButton label="Close"><I.CloseIcon /></IconButton>} />
+  const photoCard = lead && <Panel size="card" className="kit-above-card" aria-label="Calle Loreto">
+    <PanelHead as="h3" title="Calle Loreto" meta="340 m · photo 1 of 2" actions={<IconButton label="Close"><I.CloseIcon /></IconButton>} />
     <figure className="kit-photo" style={{ '--ratio': lead.view.height / lead.view.width } as CSSProperties}>
       <div className="kit-photo-frame">
         <img src={assetUrl(data!, lead.view.file)} alt="Steps" />
@@ -81,14 +78,35 @@ export default function Kit() {
       </div>
       {lead.photo && <figcaption>{lead.photo.creator}. CC BY-SA 4.0 · Mapillary</figcaption>}
     </figure>
-    <Legend items={[{ mark: 'steps', barrier: true, icon: <I.StepsIcon />, label: 'Steps' }, { mark: 'kerb', icon: <I.KerbIcon />, label: 'Kerb' }]} />
-    <div className="kit-tools"><TextButton icon={<I.FixedIcon />}>Mark fixed</TextButton><TextButton icon={<I.NoteIcon />}>Note</TextButton><TextButton muted icon={<I.RemoveIcon />}>Remove</TextButton></div>
-    <div className="kit-reply">
-      <Segmented label="Reply in" value="ko" onChange={() => {}} options={[{ value: 'en', label: 'English' }, { value: 'es', label: 'Español', lang: 'es' }, { value: 'ko', label: '한국어', lang: 'ko' }]} />
-      <Callout lang="ko">코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다.</Callout>
-      <PrimaryAction icon={<I.CopyIcon />} shortcut="mod+enter" onClick={() => {}}>Copy reply</PrimaryAction>
-    </div>
   </Panel>;
+  const noteCard = <Panel size="card" className="kit-above-card" aria-label="Route note">
+    <PanelHead as="h3" title="Route note" meta="Qorikancha · English" actions={<IconButton label="Close"><I.CloseIcon /></IconButton>} />
+    <CopyBox className="kit-note" text={NOTE} copyLabel="Copy" copiedLabel="Copied" lead />
+  </Panel>;
+
+  const said = {
+    check: <p>When the walk was recorded, a model outlined steps here, on Calle Loreto. What is there now?</p>,
+    message: <p>A visitor wrote in Korean. It seems to be about the steps on Calle Loreto. Is that right?</p>,
+    reply: <p>Here is a reply in Korean, from what your map says.</p>,
+    note: <p>Here is the route note for visitors. It changes as you check the walk.</p>,
+    reading: null,
+  }[scene];
+  const choices = {
+    check: <Choices label="What is there now?"><Choice lead icon={<I.StepsIcon />}>Still there</Choice><Choice icon={<I.FixedIcon />}>Fixed</Choice><Choice icon={<I.RemoveIcon />}>Not a barrier</Choice><Choice icon={<I.MoreIcon />}>Something else</Choice></Choices>,
+    message: <Choices label="Is that right?"><Choice lead icon={<I.PinIcon />}>Yes, that spot</Choice><Choice icon={<I.PointerIcon />}>Another spot</Choice><Choice icon={<I.CloseIcon />}>Not about a spot</Choice></Choices>,
+    reply: <Choices label="Next"><Choice lead icon={<I.ChevronIcon />}>Next message</Choice><Choice icon={<I.NoteIcon />}>Route note</Choice></Choices>,
+    note: null,
+    reading: null,
+  }[scene];
+  const messageCard = <Panel size="card" className="kit-focus-card" aria-label="Visitor message">
+    <PanelHead as="h3" title="Korean" meta="Message 1 of 4" />
+    <Quote lang="ko">코리칸차 가는 길에 성당 옆 골목의 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.</Quote>
+  </Panel>;
+  const replyCard = <Panel size="card" className="kit-focus-card" aria-label="Reply">
+    <PanelHead as="h3" title="Reply" meta="Korean" />
+    <CopyBox text={REPLY_KO} lang="ko" copyLabel="Copy" copiedLabel="Copied" className="kit-note" />
+  </Panel>;
+  const focus = { check: photoCard, message: messageCard, reply: replyCard, note: noteCard, reading: null }[scene];
 
   return <main className="kit" data-tone-demo={tone}>
     <div className="kit-stage">
@@ -96,20 +114,27 @@ export default function Kit() {
         onMarker={() => {}} onMap={() => {}} clearBottom={0} words={words} ariaLabel="Qorikancha" />}
       <header className="kit-bar">
         <span className="kit-brand">mercature</span>
-        <Segmented variant="tabs" caps label="Surface" value={tone} onChange={setTone} options={[{ value: 'dark', label: 'Charcoal glass' }, { value: 'light', label: 'Light glass' }]} />
+        <Segmented variant="tabs" caps label="Scene" value={scene} onChange={setScene} options={SCENES} />
         <span className="kit-keys"><Kbd>Esc</Kbd><span>Back</span></span>
       </header>
-      {!narrow && card}
-      {!narrow && <div className="kit-pins" aria-hidden="true">
-        <span style={{ left: '43%', top: '31%' }}><MapLabel icon={<I.StepsIcon />} title="Steps" meta="Calle Loreto · 2" selected /></span>
-        <span style={{ left: '53%', top: '57%' }}><MapLabel icon={<I.FixedIcon />} tone="route" title="Fixed" meta="Ramp, 3 Oct" /></span>
-      </div>}
-      {narrow
-        ? <Sheet tone={tone} className="kit-sheet" aria-label="Messages">{inbox}</Sheet>
-        : <Panel as="aside" tone={tone} scroll className="kit-inbox" aria-label="Messages">{inbox}</Panel>}
+      <Companion className="kit-companion" working={scene === 'reading'}><Guide working={scene === 'reading'} /></Companion>
+      {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
+      <Dialogue key={scene} label="Guide" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
+        composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />}>
+        {said}
+      </Dialogue>
     </div>
 
     <div className="kit-sheet-body">
+      <Specimen wide title="Guide's dialogue" note="One clean line on its own at the bottom, her field under it. The guide floats in the map beside what it talks about; her choices are their own list beside the photo or message.">
+        <div className="kit-dialogues">
+          <div className="kit-row"><Companion><Guide /></Companion><Companion working><Guide working /></Companion></div>
+          <Dialogue className="kit-static-dialogue" label="Guide, one line" composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} />}><p>Hi. I can help you check this walk and answer visitors.</p></Dialogue>
+          <Dialogue className="kit-static-dialogue" label="Guide, working" working workingLabel="Reading" />
+          <Choices className="kit-choices-demo" label="What is there now?"><Choice selected icon={<I.CheckIcon />}>Still there</Choice><Choice disabled icon={<I.FixedIcon />}>Fixed</Choice><Choice disabled icon={<I.RemoveIcon />}>Not a barrier</Choice></Choices>
+        </div>
+      </Specimen>
+
       <Specimen wide title="Kinds" note="Every kind its own hue, on a dark casing, always with its icon and name. Ground kinds are dashed and quieter. A possible barrier is a clay badge and a heavier line, never a tint. No kind is blue, clay or mid grey.">
         <div className="kit-kinds">
           {KIND_ORDER.map(kind => { const Icon = I.iconOfKind(kind), barrier = kind === 'steps' || kind === 'kerb'; return <div key={kind} className="kit-kind" data-mark={kind}>
@@ -118,6 +143,36 @@ export default function Kit() {
             <small>{GROUND_KINDS.has(kind) ? 'ground, dashed' : barrier ? 'possible barrier' : 'feature'}</small>
           </div>; })}
         </div>
+      </Specimen>
+
+      <Specimen title="Dialogue type" note="One hierarchy: no labels over content, one muted meta line at most.">
+        <ul className="kit-type">
+          <li><span style={{ fontSize: 'var(--chat-text)' }}>What is there now?</span><small>15 · the line, her words</small></li>
+          <li><span style={{ fontSize: 'var(--font-s)', fontWeight: 500 }}>Still there</span><small>14 · a choice</small></li>
+          <li><span style={{ fontSize: 'var(--font-xs)', color: 'var(--muted)' }}>1 of 8 · Korean</span><small>13 · meta</small></li>
+        </ul>
+        <dl className="kit-tokens kit-rhythm">
+          <div><dt>Rhythm</dt><dd>8 between the line and her field · 4 between choices · 12 by 18 inside the line</dd></div>
+          <div><dt>Width</dt><dd>640 centred on a wide screen, the full width less 12 on a phone</dd></div>
+          <div><dt>Guide</dt><dd>a 44 disc in the map beside the spot it talks about; a thin arc turns only while it works</dd></div>
+        </dl>
+      </Specimen>
+
+      <Specimen title="In your words" note="The send action sits inside the field. Enter sends; an input method's Enter never does.">
+        <div className="kit-fields kit-on-map"><Composer label="In your words" sendLabel="Send" onSend={() => {}} /><Composer label="In your words" sendLabel="Send" value="There is a new ramp beside the steps" onChange={() => {}} onSend={() => {}} /></div>
+      </Specimen>
+
+      <Specimen title="Copy box" note="The Copy action sits inside the box it copies. Long words scroll inside it, faded at the clipped edge.">
+        <div className="kit-fields" data-tone="dark" style={{ padding: 12, borderRadius: 16, background: 'var(--line-surface)' }}>
+          <CopyBox text={REPLY_KO} lang="ko" meta="Korean" copyLabel="Copy" copiedLabel="Copied" />
+          <CopyBox text={NOTE} copyLabel="Copy" copiedLabel="Copied" lead className="kit-note-short" />
+        </div>
+      </Specimen>
+
+      <Specimen title="Scroll fade" note="Content that is cut off fades at the edge where more is hidden, never a hard cut.">
+        <div data-tone="dark" className="kit-fade-demo"><ScrollFade className="kit-fade-box"><List inset>
+          {MARK_ORDER.map(kind => { const Icon = I.iconOfMark(kind); return <Row key={kind} icon={<Icon />} label={MARK_NAMES[kind]} meta={kind.length} />; })}
+        </List></ScrollFade></div>
       </Specimen>
 
       <Specimen title="Type" note="Outfit 300, 400, 500. Nothing below 13 px.">
@@ -175,7 +230,7 @@ export default function Kit() {
 
       <Specimen title="Tags and choices">
         <div className="kit-row"><Tag tone="solid" lang="ko">KO</Tag><Tag tone="solid">ES</Tag><Tag tone="example">Example</Tag><Tag>Not read yet</Tag><Tag tone="barrier"><I.StepsIcon />Steps</Tag><Tag tone="route"><I.FixedIcon />Fixed</Tag><Tag tone="unknown">Dismissed</Tag></div>
-        <div className="kit-row"><Choice /><TabsChoice /></div>
+        <div className="kit-row"><TrackChoice /><TabsChoice /></div>
       </Specimen>
 
       <Specimen title="Rows">
@@ -221,7 +276,7 @@ export default function Kit() {
 function Specimen({ title, note, wide, children }: { title: string; note?: string; wide?: boolean; children: ReactNode }) {
   return <section className={wide ? 'kit-specimen kit-wide' : 'kit-specimen'}><header><h2>{title}</h2>{note && <p>{note}</p>}</header>{children}</section>;
 }
-function Choice() {
+function TrackChoice() {
   const [value, setValue] = useState('en');
   return <Segmented label="Route note" value={value} onChange={setValue} options={[{ value: 'en', label: 'EN' }, { value: 'es', label: 'ES' }, { value: 'ko', label: 'KO' }]} />;
 }

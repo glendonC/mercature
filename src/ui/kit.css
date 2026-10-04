@@ -68,6 +68,21 @@
   .kit-sheet-body { padding: 20px 12px 48px; }
   .kit-meaning { grid-template-columns: 1fr; }
 }
+
+/* The guide's dialogue on the stage, and its parts on their own */
+.kit-stage .ui-dialogue { z-index: 7; }
+.kit-above-card { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.kit-above-card .kit-photo { margin-bottom: 8px; }
+.kit-note { margin: 0 0 8px; }
+.kit-note-short .ui-copy-text { --copy-lines: 4; }
+.kit-dialogues { display: grid; gap: 28px; padding: 20px 16px; border-radius: 12px; background: #e6e9eb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect x='6' y='8' width='40' height='26' fill='%23d8dcdf'/%3E%3Crect x='52' y='44' width='24' height='30' fill='%23d8dcdf'/%3E%3Cpath d='M0 40h80M48 0v80' stroke='%23fff' stroke-width='5'/%3E%3C/svg%3E"); }
+.kit-static-dialogue.ui-dialogue { position: relative; left: auto; z-index: auto; width: 100%; max-height: none; padding: 0; transform: none; }
+.kit-static-dialogue::before { display: none; }
+.kit-on-map { padding: 12px; border-radius: 12px; background: #e6e9eb; }
+.kit-rhythm { margin-top: 12px; }
+.kit-fade-demo { padding: 4px 8px; border-radius: 14px; background: var(--glass-charcoal); }
+.kit-fade-box { height: 180px; padding: 0 6px; }
+@media (max-width: 640px) { .kit-brand { display: none; } .kit-bar .ui-segmented { margin-inline: -8px auto; } }
 .kit-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .kit-kind { display: grid; gap: 6px; padding: 8px; border-radius: 10px; background: linear-gradient(135deg, #8d8578, #b9b2a6 45%, #5f5a52); }
 .kit-kind svg { width: 100%; height: 36px; }
@@ -76,3 +91,14 @@
 .kit-kind-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); box-shadow: 0 0 0 1.5px #fff; }
 .kit-kind-badge { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--kind-barrier); box-shadow: 0 0 0 1.5px #fff; }
 .kit-kind small { font-size: var(--font-xs); color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); }
+/* The revised stage: the guide in the map, the focus card with its choices beside it */
+.kit-companion { position: absolute; z-index: 6; left: 58%; top: 30%; }
+.kit-focus { position: absolute; z-index: 8; left: 24px; top: 80px; display: grid; grid-template-columns: minmax(0, 420px) 220px; align-items: start; gap: 12px; max-height: calc(100% - 300px); }
+.kit-focus-card { max-height: 100%; overflow-y: auto; }
+.kit-focus > .ui-choices { margin-top: -2px; }
+.kit-choices-demo { max-width: 260px; }
+@media (max-width: 640px) {
+  .kit-companion { left: 62%; top: 18%; }
+  .kit-focus { left: 12px; right: 12px; top: 64px; grid-template-columns: 1fr; gap: 4px; max-height: calc(100% - 220px); overflow-y: auto; }
+  .kit-focus > .ui-choices { grid-template-columns: 1fr 1fr; column-gap: 6px; }
+}
