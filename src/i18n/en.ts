@@ -41,6 +41,13 @@ export const en = {
 
   // Home
   'home.label': 'Mercature home',
+  'home.subtitle': 'A tour operator’s record of where a visitor might not get through on a walk, built from street photos and kept current on their own phone.',
+  'home.onPhone': 'Places on this phone',
+  'home.open': 'Open',
+  'home.onFoot': '{area} · {metres} m on foot',
+  'home.spotsToCheck': '{n} spots to check',
+  'home.oneSpotToCheck': '1 spot to check',
+  'home.allChecked': 'All spots checked',
   'home.title': 'An editable spatial{br}accessibility model',
   'home.credits': 'Photo credits',
   'home.closeCredits': 'Close photo credits',

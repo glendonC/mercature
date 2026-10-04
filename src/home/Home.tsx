@@ -1,10 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import qorikancha from '../covers/qorikancha.webp';
 import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
 import { NOOR_FARM } from '../site/farm';
-import { PACKAGES, isDestinationId } from '../destinations/data';
-import { CloseIcon, InfoIcon, SceneIcon, SearchIcon, UploadIcon } from '../icons';
+import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destination } from '../destinations/data';
+import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
+import { buildWalk, type Walk } from '../destinations/walk';
+import { loadReview, verdictOf } from '../decisions/store';
+import { CloseIcon, InfoIcon, SceneIcon } from '../icons';
 import { useLanguage } from '../i18n';
 import LanguageSwitch from '../i18n/LanguageSwitch';
 import './Home.css';
@@ -24,10 +27,8 @@ type Props = {
   saved?: SavedEntry[];
   onOpenSaved: (entry: SavedEntry) => void;
 };
-/** Search ignores case, accents and apostrophe style, so "noor’s", "Noor's" and "finca" all match. */
-const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/[\u2018\u2019`]/g, "'").toLocaleLowerCase();
-const farmTerms = fold(`${NOOR_FARM.name.en} ${NOOR_FARM.name.es} ${NOOR_FARM.place} coffee café farm finca`);
-const demoTerms = 'visitor courtyard example editing demo patio de visitantes ejemplo';
+/** The walk drawn behind Home, and the first place it offers. */
+const HERO = 'cusco-qorikancha';
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 /** Places that open here: a published package on any host, a local record only where it answers on this device. */
 function useOpenable(): (id: string) => boolean {
@@ -46,6 +47,49 @@ function useOpenable(): (id: string) => boolean {
   }, []);
   return id => (isDestinationId(id) && !!PACKAGES[id]) || local.has(id);
 }
+/** The hero walk, its spots, and how many of them still wait for a person. */
+function useHero(): { data: Destination | null; walk: Walk | null; markers: Marker[]; left: number } {
+  const [data, setData] = useState<Destination | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadDestination(HERO, controller.signal).then(setData).catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+  const walk = useMemo(() => data && buildWalk(data), [data]);
+  const review = useMemo(() => data && loadReview(data.id).review, [data]);
+  if (!walk || !review) return { data, walk: null, markers: [], left: 0 };
+  /** A spot carries the state the route canvas gives it (src/destinations/RouteCanvas.tsx); the still map hides the labels. */
+  const markers: Marker[] = walk.spots.map(spot => ({
+    id: spot.id, at: spot.at, selected: false, label: '',
+    state: spot.kind === 'no-photos' ? 'no-photos' : verdictOf(review, spot.stretches) ?? 'open',
+  }));
+  const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
+  return { data, walk, markers, left: flagged.filter(spot => !verdictOf(review, spot.stretches)).length };
+}
+const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
+/** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
+function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLElement | null>): Insets {
+  const [insets, setInsets] = useState<Insets>({ top: 96, right: 24, bottom: 220, left: 24 });
+  useLayoutEffect(() => {
+    const fit = () => {
+      const wide = window.innerWidth >= 640, text = words.current?.getBoundingClientRect(), row = places.current?.getBoundingClientRect();
+      const next: Insets = {
+        top: wide ? 96 : text ? text.bottom + 16 : 96,
+        right: 24,
+        bottom: row ? Math.max(24, window.innerHeight - row.top + 16) : 24,
+        left: wide && text ? text.right + 32 : 16,
+      };
+      setInsets(previous => sameInsets(previous, next) ? previous : next);
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    if (words.current) observer.observe(words.current);
+    if (places.current) observer.observe(places.current);
+    window.addEventListener('resize', fit);
+    return () => { observer.disconnect(); window.removeEventListener('resize', fit); };
+  }, [words, places]);
+  return insets;
+}
 /** The authored terrace drawn from its own scene records. */
 function FarmPlan() {
   const { bounds, obstacles, unknown } = NOOR_FARM.scene;
@@ -57,59 +101,49 @@ function FarmPlan() {
     {obstacles.map(item => <rect key={item.id} {...box(item.bounds)} rx=".15" className={item.movable ? 'plan-movable' : 'plan-fixed'}/>)}
   </svg>;
 }
-export default function Home({onOpen, onExample, onFarm, onDestination, onImport, onUpload, saved = [], onOpenSaved}: Props) {
+export default function Home({onExample, onFarm, onDestination, saved = [], onOpenSaved}: Props) {
   const { t, rich, lang } = useLanguage();
-  const [query, setQuery] = useState('');
-  const [expanded, setExpanded] = useState(false);
   const credits = useRef<HTMLDialogElement>(null);
-  const upload = useRef<HTMLDialogElement>(null);
-  const search = useRef<HTMLInputElement>(null);
+  const words = useRef<HTMLDivElement>(null);
+  const places = useRef<HTMLElement>(null);
   const openable = useOpenable();
-  const results = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (!expanded) return;
-    const fit = () => {
-      if (results.current) results.current.style.maxHeight = `${Math.max(80, Math.min(370, window.innerHeight - results.current.getBoundingClientRect().top - 16))}px`;
-    };
-    fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, [expanded]);
-  const term = query.trim().toLocaleLowerCase();
-  const matches = saved.filter(item => item.title.toLocaleLowerCase().includes(term));
-  const destinations = covers.filter(cover => openable(cover.id) && fold(`${cover.name} ${cover.area} ${cover.aliases}`).includes(fold(term)));
-  const showFarm = !term || farmTerms.includes(fold(term));
-  const showDemo = !term || demoTerms.includes(fold(term));
-  const showNew = !!term && !matches.length && !destinations.length && !showDemo && !showFarm;
+  const hero = useHero();
+  const insets = useFree(words, places);
+  const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
+  const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
+  const status = !hero.data ? null : hero.left === 0 ? t('home.allChecked') : hero.left === 1 ? t('home.oneSpotToCheck') : t('home.spotsToCheck', { n: hero.left });
   return <main className="welcome-shell site-home" aria-label={t('home.label')}>
+    {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
+      highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
+    <div className="home-veil" aria-hidden="true"/>
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><div className="welcome-tools"><LanguageSwitch/><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label={t('home.credits')}><InfoIcon/></button></div></header>
-    <div className="welcome-atmosphere" aria-label={t('home.prepared')}>{covers.map((cover, i) => openable(cover.id)
-      ? <button key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1}`} aria-label={t('home.explore', { name: cover.name, area: cover.area })} onClick={() => onDestination(cover.id)}><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span><span className="welcome-place-label">{cover.name}</span></span></button>
-      : <span key={cover.name} className={`welcome-photo welcome-photo-slot-${i+1} is-ambient`} aria-hidden="true"><span className="welcome-photo-content"><span className="welcome-photo-frame"><img src={cover.image} alt=""/></span></span></span>)}</div>
-    <section className="welcome-center">
+    <div className="home-words" ref={words}>
       <h1>{rich('home.title', { br: <br/> })}</h1>
-      <div className="home-discovery" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }} onKeyDown={event => { if(event.key === 'Escape') { search.current?.focus(); setExpanded(false); } }}>
-        <form className="place-search" role="search" onSubmit={event => { event.preventDefault(); setExpanded(true); requestAnimationFrame(() => results.current?.querySelector<HTMLButtonElement>('button')?.focus()); }}>
-          <button type="button" className="search-circle upload-circle" aria-label={t('home.upload')} title={t('home.upload')} onClick={() => upload.current?.showModal()}><UploadIcon/></button>
-          <input ref={search} aria-label={t('home.search')} aria-controls="place-results" aria-expanded={expanded} placeholder={t('home.search')} value={query} onFocus={() => setExpanded(true)} onChange={event => { setQuery(event.target.value); setExpanded(true); }} maxLength={120}/>
-          <button className="search-circle search-submit" aria-label={t('home.searchSubmit')} title={t('home.searchSubmit')}><SearchIcon/></button>
-        </form>
-        <div id="place-results" ref={results} className="home-results" hidden={!expanded} aria-label={t('home.results')}>
-          {(showFarm || destinations.length>0 || showDemo) && <div className="home-prepared">
-            {destinations.map(cover => <button key={cover.id} onClick={() => onDestination(cover.id)}><img src={cover.image} alt=""/><span><strong>{cover.name}</strong><small>{cover.area}</small></span></button>)}
-            {showFarm && <button onClick={onFarm}><FarmPlan/><span><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span></button>}
-            {showDemo && <button onClick={onExample}><span className="result-scene-icon"><SceneIcon/></span><span><strong>{t('home.courtyard')}</strong></span><span className="badge">{t('common.example')}</span></button>}
-          </div>}
-          {expanded && matches.length>0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{matches.map(item => <button key={item.id} onClick={() => onOpenSaved(item)}><span>{item.title}</span><small>{t(item.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small></button>)}</div>}
-          {expanded && showNew && <div className="home-new"><p>{t('home.noScene', { query: query.trim() })}</p><button onClick={() => onOpen(query.trim())}>{t('home.addOwn')}<span>{t('home.start', { query: query.trim() })}</span></button></div>}
-        </div>
-      </div>
+      <p className="home-subtitle">{t('home.subtitle')}</p>
+    </div>
+    <section className="home-places" ref={places} aria-label={t('home.onPhone')}>
+      <button className="home-place is-hero" aria-label={t('home.explore', { name: covers[0].name, area: covers[0].area })} onClick={() => onDestination(HERO)}>
+        <img src={qorikancha} alt=""/>
+        <span className="home-place-text">
+          <strong>{DESTINATIONS[HERO].name}</strong>
+          <small>{hero.data ? t('home.onFoot', { area: covers[0].area, metres: Math.round(hero.data.lengthMetres) }) : covers[0].area}</small>
+          {status && <span className="home-status">{status}</span>}
+        </span>
+        <span className="home-open">{t('home.open')}</span>
+      </button>
+      {others.map(cover => <button key={cover.id} className="home-place" aria-label={t('home.explore', { name: cover.name, area: cover.area })} onClick={() => onDestination(cover.id)}>
+        <img src={cover.image} alt=""/><span className="home-place-text"><strong>{cover.name}</strong><small>{cover.area}</small></span>
+      </button>)}
+      <button className="home-place" onClick={onFarm}>
+        <FarmPlan/><span className="home-place-text"><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span>
+      </button>
+      <button className="home-place" onClick={onExample}>
+        <span className="result-scene-icon"><SceneIcon/></span><span className="home-place-text"><strong>{t('home.courtyard')}</strong></span><span className="badge">{t('common.example')}</span>
+      </button>
+      {saved.length > 0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{saved.map(entry => <button key={entry.id} onClick={() => onOpenSaved(entry)}>
+        <span>{entry.title}</span><small>{t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small>
+      </button>)}</div>}
     </section>
-    <dialog ref={upload} className="welcome-dialog" aria-labelledby="upload-title">
-      <header><h2 id="upload-title">{t('home.uploadTitle')}</h2><button onClick={() => upload.current?.close()} aria-label={t('home.closeUpload')}><CloseIcon/></button></header>
-      <div className="upload-choices"><button onClick={() => { upload.current?.close(); onUpload(query.trim()); }}><strong>{t('home.uploadPhotos')}</strong><span>{t('home.uploadPhotosHint')}</span></button><button onClick={() => { upload.current?.close(); onImport(); }}><strong>{t('home.uploadPlan')}</strong><span>{t('home.uploadPlanHint')}</span></button></div>
-      <p className="upload-local">{t('home.uploadLocal')}</p>
-    </dialog>
     <dialog ref={credits} className="welcome-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">{t('home.credits')}</h2><button onClick={() => credits.current?.close()} aria-label={t('home.closeCredits')}><CloseIcon/></button></header><p>{t('home.creditsNote')}</p><ul>{covers.map(cover => <li key={cover.name}><a href={cover.source}>{cover.name}</a><br/>{cover.author}, {cover.year} · <a href={cover.licenseUrl}>{cover.license}</a></li>)}</ul></dialog>
   </main>;
 }
