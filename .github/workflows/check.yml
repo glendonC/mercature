@@ -16,5 +16,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # The trim runs onnx and numpy through uv; trim.mjs pins their versions.
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          cache-dependency-glob: scripts/language/trim.mjs
+      # The pinned Hub files, kept between runs until the encoder pin changes.
+      - uses: actions/cache@v4
+        with:
+          path: .local/language/model
+          key: encoder-${{ hashFiles('src/language/model.ts') }}
+      # With the trimmed files in place the gate also runs the model's own tests.
+      - run: bash scripts/release/model.sh
       - run: npx playwright install --with-deps chromium
       - run: bash scripts/checks/gate.sh
