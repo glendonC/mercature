@@ -12,7 +12,7 @@
   .guide-key { display: none; }
   .ui-choice:has(.guide-key) .ui-button-icon { display: none; }
 }
-/* On a phone two columns keep the walk in view; a long label wraps inside its row. */
+/* On a phone two columns keep the tour route in view; a long label wraps inside its row. */
 @media (max-width: 640px) {
   .guide-choices { grid-template-columns: 1fr 1fr; column-gap: 6px; }
   .guide-choices .ui-choice { padding: 0 12px; }

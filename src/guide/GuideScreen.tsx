@@ -31,10 +31,10 @@ import { Bot, Options, type Chip } from './Say';
 import './guide.css';
 import './guide-screen.css';
 
-/** A place on the walk the conversation can be about: a spot of the walk, a plain stretch, a named landmark, or a spot she added. */
+/** A place on the tour route the conversation can be about: a spot of the route, a plain stretch, a named landmark, or a spot she added. */
 type Target = { kind: 'spot'; id: string } | { kind: 'stretch'; index: number } | { kind: 'landmark'; id: string } | { kind: 'added'; id: string };
 /**
- * One item of the walk check: a flagged spot, a stretch no photo shows, another kind a model marked near the walk, or on a route from the
+ * One item of the route check: a flagged spot, a stretch no photo shows, another kind a model marked near the route, or on a route from the
  * map alone one kind OpenStreetMap shows along it, said by its most common value (line) and in how many places.
  */
 type Item = { key: string; access: AccessKind; spot: Spot } | { key: string; access: AccessKind; mark: MarkKind; count: number; points: Point[]; viewId: string | null }
@@ -68,7 +68,7 @@ type Step =
   /** Edit, a mode she enters from the pill on any step: a spot to add (a tap or her words), a spot to change (a tap), or her own note. */
   | { id: 'edit'; mode?: 'add' | 'change' | 'note' };
 
-/** Where her own note for the whole walk is kept among her notes on spots. */
+/** Where her own note for the whole route is kept among her notes on spots. */
 const WALK_NOTE = 'walk';
 /** The Edit menu as where a change goes on to, which then says what visitors will now read. */
 const EDITED: Step = { id: 'edit' };
@@ -92,7 +92,7 @@ function accessOfSpot(spot: Spot): AccessKind {
   return kind === 'steps' ? 'steps' : kind === 'kerb' ? 'kerb' : kind === 'broken' ? 'broken' : kind === 'bollard' ? 'bollard' : kind === 'cobblestones' ? 'uneven' : 'obstacle';
 }
 const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', kerb: 'kerb', broken: 'broken', crossing: 'crossing', bollard: 'bollard', cobblestones: 'uneven' };
-/** Kinds near the walk the check goes through after the flagged spots, in the order a person would. Kerbs beside the walk are context, not a question. */
+/** Kinds near the route the check goes through after the flagged spots, in the order a person would. Kerbs beside the route are context, not a question. */
 const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind] && kind !== 'kerb');
 /** Which note line a kind OpenStreetMap shows takes, by its tag's value; a value with none, such as wheelchair=yes or a paved surface, is not asked about. */
 const OSM_LINES: Readonly<Record<string, (value: string) => OsmLine | undefined>> = {
@@ -169,7 +169,7 @@ function useNarrow() {
   return narrow;
 }
 
-/** The walk as the guide's greeting and the reveal speak of it, in the interface language. */
+/** The route as the guide's greeting and the reveal speak of it, in the interface language. */
 export function walkSlotsOf(data: Destination, lang: 'en' | 'es', spots: RoutePlace | null = ROUTE_PLACES[data.id] ?? null): WalkSlots {
   const walk = buildWalk(data);
   const name = (landmark: string) => spots?.features.find(spot => !spot.stretches.length && spot.landmark === landmark)?.name[lang] ?? fromRecord(landmark, lang);
@@ -183,15 +183,15 @@ export function walkSlotsOf(data: Destination, lang: 'en' | 'es', spots: RoutePl
 }
 
 /**
- * The route screen as a conversation with the guide, docked at the bottom with the map above it. It greets her with the walk,
+ * The route screen as a conversation with the guide, docked at the bottom with the map above it. It greets her with the route,
  * goes through what the photos showed thing by thing with a question that fits each, brings each visitor's message with the
  * model's spot and a reply, says what visitors keep raising, takes what the photos missed, and ends with the route note.
  * Every change to her map is a choice she taps; her own words only make a proposal.
  */
 export default function GuideScreen({ data, asset, onHome, onPlace, settled = false, spots, caption }: { data: Destination; asset: (file: string) => string; onHome: () => void; onPlace?: (place: MenuPlace) => void; settled?: boolean;
-  /** The spots of a walk built on this device, which the registry does not list. Keep the same object between renders. */
+  /** The spots of a route built on this device, which the registry does not list. Keep the same object between renders. */
   spots?: RoutePlace;
-  /** One plain line under the walk, such as where its findings came from. */
+  /** One plain line under the route, such as where its findings came from. */
   caption?: string }) {
   const { lang } = useLanguage();
   const s = SCRIPT[lang], t = COPY[lang];
@@ -212,14 +212,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const latestEdits = useRef(edits);
   const [ways, setWays] = useState(() => loadLines(data.id).lines);
   const around = wayAroundOf(data, ways);
-  /** How much longer the way around is than the walk, in whole metres. */
+  /** How much longer the way around is than the route, in whole metres. */
   const aroundMetres = around ? Math.max(0, Math.round((around.lengthMetres ?? around.walkMetres) - around.walkMetres)) : 0;
   /** A way around no operator would offer, more than about 400 m longer or longer than the route itself, is never offered or drawn unasked. */
   const shortAround = around?.status === 'found' && aroundMetres <= 400 && aroundMetres <= data.lengthMetres;
   // The way around shows on the map when she asks for it, while the guide asks about it, and once she says it works.
   const [showAround, setShowAround] = useState(false);
   const [problem, setProblem] = useState('');
-  // Before shows the walk as the data has it; Now with every change she made. The switch appears once there is a change.
+  // Before shows the route as the data has it; Now with every change she made. The switch appears once there is a change.
   const [view, setView] = useState<'before' | 'now'>('now');
   const blankEdits = useMemo<Edits>(() => ({ ...edits, added: [], fixed: {}, notes: {}, answers: {} }), [edits]);
   const changed = Object.keys(review.decisions).length > 0 || edits.added.length > 0 || Object.keys(edits.fixed).length > 0 || Object.keys(edits.notes).length > 0
@@ -271,7 +271,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   useEffect(() => {
     if (!place || model.status === 'ready') return;
     let alive = true;
-    // Asking for the size loads the model's code, which can find the page outlived by a deploy: then the model is outdated.
+    // Asking for the size loads the model's code, which can find that a deploy outlived the page: then the model is outdated.
     void modelDownloadBytes().then(bytes => { if (!alive) return; setDownloadBytes(bytes); const now = modelState(); if (now.status === 'outdated') setModel(now); });
     return () => { alive = false; };
   }, [authored, model.status]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -379,7 +379,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 
   // A route from the map alone, judged by its stretches as the map does: no photo was read anywhere along it.
   const mapOnly = data.stretches.length > 0 && data.stretches.every(stretch => !stretch.views.length);
-  // The walk check: flagged spots first, then stretches no photo shows, then the other kinds a model marked near the walk. On a route from the
+  // The route check: flagged spots first, then stretches no photo shows, then the other kinds a model marked near the route. On a route from the
   // map alone every part has no photos, so those are not asked about; what OpenStreetMap shows along it is, kind by kind, after its flagged spots.
   const items = useMemo<Item[]>(() => {
     const spotItems = [...walk.spots.filter(spot => spot.kind === 'flagged'), ...(mapOnly ? [] : walk.spots.filter(spot => spot.kind === 'no-photos'))].map(spot => ({ key: spot.id, access: accessOfSpot(spot), spot }));
@@ -404,7 +404,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     });
     return [...spotItems, ...kinds, ...osm];
   }, [walk, data.marks, data.access, data.stretches, views, mapOnly]);
-  /** A spot's question fits its kind; a kind along much of the walk asks whether the note mentions it, but cobblestones ask for a smoother way. */
+  /** A spot's question fits its kind; a kind along much of the route asks whether the note mentions it, but cobblestones ask for a smoother way. */
   const questionOf = (item: Item): QuestionId => 'spot' in item ? QUESTION_OF[item.access] : 'osm' in item ? 'mention' : item.mark === 'cobblestones' ? 'smoother' : 'mention';
   const itemOfTarget = (target: Target) => target.kind === 'spot' ? items.findIndex(item => 'spot' in item && item.spot.id === target.id) : -1;
   /** What the check counts, as the greeting does: the flagged spots on a route with photos, every item on a route from the map alone. The rest come after with no counter. */
@@ -450,7 +450,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (choice === 'something') { go({ id: 'check', at, follow: true }); return; }
     const group = GROUP_OF[item.access], question = QUESTION_OF[item.access], follow = (FOLLOW_OF as Partial<Record<AccessKind, QuestionId>>)[item.access];
     const earlier = answerOf(latestEdits.current, item.key)?.answer;
-    // Steps or a kerb not there now are what "There are no steps" was: off her map. A follow-up answer she gave before is kept.
+    // Steps, a kerb, a post or a gate not there now come off her map. A follow-up answer she gave before is kept.
     if (!(choice === 'still' && follow && earlier && (FOLLOWS[follow as keyof typeof FOLLOWS] as readonly string[]).includes(earlier))) record(at, question, choice === 'gone' && group === 'presence' ? 'notThere' : choice);
     if (choice === 'still' && follow) { go({ id: 'check', at, follow: true }); return; }
     const c = s.check.coreSaid;
@@ -459,7 +459,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (choice === 'unknown' && aroundAt(item)) { go({ id: 'check', at, around: 'offer' }, said); return; }
     onward(at, choice === 'unknown' ? withLong(item, said) : said);
   }
-  /** Her follow-up answer, or her one answer about a kind along the walk. A place she names is a tap on the map. */
+  /** Her follow-up answer, or her one answer about a kind along the route. A place she names is a tap on the map. */
   function answer(at: number, question: QuestionId, choice: Answer, stretch?: number) {
     const item = items[at];
     if (choice === 'wayAround' && stretch === undefined && aroundAt(item)) { go({ id: 'check', at, around: 'match' }); return; }
@@ -650,7 +650,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     setStep(then); setAck(''); setResult({});
   }
 
-  /** Natural selection: a spot tapped on the map, or a photo's place, becomes what the conversation is about. */
+  /** A spot tapped on the map, or a photo's place, becomes what the conversation is about. */
   function select(target: Target) {
     if (step.id === 'message') { file(step.at, target); return; }
     if (step.id === 'check' && step.tapping) { const stretch = stretchFor(target); if (stretch !== null) answer(step.at, questionOf(items[step.at]), step.tapping, stretch); return; }
@@ -688,7 +688,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.id === 'check' && step.tapping) { select({ kind: 'stretch', index: stretch.index }); return; }
     select(spot ? { kind: 'spot', id: spot.id } : addedHere ? { kind: 'added', id: addedHere.id } : { kind: 'stretch', index: stretch.index });
   }
-  /** A tap in the 3D view on the street or a wall near the walk works as a tap on the map there; a marker tap arrives through onMarker. */
+  /** A tap in the 3D view on the street or a wall near the route works as a tap on the map there; a marker tap arrives through onMarker. */
   function pick3d(pick: { lonLat: readonly [number, number] | LonLat; spotId?: string }) {
     if (pick.spotId) return;
     if (step.id === 'check') setCard3d(step.at);
@@ -746,7 +746,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       if (spot === avoided && !fix && !gone(spot.stretches) && line !== aroundLine) lines.push(aroundLine);
       const own = noteOf(mine, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
-    // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them. A kind OpenStreetMap shows
+    // A kind along much of the route, in the note when she says so; cobblestones whenever she answered for them. A kind OpenStreetMap shows
     // along a route from the map alone goes in by its own line, which names OpenStreetMap.
     for (const one of items) {
       const said = answerOf(mine, one.key)?.answer;
@@ -862,7 +862,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return () => observer.disconnect();
   });
   const inset = safeArea();
-  // The map always keeps some room above the dialogue, however tall the dialogue grows, so the walk can still be framed.
+  // The map always keeps some room above the dialogue, however tall the dialogue grows, so the route can still be framed.
   // On a phone the Edit row sits under the header, so the map's free area starts below it; a short strip above the card still frames the spot.
   const top = (narrow ? 112 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - (narrow ? 90 : 180)));
   const insets = { top, right: 24 + inset.right, bottom: under(dockHeight), left: 24 + inset.left };
@@ -917,7 +917,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   ];
 
   if (step.id === 'hello') {
-    // Once she has checked a spot, the walk is said as what is left to check; "I'm not sure" leaves a spot to check.
+    // Once she has checked a spot, the route is said as what is left to check; "I'm not sure" leaves a spot to check.
     const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
     const checked = flagged.filter(spot => { const said = answerOf(edits, spot.id)?.answer; return (!!said && said !== 'unknown') || removed(spot.stretches) || !!isFixed(edits, spot.stretches); }).length;
     lines.push(...(settled ? [] : [s.hello.greet(walkSlots)]), checked ? s.hello.checked({ metres: walkSlots.metres, left: flagged.length - checked, total: flagged.length }) : data.views.length ? s.hello.walk(walkSlots) : s.hello.mapOnly(walkSlots));
@@ -952,7 +952,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips = (QUESTIONS.mention as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers.mention as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, 'mention', choice) }));
       quiet = skip;
     } else if (!('spot' in item)) {
-      // A kind along much of the walk is one question: whether the note mentions it, or for cobblestones whether there is a smoother way.
+      // A kind along much of the route is one question: whether the note mentions it, or for cobblestones whether there is a smoother way.
       lines.push(s.check.kind({ n: slots.n, total: slots.total, what: slots.what, count: item.count }), earlier ? s.select.answered({ answer: earlier }) : s.check.ask[question](slots));
       chips = ((question === 'smoother' ? ['nearby', 'none', 'unknown'] : QUESTIONS[question]) as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[question] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, question, choice) }));
       quiet = skip;
@@ -1106,7 +1106,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!step.mode) above = <Panel tone="dark" size="card" className="gs-changes"><PanelHead as="h2" title={s.edit.chips.changes} meta={list.length ? String(list.length) : undefined} />
       {list.length ? list.map(change => <ChangeRow key={change.id} kind={change.kind} label={change.label} undoLabel={s.changes.undo} onOpen={() => fly(change.points)} onUndo={() => { change.undo(); setAck(s.changes.undone); setResult(null); }} />)
         : <p className="gs-changes-none">{s.changes.none}</p>}</Panel>;
-    // Her note for the whole walk is her own words, kept as she wrote them; anything else she says proposes a spot.
+    // Her note for the whole route is her own words, kept as she wrote them; anything else she says proposes a spot.
     if (step.mode === 'add') words = hear;
     if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); if (editing) finish(); else go({ id: 'note' }, s.edit.noteSaved, true); };
   } else if (step.id === 'note') {
@@ -1126,7 +1126,6 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // What she just did, said back (or what visitors will now read), stands alone on its page; she taps on to what comes next, never a timer.
   const lead = payoff.length || (ack ? 1 : 0);
   if (lead && lines.length > lead && !lines[lead - 1].endsWith(PAGE_BREAK) && !lines[lead].startsWith(PAGE_BREAK)) lines[lead] = `${PAGE_BREAK}${lines[lead]}`;
-  // While a step waits behind an edit, going back to it is always one choice away.
 
   /** Each change she made, newest kinds last: her answers, the spots she added, her notes, her streets and her word on the way around. */
   function changesOf(): { id: string; kind: Kind | null; label: string; points: Point[]; undo: () => void }[] {
@@ -1191,7 +1190,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
 
   const working = busy === 'reading' || busy === 'download';
-  // Good news gets a smile, and only good news: a reply ready, the whole walk checked, a change she made saved.
+  // Good news gets a smile, and only good news: a reply ready, the whole route checked, a change she made saved.
   const happy = !working && (good || !!result || (!!cheer && cheer === ack));
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   const turn = `${JSON.stringify(step)} ${ack}`;
@@ -1294,19 +1293,19 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 }
 
 /**
- * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the walk
+ * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the route
  * has 3D, she can turn to it and tap spots there as on the map. It lives outside the screen so a new line never rebuilds the photo.
  */
 function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, onPlace, height, lang, words, answerAt }: {
   data: Destination; progress: string; title: string; affects: string; empty: string;
-  /** The findings a photo shows, one page each; none for another kind near the walk, which shows viewId instead. */
+  /** The findings a photo shows, one page each; none for another kind near the route, which shows viewId instead. */
   evidence: readonly { id: string; viewId?: string | null }[]; viewId: string | null;
   stretches: readonly number[]; markers: Marker[]; onMarker: (id: string) => void; onPick: (findingId: string) => void;
-  /** A tap in the 3D view on the street or a wall, as a place on the walk. */
+  /** A tap in the 3D view on the street or a wall, as a place on the route. */
   onPlace?: ComponentProps<typeof PhotoOr3D>['onPick'];
-  /** The photo's height on a phone, which leaves a strip of map above the card; a wide screen shows the whole photo. */
-  /** Her answer for the spot an outline lies on, so the photo shows it; left out, the photo shows the walk before her changes. */
+  /** Her answer for the spot an outline lies on, so the photo shows it; left out, the photo shows the route before her changes. */
   answerAt?: (stretches: readonly number[]) => MarkAnswer | null;
+  /** The photo's height on a phone, which leaves a strip of map above the card; a wide screen shows the whole photo. */
   height?: number; lang: 'en' | 'es'; words: { photo: (s: { n: number; total: number }) => string; previous: string; next: string } }) {
   const [page, setPage] = useState(0);
   const at = Math.min(page, Math.max(0, evidence.length - 1)), lead = evidence[at] ?? null;

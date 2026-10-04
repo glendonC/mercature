@@ -14,7 +14,7 @@ import type { OsmLine } from '../destinations/copy';
 export const STEPS = ['hello', 'select', 'check', 'checkEnd', 'message', 'reply', 'insights', 'missed', 'around', 'street', 'note'] as const;
 export type StepId = (typeof STEPS)[number];
 
-/** What a thing on the walk is, for the guide's question about it. Photo marks, OpenStreetMap tags and her own spots each map to one. */
+/** What a thing on the tour route is, for the guide's question about it. Photo marks, OpenStreetMap tags and her own spots each map to one. */
 export const ACCESS_KINDS = ['steps', 'kerb', 'uneven', 'steep', 'narrow', 'bollard', 'gate', 'noWheelchair', 'broken', 'works', 'obstacle', 'handrail', 'ramp', 'crossing', 'bench', 'toilets', 'lighting', 'unseen'] as const;
 export type AccessKind = (typeof ACCESS_KINDS)[number];
 /**
@@ -29,7 +29,7 @@ export const QUESTIONS = {
   temporary: ['still', 'repaired', 'gone', 'unknown'],
   helpful: ['still', 'gone', 'unknown'],
   unseen: ['nothing', 'something', 'unknown'],
-  /** A kind the photos show along much of the walk, such as crossings: whether her route note mentions it. */
+  /** A kind the photos show along much of the route, such as crossings: whether her route note mentions it. */
   mention: ['yes', 'no', 'unknown'],
 } as const;
 export type QuestionId = keyof typeof QUESTIONS;
@@ -78,34 +78,34 @@ export type KindGroup = keyof typeof KIND_GROUPS;
 /** What a model outlined at a flagged spot, in the words a visitor knows. */
 export type Subject = 'steps' | 'kerb' | 'path';
 
-/** The walk, for the greeting, the overview and the reveal. */
+/** The route, for the greeting, the overview and the reveal. */
 export type WalkSlots = {
   /** The place's name, such as "Qorikancha". */
   place: string;
-  /** Where the walk starts and ends, such as "the Plaza de Armas". */
+  /** Where the route starts and ends, such as "the Plaza de Armas". */
   start: string;
   target: string;
   metres: number;
-  /** Street photos along the walk. */
+  /** Street photos along the route. */
   photos: number;
-  /** Everything a model outlined in those photos near the walk. */
+  /** Everything a model outlined in those photos near the route. */
   marks: number;
   /** Outlines that might be a barrier, and the spots they fall on. */
   barriers: number;
   spots: number;
   /** Visitor messages waiting. */
   messages: number;
-  /** Things OpenStreetMap lists along a walk no street photo was read for. */
+  /** Things OpenStreetMap lists along a route for which no street photo was read. */
   osm: number;
 };
-/** One item of the walk check, or the spot she selected. */
+/** One item of the route check, or the spot she selected. */
 export type ItemSlots = {
   /** Its place in the check, from 1. */
   n: number;
   total: number;
   /** What is there, from words.access, such as "steps". */
   what: string;
-  /** Where on the walk, such as "on Calle Loreto". */
+  /** Where on the route, such as "on Calle Loreto". */
   where: string;
   /** Metres from the start. */
   metres: number;
@@ -116,7 +116,7 @@ export type ItemSlots = {
   /** What OpenStreetMap records there, ready as a phrase such as "5 steps, no handrail, no ramp", "" when nothing. */
   osm: string;
 };
-/** Another kind a model marked near the walk, counted, such as "45 kerbs" from words.marks. */
+/** Another kind a model marked near the route, counted, such as "45 kerbs" from words.marks. */
 export type KindSlots = { n: number; total: number; what: string; count: number };
 /** What visitors keep raising at one spot, from the model's reading of their messages: the spot, how many, and what is there, such as "steps". */
 export type InsightSlots = { spot: string; count: number; kind: string };
@@ -154,20 +154,20 @@ export type Script = {
   };
   /** On Home, before a place is open. */
   home: { greet: string; search: string; open: (s: { place: string }) => string };
-  /** While the walk's records replay: a greeting, then one line per beat. */
+  /** While the route's records replay: a greeting, then one line per beat. */
   reveal: { hello: (s: WalkSlots) => string; photos: (s: WalkSlots) => string; areas: (s: WalkSlots) => string; walk: (s: WalkSlots) => string; reading: (s: WalkSlots) => string; marks: (s: WalkSlots) => string };
   hello: {
     greet: (s: WalkSlots) => string;
-    /** The walk in one or two lines: its length, its photos, what was found, how much might stop someone. */
+    /** The route in one or two lines: its length, its photos, what was found, how much might stop someone. */
     walk: (s: WalkSlots) => string;
-    /** The same for a walk built from OpenStreetMap alone, before any street photo is read. */
+    /** The same for a route built from OpenStreetMap alone, before any street photo is read. */
     mapOnly: (s: WalkSlots) => string;
     altitude: (s: { metres: number }) => string;
-    /** The walk once she has answered for some spots: how many are still to check. total is the number of spots. */
+    /** The route once she has answered for some spots: how many are still to check. total is the number of spots. */
     checked: (s: { metres: number; left: number; total: number }) => string;
     chips: { check: string; messages: string; missed: string; note: string };
   };
-  /** Whatever she selects becomes the subject: the walk as a whole, a spot, an outline on a photo, a street. next says what she can do. */
+  /** Whatever she selects becomes the subject: the route as a whole, a spot, an outline on a photo, a street. next says what she can do. */
   select: {
     /** A spot she answered before, opened again: her answer, as the chip she tapped. */
     answered: (s: { answer: string }) => string;
@@ -176,20 +176,20 @@ export type Script = {
     progress: (s: { n: number; total: number }) => string;
     /** Which photo of a spot shows, when more than one does. */
     photo: (s: { n: number; total: number }) => string;
-    /** A flagged spot: what a model outlined there when the walk was recorded. */
+    /** A flagged spot: what a model outlined there when the route was recorded. */
     saw: (s: ItemSlots) => string;
     sawWhen: (s: ItemSlots) => string;
     /** A stretch no photo shows. */
     noPhotos: (s: ItemSlots) => string;
-    /** Another kind near the walk. */
+    /** Another kind near the route. */
     kind: (s: KindSlots) => string;
-    /** On a walk with no street photos read: what OpenStreetMap records there. */
+    /** On a route with no street photos read: what OpenStreetMap records there. */
     osm: (s: ItemSlots) => string;
-    /** On such a walk, one kind OpenStreetMap shows along it, from words.osm, and in how many places. */
+    /** On such a route, one kind OpenStreetMap shows along it, from words.osm, and in how many places. */
     osmKind: (s: { what: string; places: number }) => string;
     /** What OpenStreetMap adds about a spot the photos show. */
     osmToo: (s: ItemSlots) => string;
-    /** Where the photo would be, on such a walk. */
+    /** Where the photo would be, on such a route. */
     noStreetPhotos: string;
     /** The core question about a spot, by its kind: is it still there, or still like this. */
     core: Record<AccessKind, string>;
@@ -214,9 +214,9 @@ export type Script = {
     noted: (s: SpotSlots) => string;
     end: (s: TallySlots) => string;
   };
-  /** The way around the mapped steps that OpenStreetMap's router suggests. metres: how much longer than the walk. */
+  /** The way around the mapped steps that OpenStreetMap's router suggests. metres: how much longer than the route. */
   around: { offer: (s: { metres: number }) => string; show: string; ask: string; kept: string; dropped: string; unchecked: string; none: string; offline: string;
-    /** OpenStreetMap shows no steps on the walk, so there is nothing to go around. */
+    /** OpenStreetMap shows no steps on the route, so there is nothing to go around. */
     same: string;
     chips: { show: string; works: string; notWorks: string; unknown: string; better: string; notNow: string };
     /** After "There's a way around" at steps OpenStreetMap has one for, shown on the map: is hers the same? */
@@ -231,7 +231,7 @@ export type Script = {
   street: { offer: string; start: string; end: string; routing: string; found: (s: { metres: number; osm: number }) => string; kept: (s: { street: string }) => string; failed: string; offline: string;
     busy: string; tooFar: string; tooLong: string; removed: (s: { street: string }) => string;
     chips: { add: string; keep: string; again: string; cancel: string; remove: string } };
-  /** Asked once per walk; yes asks her to tap the place, then the 'through' question. */
+  /** Asked once per route; yes asks her to tap the place, then the 'through' question. */
   narrow: { ask: string; chips: { yes: string; no: string; unknown: string } };
   messages: {
     /** How many visitors wrote; none says there is nothing to answer. */
@@ -318,9 +318,9 @@ export type Script = {
   /** Clearing everything she did on this place, after she confirms. */
   restart: { chip: string; ask: string; yes: string; no: string };
   back: string;
-  /** One tap away on every step: what she wants to change on her map, while the step she was on waits for her. */
   /** Her map before her changes and now, side by side in time; the said lines come when she turns between them. */
   compare: { label: string; before: string; now: string; saidBefore: string; saidNow: string };
+  /** One tap away on every step: what she wants to change on her map, while the step she was on waits for her. */
   edit: { chip: string;
     /** The pill while she edits; a tap ends the mode, and closed is said on the way back. */
     done: string; closed: string;
@@ -340,10 +340,9 @@ export type Script = {
 };
 
 const cap = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
-/** A distance the way a person says it: 594 m is "about 600 m". */
-/** A distance as the guide and the route note say it: 594 m is about 600 m. */
+/** Rounded the way the guide and the route note say a distance: 594 m becomes 600. */
 export const about = (m: number) => m < 100 ? Math.max(10, Math.round(m / 10) * 10) : m < 1000 ? Math.round(m / 50) * 50 : Math.round(m / 100) * 100;
-/** A distance as a person says it: metres under 1 km ("about 600 m"), then kilometres to one decimal ("about 2.4 km", "about 1 km"). */
+/** A distance as a person says it: metres under 1 km ("600 m"), then kilometres to one decimal ("2.4 km", "1 km"). */
 const dist_en = (m: number) => m < 950 ? `${about(m)} m` : `${(Math.round(m / 100) / 10).toLocaleString('en')} km`;
 const dist_es = (m: number) => m < 950 ? `${about(m)} m` : `${(Math.round(m / 100) / 10).toLocaleString('es')} km`;
 /** The year of a photo's month and year, such as "December 2015". */
