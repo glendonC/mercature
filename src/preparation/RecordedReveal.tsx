@@ -16,11 +16,11 @@ const PHOTO_CARDS_FROM = CAMERAS_FROM + CAMERAS_FOR + 400, HANDOFF_AFTER_CARDS =
 const LAND_FOR = 720, FADE_FOR = 220;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
 const LAYER = { x: -100, y: -100, width: 1000, height: 700, density: 1.5 } as const;
-/** Card footprints in pixels, width by height, matching reveal.css. */
+/** Card footprints in pixels, width by height, used until the cards themselves can be measured. */
 const CARD = { wide: [232, 224], phone: [164, 170] } as const;
 
 type Card = { view: View; findings: Finding[]; position: Coordinate; photo: Photo };
-type Placed = { left: number; top: number; x: number; y: number };
+type Placed = { left: number; top: number; x: number; y: number; w: number; h: number };
 
 /** Draws one retained area in grey, sampled to bound device work; coordinates are not altered. */
 function paint(image: ImageData, cloud: Cloud, toMap: (east: number, north: number) => Coordinate) {
@@ -83,7 +83,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const [pointsDone, setPointsDone] = useState(false);
   const [view, setView] = useState<number[] | null>(null);
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
-  const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null);
+  const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
 
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -147,7 +147,8 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const areas = !!data?.pieces.length;
   const cardsFrom = areas ? CARDS_FROM : PHOTO_CARDS_FROM;
   const handoffAt = areas ? HANDOFF_AT : cardsFrom + Math.max(0, cards.length - 1) * CARD_GAP + HANDOFF_AFTER_CARDS;
-  const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || phase !== 'play' || elapsed >= cardsFrom + i * CARD_GAP));
+  // Only cards whose turn came during the replay; a skip fades those out and never flashes the rest.
+  const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || elapsed >= cardsFrom + i * CARD_GAP));
 
   useEffect(() => { if (phase === 'play' && data && elapsed >= handoffAt && (pointsDone || elapsed >= HANDOFF_LATEST)) setPhase('handoff'); }, [phase, data, elapsed, pointsDone, handoffAt]);
   useEffect(() => {
@@ -165,31 +166,49 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     return () => removeEventListener('resize', fit);
   }, [data]);
 
-  /** Card corners in screen space, kept clear of the banner, the hint line and each other. */
+  /** Card corners in screen space, kept clear of the banner, the hint line and each other. Every card is measured before it shows, since a caption can wrap. */
   useLayoutEffect(() => {
     const element = svg.current;
     if (!element || !data) return;
+    let live = true;
     const place = () => {
       const matrix = element.getScreenCTM();
-      if (!matrix) return;
+      if (!matrix || !live) return;
       const { project } = routeFrame(data);
-      const phone = innerWidth < 640, w = phone ? CARD.phone[0] : CARD.wide[0], h = phone ? CARD.phone[1] : CARD.wide[1], gap = phone ? 18 : 30;
-      const top = (element.ownerDocument.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = innerHeight - 60, taken: { left: number; top: number }[] = [];
-      setPlaced(cards.map(card => {
+      const phone = innerWidth < 640, [fw, fh] = phone ? CARD.phone : CARD.wide, gap = phone ? 18 : 30;
+      const top = (element.ownerDocument.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = innerHeight - 60, taken: { left: number; top: number; w: number; h: number }[] = [];
+      let crowded = false;
+      const spots = cards.map((card, i) => {
+        const box = cardBoxes.current[i], w = box?.offsetWidth || fw, h = box?.offsetHeight || fh;
         const [vx, vy] = project(card.position), x = matrix.a * vx + matrix.c * vy + matrix.e, y = matrix.b * vx + matrix.d * vy + matrix.f;
         const clamp = ([l, t]: number[]) => [Math.min(Math.max(12, l), innerWidth - w - 12), Math.min(Math.max(top, t), bottom - h)];
-        const clear = ([l, t]: number[]) => taken.every(o => l + w + 8 < o.left || l > o.left + w + 8 || t + h + 8 < o.top || t > o.top + h + 8);
+        const clear = ([l, t]: number[]) => taken.every(o => l + w + 8 < o.left || l > o.left + o.w + 8 || t + h + 8 < o.top || t > o.top + o.h + 8);
         // Nearest free spot to the camera: the four corners first, then the same corners pushed outward.
         const options = [1, 2, 3, 4].flatMap(k => [[x + gap, y - gap - h], [x - gap - w, y - gap - h], [x + gap, y + gap], [x - gap - w, y + gap]].map(([l, t]) => clamp([l + Math.sign(l - x + 1) * (k - 1) * (w * .6), t + Math.sign(t - y + 1) * (k - 1) * (h * .55)])));
-        const [left, cardTop] = options.find(clear) ?? options[0];
-        taken.push({ left, top: cardTop });
-        return { left, top: cardTop, x, y };
-      }));
+        // On a short screen nothing near the camera may be free: then the nearest free place between the banner and the hint line.
+        const free: number[][] = [];
+        if (!options.some(clear)) for (let t = top; t <= bottom - h; t += 12) for (let l = 12; l <= innerWidth - w - 12; l += 12) if (clear([l, t])) free.push([l, t]);
+        const near = ([l, t]: number[]) => Math.hypot(l + w / 2 - x, t + h / 2 - y);
+        const spot = options.find(clear) ?? free.sort((a, b) => near(a) - near(b))[0];
+        if (!spot) crowded = true;
+        const [left, cardTop] = spot ?? options[0];
+        taken.push({ left, top: cardTop, w, h });
+        return { left, top: cardTop, x, y, w, h };
+      });
+      if (crowded) {
+        // Still no room for every card: a tidy grid in the free band, in route order.
+        const w = Math.max(...spots.map(s => s.w)), h = Math.max(...spots.map(s => s.h));
+        const columns = Math.max(1, Math.min(spots.length, Math.floor((innerWidth - 16) / (w + 8)))), across = columns * (w + 8) - 8, down = Math.ceil(spots.length / columns) * (h + 8) - 8;
+        spots.forEach((spot, i) => Object.assign(spot, { left: (innerWidth - across) / 2 + (i % columns) * (w + 8), top: Math.max(top, (top + bottom - down) / 2) + Math.floor(i / columns) * (h + 8) }));
+      }
+      setPlaced(spots);
     };
     place();
+    // Captions measured before the web font arrives can wrap differently once it does.
+    void document.fonts?.ready.then(place);
     addEventListener('resize', place);
-    return () => removeEventListener('resize', place);
-  }, [data, cards, view]);
+    return () => { live = false; removeEventListener('resize', place); };
+  }, [data, cards, view, lang]);
 
   /** Lands the replay map on the inspection map, which draws the same records in the same frame; a route canvas frames itself once measured, so wait for that, then fade to uncover it. */
   useLayoutEffect(() => {
@@ -244,8 +263,8 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
           <p>{route} · {t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) })}</p>
           <div className="reveal-counter">{shown < total ? <><span>{rich('reveal.photosOf', { shown: <strong>{shown}</strong>, total })}</span><span className="reveal-when">{month(last?.capturedAt ?? null, locale)}</span></> : <><span>{rich(total === 1 ? 'reveal.photo' : 'reveal.photos', { count: <strong>{total}</strong> })}{span ? `, ${span}` : ''}</span><span className="reveal-when">{layer && rich('reveal.areas', { shown: <strong>{layer.areas}</strong>, total: data.pieces.length })}</span></>}</div>
         </header>
-        <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
-        {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>
+        <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : spot.w)} y2={spot.top + (spot.top > spot.y ? 0 : spot.h)}/>; })}</svg>
+        {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top }}>
           <div className="reveal-photo" style={{ aspectRatio: `${card.view.width} / ${card.view.height}` }}>
             <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
