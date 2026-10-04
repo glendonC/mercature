@@ -5,7 +5,7 @@
   background: var(--ground); color: var(--ink); font-size: var(--font-s); line-height: var(--leading);
 }
 .ri-map { position: absolute; inset: 0; }
-.route-inbox .destination-map-controls { top: auto; right: auto; left: 20px; bottom: 20px; box-shadow: var(--shadow-float); }
+.route-inbox .destination-map-controls { top: auto; right: auto; left: 20px; bottom: 20px; }
 /* Nothing on the walk asks to be confirmed, so markers rest instead of pulsing. */
 .route-inbox .route-marker[data-state=open] .route-marker-dot::after { display: none; }
 
