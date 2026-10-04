@@ -459,7 +459,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const [ack, setAck] = useState('');
   const history = useRef<Step[]>([]);
   const [said, setSaid] = useState('');
-  function go(next: Step, line = '') { setView('now'); if (next.id !== 'missed' && next.id !== 'propose') setCard3d(null); history.current.push(step); setStep(next); setAck(line); setSaid(''); }
+  /** A line of good news said on the way to a step, such as her change saved: the bot smiles while it is the line shown. */
+  const [cheer, setCheer] = useState('');
+  function go(next: Step, line = '', good = false) { setView('now'); if (next.id !== 'missed' && next.id !== 'propose') setCard3d(null); history.current.push(step); setStep(next); setAck(line); setCheer(good ? line : ''); setSaid(''); }
   // The Edit pill pauses whatever step she is on; "Back to where I was" returns to it.
   const [resume, setResume] = useState<Step | null>(null);
   function openEdit() {
@@ -790,7 +792,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = ack ? [ack] : [];
-  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null;
+  let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null, good = false;
   // What something is, in two turns of at most four: in the way or a help, then the kind.
   const groupChips = (pick: (group: KindGroup) => void): Chip[] => (Object.keys(KIND_GROUPS) as KindGroup[]).map(group => ({ id: `group-${group}`, label: s.words.groups[group], onClick: () => pick(group) }));
   const kindChips = (group: KindGroup, pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => KIND_GROUPS[group].map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
@@ -848,6 +850,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
     lines.push(s.check.end(tally));
+    good = !tally.skipped;
     chips = helloChips.filter(chip => chip.id !== 'check');
     words = hear;
   } else if (step.id === 'message' || step.id === 'reply') {
@@ -893,6 +896,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       </section>;
     } else {
       const message = current, replyIn = replyLang ?? replyLanguage(row.language);
+      good = !!message;
       lines.push(s.reply.say({ n: step.at + 1, total: rows.length, language: s.words.languages[replyIn] ?? replyIn }));
       if (message) { const text = replyText(message, replyIn, step.ask); above = <TextBox text={text} lang={replyIn} onLang={setReplyLang} copyLabel={s.reply.copy} copiedLabel={s.reply.copied} />; }
       chips = [{ id: 'next', label: step.at + 1 < rows.length ? s.messages.chips.next : s.check.chips.next, primary: true, onClick: () => go(nextMessage(step.at)) }];
@@ -915,7 +919,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       lines.push(s.street.found({ metres: Math.round(found.lengthMetres), osm: found.findings.length }));
       chips = [{ id: 'keep', label: s.street.chips.keep, primary: true, onClick: () => {
         const next = addStreet(ways, found); setWays(next); if (!saveLines(next)) setProblem(s.notSaved);
-        go({ id: 'missed' }, s.street.kept({ street: found.name ?? found.streets[0] ?? s.street.chips.add }));
+        go({ id: 'missed' }, s.street.kept({ street: found.name ?? found.streets[0] ?? s.street.chips.add }), true);
       } }, { id: 'again', label: s.street.chips.again, onClick: () => setStep({ id: 'street' }) }, cancel];
     } else if (step.from && step.to) { lines.push(s.street.routing); chips = [cancel]; }
     else { lines.push(...(step.from ? [s.street.end] : [s.street.offer, s.street.start])); chips = [cancel]; }
@@ -967,7 +971,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       {list.map(change => <ChangeRow key={change.id} kind={change.kind} label={change.label} undoLabel={s.changes.undo} onOpen={() => fly(change.points)} onUndo={() => { change.undo(); setAck(s.changes.undone); }} />)}</Panel>;
     // Her note for the whole walk is her own words, kept as she wrote them; anything else she says proposes a spot.
     if (step.mode === 'add') words = hear;
-    if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); go({ id: 'note' }, s.edit.noteSaved); };
+    if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); go({ id: 'note' }, s.edit.noteSaved, true); };
   } else if (step.id === 'note') {
     const text = noteText(noteLang, before);
     if (step.clearing) {
@@ -1037,6 +1041,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
 
   const working = busy === 'reading' || busy === 'download';
+  // Good news gets a smile, and only good news: a reply ready, the whole walk checked, a change she made saved.
+  const happy = !working && (good || (!!cheer && cheer === ack));
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   const turn = `${JSON.stringify(step)} ${ack}`;
 
@@ -1118,7 +1124,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         paths={before ? [] : [...mapPaths(showAround || step.id === 'around' || (step.id === 'check' && step.around === 'match') || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
-    <Bot ref={bot} working={working} talk={talk} />
+    <Bot ref={bot} working={working} mood={happy ? 'happy' : undefined} talk={talk} />
     <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
       <div key={card3d !== null ? `card ${card3d}` : turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}

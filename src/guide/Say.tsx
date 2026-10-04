@@ -2,11 +2,11 @@ import { forwardRef, useLayoutEffect, useState, type ReactNode, type RefObject }
 import { Choice, Choices, Companion } from '../ui';
 import './guide.css';
 
-/** The guide itself, out in the world: the shared companion, placed by the screen beside what it talks about, talking while a page types. */
-export const Bot = forwardRef<HTMLDivElement, { working?: boolean; talk?: RefObject<((talking: boolean) => void) | null>; className?: string }>(function Bot({ working = false, talk, className }, ref) {
+/** The guide itself, out in the world: the shared companion, placed by the screen beside what it talks about, talking while a page types, smiling only on good news. */
+export const Bot = forwardRef<HTMLDivElement, { working?: boolean; mood?: 'happy'; talk?: RefObject<((talking: boolean) => void) | null>; className?: string }>(function Bot({ working = false, mood, talk, className }, ref) {
   const [talking, setTalking] = useState(false);
   useLayoutEffect(() => { if (talk) talk.current = setTalking; }, [talk]);
-  return <div ref={ref} className={className ? `guide-bot ${className}` : 'guide-bot'} aria-hidden="true"><Companion working={working} talking={talking} /></div>;
+  return <div ref={ref} className={className ? `guide-bot ${className}` : 'guide-bot'} aria-hidden="true"><Companion working={working} talking={talking} mood={mood} /></div>;
 });
 
 export type Chip = { id: string; label: string; onClick: () => void; primary?: boolean; icon?: ReactNode; disabled?: boolean; pressed?: boolean; lang?: string };
