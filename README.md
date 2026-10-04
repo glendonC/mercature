@@ -24,9 +24,9 @@
 <br>
 
 <p align="center">
-  <img src="docs/assets/hero.gif" width="840" alt="Checking the Calle Loreto steps in Cusco: a street photo with the steps outlined, OpenStreetMap's record of 5 steps with no handrail and no ramp, the way around, then the route before and after the operator's changes">
+  <img src="docs/assets/intro.gif" width="820" alt="Home, then opening Qorikancha: the route is rebuilt from 403 street photos on the map, a photo card appears, and five spots are marked as possible problems for visitors">
 </p>
-<p align="center"><sub>The Calle Loreto steps in Cusco. Street photo: jaderbavaresco, Mapillary, CC BY-SA 4.0.</sub></p>
+<p align="center"><sub>Opening Qorikancha replays how its route was built. Street photos: Mapillary contributors, CC BY-SA 4.0. Map © OpenStreetMap contributors.</sub></p>
 
 ## Overview
 
@@ -51,6 +51,11 @@ message is synthetic and none has been reviewed by a native speaker. Nothing has
 site, and Mercature claims no widths, slopes or reachability.
 
 The one-page report: [docs/report.pdf](docs/report.pdf).
+
+<p align="center">
+  <img src="docs/assets/route-check.gif" width="840" alt="Checking the Calle Loreto steps in Cusco: a street photo with the steps outlined, OpenStreetMap's record of 5 steps with no handrail and no ramp, the way around, then the route before and after the operator's changes">
+</p>
+<p align="center"><sub>Checking the Calle Loreto steps, then Before / Now. Street photo: jaderbavaresco, Mapillary, CC BY-SA 4.0.</sub></p>
 
 <br>
 
