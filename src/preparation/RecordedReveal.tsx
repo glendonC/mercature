@@ -309,7 +309,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   if (failed) return <RecordedPreview id={id} onHome={onHome} onOpen={onOpen} onRetry={() => setAttempt(n => n + 1)}/>;
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
-  const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
+  const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : id === 'tbilisi-narikala' ? t('reveal.route.narikala') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
   const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : 0;
   const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk');
   // While the photos are read the line counts the marks they leave; until the first lands it keeps the stretches.
