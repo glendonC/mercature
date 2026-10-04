@@ -31,7 +31,7 @@ for (const size of [{width:1280,height:720},{width:390,height:844}]) {
     await page.goto('/');
     await expect(page.locator('.route-map .map-route-line')).toBeVisible();
     const places = await page.getByRole('button', {name:'Explore Qorikancha · Cusco'}).boundingBox();
-    const words = await page.locator('.home-subtitle').boundingBox();
+    const words = await page.locator('.home-words h1').boundingBox();
     expect(places!.y + places!.height).toBeLessThanOrEqual(size.height);
     expect(words!.y + words!.height).toBeLessThan(places!.y);
     await page.screenshot({path:`.local/home-${size.width}.png`});

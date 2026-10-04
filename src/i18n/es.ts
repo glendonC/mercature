@@ -41,7 +41,6 @@ export const es = {
 
   // Home
   'home.label': 'Inicio de Mercature',
-  'home.subtitle': 'El registro de un operador turístico sobre dónde un visitante podría no pasar en un recorrido, con fotos de calle y al día en su propio teléfono.',
   'home.onPhone': 'Lugares en este teléfono',
   'home.open': 'Abrir',
   'home.onFoot': '{area} · {metres} m a pie',

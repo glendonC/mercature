@@ -38,7 +38,6 @@ export const en = {
 
   // Home
   'home.label': 'Mercature home',
-  'home.subtitle': 'A tour operator’s record of where a visitor might not get through on a walk, built from street photos and kept current on their own phone.',
   'home.onPhone': 'Places on this phone',
   'home.open': 'Open',
   'home.onFoot': '{area} · {metres} m on foot',

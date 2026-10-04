@@ -22,10 +22,9 @@
 .welcome-tool svg, .welcome-dialog header button svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .welcome-tool:hover { background: #fff8; }
 
-/* The words, beside the walk on a wide screen and above it on a phone */
-.home-words { position: absolute; z-index: 2; left: 4vw; top: 50%; translate: 0 -58%; width: min(560px, 46vw); }
+/* The headline, beside the walk on a wide screen and above it on a phone */
+.home-words { position: absolute; z-index: 2; left: 4vw; top: 50%; translate: 0 -54%; width: min(560px, 46vw); }
 .home-words h1 { margin: 0; font-size: clamp(40px, 5.2vw, 76px); font-weight: 300; letter-spacing: -.06em; line-height: 1.03; }
-.home-subtitle { max-width: 32em; margin: 20px 0 0; color: var(--muted); font-size: clamp(17px, 1.45vw, 20px); font-weight: 400; letter-spacing: -.01em; line-height: 1.45; text-wrap: balance; }
 
 /* The places this device can open */
 .home-places { position: absolute; z-index: 3; left: 4vw; right: 4vw; bottom: 32px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
@@ -65,9 +64,8 @@
   .welcome-shell { min-height: 700px; }
   .welcome-chrome { inset: 16px 20px auto; }
   .home-veil { background: linear-gradient(180deg, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 38%, transparent 48%, transparent 62%, var(--ground) 76%); }
-  .home-words { left: 16px; right: 16px; top: 84px; width: auto; translate: none; }
+  .home-words { left: 16px; right: 16px; top: 92px; width: auto; translate: none; }
   .home-words h1 { font-size: clamp(34px, 8.8vw, 44px); }
-  .home-subtitle { margin-top: 14px; font-size: 16px; }
   .home-places { left: 12px; right: 12px; bottom: 34px; flex-direction: column; gap: 8px; }
   .home-place { width: 100%; min-height: 72px; }
   .home-place-text { flex: 1; }

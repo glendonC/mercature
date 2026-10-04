@@ -109,10 +109,7 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><div className="welcome-tools"><LanguageSwitch/><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label={t('home.credits')}><InfoIcon/></button></div></header>
-    <div className="home-words" ref={words}>
-      <h1>{rich('home.title', { br: <br/> })}</h1>
-      <p className="home-subtitle">{t('home.subtitle')}</p>
-    </div>
+    <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
     <section className="home-places" ref={places} aria-label={t('home.onPhone')}>
       <button className="home-place is-hero" aria-label={t('home.explore', { name: covers[0].name, area: covers[0].area })} onClick={() => onDestination(HERO)}>
         <img src={qorikancha} alt=""/>
