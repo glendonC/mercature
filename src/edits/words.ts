@@ -55,7 +55,8 @@ export function recordDate(at: string, language: VisitorLang): string {
 
 /**
  * How a fixed spot is named in a visitor's language, with the agreement each one needs.
- * Spanish carries its own participle; Korean takes an object particle chosen by the final consonant.
+ * Spanish puts the participle before the noun, so the record and its status stay together, and each
+ * kind carries its own article and agreement. Korean takes an object particle chosen by the final consonant.
  */
 const FIXED_SUBJECT: Readonly<Record<EditKind, { en: string; es: string; esDone: string; ko: string }>> = {
   steps: { en: 'the steps', es: 'los escalones', esDone: 'arreglados', ko: '계단' },
@@ -81,7 +82,7 @@ export const UPDATE = {
     en: (kind: EditKind, where: Where, metres: number, date: string) =>
       `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, about ${metres} m along the walk, as fixed.`,
     es: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Actualización, ${date}: registramos ${FIXED_SUBJECT[kind].es} ${where.es}, a unos ${metres} m del inicio, como ${FIXED_SUBJECT[kind].esDone}.`,
+      `Actualización, ${date}: anotamos como ${FIXED_SUBJECT[kind].esDone} ${FIXED_SUBJECT[kind].es} ${where.es}, a unos ${metres} m del inicio.`,
     ko: (kind: EditKind, where: Where, metres: number, date: string) =>
       `업데이트 (${date}): 출발점에서 약 ${metres}m, ${where.ko} 근처 ${FIXED_SUBJECT[kind].ko}${objectParticle(FIXED_SUBJECT[kind].ko)} 수리 완료로 기록했습니다.`,
   },
