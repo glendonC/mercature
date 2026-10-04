@@ -19,6 +19,15 @@ test('every registered place ships a package built from its current spots', () =
     const published = JSON.parse(readFileSync(file, 'utf8'));
     expect(published).toMatchObject({ schema: 'mercature-place/1', id, synthetic: false, local_only: false });
     expect(published.route_spots, `${id}: spots changed since its package was built`).toEqual(place.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })));
+    // What OpenStreetMap says rides in its own key: on real stretches, credited, never a width or incline, a barrier only for steps.
+    const osm = published.osm, count = published.stretches.length;
+    expect(osm.findings.length, id).toBeGreaterThan(0);
+    for (const finding of osm.findings) {
+      expect(finding.source === 'openstreetmap' && finding.label.startsWith('OpenStreetMap says: ') && finding.barrier === (finding.kind === 'steps'), finding.id).toBe(true);
+      expect(finding.stretches.length > 0 && finding.stretches.every((index: number) => index >= 0 && index < count), finding.id).toBe(true);
+    }
+    expect(JSON.stringify(osm)).not.toMatch(/"(width|incline)"/);
+    expect(osm.kinds.reduce((sum: number, kind: { count: number }) => sum + kind.count, 0)).toBe(osm.findings.length);
   }
 });
 

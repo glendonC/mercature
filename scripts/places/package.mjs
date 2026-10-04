@@ -1,13 +1,15 @@
 #!/usr/bin/env node
-// Builds public/places/<folder> for one place in ROUTE_PLACES from its local record in .local/routes/<id>
-// and its SAM 3 scan output in .local/scans/<id> (scans.json and masks/).
+// Builds public/places/<folder> for one place in ROUTE_PLACES from its local record in .local/routes/<id>,
+// its SAM 3 scan output in .local/scans/<id> (scans.json and masks/) and what OpenStreetMap says along it in
+// .local/osm/<id>.json (fetched once with scripts/places/osm.mjs).
 // Usage: node scripts/places/package.mjs <id>. No network; the same input gives the same bytes.
-// Point clouds stay local. Images are byte copies of the finding views and sips resizes of the reveal views (macOS).
+// Point clouds stay local. Images are byte copies of the finding views, or sips resizes once they would pass FINDING.budget, and sips resizes of the reveal views (macOS).
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_PLACES } from '../../src/site/registry.ts';
+import { accessFindings, accessKinds } from '../../src/osm/access.ts';
 import { marksFromRows, placeMarks, promptTable, readPiece } from './marks.mjs';
 
 const id = process.argv[2];
@@ -20,11 +22,15 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const source = join(root, '.local/routes', id);
 const target = join(root, 'public/places', routePlace.folder);
 const REVEAL = { count: 20, every: 3, size: 480, quality: 72 };
+// A walk with many photo findings ships them smaller; outlines keep the retained view's pixels, since the app scales each image to its view.
+const FINDING = { budget: 3_000_000, size: 720, quality: 45 };
 const SOURCES = ['mapillary', 'openstreetmap', 'valhalla', 'sam3'];
 
 const scanDir = join(root, '.local/scans', id);
 if (!existsSync(join(source, 'route.json'))) throw new Error(`Missing ${join(source, 'route.json')}; link .local/routes first.`);
 if (!existsSync(join(scanDir, 'scans.json'))) throw new Error(`Missing ${join(scanDir, 'scans.json')}; link .local/scans/${id} to the scan's gpu-output/scan first.`);
+const osmFile = join(root, '.local/osm', `${id}.json`);
+if (!existsSync(osmFile)) throw new Error(`Missing ${osmFile}; run node scripts/places/osm.mjs ${id} first.`);
 const record = JSON.parse(readFileSync(join(source, 'route.json'), 'utf8'));
 if (record.schema !== 'mercature-route/1' || record.id !== id || record.synthetic !== false) throw new Error('Unexpected route record.');
 
@@ -47,13 +53,18 @@ for (let index = 1; index < record.stretches.length && reveal.length < REVEAL.co
 rmSync(target, { recursive: true, force: true });
 mkdirSync(join(target, 'views'), { recursive: true });
 const shipped = new Map();
-for (const id of evidence) { copyFileSync(join(source, `views/${id}.jpg`), join(target, `views/${id}.jpg`)); shipped.set(id, { role: 'finding', width: views.get(id).width, height: views.get(id).height }); }
-for (const id of reveal) {
+const resize = (id, { size, quality }) => {
   const out = join(target, `views/${id}.jpg`);
-  execFileSync('sips', ['-Z', String(REVEAL.size), '-s', 'formatOptions', String(REVEAL.quality), join(source, `views/${id}.jpg`), '--out', out], { stdio: 'ignore' });
-  const size = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', out], { encoding: 'utf8' });
-  shipped.set(id, { role: 'reveal', width: Number(/pixelWidth: (\d+)/.exec(size)[1]), height: Number(/pixelHeight: (\d+)/.exec(size)[1]) });
+  execFileSync('sips', ['-Z', String(size), '-s', 'formatOptions', String(quality), join(source, `views/${id}.jpg`), '--out', out], { stdio: 'ignore' });
+  const pixels = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', out], { encoding: 'utf8' });
+  return { width: Number(/pixelWidth: (\d+)/.exec(pixels)[1]), height: Number(/pixelHeight: (\d+)/.exec(pixels)[1]) };
+};
+const smaller = evidence.reduce((sum, id) => sum + statSync(join(source, `views/${id}.jpg`)).size, 0) > FINDING.budget;
+for (const id of evidence) {
+  if (smaller) { shipped.set(id, { role: 'finding', ...resize(id, FINDING) }); continue; }
+  copyFileSync(join(source, `views/${id}.jpg`), join(target, `views/${id}.jpg`)); shipped.set(id, { role: 'finding', width: views.get(id).width, height: views.get(id).height });
 }
+for (const id of reveal) shipped.set(id, { role: 'reveal', ...resize(id, REVEAL) });
 
 const findings = record.findings.map(f => ({
   id: f.id, label: f.label, concept: f.concept, barrier: f.barrier === true, score: f.score, verified: false, source: f.source, model: f.model, note: f.note,
@@ -138,9 +149,18 @@ const place = {
   route_spots: routePlace.features.map(spot => ({ id: spot.id, stretches: spot.stretches, landmark: spot.landmark })),
   scan,
 };
+// What OpenStreetMap says along the walk, placed on its stretches by src/osm/access.ts, the module a browser uses for a new walk.
+// A new key at the end, so every key before it stays as it was.
+const answer = JSON.parse(readFileSync(osmFile, 'utf8'));
+const access = accessFindings(answer.elements, record.stretches.map(s => ({ index: s.index, line: s.line })), { nearMetres: record.rules.near_m });
+place.osm = {
+  source: 'OpenStreetMap via the Overpass API', fetched_at: answer.osm3s?.timestamp_osm_base ?? null, near_m: record.rules.near_m, amenity_m: 15,
+  note: 'What OpenStreetMap says along the walk, never checked by a person. Widths and inclines are left out. Only steps are a possible barrier, as in the findings.',
+  kinds: accessKinds(access), findings: access,
+};
 for (const view of place.views) if (!place.photos.some(photo => photo.id === view.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`View ${view.id} has no credited photo.`);
 for (const mark of scan.marks) if (!place.photos.some(photo => photo.id === mark.photo_id && photo.creator.username && photo.licence && photo.link)) throw new Error(`Mark ${mark.id} has no credited photo.`);
 writeFileSync(join(target, 'place.json'), `${JSON.stringify(place)}\n`);
 
 const bytes = readdirSync(target, { recursive: true }).map(name => join(target, name)).filter(path => statSync(path).isFile()).reduce((sum, path) => sum + statSync(path).size, 0);
-console.log(`${evidence.length} finding views, ${reveal.length} reveal views, ${place.photos.length} credited photos, ${findings.length} findings, ${marks.length} marks (${marks.filter(mark => mark.outline).length} outlined, ${marks.filter(mark => mark.position).length} near the route), ${(bytes / 1e6).toFixed(2)} MB`);
+console.log(`${evidence.length} finding views, ${reveal.length} reveal views, ${place.photos.length} credited photos, ${findings.length} findings, ${marks.length} marks (${marks.filter(mark => mark.outline).length} outlined, ${marks.filter(mark => mark.position).length} near the route), ${access.length} OpenStreetMap findings, ${(bytes / 1e6).toFixed(2)} MB`);
