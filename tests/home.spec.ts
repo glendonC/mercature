@@ -52,7 +52,7 @@ test('search filters prepared places as she types, and one clear answer builds a
   await page.goBack();
   await expect(page.locator('.home-saved')).toHaveCount(0);
   // Home first offers this walk another start; Escape leaves that, and the empty field shows Recent.
-  await expect(page.getByRole('textbox', {name:'Where does the walk start?'})).toBeVisible();
+  await expect(page.getByRole('textbox', {name:'Where does the route start?'})).toBeVisible();
   await field.focus();
   await page.keyboard.press('Escape');
   await field.focus();

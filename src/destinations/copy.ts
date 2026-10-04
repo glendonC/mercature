@@ -22,8 +22,8 @@ export const COPY = {
     inbox: {
       messages: 'Messages', add: 'Add a message', example: 'Example', translated: 'Machine-translated', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
       guide: 'Tap a marker for its photo, or open a message.', guideMapOnly: 'Tap a marker, or open a message.', start: 'Start',
-      found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
-      raised: 'Visitors raise', scanned: 'Model marks near the walk', scannedKinds: (n: number) => n === 1 ? '1 kind' : `${n} kinds`, flaggedSpots: 'Flagged spots', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
+      found: 'Found along the route', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
+      raised: 'Visitors raise', scanned: 'Model marks near the route', scannedKinds: (n: number) => n === 1 ? '1 kind' : `${n} kinds`, flaggedSpots: 'Flagged spots', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
       paste: 'Paste what a visitor wrote.', read: 'Read message', cancel: 'Cancel',
       about: 'About', reply: 'Reply', copyReply: 'Copy reply', filed: (spot: string) => `Filed on ${spot}`, placed: 'Filed',
       line: { reading: 'Reading the message…', ready: 'Filed on the closest match. Tap another spot to move it.', unsure: 'Not sure which spot. Tap it on the map.', none: 'Not sure. Ask the visitor, or tap the spot on the map.', noSpot: 'This message is not about one spot.', manual: 'Tap the spot on the map.', remembered: 'The first spot is where you linked a similar message before.', linked: 'Filed. The reply below uses what your map says.', unreadable: 'This language cannot be read here yet. Tap the spot on the map, or ask the visitor.' },
@@ -79,21 +79,21 @@ export const SUBJECTS: Record<Subject, Where> = {
 const MAPPED: Record<Subject, Where> = { steps: SUBJECTS.steps, kerb: { en: 'a raised kerb', es: 'un bordillo alto', ko: '높은 연석' }, path: SUBJECTS.path };
 export const NOTE = {
   title: { en: (from: string, to: string, m: number) => `${cap(enPlace(from))} to ${enPlace(to)}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${esPlace(from)} hasta ${esPlace(to)}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
-  /** A spot the model flagged: what street photos show there, which nobody has checked. Under 10 m along, it is at the start of the walk, never "about 0 m". */
+  /** A spot the model flagged: what street photos show there, which nobody has checked. Under 10 m along, it is at the start of the route, never "about 0 m". */
   barrier: {
-    en: (s: Subject, w: Where, m: number) => m < 10 ? `Street photos show ${SUBJECTS[s].en} ${w.en}, at the start of the walk.` : `Street photos show ${SUBJECTS[s].en} ${w.en}, about ${m} m along the walk.`,
+    en: (s: Subject, w: Where, m: number) => m < 10 ? `Street photos show ${SUBJECTS[s].en} ${w.en}, at the start of the route.` : `Street photos show ${SUBJECTS[s].en} ${w.en}, about ${m} m along the route.`,
     es: (s: Subject, w: Where, m: number) => m < 10 ? `Las fotos de la calle muestran ${SUBJECTS[s].es} ${w.es}, al inicio del recorrido.` : `Las fotos de la calle muestran ${SUBJECTS[s].es} ${w.es}, a unos ${m} m del inicio.`,
     ko: (s: Subject, w: Where, m: number) => m < 10 ? `거리 사진에 출발점, ${w.ko} 근처 ${SUBJECTS[s].ko}이 보입니다.` : `거리 사진에 출발점에서 약 ${m}m, ${w.ko} 근처 ${SUBJECTS[s].ko}이 보입니다.`,
   },
   /** A spot flagged only by OpenStreetMap tags: what the map records there, which nobody has checked. */
   mapped: {
-    en: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap records ${MAPPED[s].en} ${w.en}, at the start of the walk.` : `OpenStreetMap records ${MAPPED[s].en} ${w.en}, about ${m} m along the walk.`,
+    en: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap records ${MAPPED[s].en} ${w.en}, at the start of the route.` : `OpenStreetMap records ${MAPPED[s].en} ${w.en}, about ${m} m along the route.`,
     es: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap registra ${MAPPED[s].es} ${w.es}, al inicio del recorrido.` : `OpenStreetMap registra ${MAPPED[s].es} ${w.es}, a unos ${m} m del inicio.`,
     ko: (s: Subject, w: Where, m: number) => m < 10 ? `OpenStreetMap에 출발점, ${w.ko} 근처 ${MAPPED[s].ko}이 기록되어 있습니다.` : `OpenStreetMap에 출발점에서 약 ${m}m, ${w.ko} 근처 ${MAPPED[s].ko}이 기록되어 있습니다.`,
   },
   /** A spot she added: her own record, in plain words. */
   added: {
-    en: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].en)} ${w.en}, at the start of the walk.` : `${cap(KIND_WORDS[kind].en)} ${w.en}, about ${m} m along the walk.`,
+    en: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].en)} ${w.en}, at the start of the route.` : `${cap(KIND_WORDS[kind].en)} ${w.en}, about ${m} m along the route.`,
     es: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].es)} ${w.es}, al inicio del recorrido.` : `${cap(KIND_WORDS[kind].es)} ${w.es}, a unos ${m} m del inicio.`,
     ko: (kind: EditKind, w: Where, m: number) => m < 10 ? `출발점, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}${ga(KIND_WORDS[kind].ko)} 있습니다.` : `출발점에서 약 ${m}m, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}${ga(KIND_WORDS[kind].ko)} 있습니다.`,
   },
@@ -121,7 +121,7 @@ export const REPLY = {
     ko: () => '알려 주셔서 감사합니다. 그 장소를 확인했지만 장애물은 보이지 않았습니다.',
   },
   check: {
-    en: () => "Thank you. We'll check that spot on our next walk.",
+    en: () => "Thank you. We'll check that spot on our next tour.",
     es: () => 'Gracias. Revisaremos ese lugar en nuestro próximo recorrido.',
     ko: () => '감사합니다. 다음 답사 때 그 장소를 확인하겠습니다.',
   },
@@ -150,7 +150,7 @@ function cap(text: string) { return text.charAt(0).toLocaleUpperCase() + text.sl
 type AnswerLines = { en: (w: Where, m: number) => string; es: (w: Where, m: number) => string; ko: (w: Where, m: number) => string };
 
 const AT = {
-  en: (m: number) => m < 10 ? 'at the start of the walk' : `about ${m} m along the walk`,
+  en: (m: number) => m < 10 ? 'at the start of the route' : `about ${m} m along the route`,
   es: (m: number) => m < 10 ? 'al inicio del recorrido' : `a unos ${m} m del inicio`,
   ko: (m: number) => m < 10 ? '출발점' : `출발점에서 약 ${m}m`,
 };
@@ -228,9 +228,9 @@ export const GONE_NOTE = {
 
 /** A photo kind she chose to mention ("Mention this in your route note?"). */
 export const KIND_NOTE = {
-  cobblestones: { en: 'Cobblestones on parts of the walk.', es: 'Empedrado en partes del recorrido.', ko: '경로 일부 구간이 돌길입니다.' },
-  crossing: { en: 'The walk crosses roads in places.', es: 'El recorrido cruza calles en algunos puntos.', ko: '경로 중간에 차도를 건너는 곳이 있습니다.' },
-  kerb: { en: 'Kerbs along parts of the walk.', es: 'Bordillos en partes del recorrido.', ko: '경로 일부 구간에 연석이 있습니다.' },
+  cobblestones: { en: 'Cobblestones on parts of the route.', es: 'Empedrado en partes del recorrido.', ko: '경로 일부 구간이 돌길입니다.' },
+  crossing: { en: 'The route crosses roads in places.', es: 'El recorrido cruza calles en algunos puntos.', ko: '경로 중간에 차도를 건너는 곳이 있습니다.' },
+  kerb: { en: 'Kerbs along parts of the route.', es: 'Bordillos en partes del recorrido.', ko: '경로 일부 구간에 연석이 있습니다.' },
 };
 
 /** The way around the mapped steps, once she says it works. extra: metres longer than the walk, rounded. */
@@ -242,7 +242,7 @@ export const AROUND_NOTE = {
 
 /** Altitude, for a walk above about 2,500 m. metres: the walk's height above sea level, never a difference between its ends. */
 export const ALTITUDE_NOTE = {
-  en: (metres: number) => `The walk is at about ${metres.toLocaleString('en')} m above sea level; take it slowly.`,
+  en: (metres: number) => `The route is at about ${metres.toLocaleString('en')} m above sea level; take it slowly.`,
   es: (metres: number) => `El recorrido está a unos ${metres.toLocaleString('es-419')} m sobre el nivel del mar; camine con calma.`,
   ko: (metres: number) => `이 경로는 해발 약 ${metres.toLocaleString('ko')}m에 있으니 천천히 걸으세요.`,
 };
@@ -250,7 +250,7 @@ export const ALTITUDE_NOTE = {
 /** Replies. askWhere: the fail-safe when the model can't place a message. The answer clauses replace REPLY.barrier's last sentence ("Ask us if steps are hard for you.") once she has answered. */
 export const REPLY_MORE = {
   askWhere: {
-    en: 'Thank you for writing. Could you tell us where on the walk this was?',
+    en: 'Thank you for writing. Could you tell us where on the route this was?',
     es: 'Gracias por escribirnos. ¿Podría decirnos en qué parte del recorrido fue?',
     ko: '연락 주셔서 감사합니다. 경로의 어느 부분이었는지 알려 주시겠어요?',
   },
@@ -273,7 +273,7 @@ export function enPlace(name: string): string {
 
 /** Where a spot is, phrased per language from its landmark. */
 export function where(landmark: { name: string; kind: 'start' | 'target' | 'building' | 'street' } | null, names: { start: string; target: string; /** Street names as they are, without "Calle", for a walk outside a Spanish-speaking city. */ plain?: boolean }): Where {
-  if (!landmark) return { en: 'on the walk', es: 'en el recorrido', ko: '경로' };
+  if (!landmark) return { en: 'on the route', es: 'en el recorrido', ko: '경로' };
   const { name, kind } = landmark;
   if (kind === 'start') return { en: `at the ${name}`, es: `en la ${name}`, ko: name === 'Plaza de Armas' ? '아르마스 광장' : name };
   if (kind === 'target') return { en: `near the ${name}`, es: `cerca de ${name === names.target && /ticket booth/i.test(name) ? 'la boletería del Qorikancha' : name}`, ko: /ticket booth/i.test(name) ? '코리칸차 매표소' : name };

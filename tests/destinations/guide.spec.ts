@@ -11,7 +11,7 @@ test('the guide goes through the walk, and her answer takes a spot off her map',
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await openGuide(page);
-  await page.getByRole('button', {name:'Go through the walk', exact:true}).click();
+  await page.getByRole('button', {name:'Go through the route', exact:true}).click();
   const progress = page.locator('.gs-card-meta > span').first();
   await expect(progress).toHaveText(/^1 of \d+$/);
   await page.getByRole('button', {name:'Not there now', exact:true}).click();

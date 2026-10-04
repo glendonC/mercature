@@ -310,7 +310,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (spot) return `${definite(s.words.access[accessOfSpot(spot)], lang)} ${whereOf(spot)[lang]}`;
     if (target.kind === 'added') { const one = added(target.id); if (one) return `${definite(s.words.added[one.kind], lang)} ${nearOf(one.stretch)[lang]}`; }
     if (target.kind === 'landmark') { const name = nameOf(target); return lang === 'es' ? esPlace(name) : enPlace(name); }
-    return target.kind === 'stretch' ? `${lang === 'es' ? 'el recorrido' : 'the walk'} ${nearOf(target.index)[lang]}` : nameOf(target);
+    return target.kind === 'stretch' ? `${lang === 'es' ? 'el recorrido' : 'the route'} ${nearOf(target.index)[lang]}` : nameOf(target);
   }
   /** What a choice or a marker calls a spot: its kind and how far along, as on the map, or a landmark's name. */
   function tagOf(target: Target): string {

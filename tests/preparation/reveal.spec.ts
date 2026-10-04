@@ -30,9 +30,9 @@ test('the Qorikancha reveal replays how the walk was built and opens the inspect
   await expect(reveal.getByRole('figure').first()).toBeVisible();
   await expect(reveal).toHaveAttribute('data-step', 'barriers', {timeout: 10000});
   // The counts sit in small figures under the place's name, each as it is placed.
-  await expect(reveal.getByRole('img', {name: /^\d+ street photos of this walk$/})).toBeVisible();
+  await expect(reveal.getByRole('img', {name: /^\d+ street photos of this route$/})).toBeVisible();
   // Every mark the package records, not only those whose photos are published.
-  await expect(reveal.getByRole('img', {name: '52 marks along the walk'})).toBeVisible();
+  await expect(reveal.getByRole('img', {name: '52 marks along the route'})).toBeVisible();
   await expect(reveal.getByRole('img', {name: '8 might be barriers, at 5 spots'})).toBeVisible();
   // The guide speaks in plain words: it never counts photos or marks, and never says how the walk was built.
   const lines = await said();
@@ -55,7 +55,7 @@ test('a photo-only place replays its photo and still opens its map', async ({pag
   await page.goto('/');
   await page.getByRole('button', {name:'Explore Swayambhu · Kathmandu'}).click();
   const reveal = page.getByRole('region', {name:'Swayambhu', exact:true});
-  await expect(reveal.getByRole('img', {name: '1 street photo of this walk'})).toBeVisible({timeout: 8000});
+  await expect(reveal.getByRole('img', {name: '1 street photo of this route'})).toBeVisible({timeout: 8000});
   await page.keyboard.press('Escape');
   await expect(reveal).toBeHidden();
   await page.getByRole('button', {name:'3D', exact:true}).click();
