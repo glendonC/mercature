@@ -36,10 +36,11 @@ function offlineShell(): Plugin {
       for (const name of publicFiles()) digest.update(readFileSync(new URL(`./public/${name}`, import.meta.url)));
       const cache = `mercature-app-${digest.digest("hex").slice(0, 16)}`;
       // Matches ignore Vary: a host may vary on Origin, and module scripts and stylesheets are requested with one while the precache was stored without.
+      // Pages go past the HTTP cache: a newer index.html kept there after a deploy names chunks this worker never stored, so offline it must fall back to its own.
       const source = `const CACHE=${JSON.stringify(cache)};const SCOPE=new URL('./',self.location.href).pathname;const ASSETS=${JSON.stringify([...new Set(assets)])}.map(path=>SCOPE+path);
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('mercature-app-')&&key!==CACHE).map(key=>caches.delete(key)))),self.clients.claim()])));
-self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin)return;if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>caches.open(CACHE).then(cache=>cache.match(SCOPE+'index.html',{ignoreVary:true}))));return;}if(ASSETS.includes(url.pathname))event.respondWith(caches.open(CACHE).then(cache=>cache.match(event.request,{ignoreVary:true}).then(response=>response||fetch(event.request))));});`;
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==self.location.origin)return;if(event.request.mode==='navigate'){event.respondWith(fetch(event.request,{cache:'no-store'}).catch(()=>caches.open(CACHE).then(cache=>cache.match(SCOPE+'index.html',{ignoreVary:true}))));return;}if(ASSETS.includes(url.pathname))event.respondWith(caches.open(CACHE).then(cache=>cache.match(event.request,{ignoreVary:true}).then(response=>response||fetch(event.request))));});`;
       this.emitFile({ type: "asset", fileName: "sw.js", source });
     },
   };
