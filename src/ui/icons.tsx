@@ -61,6 +61,10 @@ export const UndoIcon = make('UndoIcon', <path d="M9 14 4.5 9.5 9 5M4.5 9.5H14a5
 export const PointerIcon = make('PointerIcon', <path d="M6 3.5 18.5 10l-5.4 1.8L11 17.5Z M13.1 11.8l5 5" />);
 export const PinIcon = make('PinIcon', <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.3" /></>);
 export const DownloadIcon = make('DownloadIcon', <path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14" />);
+/** Skip ahead, as on the build replay. */
+export const SkipIcon = make('SkipIcon', <path d="m5.5 6 6 6-6 6M12.5 6l6 6-6 6" />);
+/** Go in: open a place or a prepared scene. */
+export const EnterIcon = make('EnterIcon', <path d="M14 4h4.5a1.5 1.5 0 0 1 1.5 1.5v13a1.5 1.5 0 0 1-1.5 1.5H14M9.5 16.5 14 12 9.5 7.5M14 12H3.5" />);
 
 /* Controls */
 export const CloseIcon = make('CloseIcon', <path d="M6 6l12 12M18 6 6 18" />);
