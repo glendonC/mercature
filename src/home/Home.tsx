@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject }
 import qorikancha from '../covers/qorikancha.webp';
 import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
-import { NOOR_FARM } from '../site/farm';
 import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destination } from '../destinations/data';
 import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
 import { spotMarkers } from '../destinations/markers';
@@ -86,19 +85,8 @@ function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLEle
   }, [words, places]);
   return insets;
 }
-/** The authored terrace drawn from its own scene records. */
-function FarmPlan() {
-  const { bounds, obstacles, unknown } = NOOR_FARM.scene;
-  const w = bounds.maxX - bounds.minX, h = bounds.maxY - bounds.minY, side = Math.max(w, h) + 3;
-  const box = (b: { minX: number; minY: number; maxX: number; maxY: number }) => ({ x: b.minX - bounds.minX, y: bounds.maxY - b.maxY, width: b.maxX - b.minX, height: b.maxY - b.minY });
-  return <svg className="result-plan" viewBox={`${(w - side) / 2} ${(h - side) / 2} ${side} ${side}`} aria-hidden="true">
-    <rect width={w} height={h} rx=".5" className="plan-ground"/>
-    {unknown.map(region => <rect key={region.id} {...box(region.bounds)} className="plan-unknown"/>)}
-    {obstacles.map(item => <rect key={item.id} {...box(item.bounds)} rx=".15" className={item.movable ? 'plan-movable' : 'plan-fixed'}/>)}
-  </svg>;
-}
-export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: Props) {
-  const { t, rich, lang } = useLanguage();
+export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
+  const { t, rich } = useLanguage();
   const words = useRef<HTMLDivElement>(null);
   const places = useRef<HTMLElement>(null);
   const openable = useOpenable();
@@ -112,7 +100,7 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
-    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={place => place === 'noor-farm' ? onFarm() : onDestination(place)}/></header>
+    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
     <Places label={t('home.onPhone')} rows={[
       { id: HERO, name: DESTINATIONS[HERO].name, label: t('home.explore', { name: covers[0].name, area: covers[0].area }),
@@ -120,7 +108,6 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
         meta: status, thumb: <img src={qorikancha} alt=""/>, onOpen: () => onDestination(HERO) },
       ...others.map(cover => ({ id: cover.id, name: cover.name, detail: cover.area, label: t('home.explore', { name: cover.name, area: cover.area }),
         thumb: <img src={cover.image} alt=""/>, onOpen: () => onDestination(cover.id) })),
-      { id: 'noor-farm', name: NOOR_FARM.name[lang], detail: t('farm.place'), meta: t('common.example'), example: true, thumb: <FarmPlan/>, onOpen: onFarm },
       ...saved.map(entry => ({ id: entry.id, name: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'),
         thumb: <span className="home-saved-mark" aria-hidden="true"/>, onOpen: () => onOpenSaved(entry) })),
     ] satisfies PlaceRow[]}/>

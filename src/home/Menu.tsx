@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { DESTINATIONS } from '../destinations/data';
-import { NOOR_FARM } from '../site/farm';
 import { LANGS, LANG_NAMES, useLanguage, type Lang } from '../i18n';
 import { List, Panel, PanelHead, Row, Section, Segmented, IconButton, TextButton } from '../ui';
 import { CloseIcon, HomeIcon, MoreIcon } from '../ui/icons';
@@ -8,7 +7,7 @@ import { covers } from './Home';
 import './menu.css';
 
 /** The places any screen can reach from the menu. */
-export type MenuPlace = 'cusco-qorikancha' | 'noor-farm';
+export type MenuPlace = 'cusco-qorikancha';
 type Props = {
   /** Omitted on Home itself, where there is nowhere to go back to. */
   onHome?: () => void;
@@ -35,7 +34,6 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
         <List>
           {onHome && <Row icon={<HomeIcon/>} label={t('common.home')} onClick={() => go(onHome)}/>}
           <Row label={DESTINATIONS['cusco-qorikancha'].name} detail={covers[0].area} selected={current === 'cusco-qorikancha'} onClick={() => go(() => onPlace('cusco-qorikancha'))}/>
-          <Row label={NOOR_FARM.name[lang]} detail={t('common.example')} selected={current === 'noor-farm'} onClick={() => go(() => onPlace('noor-farm'))}/>
         </List>
         <Section title={t('language.label')}>
           <Segmented label={t('language.label')} value={lang} onChange={(next: Lang) => setLang(next)}

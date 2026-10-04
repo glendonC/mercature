@@ -5,24 +5,13 @@ test('home offers the prepared walk itself, with no search box and nothing to up
   await expect(page.getByRole('heading', {name:'An editable spatial accessibility model'})).toBeVisible();
   await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(page.getByRole('button', {name:/upload/i})).toHaveCount(0);
+  // Only places with a prepared model are offered; the farm example is not one of them.
+  await expect(page.getByRole('button', {name:/Noor/})).toHaveCount(0);
   const walk = page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true});
   await expect(walk).toContainText('594 m on foot');
   await expect(walk).toContainText('5 flagged spots');
   await walk.click();
   await expect(page.getByRole('region', {name:'Qorikancha', exact:true})).toBeVisible();
-});
-
-test('the farm card is marked an example and its getting-ready steps hand the farm to the workspace', async ({page}) => {
-  test.setTimeout(20000);
-  await page.goto('/');
-  const farm = page.getByRole('button', {name:/^Noor's farm/});
-  await expect(farm).toHaveAccessibleName(/Example$/);
-  await farm.click();
-  await expect(page.locator('li[data-step=paths]')).toContainText('3 of 4 reachable');
-  await expect(page.locator('li[data-step=model]')).toContainText(/Ready|Loading|Use without AI/);
-  await expect(page.getByRole('status').filter({hasText:"Noor's farm is ready."})).toBeVisible();
-  await expect(page.locator('.farm-ready')).toHaveCount(0, {timeout: 8000});
-  await expect(page.getByRole('button', {name:'View options', exact:true})).toBeVisible();
 });
 
 for (const size of [{width:1280,height:720},{width:390,height:844}]) {
