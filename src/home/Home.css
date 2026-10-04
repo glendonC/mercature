@@ -26,12 +26,12 @@
 
 /* A place is its own photograph: a squircle, quiet until you reach for it, with a charcoal label on it. */
 .home-photos { position: absolute; z-index: 3; left: 4vw; bottom: 36px; display: flex; align-items: flex-end; gap: 14px; }
-.home-photo { position: relative; display: block; width: clamp(260px, 26vw, 400px); aspect-ratio: 1.9; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.home-photo { position: relative; display: block; width: clamp(260px, 26vw, 400px); aspect-ratio: 1.9; padding: 0; border: 0; border-radius: 0; background: transparent; transition: translate var(--motion-hover) var(--ease-out); }
 .home-photo-frame { display: block; width: 100%; height: 100%; mask: url('../covers/photo-squircle-mask.png') center / 100% 100% no-repeat; }
 .home-photo img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .52; filter: saturate(.7); transition: opacity var(--motion-panel) var(--ease-out), filter var(--motion-panel) var(--ease-out); }
 .home-photo:hover, .home-photo:focus-visible { outline: none; }
 .home-photo:hover img, .home-photo:focus-visible img { opacity: .95; filter: saturate(1); }
-.home-photo:hover, .home-photo:focus-visible { translate: 0 -3px; transition: translate var(--motion-hover) var(--ease-out); }
+.home-photo:hover, .home-photo:focus-visible { translate: 0 -3px; }
 .home-photo:focus-visible .home-photo-label { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* The label rests on the photograph, in the app's charcoal glass. */
