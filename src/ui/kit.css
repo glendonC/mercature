@@ -93,12 +93,18 @@
 .kit-kind small { font-size: var(--font-xs); color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); }
 /* The revised stage: the guide in the map, the focus card with its choices beside it */
 .kit-companion { position: absolute; z-index: 6; left: 58%; top: 30%; }
-.kit-focus { position: absolute; z-index: 8; left: 24px; top: 80px; display: grid; grid-template-columns: minmax(0, 420px) 220px; align-items: start; gap: 12px; max-height: calc(100% - 300px); }
+.kit-focus { position: absolute; z-index: 8; left: 24px; top: 112px; display: grid; grid-template-columns: minmax(0, 420px) 220px; align-items: start; gap: 12px; max-height: calc(100% - 300px); }
 .kit-focus-card { max-height: 100%; overflow-y: auto; }
 .kit-focus > .ui-choices { margin-top: -2px; }
 .kit-choices-demo { max-width: 260px; }
 @media (max-width: 640px) {
   .kit-companion { left: 62%; top: 18%; }
-  .kit-focus { left: 12px; right: 12px; top: 64px; grid-template-columns: 1fr; gap: 4px; max-height: calc(100% - 220px); overflow-y: auto; }
+  .kit-focus { left: 12px; right: 12px; top: 104px; grid-template-columns: 1fr; gap: 4px; max-height: calc(100% - 220px); overflow-y: auto; }
   .kit-focus > .ui-choices { grid-template-columns: 1fr 1fr; column-gap: 6px; }
 }
+.kit-edit-bar { position: absolute; z-index: 9; top: 56px; left: 50%; display: flex; align-items: center; gap: 6px; translate: -50% 0; }
+.kit-editing { display: grid; gap: 14px; padding: 16px; border-radius: 12px; background: #e6e9eb; }
+.kit-changes { max-width: 380px; }
+.kit-changed-demo { gap: 10px 14px; padding: 6px; font-size: var(--font-xs); }
+.kit-changed-demo .ui-marker { background: var(--ink); }
+@media (max-width: 640px) { .kit-edit-bar { top: 52px; } }

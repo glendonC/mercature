@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, ChangeRow, GlassButton, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -113,6 +113,7 @@ export default function Kit() {
         <Segmented variant="tabs" caps label="Scene" value={scene} onChange={setScene} options={SCENES} />
         <span className="kit-keys"><Kbd>Esc</Kbd><span>Back</span></span>
       </header>
+      <div className="kit-edit-bar"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><BeforeNow /></div>
       <Companion className="kit-companion" working={scene === 'reading'} talking={talking} />
       {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
       <Dialogue key={scene} label="Guide" say={said} onTalking={setTalking} continueLabel="More" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
@@ -120,6 +121,19 @@ export default function Kit() {
     </div>
 
     <div className="kit-sheet-body">
+      <Specimen wide title="Editing" note="Always there over the map: the Edit pill, white while editing; Before and Now beside it, the state that is on in white. Her changes are rows with the kind's icon in its hue, one line, and a quiet Undo. A changed marker wears a dashed ink ring over a white halo; solid ink is the selection.">
+        <div className="kit-editing">
+          <div className="kit-row"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><GlassButton icon={<I.NoteIcon />} pressed>Edit</GlassButton><BeforeNow /></div>
+          <Panel size="card" className="kit-changes" aria-label="Your changes">
+            <PanelHead as="h3" title="Your changes" meta="3 on this walk" />
+            <ChangeRow kind="steps" label="Steps, Calle Loreto: still there" meta="340 m" onUndo={() => {}} undoLabel="Undo" onOpen={() => {}} />
+            <ChangeRow kind="ramp" label="Ramp added by the ticket booth" meta="590 m" onUndo={() => {}} undoLabel="Undo" onOpen={() => {}} />
+            <ChangeRow kind="kerb" label="Kerb, Calle Maruri: not a barrier" meta="180 m" onUndo={() => {}} undoLabel="Undo" onOpen={() => {}} />
+          </Panel>
+          <div className="kit-row kit-changed-demo"><span className="ui-marker ui-changed" data-tone="ink"><I.StepsIcon /></span><span>Changed</span><MarkerBadge icon={<I.StepsIcon />} tone="ink" selected /><span>Selected</span></div>
+        </div>
+      </Specimen>
+
       <Specimen wide title="Guide's dialogue" note="One clean line on its own at the bottom, her field under it. The guide floats in the map beside what it talks about; her choices are their own list beside the photo or message.">
         <div className="kit-dialogues">
           <div className="kit-row"><Companion /><Companion talking /><Companion working /></div>
@@ -279,3 +293,7 @@ function TabsChoice() {
   return <Segmented variant="tabs" label="View" value={value} onChange={setValue} options={[{ value: 'walk', label: 'Walk' }, { value: 'messages', label: 'Messages' }, { value: 'note', label: 'Note' }]} />;
 }
 
+function BeforeNow() {
+  const [value, setValue] = useState<'before' | 'now'>('now');
+  return <Segmented surface="glass" label="Show the walk" value={value} onChange={setValue} options={[{ value: 'before', label: 'Before' }, { value: 'now', label: 'Now' }]} />;
+}

@@ -151,6 +151,10 @@
   --mark-footway: var(--kind-footway);
   --mark-cobblestones: var(--kind-cobblestones);
   --mark-road: var(--kind-road);
+  /* A marker she changed: a white halo and a dashed ink ring outside it, so it never reads as the selection (solid ink) or as any kind's hue */
+  --changed-ring: 0 0 0 1.5px #ffffff;
+  --changed-outline: 1.5px dashed var(--ink);
+  --changed-offset: 3px;
   /* The selection: an ink outline with a white halo */
   --select-ring: 0 0 0 1.5px var(--ink), 0 0 0 4px var(--surface);
   /* Motion */

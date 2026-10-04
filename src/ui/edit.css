@@ -1,0 +1,39 @@
+/* Editing parts. Each floats over the map in charcoal glass or sits on a charcoal panel. */
+
+/* GlassButton: a charcoal glass pill over the map; white while its mode is on */
+.ui-glass-button { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 7px; flex: none; min-width: var(--tap); min-height: var(--tap); margin: 0; padding: 0 16px 0 14px; border: 0; background: none; color: var(--line-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ui-glass-button::before { content: ''; position: absolute; z-index: -1; inset: 4px 0; border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); transition: background-color var(--motion-hover) ease, transform var(--motion-hover) ease; }
+.ui-glass-button:hover::before { background: rgb(50 54 58 / 0.9); }
+.ui-glass-button:active::before { transform: scale(0.97); }
+.ui-glass-button .ui-button-label, .ui-glass-button .ui-button-icon { color: var(--line-ink); }
+.ui-glass-button[aria-pressed=true]::before { background: #f4f5f6; box-shadow: 0 0 0 0.5px rgb(20 22 24 / 0.18), var(--shadow-float); }
+.ui-glass-button[aria-pressed=true] .ui-button-label, .ui-glass-button[aria-pressed=true] .ui-button-icon { color: var(--ink); }
+.ui-glass-button.ui-glass-button:focus-visible { outline: none; }
+.ui-glass-button:focus-visible::before { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Segmented surface="glass": the Before / Now switch over the map. A charcoal track; the state that is on is a white thumb with ink words */
+.ui-segmented[data-surface=glass] { padding: 0 2px; }
+.ui-segmented[data-surface=glass]::before { inset: 4px 0; border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); }
+.ui-segmented[data-surface=glass] .ui-segment { padding: 0 14px; border-radius: var(--radius-pill); }
+.ui-segmented[data-surface=glass] .ui-segment::before { inset: 7px 1px; }
+.ui-segmented[data-surface=glass] .ui-segment .ui-button-label { font-size: var(--font-s); font-weight: 500; color: rgb(255 255 255 / 0.78); }
+.ui-segmented[data-surface=glass] .ui-segment:hover .ui-button-label { color: #fff; }
+.ui-segmented[data-surface=glass] .ui-segment[aria-pressed=true]::before { background: #f4f5f6; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+.ui-segmented[data-surface=glass] .ui-segment[aria-pressed=true] .ui-button-label { color: var(--ink); }
+.ui-segmented[data-surface=glass] .ui-segment.ui-segment:focus-visible { outline-color: #fff; outline-offset: -6px; }
+
+/* ChangeRow: one of her changes */
+.ui-change { display: flex; align-items: center; gap: 2px; min-height: var(--tap); }
+.ui-change + .ui-change { border-top: var(--hair-width) solid var(--ui-hair); }
+.ui-change-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; min-height: var(--tap); margin: 0 0 0 -6px; padding: 0 6px; border: 0; border-radius: var(--radius-s); background: none; color: var(--ui-ink); text-align: start; }
+button.ui-change-open:hover { background: var(--ui-hover); }
+.ui-change-icon { display: grid; place-items: center; flex: none; width: 20px; height: 20px; color: var(--mark, var(--ui-muted)); }
+.ui-change-icon .ui-icon { width: 18px; height: 18px; }
+.ui-change-label { flex: 1; min-width: 0; overflow: hidden; font-size: var(--font-s); line-height: var(--leading-tight); white-space: nowrap; text-overflow: ellipsis; }
+.ui-change-meta { flex: none; font-size: var(--font-xs); color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+.ui-change > .ui-text-button { margin-inline-end: -10px; }
+
+/* A changed marker on the map: a dashed ink ring outside a white halo. Solid ink and white is the selection; dashed means "you changed this" */
+.ui-changed { box-shadow: var(--changed-ring); outline: var(--changed-outline); outline-offset: var(--changed-offset); }
+
+@media (prefers-reduced-motion: reduce) { .ui-glass-button::before { transition: none; } }

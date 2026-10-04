@@ -1,5 +1,6 @@
 import './ui.css';
 import './chat.css';
+import './edit.css';
 
 export { Panel, PanelHead, Section, Sheet } from './Panel';
 export { List, Row } from './Row';
@@ -9,4 +10,5 @@ export { markOf, kindOf, MARK_ORDER, KIND_ORDER, BARRIER_KINDS, GROUND_KINDS, ty
 export { Segmented } from './Segmented';
 export { TextArea, Select } from './Field';
 export { Dialogue, Companion, Choices, Choice, Composer, CopyBox, ScrollFade, useScrollFade } from './Chat';
+export { GlassButton, ChangeRow } from './Edit';
 export type { Tone } from './cx';
