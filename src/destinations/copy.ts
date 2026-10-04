@@ -163,7 +163,7 @@ export const THING: Record<string, { en: string; es: string; ko: string }> = {
   narrow: { en: 'a narrow place', es: 'un paso angosto', ko: '좁은 구간' },
   bollard: { en: 'a post or bollard', es: 'un poste o bolardo', ko: '기둥' },
   gate: { en: 'a gate', es: 'un portón', ko: '문' },
-  noWheelchair: { en: 'a part OpenStreetMap marks as not for wheelchairs', es: 'una parte que OpenStreetMap marca sin acceso en silla de ruedas', ko: 'OpenStreetMap에 휠체어 이용 불가로 표시된 구간' },
+  noWheelchair: { en: 'a part OpenStreetMap marks as not for wheelchairs', es: 'una parte que OpenStreetMap marca como no accesible en silla de ruedas', ko: 'OpenStreetMap에 휠체어 이용 불가로 표시된 구간' },
   broken: { en: 'broken paving', es: 'acera rota', ko: '깨진 보도' },
   works: { en: 'roadworks', es: 'obras', ko: '공사 구간' },
   obstacle: { en: 'something in the way', es: 'algo que estorba', ko: '장애물' },
@@ -181,7 +181,7 @@ export const ANSWER_NOTE: Record<string, Record<string, AnswerLines | null>> = {
     wayAround: { en: (w, m) => `Steps ${w.en}, ${AT.en(m)}. There’s a way around them; ask us.`, es: (w, m) => `Escalones ${w.es}, ${AT.es(m)}. Hay otro camino para evitarlos; pregúntenos.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 계단이 있습니다. 계단을 피해 가는 길이 있으니 문의해 주세요.` },
     handrail: { en: (w, m) => `Steps with a handrail ${w.en}, ${AT.en(m)}.`, es: (w, m) => `Escalones con pasamanos ${w.es}, ${AT.es(m)}.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 난간이 있는 계단이 있습니다.` },
     help: { en: (w, m) => `Steps ${w.en}, ${AT.en(m)}. We help visitors there.`, es: (w, m) => `Escalones ${w.es}, ${AT.es(m)}. Ahí ayudamos a los visitantes.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 계단이 있습니다. 그곳에서는 저희가 도와드립니다.` },
-    noWay: { en: (w, m) => `Steps ${w.en}, ${AT.en(m)}, with no way around.`, es: (w, m) => `Escalones ${w.es}, ${AT.es(m)}, sin otro camino.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 계단이 있으며 돌아갈 길이 없습니다.` },
+    noWay: { en: (w, m) => `Steps ${w.en}, ${AT.en(m)}, with no way around.`, es: (w, m) => `Escalones ${w.es}, ${AT.es(m)}, y no hay otro camino.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 계단이 있으며 돌아갈 길이 없습니다.` },
     notThere: null,
     unknown: { en: (w, m) => `There may be steps ${w.en}, ${AT.en(m)}. ${ASK_EN}`, es: (w, m) => `Puede haber escalones ${w.es}, ${AT.es(m)}. ${ASK_ES}`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 계단이 있을 수 있습니다. ${ASK_KO}` },
   },
@@ -197,16 +197,16 @@ export const ANSWER_NOTE: Record<string, Record<string, AnswerLines | null>> = {
     unknown: { en: (w, m) => `The ground may be uneven ${w.en}, ${AT.en(m)}. ${ASK_EN}`, es: (w, m) => `Puede que el suelo sea disparejo ${w.es}, ${AT.es(m)}. ${ASK_ES}`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처는 바닥이 고르지 않을 수 있습니다. ${ASK_KO}` },
   },
   unseen: {
-    nothing: { en: w => `No photos of the part ${w.en}, but from what we know nothing is in the way.`, es: w => `No hay fotos de la parte ${w.es}, pero por lo que sabemos nada estorba.`, ko: w => `${w.ko} 구간은 사진이 없지만, 저희가 아는 바로는 장애물이 없습니다.` },
+    nothing: { en: w => `No photos of this stretch, ${w.en}, but from what we know nothing is in the way.`, es: w => `No hay fotos de este tramo, ${w.es}, pero por lo que sabemos nada estorba.`, ko: w => `${w.ko} 구간은 사진이 없지만, 저희가 아는 바로는 장애물이 없습니다.` },
     something: null,
-    unknown: { en: w => `We haven’t seen the part ${w.en} yet; ask us before you go.`, es: w => `Todavía no conocemos la parte ${w.es}; pregúntenos antes de ir.`, ko: w => `${w.ko} 구간은 아직 확인하지 못했으니 가시기 전에 문의해 주세요.` },
+    unknown: { en: w => `We haven’t seen the stretch ${w.en} yet; ask us before you go.`, es: w => `Todavía no hemos visto el tramo ${w.es}; pregúntenos antes de ir.`, ko: w => `${w.ko} 구간은 아직 확인하지 못했으니 가시기 전에 문의해 주세요.` },
   },
 };
 
 /** Her answer about a narrow place, a post, a gate or a part marked not for wheelchairs: always hers. */
 export const THROUGH_NOTE = {
-  yes: { en: (k: string, w: Where, m: number) => `${cap(THING[k].en)} ${w.en}, ${AT.en(m)}. From what we know, a wheelchair or stroller gets through.`, es: (k: string, w: Where, m: number) => `${cap(THING[k].es)} ${w.es}, ${AT.es(m)}. Por lo que sabemos, pasa una silla de ruedas o un coche de bebé.`, ko: (k: string, w: Where, m: number) => `${AT.ko(m)}, ${w.ko} 근처에 ${THING[k].ko}${ga(THING[k].ko)} 있습니다. 저희가 아는 바로는 휠체어나 유모차가 지나갈 수 있습니다.` },
-  no: { en: (k: string, w: Where, m: number) => `${cap(THING[k].en)} ${w.en}, ${AT.en(m)}. From what we know, a wheelchair or stroller can’t get through.`, es: (k: string, w: Where, m: number) => `${cap(THING[k].es)} ${w.es}, ${AT.es(m)}. Por lo que sabemos, no pasa una silla de ruedas ni un coche de bebé.`, ko: (k: string, w: Where, m: number) => `${AT.ko(m)}, ${w.ko} 근처에 ${THING[k].ko}${ga(THING[k].ko)} 있습니다. 저희가 아는 바로는 휠체어나 유모차가 지나갈 수 없습니다.` },
+  yes: { en: (k: string, w: Where, m: number) => `${cap(THING[k].en)} ${w.en}, ${AT.en(m)}. From what we know, a wheelchair or stroller gets through.`, es: (k: string, w: Where, m: number) => `${cap(THING[k].es)} ${w.es}, ${AT.es(m)}. Por lo que sabemos, una silla de ruedas o un coche de bebé puede pasar.`, ko: (k: string, w: Where, m: number) => `${AT.ko(m)}, ${w.ko} 근처에 ${THING[k].ko}${ga(THING[k].ko)} 있습니다. 저희가 아는 바로는 휠체어나 유모차가 지나갈 수 있습니다.` },
+  no: { en: (k: string, w: Where, m: number) => `${cap(THING[k].en)} ${w.en}, ${AT.en(m)}. From what we know, a wheelchair or stroller can’t get through.`, es: (k: string, w: Where, m: number) => `${cap(THING[k].es)} ${w.es}, ${AT.es(m)}. Por lo que sabemos, una silla de ruedas o un coche de bebé no puede pasar.`, ko: (k: string, w: Where, m: number) => `${AT.ko(m)}, ${w.ko} 근처에 ${THING[k].ko}${ga(THING[k].ko)} 있습니다. 저희가 아는 바로는 휠체어나 유모차가 지나갈 수 없습니다.` },
   unknown: { en: (k: string, w: Where, m: number) => `${cap(THING[k].en)} ${w.en}, ${AT.en(m)}. ${ASK_EN}`, es: (k: string, w: Where, m: number) => `${cap(THING[k].es)} ${w.es}, ${AT.es(m)}. ${ASK_ES}`, ko: (k: string, w: Where, m: number) => `${AT.ko(m)}, ${w.ko} 근처에 ${THING[k].ko}${ga(THING[k].ko)} 있습니다. ${ASK_KO}` },
 };
 
@@ -232,14 +232,14 @@ export const KIND_NOTE = {
 /** The way around the mapped steps, once she says it works. extra: metres longer than the walk, rounded. */
 export const AROUND_NOTE = {
   en: (w: Where, extra: number) => `There’s a way around the steps ${w.en}, about ${extra} m longer. We’ve checked it.`,
-  es: (w: Where, extra: number) => `Hay un camino que evita los escalones ${w.es}, unos ${extra} m más largo. Lo revisamos.`,
+  es: (w: Where, extra: number) => `Hay un camino que evita los escalones ${w.es}, unos ${extra} m más largo. Ya lo revisamos.`,
   ko: (w: Where, extra: number) => `${w.ko} 근처 계단을 피해 가는 길이 있습니다. 약 ${extra}m 더 길며, 저희가 확인했습니다.`,
 };
 
 /** Altitude, for a walk above about 2,500 m. metres: the walk's height above sea level, never a difference between its ends. */
 export const ALTITUDE_NOTE = {
   en: (metres: number) => `The walk is at about ${metres.toLocaleString('en')} m above sea level; take it slowly.`,
-  es: (metres: number) => `El recorrido está a unos ${metres.toLocaleString('es')} m de altura; vaya con calma.`,
+  es: (metres: number) => `El recorrido está a unos ${metres.toLocaleString('es-419')} m sobre el nivel del mar; camine con calma.`,
   ko: (metres: number) => `이 경로는 해발 약 ${metres.toLocaleString('ko')}m에 있으니 천천히 걸으세요.`,
 };
 
