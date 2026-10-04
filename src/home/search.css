@@ -3,7 +3,7 @@
 .home-words:has(.home-search-panel) { z-index: 5; }
 .home-search { position: absolute; top: calc(100% + 26px); left: 0; width: min(440px, 100%); }
 .home-search-field { display: flex; align-items: center; gap: 0; min-height: 48px; padding: 0 2px 0 14px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
-.home-search-field:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.home-search-field:focus-within { outline: none; box-shadow: var(--glass-charcoal-edge), inset 0 0 0 1px rgb(255 255 255 / 0.6), var(--shadow-float); }
 .home-search-field > .ui-icon { flex: none; color: var(--ui-muted); }
 .home-search-field input { flex: 1; min-width: 0; height: 44px; margin: 0; padding: 0 4px 0 10px; border: 0; background: transparent; color: var(--ui-ink); font: inherit; font-size: var(--font-m); letter-spacing: -0.005em; outline: none; }
 .home-search-field input::placeholder { color: var(--ui-placeholder); opacity: 1; }
@@ -17,7 +17,7 @@
 .home-search-start { margin: 2px 0 6px; }
 .home-search-label { display: block; margin: 0 2px 6px; font-size: var(--font-xs); color: var(--ui-muted); }
 .home-search-start .home-search-field { min-height: 44px; padding-left: 12px; background: var(--ui-fill); box-shadow: inset 0 0 0 var(--hair-width) var(--ui-hair-strong); backdrop-filter: none; -webkit-backdrop-filter: none; }
-.home-search-start .home-search-field:focus-within { outline: 2px solid var(--ui-focus, var(--ui-ink)); outline-offset: 1px; }
+.home-search-start .home-search-field:focus-within { outline: none; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6); }
 .home-search-steps { display: grid; gap: 2px; margin: 4px 0 6px; padding: 0; list-style: none; }
 .home-search-steps li { position: relative; display: flex; align-items: center; min-height: 32px; padding-left: 24px; font-size: var(--font-s); color: var(--ui-ink); }
 .home-search-steps li::before { content: ''; position: absolute; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ui-ink); }

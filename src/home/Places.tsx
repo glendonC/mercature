@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { List, Panel, Row } from '../ui';
 import { ChevronIcon } from '../ui/icons';
 import './Home.css';
@@ -25,8 +25,12 @@ export default function Places({ places, saved = [], label, savedLabel }: {
   label: string;
   savedLabel: string;
 }) {
+  // The row knows when it has scrolled to its end, so its fade comes off the last card.
+  const row = useRef<HTMLDivElement>(null);
+  const edge = () => { const el = row.current; if (el) el.classList.toggle('is-end', el.scrollLeft + el.clientWidth >= el.scrollWidth - 2); };
+  useLayoutEffect(() => { edge(); addEventListener('resize', edge); return () => removeEventListener('resize', edge); });
   return <>
-    <div className="home-photos" aria-label={label}>
+    <div className="home-photos" aria-label={label} ref={row} onScroll={edge}>
       {places.map(place => <button key={place.id} type="button" className="home-photo" aria-label={place.label} onClick={place.onOpen}>
         <span className="home-photo-frame"><img src={place.image} alt=""/></span>
         <span className="home-photo-label">
