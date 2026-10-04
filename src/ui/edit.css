@@ -38,3 +38,6 @@
 .ui-changed { box-shadow: var(--changed-ring); outline: var(--changed-outline); outline-offset: var(--changed-offset); }
 
 @media (prefers-reduced-motion: reduce) { .ui-glass-button::before { transition: none; } }
+
+/* A visitor's avatar */
+.ui-visitor { display: inline-grid; place-items: center; flex: none; line-height: 0; }

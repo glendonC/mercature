@@ -12,4 +12,5 @@ export { Segmented } from './Segmented';
 export { TextArea, Select } from './Field';
 export { Dialogue, Companion, Choices, Choice, Composer, CopyBox, ScrollFade, useScrollFade } from './Chat';
 export { GlassButton, GlassCircle, ChangeRow } from './Edit';
+export { VisitorAvatar, visitorLook } from './Visitor';
 export type { Tone } from './cx';

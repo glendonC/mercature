@@ -184,13 +184,15 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
 type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
 /**
  * The guide itself, on screen all the time: the bot floating free where the screen places it (64 px, 52 on a phone; --companion), never on the dialogue.
- * talking: it speaks while a page types (its mouth shows and it bobs), then idles and looks around. working: a thin arc turns around it.
+ * Its face follows what it really does, never at random: idle, eyes only (it looks around and blinks); talking while a page types, a mouth and a light bob;
+ * working only while something real runs (the model reading, the map service, a route being found), with a thin arc. Working never shows the mouth,
+ * so the library's wide working grin never appears.
  * Leave children out for the guide's own bot.
  */
 export function Companion({ children, working, talking, size, className, style }: CompanionProps) {
   const [color] = useState(() => (typeof document !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue('--field').trim()) || 'gray');
   return <span className={cx('ui-companion', className)} data-working={working || undefined} data-talking={talking || undefined} style={style} aria-hidden="true">
-    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking ? 'mouth' : 'eyes'} size={size ?? 'var(--companion)'} color={color}
+    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking && !working ? 'mouth' : 'eyes'} size={size ?? 'var(--companion)'} color={color}
       shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />}</span>
   </span>;
 }

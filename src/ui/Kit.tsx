@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, ChangeRow, GlassButton, GlassCircle, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, VisitorAvatar, ChangeRow, GlassButton, GlassCircle, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -122,6 +122,17 @@ export default function Kit() {
     </div>
 
     <div className="kit-sheet-body">
+      <Specimen title="Visitors" note="Each visitor message gets its own bot from its id: the same face every time, never the guide's grey. Still at 28 in a row, idle at 40 in the message view.">
+        <div data-tone="dark" className="kit-visitors">
+          <div className="kit-row">{['m-ko-1', 'm-es-2', 'm-en-3', 'm-qu-4', 'm-ko-5', 'm-es-6', 'm-en-7', 'm-ka-8'].map(id => <VisitorAvatar key={id} id={id} size={40} />)}</div>
+          <List inset>
+            <Row icon={<VisitorAvatar id="m-ko-1" still />} label={<span lang="ko">코리칸차 가는 길에 돌계단이 너무 가팔라서</span>} detail="Korean · Calle Loreto" />
+            <Row icon={<VisitorAvatar id="m-es-2" still />} label={<span lang="es">Algunas partes fueron duras para mi papá</span>} detail="Spanish · not filed" />
+            <Row icon={<VisitorAvatar id="m-en-3" still />} label="Is the ticket booth step-free?" detail="English · Ticket booth" />
+          </List>
+        </div>
+      </Specimen>
+
       <Specimen wide title="Editing" note="Always there over the map: the Edit pill, white while editing; Before and Now beside it, the state that is on in white. Her changes are rows with the kind's icon in its hue, one line, and a quiet Undo. A changed marker wears a dashed ink ring over a white halo; solid ink is the selection.">
         <div className="kit-editing">
           <div className="kit-row"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><GlassButton icon={<I.NoteIcon />} pressed>Edit</GlassButton><BeforeNow /></div>
