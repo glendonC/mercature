@@ -24,7 +24,7 @@ jobs:
           node-version: 24
           cache: npm
       # The trim runs onnx and numpy through uv; trim.mjs pins their versions.
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           cache-dependency-glob: scripts/language/trim.mjs
       - run: npm ci
