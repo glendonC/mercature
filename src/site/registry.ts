@@ -1,4 +1,5 @@
 // Imports keep their .ts extension so the package generator can load this file in Node directly.
+import { NARIKALA_PLACE } from './narikala.ts';
 import { QORIKANCHA_PLACE, type RoutePlace } from './route.ts';
 
 /**
@@ -7,4 +8,5 @@ import { QORIKANCHA_PLACE, type RoutePlace } from './route.ts';
  */
 export const ROUTE_PLACES: Readonly<Record<string, RoutePlace>> = {
   [QORIKANCHA_PLACE.id]: QORIKANCHA_PLACE,
+  [NARIKALA_PLACE.id]: NARIKALA_PLACE,
 };

@@ -127,7 +127,7 @@ export const NARIKALA_PLACE: RoutePlace = {
     },
     {
       id: 'cable-car-top-station', stretches: [], landmark: 'Narikala cable car top station',
-      name: { en: 'Cable car top station', es: 'Estación superior del teleférico' },
+      name: { en: 'Narikala cable car top station', es: 'Estación superior del teleférico de Narikala' },
       description: 'The top station of the cable car up to Narikala, where the recorded walk starts.',
       aliases: { en: ['cable car', 'cable car station', 'gondola', 'top station', 'start of the walk'], es: ['teleférico', 'estación del teleférico', 'estación superior'], ko: ['케이블카 정류장', '케이블카', '출발점'] },
     },
