@@ -214,7 +214,7 @@ export const en = {
   'edit.kind.other': 'Other',
   'edit.noteLabel': 'Your note',
   'edit.notePlaceholder': 'What a visitor should know',
-  'edit.noteKept': 'Kept on this phone. Visitors see it in the route note.',
+  'edit.noteKept': 'Kept on this device. Visitors see it in the route note.',
   'edit.takenAs': 'Taken as {language}',
   'edit.language.en': 'English',
   'edit.language.es': 'Spanish',
