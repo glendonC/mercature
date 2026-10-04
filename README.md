@@ -40,7 +40,7 @@ Built for the World Bank Small AI for Development challenge, tourism track.
 A real route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
 segmentation model scanned 116 views of those photos once, when the route was prepared, and made 479
-marks above its threshold; the package keeps 287 of them (paths, paving, kerbs, steps, crossings), the
+marks above its threshold; the package keeps 287 of them (footway, cobblestones, kerbs, road, steps, crossings, broken pavement), the
 218 near the walk and 69 more on the 27 published photos. Separately, the walk's build has 52 findings
 of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as
 possible barriers; none has been checked by a person.
@@ -55,14 +55,12 @@ Runtime Web. It downloads once and then works with no connection: 83,783,194 byt
 from fixed lists and says Not sure when unsure. On 48 held-out English, Spanish and Korean messages
 about the farm it put the right spot first 46 times; moved to the Qorikancha walk with no new
 training, 28 of 31. It failed on Quechua, so messages that do not look like English, Spanish or
-Korean now always get Not sure. A simpler keyword match is not enough: exact aliases find the spot as
-often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the walk
-they pick exactly the right spots for only 3 of 34 messages. For those messages the phone also learns from her: when she taps the
-spot, it keeps the link on the device, and later similar messages rank that spot first. On
+Korean now always get Not sure. For messages that fail that check, the phone also learns from her: when she taps the
+spot, it keeps the link on the device, and later similar messages rank that spot first, still as Not sure. On
 machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and
 7.3, 8.8 and 9.4 with one, two and three linked messages per spot. A Korean message lost its right
 spot in a few draws, so after that test the memory was limited to messages that fail the language
-check. One message takes a median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
+check. A simpler keyword match is not enough: exact aliases find the spot as often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the walk they pick exactly the right spots for only 3 of 34 messages. One message takes a median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
 with the CPU slowed six times; no phone has been measured.
 All test messages are synthetic, written by a large language model; the farm-tour messages from the
 brief's persona, Noor, trained the model's heads. Details: [model and
@@ -70,7 +68,7 @@ evaluation](docs/language.md). Privacy, consent, bias and oversight: [responsibl
 
 ## Get started
 
-Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). Open it once online to download the model, then it works offline. Interface in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
+Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). Nothing downloads until you tap Download on a message; after that one download, the model works offline. Interface in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
 
 To run it locally, you need Node.js 22.12 or newer.
 
@@ -79,7 +77,7 @@ npm ci
 npm run dev
 ```
 
-Open [127.0.0.1:4173](http://127.0.0.1:4173) and tap **Qorikancha**. The first visit downloads the model once. A fresh
+Open [127.0.0.1:4173](http://127.0.0.1:4173) and tap **Qorikancha**. The model downloads only when you tap Download on a message. A fresh
 clone fetches the full 146,524,765-byte files from Hugging Face; to serve the trimmed 83,783,194-byte copy as the live
 site does, run `bash scripts/release/model.sh` first (it needs [uv](https://docs.astral.sh/uv/); see [deploy](docs/deploy.md)). To try the installable offline build, run
 `npm run build` and `npm run preview`.

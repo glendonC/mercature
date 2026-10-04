@@ -6,7 +6,7 @@ It answers the tourism challenge of the World Bank Small AI for Development brie
 
 ## The place: the Qorikancha walk
 
-A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned 116 views of those photos and made 479 marks above its threshold; the package keeps 287 of them (paths, paving, kerbs, steps, crossings), the 218 near the walk and 69 more on the 27 published photos. Separately, the walk's build has 52 findings of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers; none has been checked by a person.
+A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned 116 views of those photos and made 479 marks above its threshold; the package keeps 287 of them (footway, cobblestones, kerbs, road, steps, crossings, broken pavement), the 218 near the walk and 69 more on the 27 published photos. Separately, the walk's build has 52 findings of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers; none has been checked by a person.
 
 ## How it works
 
@@ -43,8 +43,8 @@ Results by language, size and speed are in [language](language.md).
 
 - **Privacy.** Messages are read on the phone; no message, edit or link is sent anywhere, and the deployed app makes no request outside its own address. Start over deletes the place's messages, edits and remembered links.
 - **Consent.** She pastes messages visitors already sent her. The app collects nothing from visitors and sends nothing to them; she copies each reply herself.
-- **Bias and limits.** The model reads Latin and Korean script only. Quechua answers Not sure until she links a message to a spot. One large language model wrote every test message, and the Spanish and Korean text in the app has not been reviewed by a native speaker.
-- **Oversight.** Not sure hands the decision to her. She files, edits and copies every reply herself, and the model never writes free text.
+- **Bias and limits.** The model reads Latin and Korean script only. Quechua always gets Not sure; once she links one, similar messages put that spot first. One large language model wrote every test message, and the Spanish and Korean text in the app has not been reviewed by a native speaker.
+- **Oversight.** A sure answer is filed on its best spot and she can move it; on Not sure she taps the spot. She edits the map and copies every reply herself, and the model never writes free text.
 
 ## Data
 
