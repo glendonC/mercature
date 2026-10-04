@@ -64,16 +64,6 @@ export const es = {
   'error.reconstruction': 'No se pudo leer la reconstrucción.',
   'error.pointView': 'Este navegador no puede mostrar la nube de puntos. El mapa y las fotos siguen disponibles.',
 
-  // Preparation
-  'prep.label': 'Preparar {title}',
-  'prep.progress': 'Preparar la escena',
-  'prep.views': 'Vistas',
-  'prep.openScene': 'Abrir escena',
-  'prep.preview': 'Vista previa de la preparación',
-  'prep.options': 'Opciones de escena',
-  'prep.guide': 'Guía de preparación',
-  'prep.skip': 'Omitir la guía',
-
   // Getting the farm ready
   'farm.place': 'La Convención, Cusco, Perú',
   'farm.kicker': 'Preparando',

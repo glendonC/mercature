@@ -61,16 +61,6 @@ export const en = {
   'error.reconstruction': 'Reconstruction could not be read.',
   'error.pointView': 'This browser cannot display the point view. The map and photographs remain available.',
 
-  // Preparation
-  'prep.label': 'Prepare {title}',
-  'prep.progress': 'Prepare the scene',
-  'prep.views': 'Views',
-  'prep.openScene': 'Open scene',
-  'prep.preview': 'Preparation preview',
-  'prep.options': 'Scene options',
-  'prep.guide': 'Preparation guide',
-  'prep.skip': 'Skip walkthrough',
-
   // Getting the farm ready
   'farm.place': 'La Convención, Cusco, Peru',
   'farm.kicker': 'Getting ready',
