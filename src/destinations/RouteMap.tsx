@@ -404,15 +404,21 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // and the guide, or any sheet, as they change. Panning or the whole route lets the last one go.
   const chosen = markers.find(marker => marker.selected) ?? null;
   const lastOpened = useRef<string | null>(null);
+  /** When a page last framed a shot; a selection it framed needs no other move. */
+  const shown = useRef(0);
   useEffect(() => {
     if (chosen) lastOpened.current = chosen.id;
-    const spot = chosen ?? markers.find(marker => marker.id === lastOpened.current) ?? null, current = tween.current?.to ?? live.current;
-    if (!spot || !current || !size.height) return;
-    const top = insetsRef.current.top, bottom = size.height - clearBottom, aim = { ...current, lean: goal.current };
-    const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(spot.at);
-    if (!chosen && (x < 0 || x > size.width || y < 0 || y > size.height)) return;
-    if (y >= top && y <= bottom - 28) return;
-    go(clamp(place(spot.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean, aim.turn)));
+    // A page that frames its selection does so a moment later; wait for it, so the camera makes one move, not two.
+    const since = performance.now(), timer = window.setTimeout(() => {
+      const spot = chosen ?? markers.find(marker => marker.id === lastOpened.current) ?? null, current = tween.current?.to ?? live.current;
+      if (shown.current >= since || !spot || !current || !size.height) return;
+      const top = insetsRef.current.top, bottom = size.height - clearBottom, aim = { ...current, lean: goal.current };
+      const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(spot.at);
+      if (!chosen && (x < 0 || x > size.width || y < 0 || y > size.height)) return;
+      if (y >= top && y <= bottom - 28) return;
+      go(clamp(place(spot.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean, aim.turn)));
+    }, 200);
+    return () => clearTimeout(timer);
   // Only a new selection or a new band moves the camera; a person's own panning is left alone.
   }, [chosen?.id, clearBottom]);
 
@@ -420,6 +426,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const show = useCallback((shot: Shot, free: Insets = insetsRef.current, animate = true) => {
     const { width, height } = size;
     if (!width || !height) return;
+    shown.current = performance.now();
     if (shot.kind === 'route') { lastOpened.current = null; go(fitCamera(width, height, goal.current, free, true), animate); return; }
     const lean = goal.current, current = tween.current?.to ?? live.current ?? fitCamera(width, height), tilt = tiltOf(width, height);
     const sector = shot.kind === 'photo' ? viewSector(data, shot.view, walk.project, perMetre) : null;
