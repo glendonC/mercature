@@ -386,7 +386,7 @@ const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit }: { data
 const NONE: never[] = [];
 const ignore = () => {};
 const LeanedMap = memo(function LeanedMap({ data, walk, insets, words, name, onLens }: { data: Destination; walk: Walk; insets: ReturnType<typeof mapInsets>; words: MapWords; name: string; onLens: (lens: Lens) => void }) {
-  return <RouteMap still settled data={data} walk={walk} photoView="" markers={NONE} labels={NONE} insets={insets} highlight={null} onMarker={ignore} onMap={ignore} clearBottom={0} words={words} ariaLabel={name} onLens={onLens}/>;
+  return <RouteMap still settled riseIn data={data} walk={walk} photoView="" markers={NONE} labels={NONE} insets={insets} highlight={null} onMarker={ignore} onMap={ignore} clearBottom={0} words={words} ariaLabel={name} onLens={onLens}/>;
 });
 
 /** The phone layout of the route screen starts at this width, and its map insets with it. */
