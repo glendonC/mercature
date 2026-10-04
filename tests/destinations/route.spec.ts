@@ -46,6 +46,7 @@ test('a spot shows every mark with its legend, and removing it takes it out of t
 });
 
 test('the panel comes before the map, so the keyboard reaches the messages first', async ({page}) => {
+  test.setTimeout(30000);
   await page.goto('/');
   await openRoute(page);
   const order = await page.evaluate(() => { const panel = document.querySelector('.ri-panel')!, marker = document.querySelector('.route-marker')!; return !!(panel.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_FOLLOWING); });

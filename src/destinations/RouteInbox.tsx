@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState, useLayoutEffect, type CSSProperti
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
 import { addSpot, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteOf, saveEdits, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
-import { recordDate } from '../edits/words';
+import { KIND_WORDS, recordDate } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
 import { useLanguage } from '../i18n';
 import { useEditWords } from '../i18n/edit';
 import { fromRecord } from '../i18n/records';
 import Menu, { type MenuPlace } from '../home/Menu';
-import { COPY, NOTE, REPLY, guessLanguage, where, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
+import { COPY, NOTE, REPLY, SUBJECTS, guessLanguage, where, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
 import { DESTINATIONS, type Coordinate, type Destination, type Finding, type Photo, type View } from './data';
 import { EXAMPLES } from './examples';
 import { spotState } from './markers';
@@ -485,10 +485,16 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const spot = target.kind === 'spot' ? walk.spots.find(item => item.id === target.id) ?? null : null;
     if (spot?.kind === 'no-photos') return REPLY.open[language]();
     const subject = spot ? subjectOf(spot.findings) : subjectOfKind(added(target.id)?.kind ?? 'other');
-    const at = spot ? whereOf(spot) : where(null, names), from = spot ? spot.from : data.stretches[stretches[0]].from;
+    const at = spot ? whereOf(spot) : nearOf(stretches[0]), from = spot ? spot.from : data.stretches[stretches[0]].from;
     if (fix) return `${REPLY.check[language]().split('.')[0]}. ${fixedLine(spot ? kindOfSubject(subject) : added(target.id)!.kind, at, from, fix.at, language)}`;
     if (removed(stretches)) return REPLY['not-barrier'][language]();
-    return REPLY.barrier[language](subject, at);
+    // What the photos show at a flagged spot; her own words at a spot she added.
+    return REPLY.barrier[language]((spot ? SUBJECTS[subject] : KIND_WORDS[added(target.id)?.kind ?? 'other'])[language], at);
+  }
+  /** Where a spot she added is, by the landmark nearest its stretch, in each visitor language. */
+  function nearOf(stretch: number): Where {
+    const near = locate(stretch).landmark;
+    return near ? { en: `near ${near}`, es: `cerca de ${near}`, ko: near } : where(null, names);
   }
   function noteText(language: VisitorLang) {
     const lines: string[] = [];
@@ -500,10 +506,9 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
     for (const spot of edits.added) {
-      const fix = isFixed(edits, [spot.stretch]), stretch = data.stretches[spot.stretch], at = where(null, names);
-      const near = locate(spot.stretch).landmark, here: Where = near ? { en: `near ${near}`, es: `cerca de ${near}`, ko: near } : at;
+      const fix = isFixed(edits, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
       if (fix) lines.push(fixedLine(spot.kind, here, stretch.from, fix.at, language));
-      else { lines.push(NOTE.barrier[language](subjectOfKind(spot.kind), here, Math.round(stretch.from))); steps ||= spot.kind === 'steps'; }
+      else { lines.push(NOTE.added[language](spot.kind, here, Math.round(stretch.from))); steps ||= spot.kind === 'steps'; }
       lines.push(...ownNoteLines(spot.note, language));
     }
     if (!lines.length) return '';
