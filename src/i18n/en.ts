@@ -333,7 +333,7 @@ export const en = {
   'ws.enterPosition': 'Enter a position',
   'ws.cancelMove': 'Cancel move',
   'ws.reviewPlan': 'Review plan',
-  'ws.sceneOptions': 'Scene options',
+  'ws.sceneOptions': 'View options',
   'ws.viewMode': 'Workspace view',
   'ws.undo': 'Undo fix',
   'ws.planDetails': 'Plan details',

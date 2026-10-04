@@ -22,7 +22,7 @@ test('the farm card is marked an example and its getting-ready steps hand the fa
   await expect(page.locator('li[data-step=model]')).toContainText(/Ready|Loading|Use without AI/);
   await expect(page.getByRole('status').filter({hasText:"Noor's farm is ready."})).toBeVisible();
   await expect(page.locator('.farm-ready')).toHaveCount(0, {timeout: 8000});
-  await expect(page.getByRole('button', {name:'Scene options', exact:true})).toBeVisible();
+  await expect(page.getByRole('button', {name:'View options', exact:true})).toBeVisible();
 });
 
 for (const size of [{width:1280,height:720},{width:390,height:844}]) {

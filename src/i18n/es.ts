@@ -336,7 +336,7 @@ export const es = {
   'ws.enterPosition': 'Ingresar una posición',
   'ws.cancelMove': 'Cancelar movimiento',
   'ws.reviewPlan': 'Revisar plan',
-  'ws.sceneOptions': 'Opciones de escena',
+  'ws.sceneOptions': 'Opciones de vista',
   'ws.viewMode': 'Vista del espacio de trabajo',
   'ws.undo': 'Deshacer arreglo',
   'ws.planDetails': 'Detalles del plan',
