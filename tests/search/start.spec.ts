@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { pickStart } from '../../src/search/start';
+import { pickStart, startCandidates } from '../../src/search/start';
+import { routeWalk } from '../../src/search/run';
 import { findPlaces } from '../../src/search/services';
 import type { LonLat } from '../../src/search/geo';
 
@@ -30,5 +31,44 @@ test('an address found by search is named by its street address, never the bare 
     expect(found.name).toBe('1077 Anderson Avenue');
     expect(found.area).toBe('Fort Lee, United States');
     expect(found.broad).toBe(false);
+  } finally { globalThis.fetch = real; }
+});
+
+/** Encodes [lon, lat] points as a Valhalla shape (polyline at six decimals). */
+function shape(points: LonLat[]) {
+  let out = '', lat = 0, lon = 0;
+  const put = (value: number) => { let v = value < 0 ? ~(value << 1) : value << 1; while (v >= 0x20) { out += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } out += String.fromCharCode(v + 63); };
+  for (const [x, y] of points) { const a = Math.round(y * 1e6), b = Math.round(x * 1e6); put(a - lat); put(b - lon); lat = a; lon = b; }
+  return out;
+}
+
+test('trails are never a start, and the same answer always gives the same order', () => {
+  const elements = [
+    node(1, away(400, 0), { highway: 'path', name: 'Shore Trail' }),
+    node(2, away(0, 450), { leisure: 'park', name: 'Monument Park' }),
+    node(3, away(0, -450), { place: 'square', name: 'Anderson Square' }),
+    node(4, away(450, 0), { tourism: 'attraction', name: 'Palisades Trail Overlook Trail' }),
+  ];
+  const names = startCandidates(target, elements).map(start => start.name);
+  expect(names).toEqual(['Anderson Square', 'Monument Park']);
+  expect(startCandidates(target, [...elements].reverse()).map(start => start.name)).toEqual(names);
+});
+
+test('a start is judged by its walk on foot: one over 900 m gives way to the next', async () => {
+  const real = globalThis.fetch;
+  const near = away(0, -450), far = away(0, 450);
+  const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    if (url.includes('overpass')) return json({ elements: [node(1, far, { place: 'square', name: 'Far Square' }), node(2, near, { highway: 'bus_stop', name: 'Near Stop' })] });
+    // The stop's walk detours 1.6 km; the square's is direct.
+    const from = JSON.parse(String(init?.body)).locations[0];
+    const detour = Math.abs(from.lat - near[1]) < 1e-6;
+    const line: LonLat[] = detour ? [near, away(800, -450), away(800, 0), target] : [far, target];
+    return json({ trip: { legs: [{ shape: shape(line), maneuvers: [{ street_names: ['Lemoine Avenue'], begin_shape_index: 0, end_shape_index: line.length - 1 }] }] } });
+  }) as typeof fetch;
+  try {
+    const routed = await routeWalk({ name: 'Museum', position: target }, 'Fort Lee');
+    expect(routed.base.start.name).toBe('Far Square');
+    expect(routed.base.walked.lengthMetres).toBeLessThan(900);
   } finally { globalThis.fetch = real; }
 });

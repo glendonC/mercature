@@ -5,15 +5,13 @@ import { BackIcon, CloseIcon, PhotoIcon, PinIcon, RotateIcon } from '../ui/icons
 import type { Built } from '../search/build';
 import { SEARCH_LINES } from '../search/lines';
 import { matchPrepared, type Prepared } from '../search/prepared';
-import { buildWalk } from '../search/run';
+import { readWalk, routeWalk } from '../search/run';
 import { findPlaces, SearchTrouble, type Found, type Trouble } from '../search/services';
-import { saveWalk, type SavedWalk } from '../search/store';
+import type { SavedWalk } from '../search/store';
 import './search.css';
 
 const fold = (text: string) => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const troubleOf = (error: unknown): Trouble => error instanceof SearchTrouble ? error.kind : 'failed';
-/** How long the ready line shows before the walk opens. */
-const READY_FOR = 900;
 
 function SearchIcon() {
   return <svg className="ui-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /></svg>;
@@ -29,13 +27,14 @@ export type Again = { target: Found; from: string };
 
 /**
  * Home's search. Typing filters the places prepared here at once, offline. Enter or the round button asks OpenStreetMap once.
- * One tap on any other place builds a map-only walk to it on this device, from a start picked nearby, and opens it;
- * the guide's line says each stage. A walk just built can take another start from here.
+ * One tap on any other place builds a map-only walk to it on this device, from a start picked nearby, and opens it as soon as
+ * the way on foot is known; what OpenStreetMap says along it is added when it arrives. A walk just built can take another start from here.
  */
 export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview, again, recent = [], onRecent, onForget }: {
   prepared: readonly Prepared[];
   onPrepared: (id: string) => void;
-  onWalk: (built: Built, kept: boolean, target: Found) => void;
+  /** The walk on foot, opened at once; rest brings it with what OpenStreetMap says along it. */
+  onWalk: (built: Built, rest: Promise<Built>, target: Found) => void;
   onLine: (line: GuideLine | null) => void;
   onPreview: (built: Built | null) => void;
   again?: Again | null;
@@ -110,17 +109,12 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
     setStage({ kind: 'build', target, trouble: null });
     onLine({ text: say.routing({ place: target.name }), working: true });
     try {
-      const built = await buildWalk({ name: target.name, position: target.position, osm: target.osm }, target.area || target.detail, progress => {
-        if (!signal.aborted && progress.step === 'map') { onPreview(progress.preview); onLine({ text: say.reading({ count: 0 }), working: true }); }
-      }, signal, start && { name: start.name, position: start.position, osm: start.osm });
+      const routed = await routeWalk({ name: target.name, position: target.position, osm: target.osm }, target.area || target.detail, signal, start && { name: start.name, position: start.position, osm: start.osm });
       if (signal.aborted) return;
-      onPreview(built);
-      onLine({ text: say.ready({ metres: built.place.route.length_m, count: built.place.findings.length }) });
-      const kept = await saveWalk(built);
-      await new Promise(resolve => setTimeout(resolve, READY_FOR));
-      if (signal.aborted) return;
+      onPreview(routed.preview);
       setStage({ kind: 'find' });
-      onWalk(built, kept, target);
+      // The walk opens now; OpenStreetMap along it arrives on its own, even after this field has gone.
+      onWalk(routed.preview, readWalk(routed), target);
     } catch (error) {
       if (signal.aborted) return;
       onPreview(null);

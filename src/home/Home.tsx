@@ -18,7 +18,8 @@ import { Companion, Dialogue } from '../ui';
 import { SCRIPT } from '../guide/script';
 import { toDestination, type Built } from '../search/build';
 import type { Prepared } from '../search/prepared';
-import { forgetWalk, listWalks, loadWalk, type SavedWalk } from '../search/store';
+import { forgetWalk, listWalks, loadWalk, saveWalk, type SavedWalk } from '../search/store';
+import { SEARCH_LINES } from '../search/lines';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -100,11 +101,12 @@ const walkOf = (state: unknown): string | null => (state as { mercatureWalk?: un
 /** Walks built on this device: the ones kept here, and the one open in the route screen. */
 function useWalks() {
   const [kept, setKept] = useState<SavedWalk[]>([]);
-  const [open, setOpen] = useState<{ built: Built; data: Destination; kept: boolean } | null>(null);
+  /** reading: the walk is open and OpenStreetMap along it is on its way; busy: it did not come. */
+  const [open, setOpen] = useState<{ built: Built; data: Destination; kept: boolean; reading: 'reading' | 'busy' | null } | null>(null);
   const refresh = () => { void listWalks().then(setKept); };
-  const show = (built: Built | null, kept = true) => {
+  const show = (built: Built | null, kept = true, reading: 'reading' | null = null) => {
     if (!built) { setOpen(null); return; }
-    try { setOpen({ built, data: toDestination(built.place), kept }); } catch { setOpen(null); }
+    try { setOpen({ built, data: toDestination(built.place), kept, reading }); } catch { setOpen(null); }
   };
   useEffect(() => {
     refresh();
@@ -113,10 +115,16 @@ function useWalks() {
     addEventListener('popstate', reopen);
     return () => removeEventListener('popstate', reopen);
   }, []);
-  function openWalk(built: Built, kept = true) {
+  function openWalk(built: Built, rest?: Promise<Built>) {
     if (walkOf(history.state) === built.place.id) history.replaceState({ mercatureWalk: built.place.id }, '');
     else history.pushState({ mercatureWalk: built.place.id }, '');
-    show(built, kept); refresh();
+    show(built, true, rest ? 'reading' : null); refresh();
+    // The rest of the walk replaces the open one in place and is kept on the device once it is whole.
+    rest?.then(async full => {
+      const kept = await saveWalk(full);
+      setOpen(now => now?.built.place.id === full.place.id ? { built: full, data: toDestination(full.place), kept, reading: null } : now);
+      refresh();
+    }, () => setOpen(now => now?.built.place.id === built.place.id ? { ...now, reading: 'busy' } : now));
   }
   function closeWalk() { if (walkOf(history.state)) history.back(); else setOpen(null); refresh(); }
   return { kept, open, openWalk, closeWalk, openKept: (id: string) => void loadWalk(id).then(built => { if (built) openWalk(built); }), forget: (id: string) => void forgetWalk(id).then(refresh) };
@@ -153,7 +161,8 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
   const status = !hero.data ? null : hero.flagged === 0 ? t('home.noFlaggedSpots') : hero.flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: hero.flagged });
   if (walks.open) return <RouteCanvas key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
-    spots={walks.open.built.spots} caption={walks.open.kept ? t('search.mapOnly') : `${t('search.mapOnly')}. ${t('search.notKept')}`}/>;
+    spots={walks.open.built.spots} caption={walks.open.reading === 'reading' ? `${t('search.mapOnly')} · ${SEARCH_LINES[lang].reading({ count: 0 })}`
+      : walks.open.reading === 'busy' ? `${t('search.mapOnly')} · ${SEARCH_LINES[lang].busy}` : walks.open.kept ? t('search.mapOnly') : `${t('search.mapOnly')}. ${t('search.notKept')}`}/>;
   return <main ref={shell} className="welcome-shell site-home" aria-label={t('home.label')}>
     {shown ? <RouteMap key={shown.data.id} still data={shown.data} walk={shown.walk} photoView="" markers={shown.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={shown.data.target.name}/>
@@ -164,7 +173,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1>
       <div ref={search}><Search key={again ? `again ${again.target.id}` : 'search'} prepared={prepared} onPrepared={onDestination} recent={walks.kept} onRecent={walks.openKept} onForget={walks.forget} onLine={setLine} onPreview={setPreview} again={again}
-        onWalk={(built, kept, target) => { setAgain({ target, from: built.place.request.start.name }); walks.openWalk(built, kept); }}/></div>
+        onWalk={(built, rest, target) => { setAgain({ target, from: built.place.request.start.name }); walks.openWalk(built, rest); }}/></div>
     </div>
     <Places label={t('home.onPhone')} savedLabel={t('home.onDevice')}
       places={[

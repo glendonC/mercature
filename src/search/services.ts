@@ -55,7 +55,9 @@ export async function ask(url: string, init: RequestInit, signal: AbortSignal | 
 /** A place OpenStreetMap knows. */
 /** detail: the address around it, to tell answers apart; area: its town and country, for the place a walk is in.
  * broad: a whole city, region or country, too big to be the end of a walk. */
-export type Found = { id: string; name: string; detail: string; area: string; broad: boolean; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
+export type Found = { id: string; name: string; detail: string; area: string; broad: boolean; road: boolean; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
+
+const fold = (text: string) => text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 let lastAsked = 0;
 /**
@@ -99,7 +101,7 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const place = raw.category === 'place' || raw.category === 'boundary';
     const broad = rank > 0 && rank <= 12 || (place && rank <= 16 && (people > 20000 || (!(people >= 0) && span > 8000))) || (place && people > 50000)
       || (!place && raw.category !== 'highway' && span > 3000);
-    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
+    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, road: raw.category === 'highway', position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
   // The same place can come back several times (a square, its outline, its centre): one row each.
   return found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && (item.broad || distance(other.position, item.position) < 400)) === i);
@@ -153,7 +155,7 @@ export async function overpass(query: string, signal?: AbortSignal, seconds = 12
   let timer = 0;
   const backup = new Promise<{ elements: OsmElement[]; fetchedAt: string }>((resolve, reject) => {
     const go = () => { clearTimeout(timer); overpassAt(OVERPASS_AGAIN, query, both, seconds + 6).then(resolve, reject); };
-    timer = setTimeout(go, 4000) as unknown as number;
+    timer = setTimeout(go, 3000) as unknown as number;
     main.catch(error => { if (!signal?.aborted && !(error instanceof SearchTrouble && error.kind === 'offline')) go(); else reject(error); });
   });
   try { return await Promise.any([main, backup]); }

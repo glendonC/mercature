@@ -16,17 +16,23 @@ const rankOf = (tags: Record<string, string>) =>
 /** A house number or an address is never a start: nobody meets at "1074". */
 const address = (tags: Record<string, string>) => /^[\d\s\-/a-z]{1,8}$/i.test(tags.name) && /\d/.test(tags.name) || (!!tags['addr:housenumber'] && tags.name === tags['addr:housenumber']);
 
-/** The best named start among Overpass's answers, or null. Exported for tests. */
-export function pickStart(target: LonLat, elements: readonly OsmElement[]): End | null {
+/** A trail or a path is never a start: she meets visitors where a street or a stop is. */
+export const TRAIL = /\b(trail|trl|path|footpath|track|sendero|camino)\b/i;
+
+/** Named starts among Overpass's answers, best first, in the same order for the same answer. Exported for tests. */
+export function startCandidates(target: LonLat, elements: readonly OsmElement[]): End[] {
   const options = elements.flatMap(element => {
     const tags = element.tags ?? {}, center = (element as OsmElement & { center?: { lat: number; lon: number } }).center;
     const at: LonLat | null = element.lat != null && element.lon != null ? [element.lon, element.lat] : center ? [center.lon, center.lat] : null;
-    if (!tags.name || !at || address(tags)) return [];
+    if (!tags.name || !at || address(tags) || TRAIL.test(tags.name) || ['path', 'footway', 'track', 'bridleway', 'cycleway'].includes(tags.highway)) return [];
     const away = distance(target, at);
     return away >= NEAREST && away <= FURTHEST ? [{ name: tags.name, position: at, rank: rankOf(tags), off: Math.abs(away - AIM) }] : [];
-  }).sort((a, b) => a.rank - b.rank || a.off - b.off);
-  return options[0] ? { name: options[0].name, position: options[0].position } : null;
+  }).sort((a, b) => a.rank - b.rank || a.off - b.off || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return options.filter((option, i) => options.findIndex(other => other.name === option.name) === i).map(({ name, position }) => ({ name, position }));
 }
+
+/** The best named start, or null. */
+export const pickStart = (target: LonLat, elements: readonly OsmElement[]): End | null => startCandidates(target, elements)[0] ?? null;
 
 export function startQuery([lon, lat]: LonLat): string {
   const near = `around:${FURTHEST},${lat.toFixed(6)},${lon.toFixed(6)}`;
@@ -36,15 +42,17 @@ export function startQuery([lon, lat]: LonLat): string {
     `way(${near})[highway~"^(primary|secondary|tertiary)$"][name];);out center tags 300;`;
 }
 
+/** Points about 400 m south, east, north and west, with no name yet: the walk names each by the street it leaves on. */
+export const aroundPoints = (target: LonLat): End[] => [[0, -1], [1, 0], [0, 1], [-1, 0]].map(([east, north]) => ({ name: '',
+  position: [target[0] + east * 400 / (111195 * Math.cos(target[1] * Math.PI / 180)), target[1] + north * 400 / 111195] as LonLat }));
+
 /**
- * A start for a walk to the target: a named place nearby, or a point 400 m south with no name yet (the walk names it by its street).
+ * Starts to try for a walk to the target, best first: up to three named places nearby, then points around it.
  * The lookup gets three seconds on one server, so a busy one costs her little.
  */
-export async function findStart(target: LonLat, signal?: AbortSignal): Promise<End> {
-  try {
-    const { elements } = await overpassAt(OVERPASS, startQuery(target), signal, 3);
-    const found = pickStart(target, elements);
-    if (found) return found;
-  } catch (error) { if (signal?.aborted) throw error; }
-  return { name: '', position: [target[0], target[1] - 400 / 111195] };
+export async function findStarts(target: LonLat, signal?: AbortSignal): Promise<End[]> {
+  let named: End[] = [];
+  try { named = startCandidates(target, (await overpassAt(OVERPASS, startQuery(target), signal, 3)).elements).slice(0, 3); }
+  catch (error) { if (signal?.aborted) throw error; }
+  return [...named, ...aroundPoints(target)];
 }
