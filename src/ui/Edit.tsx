@@ -1,7 +1,7 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useLayoutEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
 import { TextButton } from './Button';
 import { cx } from './cx';
-import { UndoIcon, iconOfKind } from './icons';
+import { CheckIcon, NoteIcon, UndoIcon, iconOfKind } from './icons';
 import type { Kind } from './kinds';
 
 /*
@@ -21,6 +21,37 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(funct
 /** A round action over the map, in charcoal glass: 48 px, an icon and its name for screen readers. The guide's Back, and the search row's Go. */
 export const GlassCircle = forwardRef<HTMLButtonElement, Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & { label: string; children: ReactNode }>(function GlassCircle({ label, className, children, type = 'button', ...rest }, ref) {
   return <button ref={ref} type={type} className={cx('ui-glass-circle', className)} aria-label={label} title={label} {...rest}>{children}</button>;
+});
+
+type EditToggleProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  /** Editing is on. */
+  editing: boolean;
+  /** The label while editing is off, such as "Edit", and while it is on, such as "Done". */
+  editLabel: string;
+  doneLabel: string;
+};
+/**
+ * The Edit pill that becomes Done: entering the mode is felt, not just read. Its width eases between the two labels, the label and the icon
+ * crossfade (a pencil turns into a check), and the charcoal glass fills white while editing. Back the other way on Done. Instant under reduced motion.
+ */
+export const EditToggle = forwardRef<HTMLButtonElement, EditToggleProps>(function EditToggle({ editing, editLabel, doneLabel, className, type = 'button', style, ...rest }, ref) {
+  const off = useRef<HTMLSpanElement>(null), on = useRef<HTMLSpanElement>(null), box = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!box.current || !off.current || !on.current) return;
+      box.current.style.setProperty('--w-off', `${Math.ceil(off.current.offsetWidth)}px`);
+      box.current.style.setProperty('--w-on', `${Math.ceil(on.current.offsetWidth)}px`);
+    };
+    measure();
+    document.fonts?.ready.then(measure).catch(() => undefined);
+  }, [editLabel, doneLabel]);
+  return <button ref={ref} type={type} className={className ? `ui-glass-button ui-edit-toggle ${className}` : 'ui-glass-button ui-edit-toggle'} aria-pressed={editing} style={style as CSSProperties} {...rest}>
+    <span className="ui-button-icon ui-toggle-icons" aria-hidden="true"><NoteIcon /><CheckIcon /></span>
+    <span ref={box} className="ui-button-label ui-toggle-labels">
+      <span ref={off} aria-hidden={editing || undefined}>{editLabel}</span>
+      <span ref={on} aria-hidden={!editing || undefined}>{doneLabel}</span>
+    </span>
+  </button>;
 });
 
 type ChangeRowProps = {

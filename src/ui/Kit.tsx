@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, VisitorAvatar, ChangeRow, GlassButton, GlassCircle, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, VisitorAvatar, ChangeRow, EditToggle, GlassButton, GlassCircle, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -113,7 +113,7 @@ export default function Kit() {
         <Segmented variant="tabs" caps label="Scene" value={scene} onChange={setScene} options={SCENES} />
         <span className="kit-keys"><Kbd>Esc</Kbd><span>Back</span></span>
       </header>
-      <div className="kit-edit-bar"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><BeforeNow /></div>
+      <div className="kit-edit-bar"><EditMode /><BeforeNow /></div>
       <Companion className="kit-companion" working={scene === 'reading'} talking={talking} />
       {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
       <Dialogue key={scene} label="Guide" say={said} back={scene === 'check' || scene === 'message' || scene === 'note' ? <GlassCircle label="Back"><I.BackIcon /></GlassCircle> : undefined}
@@ -135,7 +135,7 @@ export default function Kit() {
 
       <Specimen wide title="Editing" note="Always there over the map: the Edit pill, white while editing; Before and Now beside it, the state that is on in white. Her changes are rows with the kind's icon in its hue, one line, and a quiet Undo. A changed marker wears a dashed ink ring over a white halo; solid ink is the selection.">
         <div className="kit-editing">
-          <div className="kit-row"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><GlassButton icon={<I.NoteIcon />} pressed>Edit</GlassButton><BeforeNow /></div>
+          <div className="kit-row"><EditMode /><EditToggle editing editLabel="Edit" doneLabel="Done" /><GlassButton icon={<I.PlusIcon />}>Add a spot</GlassButton><BeforeNow /></div>
           <Panel size="card" className="kit-changes" aria-label="Your changes">
             <PanelHead as="h3" title="Your changes" meta="3 on this walk" />
             <ChangeRow kind="steps" label="Steps, Calle Loreto: still there" meta="340 m" onUndo={() => {}} undoLabel="Undo" onOpen={() => {}} />
@@ -308,4 +308,8 @@ function TabsChoice() {
 function BeforeNow() {
   const [value, setValue] = useState<'before' | 'now'>('now');
   return <Segmented surface="glass" label="Show the walk" value={value} onChange={setValue} options={[{ value: 'before', label: 'Before' }, { value: 'now', label: 'Now' }]} />;
+}
+function EditMode() {
+  const [editing, setEditing] = useState(false);
+  return <EditToggle editing={editing} onClick={() => setEditing(on => !on)} editLabel="Edit" doneLabel="Done" />;
 }

@@ -34,3 +34,17 @@ button.ui-row:active, button.ui-change-open:active { background: var(--ui-press)
 .ui-composer:focus-within .ui-composer-field { caret-color: #ffffff; }
 .ui-composer:focus-within .ui-composer-send:disabled { color: rgb(255 255 255 / 0.78); }
 .ui-composer:focus-within .ui-composer-send:disabled::before { background: rgb(255 255 255 / 0.16); }
+
+/* EditToggle: Edit becomes Done. The surface fills and the width eases on the panel's beat; the label and the icon crossfade a step faster */
+.ui-glass-button.ui-edit-toggle::before { transition: background-color var(--motion-panel) var(--ease-out), box-shadow var(--motion-panel) var(--ease-out), translate var(--hover-time) var(--ease-out), transform var(--press-time) var(--ease-out); }
+.ui-edit-toggle .ui-button-label, .ui-edit-toggle .ui-button-icon { transition: color var(--motion-panel) var(--ease-out); }
+.ui-toggle-icons { display: grid; }
+.ui-toggle-icons > .ui-icon { grid-area: 1 / 1; transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-panel) var(--ease-out); }
+.ui-edit-toggle[aria-pressed=false] .ui-toggle-icons > .ui-icon:last-child, .ui-edit-toggle[aria-pressed=true] .ui-toggle-icons > .ui-icon:first-child { opacity: 0; transform: scale(0.6) rotate(-30deg); }
+.ui-toggle-labels { position: relative; display: block; width: var(--w-off, auto); height: calc(var(--font-s) * 1.2); transition: width var(--motion-panel) var(--ease-out); }
+.ui-edit-toggle[aria-pressed=true] .ui-toggle-labels { width: var(--w-on, auto); }
+.ui-toggle-labels > span { position: absolute; left: 0; top: 0; line-height: 1.2; white-space: nowrap; transition: opacity var(--motion-fast) var(--ease-out), translate var(--motion-panel) var(--ease-out); }
+.ui-edit-toggle[aria-pressed=false] .ui-toggle-labels > span:last-child, .ui-edit-toggle[aria-pressed=true] .ui-toggle-labels > span:first-child { opacity: 0; translate: 0 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .ui-glass-button.ui-edit-toggle::before, .ui-edit-toggle .ui-button-label, .ui-edit-toggle .ui-button-icon, .ui-toggle-icons > .ui-icon, .ui-toggle-labels, .ui-toggle-labels > span { transition: none; }
+}
