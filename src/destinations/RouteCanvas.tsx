@@ -331,7 +331,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     page={page} setPage={setPage} name={selection.kind === 'spot' ? spotName(walk.spots.find(spot => spot.id === selection.id)!) : selection.kind === 'landmark' ? nameOfKey(selection.id) : t.noBarrier}
     onJudge={judge} onClose={close} link={linking ? () => link(selection) : undefined} />;
 
-  const messagesPanel = <section className="route-panel">
+  const messagesPanel = <section className="route-panel" aria-label={t.views.messages}>
     {!current ? <>
       <label className="route-label" htmlFor={`${tabsId}-message`}>{t.message}</label>
       <textarea id={`${tabsId}-message`} value={draft} maxLength={500} placeholder={t.messagePlaceholder} onChange={event => { setDraft(event.target.value); setDraftLang(guessLanguage(event.target.value)); }} />
@@ -359,7 +359,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const replyMessage = review.messages.find(message => message.id === replyFor) ?? review.messages[0] ?? null;
   const replyLanguageNow = replyLanguage ?? (replyMessage ? replyLang(replyMessage.language) : 'en');
   const note = noteText(noteLang);
-  const changesPanel = <section className="route-panel route-changes">
+  const changesPanel = <section className="route-panel route-changes" aria-label={t.views.changes}>
     {!decided.length && !review.messages.length && <p className="route-quiet">{t.guide.nothing}</p>}
     {decided.length > 0 && <><h2>{t.spots}</h2><ul className="route-list">{decided.map(({ spot, verdict }) =>
       <li key={spot.id}><button onClick={() => open({ kind: 'spot', id: spot.id })}><span>{spotName(spot)}</span><span className="route-verdict" data-verdict={verdict}>{t.verdicts[verdict]}</span></button></li>)}</ul></>}

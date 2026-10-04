@@ -8,9 +8,6 @@ import {understand, prepareModel, modelState, modelStored, modelDownloadBytes, t
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
-  BENCH_CLEAR_POSITION,
-} from "../spatial/fixtures";
-import {
   appendOperation,
   applyScenario,
   createScenario,
@@ -137,10 +134,7 @@ export default function Workspace({
   const [notice, setNotice] = useState("");
   const [plan, setPlan] = useState<ImprovementPlan | null>(initialPlan ?? null);
   const [placing, setPlacing] = useState(false);
-  const [move, setMove] = useState({
-    x: BENCH_CLEAR_POSITION.x.toString(),
-    y: BENCH_CLEAR_POSITION.y.toString(),
-  });
+  const [move, setMove] = useState({ x: "", y: "" });
   const optionsId = useId();
   const options = useRef<HTMLDivElement>(null);
   const optionsButton = useRef<HTMLButtonElement>(null);
@@ -440,7 +434,7 @@ export default function Workspace({
     : <><h2>{placing ? t('ws.choosePosition') : editable ? t('ws.title.move', { feature: nameOf(target!).toLocaleLowerCase() }) : t('ws.keep')}</h2><div className="canvas-actions">
       {editable ? <>{!placing && site.placements.filter(item => item.featureId === target).map((item,index) => <button key={index} className={index === 0 ? 'primary' : ''} onClick={() => edit({kind:'move',objectId:target!,to:item.to})}>{item.name[lang]}</button>)}
         <button onClick={() => {setSelected(target); viewBeforePlacement.current = view; setPlacing(true); setView('map'); setComparison('proposed');}}>{t('ws.chooseOnMap')}</button>
-        {placing && <><button onClick={() => placementDialog.current?.showModal()}>{t('ws.enterPosition')}</button><button onClick={() => {setPlacing(false); setView(viewBeforePlacement.current);}}>{t('ws.cancelMove')}</button></>}
+        {placing && <><button onClick={() => {if (feature) setMove({x: String(feature.bounds.minX), y: String(feature.bounds.minY)}); placementDialog.current?.showModal();}}>{t('ws.enterPosition')}</button><button onClick={() => {setPlacing(false); setView(viewBeforePlacement.current);}}>{t('ws.cancelMove')}</button></>}
         <button onClick={() => edit({kind:'remove',objectId:target!})}>{t('ws.removeHere')}</button>
       </> : <button className="primary" onClick={() => setStep('compare')}>{t('ws.reviewPlan')}</button>}
     </div></>}
