@@ -31,6 +31,8 @@ type Props = {
   onMarker: (id: string) => void;
   /** A tap on the map itself, with the scale where it landed so the caller can judge what is near. */
   onMap: (at: Point, pixelsPerMetre: number) => void;
+  /** A tap on one of the photos this place can open, with the view to show. Without it, such a tap is a tap on the map. */
+  onPhoto?: (viewId: string) => void;
   /** Rendered beside the selected marker on wide screens. */
   card?: ReactNode;
   cardFor?: string | null;
@@ -50,17 +52,18 @@ const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 const LEAN_FOR = 1000;
 type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number };
 
-/** Every recorded camera, faint, beneath the walk. */
-const Cameras = memo(function Cameras({ walk, lens }: { walk: Walk; lens: Lens | null }) {
-  if (lens) return <g className="route-cameras"><path d={walk.cameras.map(c => { const p = lens.at(c); return `M${p[0].toFixed(1)} ${p[1].toFixed(1)}h0`; }).join('')} style={{ strokeWidth: 2.6 * lens.view.k }} /></g>;
-  return <g className="route-cameras">{walk.cameras.map((c, i) => <circle key={i} cx={c[0].toFixed(1)} cy={c[1].toFixed(1)} r="1.3" />)}</g>;
+/** Every recorded photo position, faint and one size at any zoom or lean, and the photos that open a little stronger. */
+const Cameras = memo(function Cameras({ walk, open, lens }: { walk: Walk; open: Point[]; lens: Lens | null }) {
+  const dots = (points: Point[]) => points.map(c => { const p = lens ? lens.at(c) : c; return `M${p[0].toFixed(1)} ${p[1].toFixed(1)}h0`; }).join('');
+  return <g className="route-cameras"><path d={dots(walk.cameras)} /><path d={dots(open)} className="is-open-ring" /><path d={dots(open)} className="is-open" /></g>;
 });
-/** Over the shared map's blue walk: the stretches without photos, and the selected spot. */
-const Overlay = memo(function Overlay({ walk, highlight, lens }: { walk: Walk; highlight: Point[] | null; lens: Lens | null }) {
-  const to = lens ? (p: Point) => lens.at(p) : undefined;
+/** Over the shared map's blue walk: the stretches without photos, the selected spot, and where the open photo was taken. */
+const Overlay = memo(function Overlay({ walk, highlight, photo, lens }: { walk: Walk; highlight: Point[] | null; photo: Point | null; lens: Lens | null }) {
+  const to = lens ? (p: Point) => lens.at(p) : undefined, at = photo && (to ? to(photo) : photo);
   return <g className="route-overlay">
     {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path, to)} /><polyline className="route-unseen" points={line(run.path, to)} /></g>)}
     {highlight && <><polyline className="route-highlight-halo" points={line(highlight, to)} /><polyline className="route-highlight" points={line(highlight, to)} /></>}
+    {at && <><path className="route-photo-ring" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /><path className="route-photo-at" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /></>}
   </g>;
 });
 
@@ -82,7 +85,7 @@ function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -93,6 +96,13 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const insetsRef = useRef(insets);
   insetsRef.current = insets;
   const reach = useMemo(() => [...walk.route, walk.target.at, ...(walk.start ? [walk.start.at] : [])], [walk]);
+  /** The photos this place can open, the packaged views, each with the first view to show. */
+  const openable = useMemo(() => {
+    const first = new Map(data.views.map(view => [view.photoId, view.id] as const).reverse());
+    return data.photos.flatMap(photo => { const viewId = first.get(photo.id); return viewId ? [{ viewId, at: walk.project(photo.position) }] : []; });
+  }, [data, walk]);
+  const openDots = useMemo(() => openable.map(photo => photo.at), [openable]);
+  const photoAt = useMemo(() => { const view = data.views.find(item => item.id === photoView), photo = view && data.photos.find(item => item.id === view.photoId); return photo ? walk.project(photo.position) : null; }, [data, walk, photoView]);
   /** The flat fit and the free box it fills, from the insets. */
   const fitFlat = useCallback((width: number, height: number) => {
     const { minX, minY, maxX, maxY } = walk.extent, i = insetsRef.current;
@@ -283,7 +293,11 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     pointers.current.delete(event.pointerId);
     if (pointers.current.size) { const rest = [...pointers.current.values()][0]; gesture.current = { moved: true, camera: live.current!, x: rest.x, y: rest.y, spread: 0 }; return; }
     gesture.current = null;
-    if (tap && event.type === 'pointerup' && view) { const at = view.ground([point.x, point.y]); onMap(at, view.scale(at)); }
+    if (!tap || event.type !== 'pointerup' || !view) return;
+    // A photo that can open takes a tap within a finger's reach of its dot; anywhere else is the map.
+    const near = onPhoto ? openable.map(photo => ({ photo, d: Math.hypot(view.at(photo.at)[0] - point.x, view.at(photo.at)[1] - point.y) })).filter(item => item.d <= 22).sort((a, b) => a.d - b.d)[0] : undefined;
+    if (near && onPhoto) { onPhoto(near.photo.viewId); return; }
+    const at = view.ground([point.x, point.y]); onMap(at, view.scale(at));
   }
   useEffect(() => {
     const element = box.current!;
@@ -353,8 +367,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
   return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still}
-      lens={flat ? undefined : view} rise={rise} underlay={<Cameras walk={walk} lens={flat ? null : view} />}>
-      <Overlay walk={walk} highlight={highlight} lens={flat ? null : view} />
+      lens={flat ? undefined : view} rise={rise} underlay={<Cameras walk={walk} open={openDots} lens={flat ? null : view} />}>
+      <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}

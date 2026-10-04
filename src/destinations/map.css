@@ -7,7 +7,6 @@
 .route-map .map-route-line { stroke-width: 4px; vector-effect: non-scaling-stroke; }
 .route-map .map-scale, .route-map .map-north { display: none; }
 .route-map .map-heading { vector-effect: non-scaling-stroke; }
-.route-cameras circle { fill: var(--ink); opacity: 0.16; }
 .route-overlay polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .route-overlay .route-unseen-cover { stroke: var(--surface); stroke-width: 6px; stroke-linecap: butt; }
 .route-overlay .route-unseen { stroke: var(--unknown); stroke-width: 4px; stroke-dasharray: 3 5; stroke-linecap: butt; }
@@ -53,7 +52,12 @@
 .map-way-area { fill: #fff; }
 .map-fog-far { stop-color: var(--map-ground); }
 .map-fog-clear { stop-color: var(--map-ground); stop-opacity: 0; }
-.route-cameras path { fill: none; stroke: var(--ink); stroke-linecap: round; opacity: 0.16; }
+.route-cameras path, .route-overlay .route-photo-at, .route-overlay .route-photo-ring { fill: none; stroke: var(--ink); stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.route-cameras path { stroke-width: 3px; opacity: 0.22; }
+.route-cameras .is-open-ring { stroke: var(--surface); stroke-width: 8px; opacity: 0.9; }
+.route-cameras .is-open { stroke-width: 5.5px; opacity: 0.6; }
+.route-overlay .route-photo-ring { stroke: var(--surface); stroke-width: 13px; }
+.route-overlay .route-photo-at { stroke-width: 8px; }
 
 /* The selected spot glows: a white halo on its marker and a ring spreading on the ground */
 .route-map[data-lean] .route-marker[aria-pressed=true]::before { content: ''; position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border: 1.5px solid var(--ink); border-radius: 50%; opacity: 0; transform: scaleY(var(--squash, 1)) scale(0.35); animation: map-ground-ring 2s var(--ease) infinite; pointer-events: none; }
