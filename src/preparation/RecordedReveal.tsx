@@ -1,9 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
 import { hasRouteCanvas } from '../destinations/RouteCanvas';
-import { buildWalk } from '../destinations/walk';
+import { mapInsets } from '../destinations/RouteInbox';
+import RouteMap from '../destinations/RouteMap';
+import type { MapWords } from '../destinations/GeographicMap';
+import type { Lens } from '../destinations/lens';
+import { buildWalk, type Point, type Walk } from '../destinations/walk';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import { useLanguage } from '../i18n';
 import { fromRecord, possibleFromRecord } from '../i18n/records';
@@ -14,8 +18,8 @@ import './reveal.css';
 const BUILD_FROM = 300, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
 /** Photo cards follow the build, then the hand-off; retained 3D areas, read only on this device, may hold it back a little. */
 const CARD_GAP = 300, CARD_SETTLE = 650, HANDOFF_WAIT = 1300, MAX_CARDS = 4;
-/** The landing on the inspection map, then the fade that uncovers it. */
-const LAND_FOR = 720, FADE_FOR = 220;
+/** The landing on the inspection map, then the fade that uncovers it; on a leaned route map the replay only fades, since the canvas behind shares its framing. */
+const LAND_FOR = 720, FADE_FOR = 220, FADE_LEANED = 380;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
 const LAYER = { x: -100, y: -100, width: 1000, height: 700, density: 1.5 } as const;
 /** Card footprints in pixels, width by height, used until the cards themselves can be measured. */
@@ -98,6 +102,8 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const [pointsDone, setPointsDone] = useState(false);
   const [view, setView] = useState<number[] | null>(null);
   const [marks, setMarks] = useState<Mark[]>([]);
+  const [lens, setLens] = useState<Lens | null>(null);
+  const narrow = useNarrow();
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
 
@@ -115,6 +121,11 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   }, [id, attempt]);
 
   const ordered = useMemo(() => data ? captureOrder(data.photos) : [], [data]);
+  // A place with a route canvas replays on that canvas's own leaned map, so the hand-off is only a fade.
+  const leaned = !!data && hasRouteCanvas(data);
+  const walk = useMemo(() => data && leaned ? buildWalk(data) : null, [data, leaned]);
+  const insets = useMemo(() => mapInsets(narrow), [narrow]);
+  const mapWords = useMemo<MapWords>(() => ({ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }), [t]);
   const cards = useMemo(() => data ? chooseCards(data) : [], [data]);
 
   useEffect(() => {
@@ -182,28 +193,29 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   }, [phase, data]);
 
   useLayoutEffect(() => {
-    if (!data) return;
+    if (!data || leaned) return;
     const fit = () => setView(fitView(data, innerWidth, innerHeight, (root.current?.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 110) + 12));
     fit();
     addEventListener('resize', fit);
     return () => removeEventListener('resize', fit);
-  }, [data]);
+  }, [data, leaned]);
 
   /** Card corners in screen space, kept clear of the banner, the hint line and each other. Every card is measured before it shows, since a caption can wrap. */
   useLayoutEffect(() => {
     const element = svg.current;
-    if (!element || !data) return;
+    if (!data || (leaned ? !lens || !walk : !element)) return;
     let live = true;
     const place = () => {
-      const matrix = element.getScreenCTM();
-      if (!matrix || !live) return;
+      const matrix = leaned ? null : element?.getScreenCTM();
+      if ((!leaned && !matrix) || !live) return;
       const { project } = routeFrame(data);
+      const screen = (position: Coordinate) => { if (lens && walk && leaned) return lens.at(walk.project(position)); const [vx, vy] = project(position); return [matrix!.a * vx + matrix!.c * vy + matrix!.e, matrix!.b * vx + matrix!.d * vy + matrix!.f]; };
       const phone = innerWidth < 640, [fw, fh] = phone ? CARD.phone : CARD.wide, gap = phone ? 18 : 30;
-      const top = (element.ownerDocument.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = (element.ownerDocument.querySelector('.reveal-say')?.getBoundingClientRect().top ?? innerHeight - 110) - 10, taken: { left: number; top: number; w: number; h: number }[] = [];
+      const top = (document.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = (document.querySelector('.reveal-say')?.getBoundingClientRect().top ?? innerHeight - 110) - 10, taken: { left: number; top: number; w: number; h: number }[] = [];
       let crowded = false;
       const spots = cards.map((card, i) => {
         const box = cardBoxes.current[i], w = box?.offsetWidth || fw, h = box?.offsetHeight || fh;
-        const [vx, vy] = project(card.position), x = matrix.a * vx + matrix.c * vy + matrix.e, y = matrix.b * vx + matrix.d * vy + matrix.f;
+        const [x, y] = screen(card.position);
         const clamp = ([l, t]: number[]) => [Math.min(Math.max(12, l), innerWidth - w - 12), Math.min(Math.max(top, t), bottom - h)];
         const clear = ([l, t]: number[]) => taken.every(o => l + w + 8 < o.left || l > o.left + o.w + 8 || t + h + 8 < o.top || t > o.top + o.h + 8);
         // Nearest free spot to the camera: the four corners first, then the same corners pushed outward.
@@ -231,12 +243,25 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     void document.fonts?.ready.then(place);
     addEventListener('resize', place);
     return () => { live = false; removeEventListener('resize', place); };
-  }, [data, cards, view, lang]);
+  }, [data, cards, view, lang, lens, walk, leaned]);
 
   /** Lands the replay map on the inspection map, which draws the same records in the same frame; a route canvas frames itself once measured, so wait for that, then fade to uncover it. */
   useLayoutEffect(() => {
     if (phase !== 'handoff') return;
     let frame = 0, fade = 0, waited = 0;
+    if (leaned) {
+      // The canvas behind opens settled on the same leaned framing; once its map has drawn a couple of frames, the replay fades off it.
+      const uncover = () => {
+        const ready = !!root.current?.querySelector('.route-canvas .route-map .map-route');
+        if ((!ready || waited < 2) && waited++ < 40) { frame = requestAnimationFrame(uncover); return; }
+        const replay = root.current?.querySelector<HTMLElement>('.reveal');
+        if (!replay || quiet) return setPhase('done');
+        Object.assign(replay.style, { transition: `opacity ${FADE_LEANED}ms ease`, opacity: '0' });
+        fade = window.setTimeout(() => setPhase('done'), FADE_LEANED);
+      };
+      frame = requestAnimationFrame(uncover);
+      return () => { cancelAnimationFrame(frame); clearTimeout(fade); };
+    }
     const land = () => {
       const host = root.current, box = mapBox.current, map = svg.current;
       const canvas = host?.querySelector<HTMLElement>('.route-canvas .route-map');
@@ -260,15 +285,14 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     };
     frame = requestAnimationFrame(land);
     return () => { cancelAnimationFrame(frame); clearTimeout(fade); };
-  }, [phase, quiet]);
+  }, [phase, quiet, leaned]);
 
   if (failed) return <RecordedPreview id={id} onHome={onHome} onOpen={onOpen} onRetry={() => setAttempt(n => n + 1)}/>;
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
-  const toCanvas = !!data && hasRouteCanvas(data);
-  const spots = toCanvas && data ? buildWalk(data).spots.filter(spot => spot.kind === 'flagged').length : 0;
-  const barriers = marks.filter(mark => mark.barrier).length, walk = stepOf('walk');
+  const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : 0;
+  const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk');
   const say = !data || !step ? null : {
     photos: rich(Math.max(1, shown) === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: <strong>{Math.max(1, shown).toLocaleString(locale)}</strong> }),
     areas: rich('reveal.areas', { shown: <strong>{layer?.areas ?? 0}</strong>, total: data.pieces.length }),
@@ -279,15 +303,22 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   }[step.id];
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
-    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${toCanvas ? ' to-canvas' : ''}`} data-phase={phase} data-step={step?.id ?? 'none'} role="region" aria-label={name} style={walk && { '--walk-at': `${walk.at}ms`, '--walk-for': `${walk.until - walk.at}ms` } as CSSProperties}>
+    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${leaned ? ' is-leaned' : ''}`} data-phase={phase} data-step={step?.id ?? 'none'} role="region" aria-label={name} style={{ ...(walkStep && { '--walk-at': `${walkStep.at}ms`, '--walk-for': `${walkStep.until - walkStep.at}ms` }), '--free-left': `${insets.left}px`, '--free-right': `${insets.right}px` } as CSSProperties}>
       {data && <>
-        <div className="reveal-map" ref={mapBox}>
-          <GeographicMap data={data} selected={phase === 'play' || toCanvas ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')} words={{ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }}
+        {leaned && walk ? <div className="reveal-map is-leaned" ref={mapBox}>
+          <LeanedMap data={data} walk={walk} insets={insets} words={mapWords} name={name} onLens={setLens}/>
+          {lens && <svg className="reveal-overlay" aria-hidden="true">
+            <PhotoLayer walk={walk} photos={ordered} step={stepOf('photos')} at={lens.at}/>
+            <BuildLayer data={data} marks={marks} steps={steps} unit={1} to={lens.at}/>
+            {phase === 'play' && surfaced.map(card => { const [x, y] = lens.at(walk.project(card.position)); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
+          </svg>}
+        </div> : <div className="reveal-map" ref={mapBox}>
+          <GeographicMap data={data} selected={phase === 'play' ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')} words={{ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }}
             underlay={layer && <image href={layer.url} x={LAYER.x} y={LAYER.y} width={LAYER.width} height={LAYER.height} preserveAspectRatio="none" className="reveal-points"/>}>
             <BuildLayer data={data} marks={marks} steps={steps} unit={view ? view[2] / innerWidth : 1}/>
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
-        </div>
+        </div>}
         <div className="reveal-scan" aria-hidden="true"/>
         <header className="reveal-banner">
           <h1>{name}</h1>
@@ -319,9 +350,9 @@ const GLYPHS: Record<StepId, ReactNode> = {
   barriers: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" className="glyph-barrier"/></svg>,
 };
 
-/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk. */
-function BuildLayer({ data, marks, steps, unit }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number }) {
-  const { project } = routeFrame(data);
+/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk: in map units on the flat map, through the lens on a leaned one. */
+const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit, to }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number; to?: (p: Point) => Point }) {
+  const frame = routeFrame(data), project = (c: Coordinate) => to ? to(frame.project(c)) : frame.project(c);
   const ticks = data.stretches.flatMap((stretch, i) => {
     const ends = i === data.stretches.length - 1 ? [0, stretch.line.length - 1] : [0];
     return ends.map(end => {
@@ -340,4 +371,29 @@ function BuildLayer({ data, marks, steps, unit }: { data: Destination; marks: re
     <g className="reveal-marks">{placed.map((item, i) => item.barrier ? null : mark(item, i))}</g>
     <g className="reveal-barriers">{placed.map((item, i) => item.barrier ? mark(item, i) : null)}</g>
   </g>;
+});
+
+/** The street photos landing in the order they were taken, through the lens of a leaned map. */
+const PhotoLayer = memo(function PhotoLayer({ walk, photos, step, at }: { walk: Walk; photos: readonly Photo[]; step: Step | undefined; at: (p: Point) => Point }) {
+  const from = step?.at ?? 0, span = step ? step.until - step.at : 0;
+  return <g className="reveal-photos">{photos.map((photo, i) => { const [x, y] = at(walk.project(photo.position)); return <circle key={photo.id} cx={x} cy={y} r="1.8" className="reveal-photo-dot" style={{ animationDelay: `${from + i / Math.max(1, photos.length) * span}ms` }}/>; })}</g>;
+});
+
+/** The canvas's own map, still and settled, so the replay shares its framing; it holds still while the replay's clock ticks. */
+const NONE: never[] = [];
+const ignore = () => {};
+const LeanedMap = memo(function LeanedMap({ data, walk, insets, words, name, onLens }: { data: Destination; walk: Walk; insets: ReturnType<typeof mapInsets>; words: MapWords; name: string; onLens: (lens: Lens) => void }) {
+  return <RouteMap still settled data={data} walk={walk} photoView="" markers={NONE} labels={NONE} insets={insets} highlight={null} onMarker={ignore} onMap={ignore} clearBottom={0} words={words} ariaLabel={name} onLens={onLens}/>;
+});
+
+/** The phone layout of the route screen starts at this width, and its map insets with it. */
+function useNarrow() {
+  const query = '(max-width: 640px)';
+  const [narrow, setNarrow] = useState(() => matchMedia(query).matches);
+  useEffect(() => {
+    const list = matchMedia(query), change = () => setNarrow(list.matches);
+    list.addEventListener('change', change);
+    return () => list.removeEventListener('change', change);
+  }, []);
+  return narrow;
 }

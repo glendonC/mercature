@@ -10,6 +10,18 @@
 .reveal .map-route polyline { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: reveal-draw var(--walk-for, 800ms) cubic-bezier(.45, 0, .2, 1) var(--walk-at, 2100ms) forwards; }
 .reveal .map-camera, .reveal .map-camera-view { transform-box: fill-box; transform-origin: center; animation: reveal-camera .75s var(--ease) both; }
 .reveal .destination-map-controls, .reveal .destination-map-credit { opacity: 0; transition: opacity .4s ease .25s; }
+/* On a place with a route canvas the replay draws on that canvas's own leaned map, in the same box, so the hand-off is only a fade. */
+.reveal.is-leaned { background: color-mix(in srgb, var(--ink) 4%, var(--paper)); }
+.reveal-map.is-leaned { bottom: auto; height: 100svh; min-height: 520px; --ground: color-mix(in srgb, var(--ink) 4%, var(--paper)); }
+.reveal-map.is-leaned .route-map { cursor: default; }
+.reveal .route-cameras, .reveal .route-overlay { transition: opacity .6s ease; }
+.reveal .route-cameras, .reveal:is([data-step=none], [data-step=photos], [data-step=areas], [data-step=walk]) .route-overlay { opacity: 0; }
+.reveal-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.reveal-photos { transition: opacity .6s ease; }
+.reveal:not([data-step=none], [data-step=photos]) .reveal-photos { opacity: .28; }
+.reveal-photo-dot { fill: var(--ink); fill-opacity: .6; transform-box: fill-box; transform-origin: center; animation: reveal-camera .75s var(--ease) both; }
+/* Words sit over the map's free part, left of the panel the route screen opens on wide screens. */
+.reveal.is-leaned :is(.reveal-banner, .reveal-say) { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2); }
 .reveal-points { opacity: .9; transition: opacity .35s ease; }
 .reveal[data-phase=handoff] .reveal-points { opacity: 0; }
 .reveal-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff); transform-box: fill-box; transform-origin: center; animation: reveal-ring .6s var(--ease) both; }
