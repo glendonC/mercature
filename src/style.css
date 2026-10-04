@@ -224,15 +224,16 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
 }
+/* A bare button is quiet: the shared parts in src/ui draw every visible shape */
 button {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
-  color: var(--ink);
-  padding: 10px 15px;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: none;
+  color: inherit;
+  padding: 0;
 }
 a {
   color: inherit;
