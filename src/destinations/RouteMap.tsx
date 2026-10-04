@@ -46,6 +46,10 @@ type Props = {
   words: MapWords;
   /** A backdrop that only shows the walk: no pan, zoom or taps, and markers are plain dots. */
   still?: boolean;
+  /** Starts at the leaned framing, with no flat first frame and no lean-in, for a map that opens with a leaned replay. */
+  settled?: boolean;
+  /** Called with the map's projection whenever it changes, to draw in step with the map. It runs on every frame of a move. */
+  onLens?: (lens: Lens) => void;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -89,14 +93,14 @@ function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, onLens }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<View | null>(null);
   const live = useRef<View | null>(null);
   /** The lean the map is heading for. Framing aims at it, so a frame still holds when the lean settles. */
-  const goal = useRef(0);
+  const goal = useRef(leaning && settled ? 1 : 0);
   const insetsRef = useRef(insets);
   insetsRef.current = insets;
   const reach = useMemo(() => [...walk.route, walk.target.at, ...(walk.start ? [walk.start.at] : [])], [walk]);
@@ -261,7 +265,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     size: () => ({ ...size, fitK: fitCamera(size.width, size.height).k }),
   }), [go, fitCamera, clamp, place, size, tiltOf]);
 
-  const view = camera && size.width ? lens(camera, tilt, size.width, size.height) : null;
+  const view = useMemo(() => camera && size.width ? lens(camera, tilt, size.width, size.height) : null, [camera, tilt, size]);
+  useEffect(() => { if (view && onLens) onLens(view); }, [view, onLens]);
   const toScreen = (p: Point): Point => view ? view.at(p) : [-999, -999];
 
   // Drag to pan, pinch or wheel to zoom; a tap without movement selects the walk under it.
