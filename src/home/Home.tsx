@@ -4,7 +4,7 @@ import narikala from '../covers/narikala.webp';
 import swayambhu from '../covers/swayambhu.webp';
 import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destination } from '../destinations/data';
 import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
-import RouteInbox from '../destinations/RouteInbox';
+import RouteCanvas from '../destinations/RouteCanvas';
 import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
@@ -150,7 +150,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
   const status = !hero.data ? null : hero.flagged === 0 ? t('home.noFlaggedSpots') : hero.flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: hero.flagged });
-  if (walks.open) return <RouteInbox key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
+  if (walks.open) return <RouteCanvas key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
     spots={walks.open.built.spots} caption={walks.open.kept ? t('search.mapOnlyLong') : `${t('search.mapOnlyLong')} ${t('search.notKept')}`}/>;
   return <main ref={shell} className="welcome-shell site-home" aria-label={t('home.label')}>
     {shown ? <RouteMap key={shown.data.id} still data={shown.data} walk={shown.walk} photoView="" markers={shown.markers} labels={[]} insets={insets}
