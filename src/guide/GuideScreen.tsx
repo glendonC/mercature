@@ -18,8 +18,8 @@ import { addStreet, buildStreet, loadLines, mapPaths, saveLines, setCheck, wayAr
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { ChevronIcon, iconFor } from '../ui/icons';
-import { Choice, Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
+import { ChevronIcon, NoteIcon, iconFor } from '../ui/icons';
+import { Composer, CopyBox, Dialogue, GlassButton, MARK_ORDER, Segmented, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
@@ -163,6 +163,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const [ways, setWays] = useState(() => loadLines(data.id).lines);
   const around = wayAroundOf(data, ways);
   const [problem, setProblem] = useState('');
+  // Before shows the walk as the data has it; Now with every change she made. The switch appears once there is a change.
+  const [view, setView] = useState<'before' | 'now'>('now');
+  const blankEdits = useMemo<Edits>(() => ({ ...edits, added: [], fixed: {}, notes: {}, answers: {} }), [edits]);
+  const changed = Object.keys(review.decisions).length > 0 || edits.added.length > 0 || Object.keys(edits.fixed).length > 0 || Object.keys(edits.notes).length > 0
+    || Object.keys(edits.answers).length > 0 || ways.streets.length > 0 || !!ways.check;
+  const before = view === 'before' && changed;
   function commit(change: (review: Review) => Review) {
     const next = change(latest.current); latest.current = next; setReview(next);
     if (!saveReview(next)) setProblem(s.notSaved);
@@ -368,10 +374,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const [ack, setAck] = useState('');
   const history = useRef<Step[]>([]);
   const [said, setSaid] = useState('');
-  function go(next: Step, line = '') { history.current.push(step); setStep(next); setAck(line); setSaid(''); }
+  function go(next: Step, line = '') { setView('now'); history.current.push(step); setStep(next); setAck(line); setSaid(''); }
   // The Edit pill pauses whatever step she is on; "Back to where I was" returns to it.
   const [resume, setResume] = useState<Step | null>(null);
-  function openEdit() { if (step.id === 'edit') return; setResume(paused => paused ?? step); go({ id: 'edit' }); }
+  function openEdit() {
+    if (step.id !== 'edit') { setResume(paused => paused ?? step); go({ id: 'edit' }); return; }
+    if (resume) { const paused = resume; setResume(null); history.current.push(step); setStep(paused); setAck(''); }
+  }
   function back() { const previous = history.current.pop(); if (previous) { setStep(previous); setAck(''); setSaid(''); } }
   const nextCheck = (at: number): Step => at + 1 < items.length ? { id: 'check', at: at + 1 } : { id: 'checkEnd' };
   const nextMessage = (at: number): Step => at + 1 < rows.length ? { id: 'message', at: at + 1 } : { id: 'insights' };
@@ -522,39 +531,41 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const clause = spot ? (REPLY_MORE.answer as Record<string, Record<VisitorLang, string>>)[answerOf(edits, spot.id)?.answer ?? ''] : undefined;
     return clause ? text.replace(NOTE.steps[language], clause[language]) : text;
   }
-  function noteText(language: VisitorLang) {
+  /** The route note now, or as it read before any of her changes: the data alone. */
+  function noteText(language: VisitorLang, before = false) {
+    const mine = before ? blankEdits : edits, gone = (stretches: readonly number[]) => !before && removed(stretches);
     const lines: string[] = [];
     let steps = false;
     for (const spot of walk.spots) {
-      const fix = isFixed(edits, spot.stretches), subject = subjectOf(spot), said = answerOf(edits, spot.id), at = whereOf(spot), m = Math.round(spot.from);
+      const fix = isFixed(mine, spot.stretches), subject = subjectOf(spot), said = answerOf(mine, spot.id), at = whereOf(spot), m = Math.round(spot.from);
       // Her answer says what is there now; a spot she has not answered keeps what the photos or OpenStreetMap show.
       const line = said ? answerLine(said.question, said.answer, accessOfSpot(spot), at, m, language) : undefined;
       if (fix) lines.push(fixedLine(kindOfSubject(subject), at, spot.from, fix.at, language));
-      else if (removed(spot.stretches) || line === null) { /* off her map, or nothing for the note */ }
+      else if (gone(spot.stretches) || line === null) { /* off her map, or nothing for the note */ }
       else if (line) lines.push(line);
       else if (spot.kind === 'flagged') { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, at, m)); steps ||= subject === 'steps'; }
-      const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
+      const own = noteOf(mine, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
     // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them.
     for (const one of items) if (!('spot' in one) && KIND_NOTE[one.mark as keyof typeof KIND_NOTE]) {
-      const said = answerOf(edits, one.key)?.answer;
+      const said = answerOf(mine, one.key)?.answer;
       if (said === 'yes' || (one.mark === 'cobblestones' && said && said !== 'unknown')) lines.push(KIND_NOTE[one.mark as keyof typeof KIND_NOTE][language]);
     }
-    if (around?.status === 'found' && ways.check?.works) {
+    if (around?.status === 'found' && !before && ways.check?.works) {
       const avoided = walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index))));
       if (avoided) lines.push(AROUND_NOTE[language](whereOf(avoided), Math.max(0, Math.round(((around.lengthMetres ?? around.walkMetres) - around.walkMetres) / 10) * 10)));
     }
-    for (const spot of edits.added) {
-      const fix = isFixed(edits, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
+    for (const spot of mine.added) {
+      const fix = isFixed(mine, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
       if (fix) lines.push(fixedLine(spot.kind, here, stretch.from, fix.at, language));
       else { lines.push(NOTE.added[language](spot.kind, here, Math.round(stretch.from))); steps ||= spot.kind === 'steps'; }
       lines.push(...ownNoteLines(spot.note, language));
     }
-    const walkNote = noteOf(edits, WALK_NOTE); if (walkNote) lines.push(...ownNoteLines(walkNote, language));
+    const walkNote = noteOf(mine, WALK_NOTE); if (walkNote) lines.push(...ownNoteLines(walkNote, language));
     if (!lines.length) return '';
     const end = (name: string) => { const spot = routeSpots.find(item => !item.stretches.length && item.landmark === name); return !spot ? name : language === 'ko' ? spot.aliases.ko?.[0] ?? spot.name.en : spot.name[language]; };
     const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), about(data.lengthMetres)) : data.title;
-    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), (!data.photos.length ? NOTE.basisMapped : Object.values(edits.answers).some(said => said.answer !== 'unknown') ? NOTE.basisChecked : NOTE.basis)[language]].join('\n');
+    return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), (!data.photos.length ? NOTE.basisMapped : Object.values(mine.answers).some(said => said.answer !== 'unknown') ? NOTE.basisChecked : NOTE.basis)[language]].join('\n');
   }
   function copy(text: string, done: string) { navigator.clipboard.writeText(text).then(() => setSaid(done), () => setSaid(t.copyFailed)); }
 
@@ -581,18 +592,22 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     : step.id === 'missed' ? step.here ?? null : step.id === 'propose' ? step.proposal.target : null;
   const filedCounts = new Map<string, number>();
   for (const message of review.messages) if (message.spot) filedCounts.set(message.spot, (filedCounts.get(message.spot) ?? 0) + 1);
+  // Each spot as the data has it and as her edits leave it; a spot whose two differ, or that she answered for, is ringed in both views.
   const markers: Marker[] = walk.spots.map(spot => {
-    const target: Target = { kind: 'spot', id: spot.id }, fix = isFixed(edits, spot.stretches), count = filedCounts.get(keyOf(target)) ?? 0;
-    const said = answerOf(edits, spot.id), fromAnswer = said ? stateOfAnswer(said.answer) : null;
-    const state: MarkerState = fix ? 'fixed' : removed(spot.stretches) ? 'not-barrier' : spot.kind === 'no-photos' ? 'no-photos' : fromAnswer ?? 'open';
+    const target: Target = { kind: 'spot', id: spot.id }, fixNow = isFixed(edits, spot.stretches), fix = !before && fixNow, count = filedCounts.get(keyOf(target)) ?? 0;
+    const saidNow = answerOf(edits, spot.id), said = before ? null : saidNow, fromAnswer = said ? stateOfAnswer(said.answer) : null;
+    const recorded: MarkerState = spot.kind === 'no-photos' ? 'no-photos' : 'open';
+    const state: MarkerState = fix ? 'fixed' : !before && removed(spot.stretches) ? 'not-barrier' : fromAnswer ?? recorded;
     const subject = subjectOf(spot), tag = tagOf(target);
     const icon = state === 'fixed' ? 'fixed' : state === 'not-barrier' ? 'dismissed' : state === 'no-photos' ? 'no-photos' : subject === 'path' ? iconFor(spot.findings[0]?.concept ?? '') ?? 'path' : subject;
-    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, kind: kindOf(spot.findings[0]?.concept ?? '') ?? undefined, label: [spotName(spot), ...(count ? [t.inbox.visitors(count)] : [])].join(', ') };
+    return { id: spot.id, at: spot.at, state, selected: same(selected, target), rank: rankOf(target), count, tag, icon, kind: kindOf(spot.findings[0]?.concept ?? '') ?? undefined, label: [spotName(spot), ...(count ? [t.inbox.visitors(count)] : [])].join(', '),
+      changed: !!fixNow || !!saidNow || removed(spot.stretches) };
   });
+  // A spot she added lifts away before her changes and drops back in with them.
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
-    if (at) markers.push({ id: `added:${spot.id}`, at, state: fix ? 'fixed' : 'barrier', selected: same(selected, target), rank: rankOf(target), count,
-      tag: tagOf(target), icon: fix ? 'fixed' : 'added', label: addedName(spot.id) });
+    if (at) markers.push({ id: `added:${spot.id}`, at, state: before ? 'added' : fix ? 'fixed' : 'barrier', selected: !before && same(selected, target), rank: rankOf(target), count,
+      tag: tagOf(target), icon: fix ? 'fixed' : 'added', label: addedName(spot.id), changed: true, gone: before });
   }
   const extra = [...ranked.map(targetOf), selected].filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch'));
   for (const target of extra) {
@@ -802,7 +817,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.mode === 'add') words = hear;
     if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); go({ id: 'note' }, s.edit.noteSaved); };
   } else if (step.id === 'note') {
-    const text = noteText(noteLang);
+    const text = noteText(noteLang, before);
     if (step.clearing) {
       lines.push(s.restart.ask);
       chips = [{ id: 'yes', label: s.restart.yes, onClick: () => { commit(startOver); edit(clearEdits); if (place) void forgetPlace(place.id); setSkipped(new Set()); setResume(null); history.current = []; setStep({ id: 'hello' }); setAck(''); } },
@@ -869,14 +884,18 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     onKeyDown={event => { if (event.key === 'Escape' && history.current.length) back(); }}>
     <header className="gs-bar">
       <div className="gs-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start ? routeSpots.find(spot => !spot.stretches.length && spot.landmark === walk.start!.name)?.name[lang] ?? walk.start.name : data.title, Math.round(data.lengthMetres))}</p>{caption && <p>{caption}</p>}</div>
-      <Choice className="gs-edit" selected={step.id === 'edit'} onClick={openEdit}>{s.edit.chip}</Choice>
+      <div className="gs-edits">
+        <GlassButton className="gs-edit" icon={<NoteIcon />} pressed={step.id === 'edit'} onClick={openEdit}>{s.edit.chip}</GlassButton>
+        {changed && <Segmented className="gs-compare" surface="glass" label={s.compare.label} value={before ? 'before' : 'now'} options={[{ value: 'before', label: s.compare.before }, { value: 'now', label: s.compare.now }]}
+          onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); }} />}
+      </div>
       <Menu onHome={onHome} current={shownPlace} onPlace={next => { if (next !== shownPlace) (onPlace ?? onHome)(next); }} />
     </header>
     <div className="gs-map">
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={tapMarker} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         picking={step.id === 'street' && !step.found ? 'free' : (step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || (step.id === 'edit' && (step.mode === 'add' || step.mode === 'change')) || undefined}
-        paths={[...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
+        paths={before ? [] : [...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
     <Bot ref={bot} working={working} talk={talk} />

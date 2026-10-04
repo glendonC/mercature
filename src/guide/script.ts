@@ -245,6 +245,8 @@ export type Script = {
   restart: { chip: string; ask: string; yes: string; no: string };
   back: string;
   /** One tap away on every step: what she wants to change on her map, while the step she was on waits for her. */
+  /** Her map before her changes and now, side by side in time; the said lines come when she turns between them. */
+  compare: { label: string; before: string; now: string; saidBefore: string; saidNow: string };
   edit: { chip: string; ask: string; addSpot: string; changeSpot: string; note: string; noteSaved: string; chips: { addSpot: string; changeSpot: string; addStreet: string; note: string; back: string } };
   /** The screen reader's name for the mark that turns to the next page of a line. */
   more: string;
@@ -508,6 +510,7 @@ const en: Script = {
   input: { placeholder: 'Type in your own words', send: 'Send' },
   restart: { chip: 'Start over', ask: 'Clear everything you’ve done on this walk?', yes: 'Clear it', no: 'Keep it' },
   back: 'Back',
+  compare: { label: 'Your map', before: 'Before', now: 'Now', saidBefore: 'This is the walk before your changes.', saidNow: 'This is the walk with your changes.' },
   edit: {
     chip: 'Edit', ask: 'What would you like to change?', addSpot: 'Tap where it is, or tell me in your own words.', changeSpot: 'Tap the spot you want to change.',
     note: 'What should your note say? Write it in your own words.', noteSaved: 'Saved. Visitors will see it in your words.',
@@ -751,6 +754,7 @@ const es: Script = {
   input: { placeholder: 'Escribe con tus palabras', send: 'Enviar' },
   restart: { chip: 'Empezar de nuevo', ask: '¿Borro todo lo que hiciste en este recorrido?', yes: 'Sí, borrar', no: 'No, conservar' },
   back: 'Volver',
+  compare: { label: 'Tu mapa', before: 'Antes', now: 'Ahora', saidBefore: 'Así era el recorrido antes de tus cambios.', saidNow: 'Así queda el recorrido con tus cambios.' },
   edit: {
     chip: 'Editar', ask: '¿Qué quieres cambiar?', addSpot: 'Toca dónde está o cuéntamelo con tus palabras.', changeSpot: 'Toca el punto que quieres cambiar.',
     note: '¿Qué debería decir tu nota? Escríbela con tus palabras.', noteSaved: 'Guardado. Los visitantes la verán con tus palabras.',
