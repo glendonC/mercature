@@ -15,7 +15,7 @@ import { fromRecord } from '../i18n/records';
 import { walkMarks, type Mark } from './marks';
 import RevealFx from '../fx/RevealFx';
 import { marksShown, photosShown, type Beats } from '../fx/build';
-import { TextButton, markOf } from '../ui';
+import { Companion, Dialogue, TextButton, markOf } from '../ui';
 import { SCRIPT, type WalkSlots } from '../guide/script';
 import { ROUTE_PLACES } from '../site/registry';
 import { SkipIcon } from '../ui/icons';
@@ -24,19 +24,19 @@ import type { Space } from '../space3d/space';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
-const BUILD_FROM = 900, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
+const BUILD_FROM = 600, PHOTOS_FOR = 1200, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
 /** The 3D areas built from the photos rise along the walk and settle onto the map, where the place publishes them; SPACE_PACE scales the 3D view's own 3.9 s. */
-const SPACE_PACE = 0.85, SPACE_FOR = 3900 * SPACE_PACE + 150;
+const SPACE_PACE = 0.5, SPACE_FOR = 3900 * SPACE_PACE + 150;
 /** A long walk's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
-const COUNT_MAX = 1100;
+const COUNT_MAX = 800;
 /** The guide's greeting holds this long, while the place's name and its map come in and the first photos land. */
 const HELLO_FOR = 1500;
 /** The guide's line for each step: a colleague's words, with no counts; the counts sit in the figures under the place's name. */
-const LINE_OF = { photos: 'photos', areas: 'photos', walk: 'walk', stretches: 'walk', reading: 'reading', marks: 'reading', barriers: 'marks' } as const;
+const LINE_OF = { photos: 'photos', areas: 'areas', walk: 'walk', stretches: 'walk', reading: 'reading', marks: 'reading', barriers: 'marks' } as const;
 /** The photo reading: a few photos with model outlines, each opening from its dot and folding back into it, one every READ_GAP, each READ_FOR long; its marks land on the map READ_LANDS in, as reveal.css draws them. */
-const READ_GAP = 560, READ_FOR = 1050, READ_LANDS = 980, MAX_CARDS = 5;
+const READ_GAP = 520, READ_FOR = 1050, READ_LANDS = 980, MAX_CARDS = 4;
 /** The last step holds this long before the hand-off; retained 3D areas, read only on this device, may hold it back a little more. */
-const HOLD_END = 900, HANDOFF_WAIT = 1300;
+const HOLD_END = 300, HANDOFF_WAIT = 1300;
 /** The landing on the inspection map, then the fade that uncovers it; on a leaned route map the replay only fades, since the canvas behind shares its framing. */
 const LAND_FOR = 720, FADE_FOR = 220, FADE_LEANED = 380;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
@@ -100,7 +100,7 @@ function endOf(data: Destination, lang: keyof typeof SCRIPT): string {
 /** The kind an outline was read as, in one or two words, such as Steps or Kerb; the finding's own label where the scan names no kind. */
 const kindOf = (data: Destination, finding: Finding, lang: Parameters<typeof fromRecord>[1]) => fromRecord(data.scan?.kinds.find(kind => kind.concept === finding.concept)?.label ?? finding.label, lang);
 
-/** Up to five photos with model outlines, barriers first, spread along the route from start to end. */
+/** Up to four photos with model outlines, barriers first, spread along the route from start to end. */
 function chooseCards(data: Destination): Card[] {
   const origin: Coordinate = [data.origin[0], data.origin[1]];
   const line = data.line.map(point => metres(point, origin));
@@ -135,6 +135,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const [pointsDone, setPointsDone] = useState(false);
   const [view, setView] = useState<number[] | null>(null);
   const [lens, setLens] = useState<Lens | null>(null);
+  /** The guide talks while a page of its line types in. */
+  const [talking, setTalking] = useState(false);
   const narrow = useNarrow();
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
@@ -384,7 +386,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           </div>
           <figcaption><strong className="reveal-chip" data-barrier={card.findings.some(f => f.barrier) || undefined}>{kindOf(data, card.findings.find(f => f.barrier) ?? card.findings[0], lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
-        {phase === 'play' && line && <p className="reveal-say" key={beat}><span>{line}</span></p>}
+        {phase === 'play' && line && <Dialogue key={beat} className="reveal-say" label={t('common.guide')} say={line} onTalking={setTalking} advanceAfter={900} />}
+        <Companion className="reveal-bot" talking={talking} />
         <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}{space && ' · 3D: VGGT'}</span><span className="reveal-credit-short">{t('reveal.creditShort')}{space && ' · 3D: VGGT'}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}

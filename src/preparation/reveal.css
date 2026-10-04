@@ -86,9 +86,9 @@
 .reveal[data-step=barriers] .reveal-mark.is-barrier { fill: var(--blocked); animation: reveal-mark .35s var(--ease) var(--at) both, reveal-barrier .6s var(--ease); }
 /* The possible barriers stay through the landing, where the canvas's spots take their place. */
 .reveal[data-phase=handoff] :is(.reveal-ticks, .reveal-marks) { opacity: 0; transition: opacity .3s ease; }
-.reveal-say { position: absolute; left: 50%; bottom: calc(62px + var(--safe-bottom)); display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100% - 32px); margin: 0; translate: -50% 0; font-size: var(--text-guide); line-height: 1.35; color: var(--ink); text-shadow: 0 0 12px #eceeef, 0 0 4px #eceeef, 0 0 2px #eceeef; animation: reveal-say .45s var(--ease) both; pointer-events: none; }
-.reveal-say strong { font-weight: 500; }
-.reveal-say svg { flex: 0 0 22px; width: 22px; height: 22px; overflow: visible; }
+/* The guide floats above its own line, clear of it; the dialogue draws itself at the bottom centre. */
+.reveal-bot { position: absolute; z-index: 6; left: calc(50% - 32px); bottom: calc(160px + var(--safe-bottom)); }
+.reveal.is-leaned .reveal-bot { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2 - 32px); }
 .glyph-photo { fill: var(--ink); opacity: .55; }
 .glyph-walk { fill: none; stroke: var(--reachable); stroke-width: 2.4; stroke-linecap: round; }
 .glyph-ticks { fill: none; stroke: var(--ink); stroke-opacity: .6; stroke-width: 1.4; }
