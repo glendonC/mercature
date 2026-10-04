@@ -16,11 +16,11 @@ React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respecti
 
 The guide on the hidden farm workspace and the loopback inspection screen uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
 
-The preparation views of the hidden farm workspace and the loopback inspection screen use [thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt).
+[thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt), is listed as a dependency but not used by the app.
 
 ## Published place package
 
-`public/places/qorikancha` ships 27 cropped views of Mapillary street photos along the Qorikancha walk, the records of the 403 photos used, OpenStreetMap context and the walking route. Each photo keeps its contributor, capture date, source link and license (CC BY-SA 4.0) in `place.json`, and the app shows them with the photo. The cropped views are adaptations and remain under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Map data is from OpenStreetMap contributors under the ODbL. No point clouds are published.
+`public/places/qorikancha` ships 27 views of Mapillary street photos along the Qorikancha walk (12 crops of 360° photos and 15 resized photos), the records of the 403 photos used, OpenStreetMap context and the walking route. Each photo keeps its contributor, capture date, source link and license (CC BY-SA 4.0) in `place.json`, and the app shows them with the photo. The views are adaptations and remain under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Map data is from OpenStreetMap contributors under the ODbL. No point clouds are published.
 
 ## Local destination inspection
 
