@@ -93,3 +93,7 @@
 .space3d[data-tone=light] .space3d-credit { color: var(--muted); text-shadow: var(--halo-label); }
 /* A stage's screen carries the credits in its own line. */
 .space3d-stage .space3d-credit { display: none; }
+/* A keyboard button over each marker: Tab reaches it, Enter picks it; taps go to the canvas beneath. */
+.space3d-markers { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.space3d-marker { position: absolute; left: -22px; top: -22px; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; background: none; pointer-events: none; }
+.space3d-marker:focus-visible { outline: 2px solid rgb(255 255 255 / 0.95); outline-offset: -6px; box-shadow: inset 0 0 0 8px rgb(29 33 37 / 0.35); }

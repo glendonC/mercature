@@ -6,7 +6,9 @@ import { useLanguage } from '../i18n';
 import { IconButton, markOf } from '../ui';
 import { FitIcon, MinusIcon, PlusIcon } from '../ui/icons';
 import { Renderer, project, type Camera, type Pin, type Vec3 } from './render';
-import { groundAt, loadArea, loadSpace, nearest, pointAt, track, type Space, type Track } from './space';
+import { groundAt, loadArea, loadSpace, nearest, pointAt, track, type Area, type Space, type Track } from './space';
+import { lonLatOf, pickGround, pickPoint } from './pick';
+import { Tweens, lookOf, type Look } from './pins';
 import './space3d.css';
 
 export type Space3DProps = {
@@ -17,6 +19,9 @@ export type Space3DProps = {
   marks?: boolean;
   onMarker?: (id: string) => void;
   onMark?: (mark: ScanMark) => void;
+  /** A tap, or Enter on a marker, picks a place: the point she tapped, or the ground under it, as a place on the map, and the spot whose
+   * marker is within reach. A small ring shows where. */
+  onPick?: (pick: { lonLat: Coordinate; spotId?: string }) => void;
   /** Frame these stretches of the walk instead of the whole walk. */
   focus?: number[] | null;
   /** Show only these 3D areas (capture area ids such as s01), framed together. */
@@ -64,10 +69,8 @@ function rgbOf(colour: string): Vec3 {
 }
 /** Lighter, for a mark that must read on the dark glass. */
 const lift = (rgb: Vec3, by: number): Vec3 => rgb.map(c => c + (1 - c) * by) as Vec3;
-const STATE_TOKEN: Record<Marker['state'], [string, string]> = {
-  open: ['--blocked', '#a6501c'], barrier: ['--blocked', '#a6501c'], 'not-barrier': ['--unknown', '#5f6368'], 'no-photos': ['--unknown', '#5f6368'],
-  landmark: ['--field', '#8a9095'], clear: ['--reachable', '#1f5fa8'], fixed: ['--reachable', '#1f5fa8'], added: ['--blocked', '#a6501c'], osm: ['--field', '#8a9095'],
-};
+/** Her pick: a small white ring with an ink edge (the shader draws the ring; the rest of the look is unused). */
+const PICK_LOOK: Look = { size: 14, fill: [1, 1, 1], fillAlpha: 0, ring: [1, 1, 1], ringWidth: 2, halo: 0, glyph: 0, glyphRgb: [1, 1, 1], glyphSize: 0, square: 0, badge: 0, selected: 0, dim: 0, rank: 0 };
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (t: number) => t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -85,7 +88,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   return { target, yaw, pitch, distance: radius / Math.sin(half) * 1.02 };
 }
 
-export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, pace = 1, onIntroEnd, onUnavailable, orbit = false, still = false, from, tone = 'dark', className }: Space3DProps) {
+export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, onPick, focus = null, areas = null, intro = false, settle = false, play = true, pace = 1, onIntroEnd, onUnavailable, orbit = false, still = false, from, tone = 'dark', className }: Space3DProps) {
   const { lang } = useLanguage();
   const words = WORDS[lang === 'es' ? 'es' : 'en'];
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
@@ -99,11 +102,13 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   const clock = useRef({ start: 0, done: !intro });
   const dirty = useRef(true);
   const pins = useRef<(Pin & { scan?: ScanMark })[]>([]);
+  /** Markers ease between states as the map's do; her last pick shows as a ring; the areas, kept for picking; a button per marker for the keyboard. */
+  const tweens = useRef(new Tweens()), picked = useRef<Vec3 | null>(null), shown = useRef<Area[]>([]), buttons = useRef(new Map<string, HTMLButtonElement>());
   const matrix = useRef<Float32Array | null>(null);
   /** When she last gave any input, and whether she has at all. */
   const input = useRef({ at: performance.now(), touched: false });
-  const callbacks = useRef({ onMarker, onMark, onIntroEnd, onUnavailable });
-  callbacks.current = { onMarker, onMark, onIntroEnd, onUnavailable };
+  const callbacks = useRef({ onMarker, onMark, onPick, onIntroEnd, onUnavailable });
+  callbacks.current = { onMarker, onMark, onPick, onIntroEnd, onUnavailable };
 
   const fail = (reason: string) => { setFailed(reason); callbacks.current.onUnavailable?.(reason); };
 
@@ -117,6 +122,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     const lost = (event: Event) => { event.preventDefault(); fail('The 3D view stopped.'); };
     canvas.current.addEventListener('webglcontextlost', lost);
     const controller = new AbortController();
+    shown.current = [];
     (async () => {
       const all = await loadSpace(data, controller.signal, from);
       const s = areas?.length ? { ...all, pieces: all.pieces.filter(p => areas.includes(p.id)) } : all;
@@ -128,7 +134,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
       await Promise.all(queue.map(async ({ piece, start }) => {
         const area = await loadArea(s, piece);
         if (controller.signal.aborted) return;
-        r.addArea(area, start); count++; setLoaded(count); dirty.current = true;
+        r.addArea(area, start); shown.current.push(area); count++; setLoaded(count); dirty.current = true;
       }));
     })().catch(error => { if (!controller.signal.aborted) fail(error instanceof Error ? error.message : 'The 3D could not load.'); });
     const element = canvas.current;
@@ -150,28 +156,36 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     dirty.current = true;
   }, [space, walk]);
 
-  // Markers and marks as pins at their ground positions.
+  // Markers as the map draws them, easing when a state changes; marks as small dots in their kinds' hues; her pick as a ring.
+  const pushPins = (now: number) => {
+    const r = renderer.current;
+    if (!r) return;
+    const list: Pin[] = pins.current.map(p => p.kind === 'marker' ? { ...p, look: tweens.current.now(p.id, now) ?? p.look } : p);
+    if (picked.current) list.push({ id: 'pick', at: picked.current, kind: 'pick', look: PICK_LOOK });
+    r.setPins(list, rgbOf(css('--kind-barrier', '#e0905f')));
+  };
   useEffect(() => {
     const r = renderer.current;
     if (!r || !space) return;
     const frame = routeFrame(data), zero = frame.fromMetres(0, 0);
     const fromFrame = ([x, y]: [number, number]): [number, number] => [(x - zero[0]) / frame.scale, -(y - zero[1]) / frame.scale];
-    const any = markers.some(m => m.selected);
+    const any = markers.some(m => m.selected), looks = new Map<string, Look>();
     const list: (Pin & { scan?: ScanMark })[] = markers.map(m => {
-      // A marker takes its kind's hue where the map gives it one, else its state's colour.
-      const [east, north] = fromFrame(m.at as [number, number]), [token, fallback] = STATE_TOKEN[m.state] ?? ['--field', '#8a9095'], hue = m.kind ? css(`--mark-${m.kind}`, '') : '';
-      return { id: m.id, at: [east, north, ground(east, north) + pinHeight], rgb: lift(rgbOf(hue || css(token, fallback)), 0.12), size: m.selected ? 30 : m.state === 'osm' ? 14 : 22, selected: m.selected, dim: any && !m.selected };
+      const [east, north] = fromFrame(m.at as [number, number]), look = lookOf(m, any);
+      looks.set(m.id, look);
+      return { id: m.id, at: [east, north, ground(east, north) + pinHeight], kind: 'marker', look };
     });
     if (marks) {
       const origin: Coordinate = [data.origin[0], data.origin[1]];
       for (const mark of data.marks) {
         if (!mark.position) continue;
-        const [east, north] = metres(mark.position, origin), kind = markOf(mark.concept) ?? 'road';
-        list.push({ id: `mark:${mark.id}`, scan: mark, at: [east, north, ground(east, north) + 0.5], rgb: lift(rgbOf(css(`--mark-${kind}`, '#8a9095')), 0.25), size: mark.barrier ? 10 : 7, selected: false, dim: false, mark: true });
+        const [east, north] = metres(mark.position, origin), hue = lift(rgbOf(css(`--mark-${markOf(mark.concept) ?? 'road'}`, '#8a9095')), 0.25);
+        list.push({ id: `mark:${mark.id}`, scan: mark, at: [east, north, ground(east, north) + 0.5], kind: 'mark', look: { ...PICK_LOOK, size: mark.barrier ? 10 : 7, fill: hue, fillAlpha: 1, ringWidth: 0, halo: 1, glyphRgb: hue } });
       }
     }
+    tweens.current.set(looks, performance.now(), reduced());
     pins.current = list;
-    r.setPins(list);
+    pushPins(performance.now());
     dirty.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [space, markers, marks, data]);
@@ -243,6 +257,8 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
         const k = ease((t - SETTLE_FROM) / SETTLE_FOR), to = overview(), turn = Math.atan2(Math.sin(to.yaw - settleFrom.yaw), Math.cos(to.yaw - settleFrom.yaw));
         camera.current = { target: settleFrom.target.map((v, i) => v + (to.target[i] - v) * k) as Vec3, pitch: settleFrom.pitch + (to.pitch - settleFrom.pitch) * k, yaw: settleFrom.yaw + turn * k, distance: settleFrom.distance * Math.pow(to.distance / settleFrom.distance, k) };
       }
+      // A marker easing to its new state is drawn every frame until it settles.
+      if (tweens.current.moving) { pushPins(now); moving = true; }
       // Idle, the camera circles its target; a frame drawn for the orbit alone waits its turn.
       if (circling && !playing && !goal.current && !gesture.current && camera.current && now - input.current.at >= (input.current.touched ? ORBIT_AGAIN : ORBIT_AFTER)) {
         if (!moving && !dirty.current && now - painted < PAINT_EVERY) return;
@@ -256,6 +272,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
       const reveal = playing ? walk.length * ease((t - LINE_FROM) / LINE_FOR) : walk.length + 1;
       const pinsK = playing ? ease((t - PINS_FROM) / PINS_FOR) : 1;
       matrix.current = r.draw({ camera: camera.current, time: t, reveal, pinsDrop: (1 - pinsK) * 14, pinsAlpha: pinsK, limit: 1 });
+      place(matrix.current);
       if (playing && t >= SETTLE_FROM + (settle ? SETTLE_FOR : 0) + 0.1 && !ended) { ended = true; clock.current.done = true; callbacks.current.onIntroEnd?.(); }
     };
     frame = requestAnimationFrame(tick);
@@ -293,19 +310,49 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   };
   const spread = () => { const [a, b] = [...pointers.current.values()]; return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0; };
   const centre = () => { const all = [...pointers.current.values()]; return { x: all.reduce((s, p) => s + p.x, 0) / all.length, y: all.reduce((s, p) => s + p.y, 0) / all.length }; };
+  /** Keeps each marker's keyboard button over its marker, and out of the tab order while it is off the view. */
+  const place = (m: Float32Array) => {
+    const box = host.current?.getBoundingClientRect();
+    if (!box) return;
+    for (const pin of pins.current) {
+      const button = pin.kind === 'marker' ? buttons.current.get(pin.id) : undefined;
+      if (!button) continue;
+      const at = project(m, pin.at, box.width, box.height), off = !at || at[0] < 0 || at[1] < 0 || at[0] > box.width || at[1] > box.height;
+      if (at) button.style.transform = `translate(${at[0]}px, ${at[1]}px)`;
+      if (button.hidden !== off) button.hidden = off;
+    }
+  };
+  const report = (at: Vec3, spotId?: string) => {
+    picked.current = at; pushPins(performance.now()); dirty.current = true;
+    callbacks.current.onPick?.({ lonLat: lonLatOf(at[0], at[1], [data.origin[0], data.origin[1]]), spotId });
+  };
   const pick = (x: number, y: number) => {
     const m = matrix.current, box = host.current?.getBoundingClientRect(), r = renderer.current;
     if (!m || !box || !r) return;
     let best: { pin: (typeof pins.current)[number]; d: number } | null = null;
     for (const pin of pins.current) {
+      if (pin.kind === 'mark' && camera.current && camera.current.distance > 140) continue;
       const at = project(m, pin.at, box.width, box.height);
       if (!at) continue;
-      const d = Math.hypot(at[0] - x, at[1] - y), reach = Math.max(22, pin.size / 2 + 8) + (pin.scan ? 0 : 4);
-      if (pin.scan && camera.current && camera.current.distance > 140) continue;
+      const d = Math.hypot(at[0] - x, at[1] - y), reach = Math.max(22, pin.look.size / 2 + 8) + (pin.scan ? 0 : 4);
       if (d <= reach && (!best || d - (pin.scan ? 0 : 10) < best.d - (best.pin.scan ? 0 : 10))) best = { pin, d };
     }
-    if (!best) return;
-    if (best.pin.scan) callbacks.current.onMark?.(best.pin.scan); else callbacks.current.onMarker?.(best.pin.id);
+    const spot = best && !best.pin.scan ? best.pin : null;
+    if (best?.pin.scan) callbacks.current.onMark?.(best.pin.scan);
+    if (spot) callbacks.current.onMarker?.(spot.id);
+    if (!callbacks.current.onPick) return;
+    // The point she tapped; else the ground under the tap, near the walk; else the ground under the marker she tapped.
+    const point = pickPoint(shown.current, m, box.width, box.height, x, y, 24);
+    const floor = point ? null : pickGround(m, box.width, box.height, x, y, ground);
+    const at = point ?? (floor && nearest(walk, floor[0], floor[1]).off <= 40 ? floor : null) ?? (spot ? [spot.at[0], spot.at[1], spot.at[2] - pinHeight] as Vec3 : null);
+    if (at) report(at, spot?.id);
+  };
+  /** Enter or a click on a marker's keyboard button: the same as tapping its marker. */
+  const choose = (id: string) => {
+    const pin = pins.current.find(item => item.kind === 'marker' && item.id === id);
+    if (!pin) return;
+    callbacks.current.onMarker?.(id);
+    if (callbacks.current.onPick) report([pin.at[0], pin.at[1], pin.at[2] - pinHeight], id);
   };
   const handlers = {
     onPointerDown: (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -373,6 +420,8 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   if (failed) return null;
   return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-tone={tone} data-ready={loaded > 0 || undefined}>
     {still ? <canvas ref={canvas} className="space3d-canvas" role="img" aria-label={words.label} /> : <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />}
+    {!still && <div className="space3d-markers">{markers.map(m => <button key={m.id} ref={button => { if (button) buttons.current.set(m.id, button); else buttons.current.delete(m.id); }}
+      type="button" className="space3d-marker" aria-label={m.label} aria-pressed={m.selected} hidden onClick={() => choose(m.id)} />)}</div>}
     {!still && <p className="space3d-label">{words.label}</p>}
     {space && loaded < space.pieces.length && <p className="space3d-loading" role="status">{words.loading}</p>}
     {!still && <div className="space3d-controls">

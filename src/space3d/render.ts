@@ -1,10 +1,12 @@
 /** A small WebGL2 renderer for the 3D areas: round points with the photos' colours, the walk as a lit line, and marks as rings. */
 import type { Area } from './space';
+import type { Look } from './pins';
 
 export type Vec3 = [number, number, number];
 export type Camera = { target: Vec3; yaw: number; pitch: number; distance: number };
-/** A ring drawn at a place on the walk: a spot (large) or a mark (small). rgb in 0..1. */
-export type Pin = { id: string; at: Vec3; rgb: Vec3; size: number; selected: boolean; dim: boolean; mark?: boolean };
+/** Something drawn at a place on the walk, as the route map draws it: a marker in its state's look, a scan mark (a small dot that
+ * leaves far away), or the ring where she picked. */
+export type Pin = { id: string; at: Vec3; look: Look; kind: 'marker' | 'mark' | 'pick' };
 
 const FOV = 40 * Math.PI / 180;
 
@@ -105,35 +107,62 @@ void main() {
   o = vec4(u_colour.rgb * a, a);
 }`;
 const PIN_VS = `#version 300 es
-in vec3 a_pos; in vec3 a_col; in float a_size; in float a_state;
+in vec3 a_pos; in vec4 a_fill; in vec4 a_ring; in vec4 a_glyph; in vec4 a_shape; in vec4 a_state;
 uniform mat4 u_matrix; uniform highp float u_dpr; uniform float u_drop;
-out vec3 v_col; out float v_state; out float v_size;
+out vec4 v_fill; out vec4 v_ring; out vec4 v_glyph; out vec4 v_shape; out vec4 v_state; out float v_ext;
 void main() {
   vec3 p = a_pos; p.z += u_drop;
   vec4 clip = u_matrix * vec4(p, 1.0);
   gl_Position = clip;
-  // A mark (state 3) shrinks with distance and is left out from far away, where the walk's markers speak for it.
-  float near = a_state > 2.5 ? clamp(110.0 / clip.w, 0.0, 1.25) : 1.0;
-  float size = near < 0.5 ? 0.0 : a_size * near * u_dpr;
-  gl_PointSize = size;
-  v_col = a_col; v_state = a_state; v_size = size;
+  // A scan mark (state z 1) shrinks with distance and is left out from far away, where the walk's markers speak for it.
+  float near = abs(a_state.z - 1.0) < 0.5 ? clamp(110.0 / clip.w, 0.0, 1.25) : 1.0;
+  float size = near < 0.5 ? 0.0 : a_shape.x * near;
+  float r0 = size * 0.5 * (1.0 + 0.2 * a_state.x);
+  float ext = max(r0 + a_state.w + a_state.x * 2.0, a_shape.z * 12.5) + 1.5;
+  gl_PointSize = size > 0.0 ? 2.0 * ext * u_dpr : 0.0;
+  v_fill = a_fill; v_ring = a_ring; v_glyph = a_glyph; v_shape = vec4(r0, a_shape.yzw); v_state = a_state; v_ext = ext;
 }`;
-/** a_state: 0 plain, 1 selected, 2 dimmed, 3 a mark. A disc in its colour with a white core and a white halo; selected adds an ink ring inside the halo; a mark is a plain dot with a thin halo. */
+/** In CSS pixels from the pin's centre, y down: the map's dot (circle or rounded square), its inner ring, glyph, white halo, the corner
+ * badge of a possible barrier, and for the selected one an ink ring outside the halo. State z: 0 marker, 1 scan mark, 2 her pick. */
 const PIN_FS = `#version 300 es
 precision mediump float;
-in vec3 v_col; in float v_state; in float v_size; uniform float u_alpha; uniform highp float u_dpr; out vec4 o;
+in vec4 v_fill; in vec4 v_ring; in vec4 v_glyph; in vec4 v_shape; in vec4 v_state; in float v_ext;
+uniform float u_alpha; uniform highp float u_dpr; uniform vec3 u_badge; out vec4 o;
+float box(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+float segment(vec2 p, vec2 a, vec2 b, float w) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h) - w * 0.5; }
+vec4 over(vec4 below, vec4 above) { return above + below * (1.0 - above.a); }
+float cover(float d, float aa) { return 1.0 - smoothstep(-aa, aa, d); }
 void main() {
-  float R = v_size * 0.5, r = length((gl_PointCoord * 2.0 - 1.0) * R);
-  float cover = 1.0 - smoothstep(R - 1.0, R, r);
-  if (cover <= 0.0) discard;
-  float sel = step(0.5, v_state) * (1.0 - step(1.5, v_state)), dim = step(1.5, v_state) * (1.0 - step(2.5, v_state)), mark = step(2.5, v_state);
-  float halo = (sel > 0.5 ? 2.0 : mark > 0.5 ? 1.0 : 1.5) * u_dpr, ink = 2.0 * u_dpr * sel;
-  vec3 c = mix(v_col, vec3(1.0), (1.0 - mark) * (1.0 - smoothstep(R * 0.34 - 0.5, R * 0.34 + 0.5, r)));
-  float band = smoothstep(R - halo - ink - 0.5, R - halo - ink + 0.5, r) * (1.0 - smoothstep(R - halo - 0.5, R - halo + 0.5, r));
-  c = mix(c, vec3(0.114, 0.129, 0.145), band * sel);
-  c = mix(c, vec3(1.0), smoothstep(R - halo - 0.5, R - halo + 0.5, r));
-  float a = cover * u_alpha * (1.0 - 0.55 * dim);
-  o = vec4(c * a, a);
+  vec2 p = (gl_PointCoord * 2.0 - 1.0) * v_ext;
+  float aa = 0.75 / u_dpr, r0 = v_shape.x, gs = v_shape.w, sel = v_state.x, halo = v_state.w;
+  float d = mix(length(p) - r0, box(p, vec2(r0), min(3.0, r0)), v_shape.y);
+  vec4 c = vec4(0.0);
+  if (v_state.z > 1.5) {
+    // Her pick: a white ring with a thin ink edge.
+    c = over(c, vec4(0.114, 0.129, 0.145, 1.0) * cover(abs(d) - 2.2, aa));
+    c = over(c, vec4(1.0) * cover(abs(d) - 1.2, aa));
+  } else {
+    c = over(c, vec4(0.114, 0.129, 0.145, 1.0) * sel * cover(abs(d - halo - 0.5) - 0.5, aa));
+    c = over(c, vec4(1.0) * 0.92 * cover(d - halo, aa));
+    float inside = cover(d, aa);
+    c = over(c, vec4(v_fill.rgb, 1.0) * v_fill.a * inside);
+    c = over(c, vec4(v_ring.rgb, 1.0) * inside * (1.0 - cover(d + v_ring.w, aa)));
+    float g = v_glyph.w, k = gs * 0.5 * 0.7071, gd = 1e3;
+    if (g > 0.5 && g < 1.5) gd = length(p) - gs * 0.5;
+    else if (g > 1.5 && g < 2.5) gd = box(p, vec2(gs * 0.5), 1.0);
+    else if (g > 2.5 && g < 3.5) gd = segment(p, vec2(-k, k), vec2(k, -k), 1.5);
+    else if (g > 3.5 && g < 4.5) gd = min(segment(p, vec2(-2.6, -0.2), vec2(-0.7, 1.7), 1.5), segment(p, vec2(-0.7, 1.7), vec2(3.0, -2.0), 1.5));
+    else if (g > 4.5) gd = min(box(p, vec2(gs * 0.5, 0.75), 0.0), box(p, vec2(0.75, gs * 0.5), 0.0));
+    c = over(c, vec4(v_glyph.rgb, 1.0) * cover(gd, aa) * inside);
+    if (v_shape.z > 0.01) {
+      float b = length(p - vec2(r0 + 0.5, -(r0 + 0.5))) - 3.5;
+      c = over(c, vec4(1.0) * v_shape.z * cover(b - 1.5, aa));
+      c = over(c, vec4(u_badge, 1.0) * v_shape.z * cover(b, aa));
+    }
+  }
+  c *= u_alpha * (1.0 - 0.55 * v_state.y);
+  if (c.a < 0.003) discard;
+  o = c;
 }`;
 
 function shader(gl: WebGL2RenderingContext, type: number, source: string) {
@@ -163,6 +192,7 @@ export class Renderer {
   width = 1; height = 1; dpr = 1;
   /** Drawn over a light map rather than on dark glass. */
   light = false;
+  private badge: Vec3 = [0.878, 0.565, 0.373];
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, depth: true, powerPreference: 'default' });
@@ -214,17 +244,23 @@ export class Renderer {
     this.lineCount = side.length;
   }
 
-  setPins(pins: Pin[]) {
+  setPins(pins: Pin[], badge: Vec3 = [0.878, 0.565, 0.373]) {
     const gl = this.gl;
+    this.badge = badge;
     for (const b of this.pinBuffers) gl.deleteBuffer(b);
-    // Selected last so it draws on top.
-    const ordered = [...pins].sort((a, b) => Number(!a.mark) - Number(!b.mark) || Number(a.selected) - Number(b.selected) || b.size - a.size);
+    if (this.pinVao) gl.deleteVertexArray(this.pinVao);
+    // Marks under markers, markers under her pick, the selected marker over the others.
+    const rank = (p: Pin) => p.kind === 'mark' ? 0 : p.kind === 'pick' ? 3 : p.look.selected > 0.5 ? 2 : 1;
+    const ordered = [...pins].sort((a, b) => rank(a) - rank(b));
+    const at = (f: (p: Pin) => number[]) => new Float32Array(ordered.flatMap(f));
     this.pinVao = gl.createVertexArray(); gl.bindVertexArray(this.pinVao);
     this.pinBuffers = [
-      this.buffer(new Float32Array(ordered.flatMap(p => p.at)), this.pins.a('a_pos'), 3, gl.FLOAT),
-      this.buffer(new Float32Array(ordered.flatMap(p => p.rgb)), this.pins.a('a_col'), 3, gl.FLOAT),
-      this.buffer(new Float32Array(ordered.map(p => p.size)), this.pins.a('a_size'), 1, gl.FLOAT),
-      this.buffer(new Float32Array(ordered.map(p => p.mark ? 3 : p.selected ? 1 : p.dim ? 2 : 0)), this.pins.a('a_state'), 1, gl.FLOAT),
+      this.buffer(at(p => p.at), this.pins.a('a_pos'), 3, gl.FLOAT),
+      this.buffer(at(p => [...p.look.fill, p.look.fillAlpha]), this.pins.a('a_fill'), 4, gl.FLOAT),
+      this.buffer(at(p => [...p.look.ring, p.look.ringWidth]), this.pins.a('a_ring'), 4, gl.FLOAT),
+      this.buffer(at(p => [...p.look.glyphRgb, p.look.glyph]), this.pins.a('a_glyph'), 4, gl.FLOAT),
+      this.buffer(at(p => [p.look.size, p.look.square, p.look.badge, p.look.glyphSize]), this.pins.a('a_shape'), 4, gl.FLOAT),
+      this.buffer(at(p => [p.look.selected, p.look.dim, p.kind === 'mark' ? 1 : p.kind === 'pick' ? 2 : 0, p.look.halo]), this.pins.a('a_state'), 4, gl.FLOAT),
     ];
     gl.bindVertexArray(null);
     this.pinCount = ordered.length;
@@ -280,6 +316,7 @@ export class Renderer {
       gl.uniform1f(this.pins.u('u_dpr'), this.dpr);
       gl.uniform1f(this.pins.u('u_drop'), frame.pinsDrop);
       gl.uniform1f(this.pins.u('u_alpha'), frame.pinsAlpha);
+      gl.uniform3fv(this.pins.u('u_badge'), this.badge);
       gl.bindVertexArray(this.pinVao);
       gl.drawArrays(gl.POINTS, 0, this.pinCount);
       gl.enable(gl.DEPTH_TEST);
