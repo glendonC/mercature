@@ -531,7 +531,7 @@ const es: Script = {
   hello: {
     greet: () => 'Revisemos juntos tu recorrido.',
     walk: s => s.spots === 0 ? `Son unos ${about(s.metres)} m y nada parece un problema.` : `Son unos ${about(s.metres)} m, con ${count_es(s.spots, 'punto', 'puntos')} que podrían complicar a los visitantes.`,
-    mapOnly: s => `Unos ${about(s.metres)} m, aún sin fotos de la calle. Según OpenStreetMap, hay ${s.osm === 1 ? 'una cosa' : 'algunas cosas'} por revisar.`,
+    mapOnly: s => `Unos ${about(s.metres)} m, aún sin fotos. Según OpenStreetMap, hay ${s.osm === 1 ? 'una cosa' : 'algunas cosas'} por revisar.`,
     altitude: s => `Aquí estamos a unos ${s.metres.toLocaleString('es')} m de altura, así que caminar cansa más.`,
     chips: { check: 'Revisar el recorrido', messages: 'Leer mensajes', missed: 'Agregar algo que sé', note: 'Ver la nota de la ruta' },
   },
