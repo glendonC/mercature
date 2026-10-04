@@ -47,8 +47,15 @@ export function decodeArea(id: string, buffer: ArrayBuffer, expected: number): A
   return { id, n, positions, colours: bytes.slice(24 + n * 6, 24 + n * 9), low, high };
 }
 
-export async function loadArea(space: Space, piece: SpacePiece, signal?: AbortSignal): Promise<Area> {
-  const response = await fetch(space.base + piece.file.slice('pieces/'.length), { signal, redirect: 'error', credentials: 'same-origin' });
+const areas = new Map<string, Promise<Area>>();
+/** One area, decoded once per page; a view that mounts again reuses it. */
+export function loadArea(space: Space, piece: SpacePiece): Promise<Area> {
+  const url = space.base + piece.file.slice('pieces/'.length);
+  if (!areas.has(url)) areas.set(url, fetchArea(url, piece).catch(error => { areas.delete(url); throw error; }));
+  return areas.get(url)!;
+}
+async function fetchArea(url: string, piece: SpacePiece): Promise<Area> {
+  const response = await fetch(url, { redirect: 'error', credentials: 'same-origin' });
   if (!response.ok || /text\/html/i.test(response.headers.get('content-type') ?? '')) fail('The 3D is not available.');
   const buffer = await response.arrayBuffer();
   if (buffer.byteLength > 2_000_000) fail('The 3D exceeds the size limit.');

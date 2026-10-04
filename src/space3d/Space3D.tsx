@@ -119,7 +119,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
       const queue = order.map((piece, i) => ({ piece, start: RISE_FROM + RISE_SPREAD * i / Math.max(1, order.length - 1) }));
       let count = 0;
       await Promise.all(queue.map(async ({ piece, start }) => {
-        const area = await loadArea(s, piece, controller.signal);
+        const area = await loadArea(s, piece);
         if (controller.signal.aborted) return;
         r.addArea(area, start); count++; setLoaded(count); dirty.current = true;
       }));
