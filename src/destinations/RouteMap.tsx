@@ -623,10 +623,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     if (level <= 1) show({ kind: 'route' }); else go(clamp({ ...current, k: fit.k * level }));
   };
-  // How much a circle on the ground flattens, for the ring under the selected marker.
-  const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
+  // How much a circle on the ground flattens, for the ring under the selected marker; and the free part of the map, so a page can
+  // keep its controls in it.
+  const frameStyle = { '--squash': flat ? undefined : Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3),
+    '--map-free-top': `${insets.top}px`, '--map-free-right': `${insets.right}px`, '--map-free-bottom': `${insets.bottom}px`, '--map-free-left': `${insets.left}px` } as CSSProperties;
   const picked = pick && view ? view.at(pick) : null;
-  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} data-picking={picking && !still ? '' : undefined} style={flat ? undefined : squash}
+  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} data-picking={picking && !still ? '' : undefined} style={frameStyle}
     onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => setPick(null)} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} unseen={unseen} glowing={glowing} lens={flat ? null : view} /><Paths paths={drawn} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
