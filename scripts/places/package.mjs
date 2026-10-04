@@ -116,7 +116,7 @@ const place = {
     photos: 'Street photos by Mapillary contributors under CC BY-SA 4.0; each photo names its creator and source. Views are crops and resizes of those photos, shared under the same licence.',
     map: '© OpenStreetMap contributors, under the Open Database License 1.0 (https://www.openstreetmap.org/copyright).',
     findings: 'Outlines are model suggestions from SAM 3 that nobody has verified. A stretch without findings only means no barrier was seen in photos.',
-    marks: 'Every SAM 3 mark above its threshold, simplified from the model\'s outline; nobody has checked them. Pavement, road, cobblestones and crossings describe the ground, not barriers. One thing seen in several photos is one mark per photo.',
+    marks: 'SAM 3 marks above their threshold that lie near the walk or on a published view, simplified from the model\'s outline; nobody has checked them. Pavement, road, cobblestones and crossings describe the ground, not barriers. One thing seen in several photos is one mark per photo.',
   },
   sources: record.sources.filter(s => SOURCES.includes(s.id)),
   request: { start: { name: record.request.start.name, position: position(record.request.start.position) }, destination: { name: record.request.destination.name, position: position(record.request.destination.position), osm: record.request.destination.osm } },
