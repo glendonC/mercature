@@ -6,7 +6,7 @@ It answers the tourism challenge of the World Bank Small AI for Development brie
 
 ## The place: the Qorikancha walk
 
-A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned the photos and left 287 marks of steps, kerbs, crossings and paving; 8 findings are flagged as possible barriers, none checked by a person.
+A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned the photos: its raw scan left 287 marks of every kind (paths, paving, kerbs, steps, crossings), and separately the walk's build has 52 findings of steps and kerbs on the walk's stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers; none has been checked by a person.
 
 ## How it works
 

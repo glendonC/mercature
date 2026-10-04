@@ -39,8 +39,10 @@ Built for the World Bank Small AI for Development challenge, tourism track.
 
 A real route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
-segmentation model scanned the photos once, when the route was prepared, and left 287 marks of steps,
-kerbs, crossings and paving; 8 findings are flagged as possible barriers, none checked by a person.
+segmentation model scanned the photos once, when the route was prepared: its raw scan left 287 marks
+of every kind (paths, paving, kerbs, steps, crossings), and separately the walk's build has 52 findings of steps and
+kerbs on the walk's stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as
+possible barriers; none has been checked by a person.
 A stretch with no flagged barrier means only that no barrier was seen in the photos: Mercature
 claims no widths, slopes or reachability.
 
