@@ -27,6 +27,8 @@
 .route-marker[data-state=no-photos] .route-marker-dot { width: 15px; height: 15px; background: repeating-linear-gradient(45deg, var(--unknown) 0 2px, var(--surface) 2px 4.5px); border: 1.5px solid var(--unknown); }
 .route-marker[data-state=landmark] .route-marker-dot { width: 11px; height: 11px; background: var(--ink); }
 .route-marker[data-state=clear] .route-marker-dot { width: 13px; height: 13px; background: var(--reachable); }
+.route-marker[data-state=fixed] .route-marker-dot { width: 17px; height: 17px; border-radius: 4px; background: var(--reachable); }
+.route-marker[data-state=fixed] .route-marker-dot::before { content: ''; width: 7px; height: 3.5px; border: solid var(--on-primary); border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
 .route-marker[data-rank] .route-marker-dot { width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--surface), 0 0 0 9px color-mix(in srgb, var(--ink) 12%, transparent), 0 2px 8px rgb(20 22 24 / 0.25); }
 .route-marker[data-rank] .route-marker-dot::after { display: none; }
 .route-marker[data-state=no-photos], .route-marker[data-state=landmark] { z-index: 1; }

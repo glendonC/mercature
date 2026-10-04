@@ -8,7 +8,7 @@ import type { Point, Walk } from './walk';
 
 export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
-export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear';
+export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
 export type Marker = { id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number; tag?: string };
 export type MapHandle = {
   fit: (animate?: boolean) => void;
