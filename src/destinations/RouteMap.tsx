@@ -2,6 +2,7 @@ import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayou
 import type { Destination } from './data';
 import GeographicMap, { type MapWords } from './GeographicMap';
 import './destinations.css';
+import './map.css';
 import type { Point, Walk } from './walk';
 
 export type Camera = { x: number; y: number; k: number };
@@ -36,6 +37,8 @@ type Props = {
   /** Pixels at the bottom kept free of map words, for the guide line and any sheet. */
   clearBottom: number;
   words: MapWords;
+  /** A backdrop that only shows the walk: no pan, zoom or taps, and markers are plain dots. */
+  still?: boolean;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -53,7 +56,7 @@ const Overlay = memo(function Overlay({ walk, highlight }: { walk: Walk; highlig
   </g>;
 });
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<Camera | null>(null);
@@ -131,7 +134,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const gesture = useRef<{ moved: boolean; camera: Camera; x: number; y: number; spread: number } | null>(null);
   function local(event: ReactPointerEvent) { const r = box.current!.getBoundingClientRect(); return { x: event.clientX - r.left, y: event.clientY - r.top }; }
   function down(event: ReactPointerEvent<HTMLDivElement>) {
-    if ((event.target as HTMLElement).closest('button, a, .route-card')) return;
+    if (still || (event.target as HTMLElement).closest('button, a, .route-card')) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, local(event));
     const points = [...pointers.current.values()], x = points.reduce((s, p) => s + p.x, 0) / points.length, y = points.reduce((s, p) => s + p.y, 0) / points.length;
@@ -162,6 +165,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }
   useEffect(() => {
     const element = box.current!;
+    if (still) return;
     const wheel = (event: WheelEvent) => {
       if ((event.target as HTMLElement).closest('.route-card')) return;
       event.preventDefault();
@@ -175,7 +179,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     };
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
-  }, [clamp]);
+  }, [clamp, still]);
 
   // Card placement beside its marker, flipped or nudged to stay inside the canvas.
   const cardBox = useRef<HTMLDivElement>(null);
@@ -217,15 +221,17 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
   };
-  return <div className="route-map" ref={box} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
-    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} underlay={<Cameras walk={walk} />}>
+  return <div className="route-map" ref={box} data-still={still || undefined} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
+    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} underlay={<Cameras walk={walk} />}>
       <Overlay walk={walk} highlight={highlight} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
     <div className="route-markers">
-      {placed.map(({ marker, at }) => <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
+      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} style={{ left: at[0], top: at[1] }} aria-hidden="true">
+        <span className="route-marker-dot">{marker.rank ?? ''}</span>
+      </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
         data-rank={marker.rank} style={{ left: at[0], top: at[1] }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
         <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
         {marker.tag && <span className="route-marker-tag" aria-hidden="true">{marker.tag}</span>}

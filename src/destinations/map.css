@@ -1,0 +1,7 @@
+/* The route map's own look, wherever it is shown. */
+.route-map .destination-map { position: absolute; inset: 0; height: auto; }
+.route-map .destination-map > svg { position: absolute; inset: 0; }
+.route-map .map-route-halo { stroke-width: 10px; vector-effect: non-scaling-stroke; }
+.route-map .map-route-line { stroke-width: 4px; vector-effect: non-scaling-stroke; }
+.route-map[data-still], .route-map[data-still]:active { touch-action: auto; cursor: default; }
+.route-map[data-still] .route-marker { pointer-events: none; }

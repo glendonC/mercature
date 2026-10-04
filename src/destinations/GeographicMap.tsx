@@ -40,11 +40,13 @@ type Props = {
   viewBox?: string;
   /** The map's own words; the interface language's by default. */
   words?: MapWords;
+  /** A backdrop: no zoom buttons, scale bar or north arrow. The credit stays. */
+  still?: boolean;
 };
 export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: string };
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
-export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given }: Props) {
+export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, still = false }: Props) {
   const { t } = useLanguage();
   const words = given ?? { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const selectedView = data.views.find(v => v.id === selected), selectedPhoto = data.photos.find(p => p.id === selectedView?.photoId);
@@ -75,6 +77,6 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
     {selectedPosition && selectedHeading != null && <path d="M0 0L-14 -31L14 -31Z" transform={`translate(${selectedPosition.join(' ')}) rotate(${selectedHeading})`} className="map-heading" pointerEvents="none"/>}
     <g transform={`translate(${target.join(' ')})`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>
     {children}
-    <g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text>
-  </svg><div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div><span className="destination-map-credit">{words.credit}</span></section>;
+    {!still && <><g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text></>}
+  </svg>{!still && <div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div>}<span className="destination-map-credit">{words.credit}</span></section>;
 }
