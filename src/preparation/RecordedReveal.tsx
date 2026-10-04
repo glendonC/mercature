@@ -25,10 +25,18 @@ import './reveal.css';
 const BUILD_FROM = 600, PHOTOS_FOR = 1200, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
 /** A long walk's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
 const COUNT_MAX = 800;
-/** The guide's greeting holds this long, while the place's name and its map come in and the first photos land. */
-const HELLO_FOR = 1500;
 /** The guide's line for each step: a colleague's words, with no counts; the counts sit in the figures under the place's name. */
 const LINE_OF = { photos: 'photos', areas: 'photos', walk: 'walk', stretches: 'walk', reading: 'reading', marks: 'reading', barriers: 'marks' } as const;
+type Beat = 'hello' | (typeof LINE_OF)[keyof typeof LINE_OF];
+/** Lines the replay leaves out, so every line it says can be read and the whole replay stays near 12 s; a left-out line's steps stay with the line before. */
+const LEFT_OUT: ReadonlySet<Beat> = new Set<Beat>(['hello', 'walk']);
+/** How long a line must stay to be read, the dialogue's own rule: 1.2 s plus 300 ms a word, never under 2.5 s. */
+const readFor = (text: string) => Math.max(2500, 1200 + 300 * text.split(/\s+/).filter(Boolean).length);
+/** The line each step is spoken under: its own, or the last one said before it. */
+function speakers(ids: readonly StepId[]): (Beat | null)[] {
+  let speaking: Beat | null = LEFT_OUT.has('hello') ? null : 'hello';
+  return ids.map(id => { if (!LEFT_OUT.has(LINE_OF[id])) speaking = LINE_OF[id]; return speaking; });
+}
 /** The photo reading: a few photos with model outlines, each opening from its dot and folding back into it, one every READ_GAP, each READ_FOR long; its marks land on the map READ_LANDS in, as reveal.css draws them. */
 const READ_GAP = 520, READ_FOR = 1050, READ_LANDS = 980, MAX_CARDS = 4;
 /** The last step holds this long before the hand-off; retained 3D areas, read only on this device, may hold it back a little more. */
@@ -46,7 +54,7 @@ type StepId = 'photos' | 'areas' | 'walk' | 'stretches' | 'reading' | 'marks' | 
 type Step = { id: StepId; at: number; until: number };
 
 /** The build in order: photos, retained 3D areas where this device has them, the walk, its stretches, a few photos read, the findings, then the possible barriers. A step with nothing to show is left out. */
-function schedule(data: Destination, marks: readonly Mark[], reads: number, leaned: boolean): Step[] {
+function schedule(data: Destination, marks: readonly Mark[], reads: number, leaned: boolean, lines: Record<Beat, string> | null): Step[] {
   const order: [StepId, number][] = [['photos', PHOTOS_FOR]];
   // Retained areas show only on the flat map; a leaned replay stays on its one map.
   if (data.pieces.length && !leaned) order.push(['areas', data.pieces.length * POINT_GAP + 300]);
@@ -55,6 +63,18 @@ function schedule(data: Destination, marks: readonly Mark[], reads: number, lean
   if (reads) order.push(['reading', (reads - 1) * READ_GAP + READ_FOR]);
   if (marks.length) order.push(['marks', Math.min(COUNT_MAX, marks.length * MARK_GAP + 300)]);
   if (marks.some(mark => mark.barrier)) order.push(['barriers', BARRIERS_FOR]);
+  // Each line stays at least its reading time: a run of steps spoken under one line is stretched at its end when the line needs longer
+  if (lines) {
+    const by = speakers(order.map(([id]) => id));
+    for (let start = 0; start < order.length;) {
+      let end = start;
+      while (end + 1 < order.length && by[end + 1] === by[start]) end++;
+      const beat = by[start], has = order.slice(start, end + 1).reduce((sum, [, length]) => sum + length, 0);
+      const need = (beat ? readFor(lines[beat]) : 0) + (start === 0 && !LEFT_OUT.has('hello') ? readFor(lines.hello) : 0) - (start === 0 ? BUILD_FROM : 0);
+      if (need > has) order[end] = [order[end][0], order[end][1] + need - has];
+      start = end + 1;
+    }
+  }
   let at = BUILD_FROM;
   return order.map(([id, length]) => { const step = { id, at, until: at + length }; at += length; return step; });
 }
@@ -188,7 +208,15 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
     return () => clearInterval(timer);
   }, [data, phase]);
 
-  const steps = useMemo(() => data ? schedule(data, marks, cards.length, leaned) : [], [data, marks, cards.length, leaned]);
+  // The guide's lines, worked out before the schedule so each can be held for its reading time
+  const lines = useMemo<Record<Beat, string> | null>(() => {
+    if (!data) return null;
+    const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : data.stretches.filter(stretch => stretch.status === 'barrier').length;
+    const slots: WalkSlots = { place: DESTINATIONS[id].name, start: data.start?.name ?? '', target: endOf(data, lang), metres: data.lengthMetres, photos: data.photos.length, marks: marks.length, barriers: marks.filter(mark => mark.barrier).length, spots, messages: 0, osm: 0 };
+    const say = SCRIPT[lang].reveal;
+    return { hello: say.hello(slots), photos: say.photos(slots), walk: say.walk(slots), reading: say.reading(slots), marks: say.marks(slots) };
+  }, [data, walk, marks, lang, id]);
+  const steps = useMemo(() => data ? schedule(data, marks, cards.length, leaned, lines) : [], [data, marks, cards.length, leaned, lines]);
   const stepOf = (id: StepId) => steps.find(item => item.id === id);
   /** The build layer's beats, on its clock. */
   const beats = useMemo<Beats>(() => {
@@ -346,9 +374,10 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : data ? data.stretches.filter(stretch => stretch.status === 'barrier').length : 0;
   const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk');
   // What the guide says: a greeting while the place comes in, then one line per stage; the counts stay out of its speech.
-  const beat = !data ? null : quiet || phase !== 'play' ? 'marks' : !step || (step.id === 'photos' && elapsed < HELLO_FOR) ? 'hello' : LINE_OF[step.id];
-  const slots: WalkSlots | null = data && { place: name, start: data.start?.name ?? '', target: endOf(data, lang), metres: data.lengthMetres, photos: data.photos.length, marks: marks.length, barriers, spots, messages: 0, osm: 0 };
-  const line = slots && beat ? SCRIPT[lang].reveal[beat](slots) : null;
+  const helloFor = !lines || LEFT_OUT.has('hello') ? 0 : readFor(lines.hello);
+  const spokenBy = speakers(steps.map(item => item.id));
+  const beat: Beat | null = !data ? null : quiet || phase !== 'play' ? 'marks' : elapsed < helloFor ? 'hello' : spokenBy[step ? steps.indexOf(step) : 0] ?? null;
+  const line = lines && beat ? lines[beat] : null;
   // The counts, each as it is placed, in small figures under the place's name: photos landed, the walk's length, marks placed, the possible barriers.
   const at = (id: StepId) => { const index = steps.findIndex(item => item.id === id); return index >= 0 && !!step && steps.indexOf(step) >= index; };
   const metresText = data ? t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) }) : '';
