@@ -33,7 +33,8 @@ export function reviewLine(review: Review | undefined, lang: Lang): string {
   const es = lang === 'es';
   if (review?.state === 'checked') {
     const at = new Date(review.at), date = Number.isNaN(at.getTime()) ? '' : new Intl.DateTimeFormat(es ? 'es-419' : 'en-GB', { day: 'numeric', month: 'long' }).format(at);
-    if (date) return es ? `Lo revisaste el ${date}` : `You checked this on ${date}`;
+    if (!date) return es ? 'Lo revisaste' : 'You checked this';
+    return es ? `Lo revisaste el ${date}` : `You checked this on ${date}`;
   }
   if (review?.state === 'removed') return es ? 'Lo quitaste de tu mapa' : 'You took this off your map';
   return es ? 'Sin revisar todavía' : 'Not checked yet';
