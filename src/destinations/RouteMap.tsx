@@ -215,8 +215,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Kept by what the lines are, so a page that builds them anew on every render does not move the camera.
   const pathsKey = JSON.stringify(paths);
   const drawn = useMemo(() => (JSON.parse(pathsKey) as MapPath[]).map(path => ({ id: path.id, kind: path.kind, points: path.line.map(walk.project) })), [pathsKey, walk]);
-  /** The whole route with the lines beside it, and a key for it. */
-  const whole = useMemo(() => ({ points: [...reach, ...drawn.flatMap(path => path.points)], key: drawn.map(path => `${path.id}:${path.points.length}`).join(' ') }), [reach, drawn]);
+  /** The whole route with the lines beside it, and a key for it; lines reaching far beyond the walk are left out, so it stays large. */
+  const whole = useMemo(() => {
+    const span = (points: Point[]) => { const xs = points.map(p => p[0]), ys = points.map(p => p[1]); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1); };
+    const near = drawn.filter(path => path.points.length && span([...reach, ...path.points]) <= span(reach) * 1.5);
+    return { points: [...reach, ...near.flatMap(path => path.points)], key: near.map(path => `${path.id}:${path.points.length}`).join(' ') };
+  }, [reach, drawn]);
   /** The flat fit and the free box it fills, from the insets or the free part of the screen given. */
   const fitFlat = useCallback((width: number, height: number, i: Insets = insetsRef.current) => {
     const { minX, minY, maxX, maxY } = walk.extent;
