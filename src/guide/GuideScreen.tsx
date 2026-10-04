@@ -22,7 +22,7 @@ import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { BackIcon, ChevronIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
-import { ChangeRow, Composer, CopyBox, Dialogue, EditToggle, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
+import { ChangeRow, Composer, CopyBox, Dialogue, EditToggle, GlassButton, GlassCircle, PAGE_BREAK, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
@@ -107,7 +107,7 @@ const OSM_LINES: Readonly<Record<string, (value: string) => OsmLine | undefined>
 /** What each such line is for the guide's words: who it affects. */
 const ACCESS_OF_OSM: Record<OsmLine, AccessKind> = {
   bench: 'bench', toilets: 'toilets', crossing: 'crossing', handrail: 'handrail', noHandrail: 'steps', ramp: 'ramp', noRamp: 'steps', lit: 'lighting', unlit: 'lighting',
-  wheelchairNo: 'noWheelchair', wheelchairLimited: 'noWheelchair', cobbles: 'uneven', loose: 'uneven', kerbLowered: 'ramp', kerbRaised: 'kerb',
+  wheelchairNo: 'noWheelchair', wheelchairLimited: 'noWheelchair', cobbles: 'uneven', loose: 'uneven', kerbLowered: 'kerb', kerbRaised: 'kerb',
 };
 /** The map icon of something that helps, which she can add. */
 const HELP_ICON: Partial<Record<EditKind, MarkerIcon>> = { bench: 'bench', toilet: 'toilets', ramp: 'ramp', handrail: 'handrail' };
@@ -893,12 +893,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   /** The check card for one item; a card she picked a place from in 3D stays open, in 3D, and its head names the place she picked while she says what is there. */
   const cardOf = (item: Item, at: number, here?: Target | null) => {
     const away = !!here && !('spot' in item && same(here, { kind: 'spot', id: item.spot.id }));
-    return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : 'osm' in item && item.osm.line === 'unlit' ? s.words.affectsDark : s.words.affects[item.access]}
+    return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : 'osm' in item && item.osm.line === 'unlit' ? s.words.affectsDark : 'osm' in item && item.osm.line === 'kerbLowered' ? s.words.affectsLowered : s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item || 'osm' in item ? null : item.viewId}
       stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? photoFit ?? photoStrip() : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   };
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
-  const lines: string[] = result ? editResult(result.said) : ack ? [ack] : [];
+  const payoff = result ? editResult(result.said) : [], lines: string[] = result ? [...payoff] : ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null, good = false;
   let field = { label: s.input.placeholder, send: s.input.send };
   const pasteChip: Chip = { id: 'paste', label: s.messages.chips.paste, onClick: () => go({ id: 'paste' }) };
@@ -975,6 +975,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const message = current, answer = message?.answer ?? null, language = s.words.languages[row.language] ?? row.language;
       if (step.at === 0 && !ack && !step.pasted) lines.push(s.messages.intro({ total: rows.length }));
       lines.push(s.messages.arrived({ n: step.at + 1, total: rows.length, language }));
+      const told = lines.length;
       const first = answer?.candidates.map(targetOf).find((target): target is Target => !!target) ?? null;
       if (model.status === 'outdated' && !message?.spot) {
         lines.push(s.model.outdated);
@@ -994,6 +995,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       else if (first && answer.status === 'ready') lines.push(s.messages.spot({ spot: spotWords(first) }));
       else if (first) lines.push(s.messages.unsure);
       else lines.push(answer.kind ? s.messages.noSpot : s.messages.unplaced);
+      // What the model or she made of it stands on its own page after the line that brings the message.
+      if (lines.length > told) lines[told] = `${PAGE_BREAK}${lines[told]}`;
       if (message && !chips.length) {
         if (message.spot) chips.push({ id: 'reply', label: s.reply.copy, primary: true, onClick: () => go({ id: 'reply', at: step.at }) });
         else {
@@ -1112,6 +1115,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (text) above = <TextBox text={text} lang={noteLang} onLang={setNoteLang} copyLabel={s.note.copy} copiedLabel={s.note.copied} />;
   }
 
+  // What she just did, said back (or what visitors will now read), stands alone on its page; she taps on to what comes next, never a timer.
+  const lead = payoff.length || (ack ? 1 : 0);
+  if (lead && lines.length > lead && !lines[lead - 1].endsWith(PAGE_BREAK) && !lines[lead].startsWith(PAGE_BREAK)) lines[lead] = `${PAGE_BREAK}${lines[lead]}`;
   // While a step waits behind an edit, going back to it is always one choice away.
 
   /** Each change she made, newest kinds last: her answers, the spots she added, her notes, her streets and her word on the way around. */
@@ -1248,7 +1254,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       <div className="gs-edits">
         <EditToggle className="gs-edit" editing={editing} onClick={openEdit} editLabel={s.edit.chip} doneLabel={s.edit.done} />
         {changed && <Segmented className="gs-compare" surface="glass" label={s.compare.label} value={before ? 'before' : 'now'} options={[{ value: 'before', label: s.compare.before }, { value: 'now', label: s.compare.now }]}
-          onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); }} />}
+          onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); setResult(null); }} />}
         {(shortAround || !!ways.check?.works) && !before && <GlassButton className="gs-around" icon={<PathIcon />} pressed={showAround || !!ways.check?.works} onClick={() => setShowAround(shown => !shown)}>{s.around.mapToggle}</GlassButton>}
       </div>
       <Menu onHome={onHome} current={shownPlace} onPlace={next => { if (next !== shownPlace) (onPlace ?? onHome)(next); }} />
@@ -1270,7 +1276,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       </div>
     </div>
     <Dialogue key={`line ${turn}`} say={lines} back={history.current.length > 0 ? <GlassCircle label={s.back} onClick={back}><BackIcon /></GlassCircle> : undefined}
-      actions={quiet ? <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} advanceAfter={1400} label={t.workspace} lang={lang}
+      actions={quiet ? <TextButton muted icon={<SkipIcon />} onClick={quiet.onClick}>{quiet.label}</TextButton> : undefined} onTalking={value => talk.current?.(value)} onDone={() => screen.current?.setAttribute('data-ready', '')} continueLabel={s.more} label={t.workspace} lang={lang}
       working={busy === 'reading'} workingLabel={s.model.reading}
       composer={words ? <Composer label={field.label} sendLabel={field.send} onSend={text => void words!(text)} disabled={busy === 'reading'} lang={lang} maxLength={300} /> : undefined}>
       {progress && <p className="gs-progress">{progress}</p>}

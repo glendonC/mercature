@@ -141,8 +141,8 @@ export type Script = {
     marks: Record<MarkKind, (count: number) => string>;
     /** What OpenStreetMap shows along a route from the map alone, by kind and value, inside check.osmKind, such as "steps with no handrail". */
     osm: Record<OsmLine, string>;
-    /** Who parts with no street lights affect. */
-    affectsDark: string;
+    /** Who parts with no street lights affect, and who lowered kerbs help. */
+    affectsDark: string; affectsLowered: string;
     /** The kinds she can give a spot, as chips. */
     kinds: Record<EditKind, string>;
     /** The same kinds inside a line, such as "a kerb". */
@@ -404,7 +404,7 @@ const en: Script = {
       lit: 'street lights', unlit: 'parts with no street lights', wheelchairNo: 'places marked not for wheelchairs', wheelchairLimited: 'places marked limited for wheelchairs',
       cobbles: 'cobblestones', loose: 'loose or unpaved ground', kerbLowered: 'lowered kerbs', kerbRaised: 'high kerbs',
     },
-    affectsDark: 'Harder for people who can’t see well after dark.',
+    affectsDark: 'Harder for people who can’t see well after dark.', affectsLowered: 'If there are lowered kerbs here, they help wheelchair users and strollers cross.',
     kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow place', other: 'Something else', bench: 'Bench', toilet: 'Toilet', ramp: 'Ramp', handrail: 'Handrail' },
     added: { steps: 'steps', kerb: 'a kerb', narrow: 'a narrow place', other: 'something in the way', bench: 'a bench', toilet: 'a toilet', ramp: 'a ramp', handrail: 'a handrail' },
     groups: { blocks: 'Something in the way', helps: 'Something that helps' },
@@ -698,7 +698,7 @@ const es: Script = {
       lit: 'alumbrado', unlit: 'partes sin alumbrado', wheelchairNo: 'lugares marcados como no accesibles en silla de ruedas', wheelchairLimited: 'lugares marcados con acceso limitado en silla de ruedas',
       cobbles: 'empedrado', loose: 'suelo suelto o sin pavimentar', kerbLowered: 'bordillos rebajados', kerbRaised: 'bordillos altos',
     },
-    affectsDark: 'Cuesta más de noche a quien ve poco.',
+    affectsDark: 'Cuesta más de noche a quien ve poco.', affectsLowered: 'Si hay bordillos rebajados aquí, ayudan a cruzar en silla de ruedas o con coche de bebé.',
     kinds: { steps: 'Escalones', kerb: 'Bordillo', narrow: 'Paso angosto', other: 'Otra cosa', bench: 'Banca', toilet: 'Baño', ramp: 'Rampa', handrail: 'Pasamanos' },
     added: { steps: 'escalones', kerb: 'un bordillo', narrow: 'un paso angosto', other: 'algo que estorba', bench: 'una banca', toilet: 'un baño', ramp: 'una rampa', handrail: 'un pasamanos' },
     groups: { blocks: 'Algo que estorba', helps: 'Algo que ayuda' },
