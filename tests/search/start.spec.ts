@@ -72,3 +72,13 @@ test('a start is judged by its walk on foot: one over 900 m gives way to the nex
     expect(routed.base.walked.lengthMetres).toBeLessThan(900);
   } finally { globalThis.fetch = real; }
 });
+
+test('a road that only shares some of the words comes after the places', async () => {
+  const real = globalThis.fetch;
+  const row = (name: string, category: string, type: string) => ({ osm_type: 'way', osm_id: name.length, lat: '40.8509', lon: '-73.9701', category, type, addresstype: type, place_rank: 27,
+    boundingbox: ['40.8508', '40.8510', '-73.9702', '-73.9700'], name, display_name: `${name}, Fort Lee, United States`, namedetails: { name }, address: { town: 'Fort Lee', country: 'United States' } });
+  globalThis.fetch = (async () => new Response(JSON.stringify([row('Historic Park Road', 'highway', 'service'), row('Fort Lee Historic Park Visitor Center', 'tourism', 'information')]), { headers: { 'content-type': 'application/json' } })) as typeof fetch;
+  try {
+    expect((await findPlaces('Fort Lee Historic Park')).map(found => found.name)).toEqual(['Fort Lee Historic Park Visitor Center', 'Historic Park Road']);
+  } finally { globalThis.fetch = real; }
+});

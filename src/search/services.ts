@@ -104,7 +104,11 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, road: raw.category === 'highway', position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
   // The same place can come back several times (a square, its outline, its centre): one row each.
-  return found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && (item.broad || distance(other.position, item.position) < 400)) === i);
+  const kept = found.filter((item, i) => found.findIndex(other => other.name === item.name && other.area === item.area && (item.broad || distance(other.position, item.position) < 400)) === i);
+  // A road whose name only shares some of the words ("Historic Park Road" for "Fort Lee Historic Park") comes after the places.
+  const asked = fold(words).split(/\s+/).filter(word => word.length > 2), whole = (item: Found) => asked.every(word => fold(item.name).includes(word));
+  const partialRoad = (item: Found) => item.road && !whole(item);
+  return kept.map((item, i) => ({ item, i })).sort((a, b) => Number(partialRoad(a.item)) - Number(partialRoad(b.item)) || a.i - b.i).map(({ item }) => item);
 }
 
 /** A named street the walk follows, from the walk's own turn by turn directions, in metres along it. */
