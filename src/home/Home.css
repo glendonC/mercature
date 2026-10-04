@@ -13,7 +13,9 @@
   background: var(--ground);
 }
 .site-home .destination-map { --map-ground: var(--ground); }
-.site-home .destination-map-credit { right: 24px; bottom: 12px; padding: 0; background: none; color: var(--muted); font-size: var(--text-caption); text-shadow: var(--halo); }
+/* The map's own credit sits under the veil, so Home carries the line itself, above it. */
+.site-home .destination-map-credit { display: none; }
+.home-credit { position: absolute; z-index: 4; right: 24px; bottom: 12px; margin: 0; color: var(--muted); font-size: var(--text-caption); text-shadow: var(--halo); }
 .home-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, var(--ground) 32%, color-mix(in srgb, var(--ground) 70%, transparent) 46%, transparent 58%); }
 .welcome-chrome { position: absolute; z-index: 10; inset: 30px 4vw auto; display: flex; align-items: center; justify-content: space-between; }
 .welcome-brand { font-size: 20px; letter-spacing: -.05em; font-weight: 400; }
@@ -69,7 +71,7 @@
   .home-place { width: 100%; }
   .home-place-text { flex: 1; }
   .home-open { padding: 0 12px; }
-  .site-home .destination-map-credit { right: 16px; bottom: 10px; }
+  .home-credit { right: 16px; bottom: 10px; }
   .home-saved button { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) {

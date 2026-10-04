@@ -110,6 +110,7 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
     {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
+    {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={place => place === 'noor-farm' ? onFarm() : onDestination(place)}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
     <section className="home-places" ref={places} aria-label={t('home.onPhone')}>
