@@ -34,6 +34,8 @@
 .route-marker[data-state=no-photos], .route-marker[data-state=landmark] { z-index: 1; }
 .route-marker[aria-pressed=true], .route-marker[data-rank] { z-index: 3; }
 .route-marker[aria-pressed=true] .route-marker-dot { transform: scale(1.25); box-shadow: 0 0 0 2px var(--ink), 0 0 0 5px var(--surface), 0 3px 10px rgb(20 22 24 / 0.3); }
+/* Messages filed at a spot: a small count above its marker */
+.route-marker-count { position: absolute; left: calc(50% + 5px); bottom: calc(50% + 5px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--radius-pill); background: var(--ink); color: var(--on-primary); box-shadow: 0 0 0 1.5px var(--surface); font-size: 12px; font-weight: 500; line-height: 17px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
 .route-marker-tag { position: absolute; left: 36px; top: 50%; transform: translateY(-50%); padding: 3px 9px; border-radius: var(--radius-pill); background: var(--glass-panel, var(--glass)); box-shadow: var(--shadow-s); font-size: var(--text-caption); white-space: nowrap; color: var(--ink); pointer-events: none; }
 @keyframes route-pulse { 0% { opacity: 0.55; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.5); } }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
@@ -73,6 +75,7 @@
 
 @media (max-width: 640px) {
   .route-labels span { font-size: var(--text-phone-min); max-width: 130px; }
+  .route-marker-count { min-width: 19px; height: 19px; font-size: var(--text-phone-min); line-height: 19px; }
   .route-marker-tag { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

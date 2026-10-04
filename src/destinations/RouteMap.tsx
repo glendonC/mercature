@@ -9,7 +9,11 @@ import type { Point, Walk } from './walk';
 export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
 export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
-export type Marker = { id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number; tag?: string };
+export type Marker = {
+  id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number; tag?: string;
+  /** Visitor messages filed at this spot, shown as a small count when above zero. Say it in the label too. */
+  count?: number;
+};
 export type MapHandle = {
   fit: (animate?: boolean) => void;
   /** Moves the camera so a map point lands on a screen point, optionally closer in. */
@@ -377,9 +381,11 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
       {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-hidden="true">
         <span className="route-marker-dot">{marker.rank ?? ''}</span>
+        {!!marker.count && <span className="route-marker-count">{marker.count > 99 ? '99+' : marker.count}</span>}
       </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
         data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
         <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
+        {!!marker.count && <span className="route-marker-count" aria-hidden="true">{marker.count > 99 ? '99+' : marker.count}</span>}
         {marker.tag && <span className="route-marker-tag" aria-hidden="true">{marker.tag}</span>}
       </button>)}
     </div>
