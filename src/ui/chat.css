@@ -47,12 +47,9 @@
 .ui-choices { display: grid; justify-items: stretch; gap: 0; }
 .ui-choice { position: relative; isolation: isolate; display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--tap); margin: 0; padding: 0 14px; border: 0; background: none; color: var(--line-ink); text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-choice::before { content: ''; position: absolute; z-index: -1; inset: calc((var(--tap) - var(--choice-height)) / 2) 0; border-radius: 12px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); transition: background-color var(--motion-hover) ease, transform var(--motion-hover) ease; }
-.ui-choice:hover::before { background: rgb(50 54 58 / 0.92); }
-.ui-choice:active::before { transform: scale(0.985); }
 .ui-choice .ui-button-label { font-size: var(--font-s); font-weight: 500; line-height: 1.25; white-space: normal; color: var(--line-ink); }
 .ui-choice .ui-button-icon { margin: 0; color: var(--line-ink); }
 .ui-choice[data-lead]::before { background: #f4f5f6; box-shadow: 0 0 0 0.5px rgb(20 22 24 / 0.18), var(--shadow-float); }
-.ui-choice[data-lead]:hover::before { background: #ffffff; }
 .ui-choice[data-lead] .ui-button-label, .ui-choice[data-lead] .ui-button-icon { color: var(--ink); }
 .ui-choice[aria-pressed=true]::before { box-shadow: inset 0 0 0 1.5px var(--line-ink), var(--shadow-float); }
 .ui-choice:disabled { opacity: 0.45; cursor: default; }
@@ -70,8 +67,6 @@
 .ui-composer-field::placeholder { color: var(--line-muted); opacity: 1; }
 .ui-composer-send { position: relative; isolation: isolate; display: grid; place-items: center; flex: none; width: var(--tap); height: var(--tap); margin: 2px 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-composer-send::before { content: ''; position: absolute; z-index: -1; inset: 4px; border-radius: 50%; background: #f4f5f6; transition: background-color var(--motion-hover) ease, transform var(--motion-hover) ease; }
-.ui-composer-send:hover:not(:disabled)::before { background: #ffffff; }
-.ui-composer-send:active:not(:disabled)::before { transform: scale(0.94); }
 .ui-composer-send:disabled { opacity: 1; cursor: default; color: rgb(255 255 255 / 0.5); }
 .ui-composer-send:disabled::before { background: rgb(255 255 255 / 0.08); }
 .ui-composer-send .ui-icon { width: 18px; height: 18px; }

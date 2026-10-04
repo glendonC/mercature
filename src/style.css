@@ -164,6 +164,13 @@
   --motion-slow: var(--slow);
   --ease-out: var(--ease);
   --ease-in-out: cubic-bezier(0.45, 0, 0.2, 1);
+  /* Interaction: hover brightens and lifts, press scales; the same everywhere (src/ui/interact.css) */
+  --hover-time: var(--motion-hover);
+  --press-time: 100ms;
+  --press-scale: 0.97;
+  --lift: -1.5px;
+  --glass-hover: rgb(50 54 58 / 0.9);
+  --shadow-lift: 0 2px 4px rgb(20 22 24 / 0.1), 0 8px 18px -4px rgb(20 22 24 / 0.2);
   /* The guide's dialogue: one clean line at the bottom, as a game shows it. One hierarchy and one rhythm: the line 15 px, a choice 14 px,
      meta 13 px; 8 px between the line and her field, 4 px between choices. */
   --chat-width: 640px;
@@ -198,6 +205,14 @@
 @media (min-resolution: 2dppx) {
   :root {
     --hair-width: 0.5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --hover-time: 0ms;
+    --press-time: 0ms;
+    --press-scale: 1;
+    --lift: 0px;
   }
 }
 @media (max-width: 640px) {

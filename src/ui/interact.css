@@ -1,0 +1,36 @@
+/* One quiet interaction system for every part in src/ui. Tokens: --hover-time, --press-time, --press-scale, --lift, --glass-hover, --shadow-lift.
+   Hover brightens a surface and lifts a pill 1.5 px; it exists only where a pointer can hover, so a tap never leaves it stuck.
+   Press scales to 0.97 for 100 ms. Focus keeps its ring. Reduced motion makes all of it instant and still. */
+.ui-glass-button::before, .ui-choice::before, .ui-segment::before, .ui-text-button::before, .ui-icon-button::before, .ui-primary::before, .ui-composer-send::before, .ui-glass-circle {
+  transition: background-color var(--hover-time) var(--ease-out), box-shadow var(--hover-time) var(--ease-out), translate var(--hover-time) var(--ease-out), transform var(--press-time) var(--ease-out); }
+.ui-row, .ui-change-open { transition: background-color var(--hover-time) var(--ease-out); }
+.ui-segment .ui-button-label, .ui-composer-send { transition: color var(--hover-time) var(--ease-out); }
+.ui-composer { transition: box-shadow var(--hover-time) var(--ease-out); }
+
+@media (hover: hover) {
+  .ui-glass-button:hover::before, .ui-choice:hover::before { background: var(--glass-hover); translate: 0 var(--lift); box-shadow: var(--glass-charcoal-edge), var(--shadow-lift); }
+  .ui-choice[data-lead]:hover::before, .ui-glass-button[aria-pressed=true]:hover::before { background: #ffffff; box-shadow: 0 0 0 0.5px rgb(20 22 24 / 0.18), var(--shadow-lift); }
+  .ui-choice:disabled:hover::before { translate: 0 0; }
+  .ui-glass-circle:hover { background: var(--glass-hover); translate: 0 var(--lift); box-shadow: var(--glass-charcoal-edge), var(--shadow-lift); }
+  .ui-primary:hover:not(:disabled)::before { background: var(--ui-primary-hover); translate: 0 var(--lift); }
+  .ui-text-button:hover::before, .ui-icon-button:hover::before { background: var(--ui-hover); }
+  .ui-icon-button[data-surface=glass]:hover::before { background: var(--glass-hover); }
+  .ui-segment:hover .ui-button-label { color: var(--ui-ink); }
+  .ui-segmented[data-surface=glass] .ui-segment:hover .ui-button-label { color: #ffffff; }
+  .ui-segmented[data-surface=glass] .ui-segment:not([aria-pressed=true]):hover::before { background: rgb(255 255 255 / 0.08); }
+  button.ui-row:hover, button.ui-change-open:hover { background: var(--ui-hover); }
+  .ui-composer:hover:not(:focus-within) { box-shadow: var(--glass-charcoal-edge), inset 0 0 0 1px rgb(255 255 255 / 0.22), var(--shadow-float); }
+  .ui-composer-send:hover:not(:disabled)::before { background: #ffffff; }
+}
+
+/* Press, from any pointer */
+.ui-glass-button:active::before, .ui-choice:active:not(:disabled)::before, .ui-primary:active:not(:disabled)::before, .ui-composer-send:active:not(:disabled)::before, .ui-segment:active::before { transform: scale(var(--press-scale)); translate: 0 0; }
+.ui-glass-circle:active { transform: scale(var(--press-scale)); translate: 0 0; }
+.ui-text-button:active:not(:disabled)::before, .ui-icon-button:active:not(:disabled)::before { background: var(--ui-press); transform: scale(var(--press-scale)); }
+button.ui-row:active, button.ui-change-open:active { background: var(--ui-press); }
+
+/* The field's focus: its edge and caret brighten, and the send circle wakes */
+.ui-composer-field { caret-color: rgb(255 255 255 / 0.7); }
+.ui-composer:focus-within .ui-composer-field { caret-color: #ffffff; }
+.ui-composer:focus-within .ui-composer-send:disabled { color: rgb(255 255 255 / 0.78); }
+.ui-composer:focus-within .ui-composer-send:disabled::before { background: rgb(255 255 255 / 0.16); }

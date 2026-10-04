@@ -30,8 +30,6 @@
 .ui-list > li + li { background: linear-gradient(var(--ui-hair), var(--ui-hair)) no-repeat var(--list-inset) 0 / calc(100% - var(--list-inset)) var(--hair-width); }
 .ui-row { display: flex; align-items: center; gap: 10px; width: calc(100% + 12px); min-height: var(--tap); margin: 0 -6px; padding: 6px; border: 0; border-radius: var(--radius-s); background: transparent; color: var(--ui-ink); text-align: start; -webkit-tap-highlight-color: transparent; }
 button.ui-row { cursor: pointer; transition: background-color var(--motion-hover) ease, box-shadow var(--motion-hover) ease; }
-button.ui-row:hover { background: var(--ui-hover); }
-button.ui-row:active { background: var(--ui-press); }
 .ui-row[aria-pressed=true] { background: var(--ui-thumb); box-shadow: inset 0 0 0 1px var(--ui-ink); }
 /* A selected row's fill is lighter, so its muted words go a step stronger on charcoal */
 [data-tone=dark] .ui-row[aria-pressed=true] { --ui-muted: rgb(242 243 244 / 0.88); background: rgb(255 255 255 / 0.09); }
@@ -50,8 +48,6 @@ button.ui-row:active { background: var(--ui-press); }
 /* Buttons: a 44 px box, a slimmer shape drawn behind the label */
 .ui-text-button, .ui-primary, .ui-icon-button { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-width: var(--tap); min-height: var(--tap); margin: 0; padding: 0 10px; border: 0; border-radius: var(--radius-s); background: none; color: var(--ui-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-text-button::before, .ui-primary::before, .ui-icon-button::before { content: ''; position: absolute; z-index: -1; inset: 7px 0; border-radius: inherit; transition: background-color var(--motion-hover) ease, box-shadow var(--motion-hover) ease, transform var(--motion-hover) ease; }
-.ui-text-button:hover::before, .ui-icon-button:hover::before { background: var(--ui-hover); }
-.ui-text-button:active::before, .ui-icon-button:active::before { background: var(--ui-press); }
 .ui-text-button.ui-text-button:focus-visible, .ui-icon-button.ui-icon-button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -6px; }
 /* The primary's ring sits 2 px outside its pill and still inside the button's own box, so a scroll box at its edge never clips it */
 .ui-primary.ui-primary:focus-visible { outline: none; }
@@ -65,8 +61,6 @@ button.ui-row:active { background: var(--ui-press); }
 
 .ui-primary { padding: 0 18px; border-radius: var(--radius-pill); }
 .ui-primary::before { inset: 6px 4px; background: var(--ui-primary); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(20 22 24 / 0.2); }
-.ui-primary:hover:not(:disabled)::before { background: var(--ui-primary-hover); }
-.ui-primary:active:not(:disabled)::before { transform: scale(0.98); }
 .ui-primary .ui-button-label, .ui-primary .ui-button-icon { color: var(--ui-on-primary); }
 .ui-primary .ui-kbd { margin-inline-end: -6px; background: color-mix(in srgb, var(--ui-on-primary) 14%, transparent); box-shadow: none; color: color-mix(in srgb, var(--ui-on-primary) 72%, transparent); }
 
@@ -74,7 +68,6 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-icon-button::before { inset: 6px; }
 .ui-icon-button .ui-icon { width: 18px; height: 18px; }
 .ui-icon-button[data-surface=glass]::before { background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); }
-.ui-icon-button[data-surface=glass]:hover::before { background: rgb(44 48 52 / 0.9); }
 .ui-icon-button[data-surface=glass] .ui-icon { color: #f2f3f4; }
 .ui-icon-button.ui-icon-button[data-surface=glass]:focus-visible { outline-color: var(--ink); outline-offset: -4px; }
 
@@ -102,7 +95,7 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-segment { position: relative; isolation: isolate; flex: 1 0 auto; min-width: var(--tap); min-height: var(--tap); margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--ui-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-segment::before { content: ''; position: absolute; z-index: -1; inset: 8px 0; border-radius: inherit; transition: background-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out); }
 .ui-segment .ui-button-label { font-size: var(--font-xs); color: var(--ui-muted); transition: color var(--motion-fast) ease; }
-.ui-segment:hover .ui-button-label, .ui-segment[aria-pressed=true] .ui-button-label, .ui-segment[aria-selected=true] .ui-button-label { color: var(--ui-ink); }
+.ui-segment[aria-pressed=true] .ui-button-label, .ui-segment[aria-selected=true] .ui-button-label { color: var(--ui-ink); }
 .ui-segmented[data-variant=track] .ui-segment[aria-pressed=true]::before { background: var(--ui-thumb); box-shadow: var(--ui-thumb-edge); }
 .ui-segment.ui-segment:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -7px; }
 .ui-segmented[data-variant=tabs] { gap: 2px; }
