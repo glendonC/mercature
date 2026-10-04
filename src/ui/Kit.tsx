@@ -18,7 +18,7 @@ const MESSAGES = [
 const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon], ['Crossing', I.CrossingIcon], ['Cobblestones', I.CobblestonesIcon], ['Footway', I.FootwayIcon], ['Bollard', I.BollardIcon],
   ['Broken pavement', I.BrokenPavementIcon], ['Road', I.RoadIcon], ['On the path', I.PathIcon], ['Landmark', I.LandmarkIcon], ['No photos', I.NoPhotosIcon], ['Photo', I.PhotoIcon], ['Fixed', I.FixedIcon], ['Added by you', I.AddedIcon],
   ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Check on site', I.LookIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon], ['Start over', I.RotateIcon], ['Undo', I.UndoIcon], ['Use without AI', I.PointerIcon], ['Filed on a spot', I.PinIcon], ['Download', I.DownloadIcon], ['Skip', I.SkipIcon], ['Enter', I.EnterIcon], ['Done', I.CheckIcon],
-  ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['More', I.MoreIcon]];
+  ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['Menu', I.MenuIcon], ['More', I.MoreIcon]];
 const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road' };
 const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 

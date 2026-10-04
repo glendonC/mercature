@@ -75,6 +75,8 @@ export const MinusIcon = make('MinusIcon', <path d="M5 12h14" />);
 export const FitIcon = make('FitIcon', <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />);
 export const CopyIcon = make('CopyIcon', <><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" /><path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3" /></>);
 export const HomeIcon = make('HomeIcon', <path d="M4 10 12 3.5l8 6.5v10a.5.5 0 0 1-.5.5H15v-6.5H9V20.5H4.5A.5.5 0 0 1 4 20Z" />);
+/** The menu: Home, the places, the language and the sources. */
+export const MenuIcon = make('MenuIcon', <path d="M4.5 7h15M4.5 12h15M4.5 17h15" />);
 export const MoreIcon = make('MoreIcon', <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" strokeWidth={3} />);
 
 const MARK_ICONS: Record<MarkKind, Icon> = { steps: StepsIcon, kerb: KerbIcon, broken: BrokenPavementIcon, bollard: BollardIcon, crossing: CrossingIcon, footway: FootwayIcon, cobblestones: CobblestonesIcon, road: RoadIcon };
