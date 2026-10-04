@@ -198,7 +198,7 @@
 }
 @media (max-width: 640px) {
   :root {
-    --chat-edge: 12px;
+    --chat-edge: 16px;
     --chat-top: 64px;
   }
 }

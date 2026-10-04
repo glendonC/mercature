@@ -2,12 +2,21 @@
    Each part is its own charcoal surface over the map; the room around them lets taps through to the map. */
 
 /* Dialogue: one clean line on its own at the bottom, her field under it */
-.ui-dialogue { position: absolute; z-index: 10; left: 50%; bottom: 0; display: grid; gap: var(--chat-gap); width: min(var(--chat-width), 100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); max-height: calc(100% - var(--chat-top)); padding-bottom: calc(var(--chat-edge) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); color: var(--line-ink); }
+.ui-dialogue { position: absolute; z-index: 10; left: 50%; bottom: 0; display: grid; gap: var(--chat-gap); width: max-content; min-width: min(280px, 100% - 2 * var(--chat-edge)); max-width: min(var(--chat-width), 100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); max-height: calc(100% - var(--chat-top)); padding-bottom: calc(var(--chat-edge) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); color: var(--line-ink); }
 .ui-dialogue-line { min-height: 48px; padding: 12px 18px; border-radius: var(--radius-panel); background: var(--line-surface); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); font-size: var(--chat-text); line-height: var(--chat-leading); overflow-wrap: anywhere; animation: ui-line-in var(--motion-panel) var(--ease-out) both; }
 .ui-dialogue-line:lang(ko), .ui-dialogue-line :lang(ko), .ui-copy-text:lang(ko) { word-break: keep-all; }
 .ui-dialogue-meta { margin: 0 0 2px; font-size: var(--font-xs); line-height: var(--leading-tight); color: var(--line-muted); font-variant-numeric: tabular-nums; }
 .ui-dialogue-text { display: grid; gap: 4px; }
-.ui-dialogue-text p { margin: 0; }
+.ui-dialogue-text p { margin: 0; text-wrap: pretty; }
+/* Paged words: the part not typed yet keeps its room, so the box never changes size while a page types */
+.ui-dialogue-line[data-paged] { position: relative; padding-inline-end: 40px; }
+.ui-dialogue-line[data-advance] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ui-untyped { color: transparent; }
+/* The continue mark: a small white triangle in the corner, when another page follows */
+.ui-dialogue-more { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: var(--radius-panel); background: none; cursor: pointer; }
+.ui-dialogue-more > span { width: 0; height: 0; border-inline: 5px solid transparent; border-top: 6px solid var(--line-ink); animation: ui-more 0.9s var(--ease-in-out) infinite alternate; }
+.ui-dialogue-more.ui-dialogue-more:focus-visible { outline: 2px solid var(--line-ink); outline-offset: -8px; }
+@keyframes ui-more { to { transform: translateY(3px); opacity: 0.7; } }
 .ui-dialogue-text strong { font-weight: 500; }
 .ui-dialogue-line .ui-quote { margin: 4px 0; border-left-color: rgb(255 255 255 / 0.32); }
 .ui-typing { display: inline-flex; align-items: center; gap: 5px; height: calc(var(--chat-text) * var(--chat-leading)); }
@@ -19,7 +28,13 @@
 
 /* Companion: the guide out in the map, small, in a charcoal glass disc with a white ring. A thin arc turns only while it works. */
 .ui-companion { position: relative; display: inline-grid; place-items: center; flex: none; width: var(--companion); height: var(--companion); border-radius: 50%; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), 0 0 0 1.5px rgb(255 255 255 / 0.92), 0 4px 14px -4px rgb(10 12 14 / 0.4); }
-.ui-companion > * { max-width: calc(100% - 6px); max-height: calc(100% - 6px); }
+.ui-companion { animation: ui-float 4.2s var(--ease-in-out) infinite alternate; }
+.ui-companion-bot { display: grid; place-items: center; max-width: calc(100% - 6px); max-height: calc(100% - 6px); transform-origin: 50% 90%; }
+.ui-companion-bot > * { max-width: 100%; max-height: 100%; }
+/* Talking: a light bob in time with the words, while its mouth shows */
+.ui-companion[data-talking] .ui-companion-bot { animation: ui-talk 0.17s ease-in-out infinite alternate; }
+@keyframes ui-float { from { translate: 0 -2px; } to { translate: 0 2px; } }
+@keyframes ui-talk { to { transform: translateY(-1.5px) scale(1.03, 0.96); } }
 .ui-companion[data-working]::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, var(--ink) 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px)); animation: ui-companion-turn 1.1s linear infinite; }
 @keyframes ui-companion-turn { to { transform: rotate(1turn); } }
 
@@ -73,11 +88,12 @@
 .ui-scroll-fade[data-more-end] { --fade-end: var(--fade, 28px); }
 
 @media (max-width: 640px) {
+  .ui-dialogue { width: calc(100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }
   .ui-composer-field { font-size: 16px; }
   .ui-dialogue-line { padding: 11px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ui-dialogue-line { animation: none; }
+  .ui-dialogue-line, .ui-dialogue-more > span, .ui-companion, .ui-companion[data-talking] .ui-companion-bot { animation: none; }
   .ui-typing i { animation: none; opacity: 0.7; }
   .ui-companion[data-working]::after { animation-duration: 3s; }
   .ui-choice::before, .ui-composer-send::before, .ui-composer, .ui-scroll-fade { transition: none; }

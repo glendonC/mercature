@@ -1,4 +1,3 @@
-import { BotAvatar } from 'bot-avatars';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { assetUrl, loadDestination, type Destination } from '../destinations/data';
 import { loadReview } from '../decisions/store';
@@ -35,18 +34,12 @@ const SCENES = [
   { value: 'reply', label: 'Reply' },
   { value: 'note', label: 'Note' },
   { value: 'reading', label: 'Reading' },
+  { value: 'long', label: 'Long' },
 ] as const;
 type Scene = (typeof SCENES)[number]['value'];
 const initialScene = (): Scene => { try { const scene = new URLSearchParams(location.search).get('scene'); return SCENES.some(item => item.value === scene) ? scene as Scene : 'check'; } catch { return 'check'; } };
 const REPLY_KO = '코리칸차 가는 길, 로레토 거리 340 m 지점에 계단이 있다는 기록이 있습니다. 현장 확인은 아직 하지 않았습니다.';
 const NOTE = 'Plaza de Armas to the Qorikancha ticket booth, 594 m.\nCalle Loreto, 340 m: steps recorded in a street photo and in OpenStreetMap. Not checked on site.\nHatunrumiyoq, 420 to 430 m: no street photos.\nTicket booth: a ramp was recorded on 3 Oct.\nThis note is made from street photos and OpenStreetMap. Ask staff before you go.';
-
-/** The guide, as the route screen draws it: the bot in the app's field grey. */
-function Guide({ working }: { working?: boolean }) {
-  const narrow = useNarrow();
-  const [color] = useState(() => getComputedStyle(document.documentElement).getPropertyValue('--field').trim() || 'gray');
-  return <BotAvatar type="blob" state={working ? 'working' : 'default'} size={36} color={color} shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />;
-}
 
 /** The review page for the shared primitives: the guide's dialogue over the real walk, then each part on its own. */
 export default function Kit() {
@@ -85,18 +78,21 @@ export default function Kit() {
   </Panel>;
 
   const said = {
-    check: <p>When the walk was recorded, a model outlined steps here, on Calle Loreto. What is there now?</p>,
-    message: <p>A visitor wrote in Korean. It seems to be about the steps on Calle Loreto. Is that right?</p>,
-    reply: <p>Here is a reply in Korean, from what your map says.</p>,
-    note: <p>Here is the route note for visitors. It changes as you check the walk.</p>,
-    reading: null,
+    check: 'When the walk was recorded, a model outlined steps here, on Calle Loreto. What is there now?',
+    message: 'A visitor wrote in Korean. It seems to be about the steps on Calle Loreto. Is that right?',
+    reply: 'Here is a reply in Korean, from what your map says.',
+    note: 'Here is the route note.',
+    reading: undefined,
+    long: ['Let\u2019s go through your walk together.', 'It runs about 600 m from the Plaza de Armas to the Qorikancha ticket booth, past the cathedral and down Calle Loreto.', 'Street photos show five spots that might give visitors trouble, most of them steps.', 'We will look at each one, and you tell me what is there now.'],
   }[scene];
+  const [talking, setTalking] = useState(false);
   const choices = {
     check: <Choices label="What is there now?"><Choice lead icon={<I.StepsIcon />}>Still there</Choice><Choice icon={<I.FixedIcon />}>Fixed</Choice><Choice icon={<I.RemoveIcon />}>Not a barrier</Choice><Choice icon={<I.MoreIcon />}>Something else</Choice></Choices>,
     message: <Choices label="Is that right?"><Choice lead icon={<I.PinIcon />}>Yes, that spot</Choice><Choice icon={<I.PointerIcon />}>Another spot</Choice><Choice icon={<I.CloseIcon />}>Not about a spot</Choice></Choices>,
     reply: <Choices label="Next"><Choice lead icon={<I.ChevronIcon />}>Next message</Choice><Choice icon={<I.NoteIcon />}>Route note</Choice></Choices>,
     note: null,
     reading: null,
+    long: null,
   }[scene];
   const messageCard = <Panel size="card" className="kit-focus-card" aria-label="Visitor message">
     <PanelHead as="h3" title="Korean" meta="Message 1 of 4" />
@@ -106,7 +102,7 @@ export default function Kit() {
     <PanelHead as="h3" title="Reply" meta="Korean" />
     <CopyBox text={REPLY_KO} lang="ko" copyLabel="Copy" copiedLabel="Copied" className="kit-note" />
   </Panel>;
-  const focus = { check: photoCard, message: messageCard, reply: replyCard, note: noteCard, reading: null }[scene];
+  const focus = { check: photoCard, message: messageCard, reply: replyCard, note: noteCard, reading: null, long: null }[scene];
 
   return <main className="kit" data-tone-demo={tone}>
     <div className="kit-stage">
@@ -117,19 +113,17 @@ export default function Kit() {
         <Segmented variant="tabs" caps label="Scene" value={scene} onChange={setScene} options={SCENES} />
         <span className="kit-keys"><Kbd>Esc</Kbd><span>Back</span></span>
       </header>
-      <Companion className="kit-companion" working={scene === 'reading'}><Guide working={scene === 'reading'} /></Companion>
+      <Companion className="kit-companion" working={scene === 'reading'} talking={talking} />
       {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
-      <Dialogue key={scene} label="Guide" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
-        composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />}>
-        {said}
-      </Dialogue>
+      <Dialogue key={scene} label="Guide" say={said} onTalking={setTalking} continueLabel="More" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
+        composer={scene === 'long' ? undefined : <Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />} />
     </div>
 
     <div className="kit-sheet-body">
       <Specimen wide title="Guide's dialogue" note="One clean line on its own at the bottom, her field under it. The guide floats in the map beside what it talks about; her choices are their own list beside the photo or message.">
         <div className="kit-dialogues">
-          <div className="kit-row"><Companion><Guide /></Companion><Companion working><Guide working /></Companion></div>
-          <Dialogue className="kit-static-dialogue" label="Guide, one line" composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} />}><p>Hi. I can help you check this walk and answer visitors.</p></Dialogue>
+          <div className="kit-row"><Companion /><Companion talking /><Companion working /></div>
+          <Dialogue className="kit-static-dialogue" label="Guide, one line" say="Hi. I can help you check this walk and answer visitors." composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} />} />
           <Dialogue className="kit-static-dialogue" label="Guide, working" working workingLabel="Reading" />
           <Choices className="kit-choices-demo" label="What is there now?"><Choice selected icon={<I.CheckIcon />}>Still there</Choice><Choice disabled icon={<I.FixedIcon />}>Fixed</Choice><Choice disabled icon={<I.RemoveIcon />}>Not a barrier</Choice></Choices>
         </div>

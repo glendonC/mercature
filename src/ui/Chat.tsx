@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactNode, type RefObject } from 'react';
+import { BotAvatar } from 'bot-avatars';
 import { PrimaryAction, TextButton } from './Button';
 import { cx } from './cx';
 import { CheckIcon, CopyIcon, SendIcon } from './icons';
@@ -10,7 +11,17 @@ import { CheckIcon, CopyIcon, SendIcon } from './icons';
  */
 
 type DialogueProps = {
-  /** The guide's words: one or two short paragraphs. Give the Dialogue a key per line, so a new line enters as new. */
+  /** Words to page and type in, as a game shows dialogue: pages of at most two lines, split by sentence and never mid-word.
+   *  Each page types in within 1.1 s; a tap, Enter or Space completes a page, then turns to the next; a small mark shows when more follows.
+   *  Leave it out to show children as they are. */
+  say?: string | readonly string[];
+  /** True while a page types in, false once it is whole: give it to the Companion as talking. */
+  onTalking?: (talking: boolean) => void;
+  /** Called once the last page is whole. */
+  onDone?: () => void;
+  /** The continue mark's name for screen readers, such as "More". */
+  continueLabel?: string;
+  /** Anything after the words, such as a plain error line. */
   children?: ReactNode;
   /** One short muted line above the words, such as "2 of 8". */
   meta?: ReactNode;
@@ -26,24 +37,143 @@ type DialogueProps = {
   className?: string;
 };
 
-/** The bottom dialogue: always in the same place, centred, clear of the home indicator and a landscape notch. */
-export function Dialogue({ children, meta, composer, working, workingLabel, label, lang, className }: DialogueProps) {
+const PER_CHAR = 16, MOST = 1100, LINES = 2;
+const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Sentences, each with its closing mark, so a page never ends mid-sentence when it can help it. */
+function sentencesOf(text: string) {
+  return (text.match(/[^.!?。！？]+(?:[.!?。！？]+["”’')\]]*|$)/g) ?? [text]).map(part => part.trim()).filter(Boolean);
+}
+/** How many lines words take at a width, wrapped between words as the browser does. */
+function linesOf(text: string, width: number, measure: (s: string) => number) {
+  let lines = 1, line = '';
+  for (const word of text.split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && measure(next) > width) { lines++; line = word; } else line = next;
+  }
+  return lines;
+}
+/** Pages of at most two lines at a width: whole sentences where they fit, a long sentence cut between words. */
+export function paginate(say: string | readonly string[], width: number, measure: (s: string) => number, most = LINES): string[] {
+  const pages: string[] = [];
+  let page = '';
+  const fits = (text: string) => linesOf(text, width, measure) <= most;
+  // A sentence that fits joins the page; a longer one is laid out by clause, and a clause too long for a page by word
+  const add = (piece: string, split: (piece: string) => string[] | null) => {
+    const joined = page ? `${page} ${piece}` : piece;
+    if (fits(joined)) { page = joined; return; }
+    const parts = split(piece);
+    if (parts) { for (const part of parts) add(part, words); return; }
+    if (page) pages.push(page);
+    page = piece;
+  };
+  const words = (piece: string) => { const all = piece.split(/\s+/); return all.length > 1 && !fits(piece) ? all : null; };
+  const clauses = (piece: string) => { const all = piece.split(/(?<=[,;:])\s+/); return all.length > 1 ? all : words(piece); };
+  for (const sentence of (typeof say === 'string' ? [say] : say).flatMap(sentencesOf)) {
+    if (page && !fits(`${page} ${sentence}`) && fits(sentence)) { pages.push(page); page = sentence; continue; }
+    add(sentence, clauses);
+  }
+  if (page) pages.push(page);
+  return pages.length ? pages : [''];
+}
+
+/** The pages of words for the dialogue's current width, measured in its own font. */
+function usePages(say: string | readonly string[] | undefined, box: RefObject<HTMLElement | null>) {
+  const key = say === undefined ? '' : typeof say === 'string' ? say : say.join('\n');
+  const [pages, setPages] = useState<string[]>([]);
+  useLayoutEffect(() => {
+    if (say === undefined) return;
+    const context = document.createElement('canvas').getContext('2d');
+    const run = () => {
+      const element = box.current;
+      if (!element || !context) { setPages(typeof say === 'string' ? [say] : [...say]); return; }
+      const style = getComputedStyle(element), narrow = matchMedia('(max-width: 640px)').matches;
+      context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const outer = narrow ? innerWidth - 32 : Math.min(640, innerWidth - 48);
+      const width = outer - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 4;
+      setPages(previous => { const next = paginate(say, width, text => context.measureText(text).width); return previous.join('\u0000') === next.join('\u0000') ? previous : next; });
+    };
+    run();
+    document.fonts?.ready.then(run).catch(() => undefined);
+    addEventListener('resize', run);
+    return () => removeEventListener('resize', run);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return pages;
+}
+
+/** The bottom dialogue: always in the same place, centred, as wide as its words between 280 and 640 px, clear of the home indicator and a landscape notch. */
+export function Dialogue({ say, onTalking, onDone, continueLabel, children, meta, composer, working, workingLabel, label, lang, className }: DialogueProps) {
+  const line = useRef<HTMLDivElement>(null);
+  const pages = usePages(say, line);
+  const [at, setAt] = useState(0);
+  const [shown, setShown] = useState(0);
+  const page = pages[Math.min(at, pages.length - 1)] ?? '';
+  const paged = say !== undefined && !working;
+  const typing = paged && shown < page.length;
+  const more = paged && at < pages.length - 1;
+  useEffect(() => { setAt(0); }, [pages]);
+  useLayoutEffect(() => {
+    if (!paged) return;
+    if (reduced()) { setShown(page.length); return; }
+    setShown(0);
+    const per = Math.min(PER_CHAR, MOST / Math.max(1, page.length)), began = performance.now();
+    let frame = 0;
+    const step = () => { const typed = Math.floor((performance.now() - began) / per); setShown(Math.min(typed, page.length)); if (typed < page.length) frame = requestAnimationFrame(step); };
+    frame = requestAnimationFrame(step);
+    // A page that is not painting gets no frames: it shows whole by MOST regardless.
+    const whole = window.setTimeout(() => setShown(page.length), MOST + 150);
+    return () => { cancelAnimationFrame(frame); clearTimeout(whole); };
+  }, [paged, page]);
+  const talk = useRef(onTalking); talk.current = onTalking;
+  const done = useRef(onDone); done.current = onDone;
+  useEffect(() => { talk.current?.(typing); }, [typing]);
+  useEffect(() => () => talk.current?.(false), []);
+  useEffect(() => { if (paged && !typing && !more && page) done.current?.(); }, [paged, typing, more, page]);
+  const next = () => { if (typing) setShown(page.length); else if (more) setAt(index => index + 1); };
+  const nextRef = useRef(next); nextRef.current = next;
+  useEffect(() => {
+    if (!paged || (!typing && !more)) return;
+    const key = (event: KeyboardEvent) => {
+      if ((event.key !== 'Enter' && event.key !== ' ') || event.metaKey || event.ctrlKey || event.altKey || event.isComposing) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, button, a, [contenteditable=true], [role=button]')) return;
+      event.preventDefault();
+      nextRef.current();
+    };
+    addEventListener('keydown', key);
+    return () => removeEventListener('keydown', key);
+  }, [paged, typing, more]);
   return <section className={cx('ui-dialogue', className)} aria-label={label} data-tone="dark">
-    <div className="ui-dialogue-line" lang={lang} aria-live="polite" data-working={working || undefined}>
+    <div ref={line} className="ui-dialogue-line" lang={lang} aria-live="polite" data-working={working || undefined} data-paged={paged || undefined}
+      data-advance={typing || more || undefined} onClick={paged ? next : undefined}>
       {working
         ? <span className="ui-typing" role={workingLabel ? 'img' : undefined} aria-label={workingLabel} aria-hidden={workingLabel ? undefined : true}><i /><i /><i /></span>
         : <>
           {meta != null && meta !== false && <p className="ui-dialogue-meta">{meta}</p>}
-          <div className="ui-dialogue-text">{children}</div>
+          <div className="ui-dialogue-text">
+            {paged && <p className="ui-dialogue-page"><span aria-hidden="true">{page.slice(0, shown)}<span className="ui-untyped">{page.slice(shown)}</span></span><span className="sr-only">{page}</span></p>}
+            {children}
+          </div>
+          {more && !typing && <button type="button" className="ui-dialogue-more" aria-label={continueLabel} title={continueLabel} onClick={event => { event.stopPropagation(); next(); }}><span /></button>}
         </>}
     </div>
     {composer}
   </section>;
 }
 
-/** The guide out in the world: the avatar small, in a charcoal glass disc with a white ring, placed by the screen beside what it talks about. working turns a thin arc around it. */
-export function Companion({ children, working, className, style }: { children: ReactNode; working?: boolean; className?: string; style?: CSSProperties }) {
-  return <span className={cx('ui-companion', className)} data-working={working || undefined} style={style} aria-hidden="true">{children}</span>;
+type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; size?: number; className?: string; style?: CSSProperties };
+/**
+ * The guide out in the world: the bot small, in a charcoal glass disc with a white ring, floating where the screen places it, never on the dialogue.
+ * talking: it speaks while a page types (its mouth shows and it bobs), then idles and looks around. working: a thin arc turns around it.
+ * Leave children out for the guide's own bot.
+ */
+export function Companion({ children, working, talking, size = 36, className, style }: CompanionProps) {
+  const [color] = useState(() => (typeof document !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue('--field').trim()) || 'gray');
+  return <span className={cx('ui-companion', className)} data-working={working || undefined} data-talking={talking || undefined} style={style} aria-hidden="true">
+    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking ? 'mouth' : 'eyes'} size={size} color={color}
+      shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />}</span>
+  </span>;
 }
 
 /** Her choices, as their own list beside the photo or message they act on. At most one lead: the answer the guide expects, as a white pill. */
