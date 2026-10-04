@@ -63,7 +63,7 @@ let lastAsked = 0;
  * near: keeps the answers within a few kilometres of a point, for the start of a walk.
  */
 export async function findPlaces(words: string, options: { near?: LonLat; lang?: string; signal?: AbortSignal } = {}): Promise<Found[]> {
-  const query = new URLSearchParams({ q: words.trim(), format: 'jsonv2', limit: '6', namedetails: '1', addressdetails: '1' });
+  const query = new URLSearchParams({ q: words.trim(), format: 'jsonv2', limit: '6', namedetails: '1', addressdetails: '1', extratags: '1' });
   if (options.lang) query.set('accept-language', options.lang);
   if (options.near) {
     const [lon, lat] = options.near, d = 0.045;
@@ -93,9 +93,12 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const area = [town !== name ? town : undefined, address.country].filter(Boolean).join(', ');
     const box = Array.isArray(raw.boundingbox) ? (raw.boundingbox as string[]).map(Number) : [];
     const span = box.length === 4 && box.every(Number.isFinite) ? distance([box[2], box[0]], [box[3], box[1]]) : 0;
-    const rank = Number(raw.place_rank ?? 30);
-    const broad = (rank > 0 && rank <= 16) || ['country', 'state', 'region', 'province', 'county', 'city', 'municipality', 'district', 'city_district'].includes(String(raw.addresstype ?? ''))
-      || (span > 4000 && raw.category !== 'highway');
+    const rank = Number(raw.place_rank ?? 30), people = Number((raw.extratags as Record<string, string> | null)?.population ?? NaN);
+    // Big: a region, state or country, or a city of more than 20 000 people. A village or a small town is walked to its centre,
+    // whatever its outline says; an area that is not a place (a park, a campus) is big when it spans more than 3 km.
+    const place = raw.category === 'place' || raw.category === 'boundary';
+    const broad = rank > 0 && rank <= 12 || (place && rank <= 16 && (people > 20000 || (!(people >= 0) && span > 8000))) || (place && people > 50000)
+      || (!place && raw.category !== 'highway' && span > 3000);
     found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, broad, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
   // The same place can come back several times (a square, its outline, its centre): one row each.
