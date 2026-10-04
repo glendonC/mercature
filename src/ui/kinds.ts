@@ -19,15 +19,16 @@ export function markOf(concept: string): MarkKind | null {
 }
 
 /** Every kind a place can name, each with its own hue (--kind-<kind> in src/style.css): the photo kinds, then what a place's map adds. */
-export type Kind = MarkKind | 'steep' | 'gate' | 'handrail' | 'ramp' | 'bench' | 'lighting' | 'toilets';
-export const KIND_ORDER: readonly Kind[] = ['steps', 'kerb', 'broken', 'steep', 'bollard', 'gate', 'handrail', 'ramp', 'bench', 'lighting', 'toilets', 'crossing', 'cobblestones', 'footway', 'road'];
+export type Kind = MarkKind | 'steep' | 'gate' | 'handrail' | 'ramp' | 'bench' | 'lighting' | 'toilets' | 'wheelchair' | 'tactile';
+export const KIND_ORDER: readonly Kind[] = ['steps', 'kerb', 'broken', 'steep', 'bollard', 'gate', 'handrail', 'ramp', 'bench', 'lighting', 'toilets', 'wheelchair', 'crossing', 'tactile', 'cobblestones', 'footway', 'road'];
 /** Ground kinds: drawn dashed and quieter (--dash-<kind>). */
-export const GROUND_KINDS: ReadonlySet<Kind> = new Set(['crossing', 'cobblestones', 'footway', 'road']);
+export const GROUND_KINDS: ReadonlySet<Kind> = new Set(['crossing', 'tactile', 'cobblestones', 'footway', 'road']);
 
 /** The kind of a concept or a map tag, such as 'handrail=yes', 'ramp', 'highway=street_lamp' or 'steps'. A tag that says a thing is absent, such as 'ramp=no', has no kind: it must never draw as the thing. */
 export function kindOf(concept: string): Kind | null {
   const c = concept.toLowerCase();
   if (/=\s*no\b/.test(c)) return null;
+  if (/tactile/.test(c)) return 'tactile';
   if (/handrail|railing/.test(c)) return 'handrail';
   if (/ramp/.test(c)) return 'ramp';
   if (/steep|incline|slope/.test(c)) return 'steep';
@@ -35,5 +36,6 @@ export function kindOf(concept: string): Kind | null {
   if (/bench|seat/.test(c)) return 'bench';
   if (/lamp|light|\blit\b/.test(c)) return 'lighting';
   if (/toilet|restroom|\bwc\b/.test(c)) return 'toilets';
+  if (/wheelchair/.test(c)) return 'wheelchair';
   return markOf(c);
 }

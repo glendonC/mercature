@@ -146,6 +146,8 @@ button.ui-row:active { background: var(--ui-press); }
 [data-mark=bench] { --mark: var(--kind-bench); }
 [data-mark=lighting] { --mark: var(--kind-lighting); }
 [data-mark=toilets] { --mark: var(--kind-toilets); }
+[data-mark=wheelchair] { --mark: var(--kind-wheelchair); }
+[data-mark=tactile] { --mark: var(--kind-tactile); --dash: var(--dash-tactile); }
 [data-mark=crossing] { --mark: var(--kind-crossing); --dash: var(--dash-crossing); }
 [data-mark=cobblestones] { --mark: var(--kind-cobblestones); --dash: var(--dash-cobblestones); }
 [data-mark=footway] { --mark: var(--kind-footway); --dash: var(--dash-footway); }
@@ -156,7 +158,7 @@ button.ui-row:active { background: var(--ui-press); }
 .ui-mark-halo { fill: none; stroke: var(--kind-casing); stroke-width: 3.75px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .ui-mark-halo[data-barrier] { stroke-width: 5.5px; }
 .ui-swatch[data-kind][data-mark]::before { inset: 0; border-radius: 2.5px; outline: 0; background: color-mix(in srgb, var(--mark) 18%, transparent); box-shadow: inset 0 0 0 1.5px var(--mark); }
-.ui-swatch[data-kind][data-mark]:is([data-mark=crossing], [data-mark=cobblestones], [data-mark=footway], [data-mark=road])::before { box-shadow: none; outline: 1.5px dashed var(--mark); outline-offset: -1.5px; }
+.ui-swatch[data-kind][data-mark]:is([data-mark=crossing], [data-mark=tactile], [data-mark=cobblestones], [data-mark=footway], [data-mark=road])::before { box-shadow: none; outline: 1.5px dashed var(--mark); outline-offset: -1.5px; }
 .ui-swatch[data-kind][data-mark][data-barrier]::before { background: color-mix(in srgb, var(--mark) 26%, transparent); box-shadow: inset 0 0 0 2px var(--mark); }
 /* A possible barrier's badge: a small clay dot ringed in white */
 .ui-swatch[data-kind][data-mark][data-barrier]::after { content: ''; position: absolute; top: -3px; right: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--kind-barrier); box-shadow: 0 0 0 1px #ffffff; }

@@ -15,7 +15,7 @@ const ICONS: [string, I.Icon][] = [['Steps', I.StepsIcon], ['Kerb', I.KerbIcon],
   ['Message', I.MessageIcon], ['Your note', I.NoteIcon], ['Remove', I.RemoveIcon], ['Problem', I.ProblemIcon], ['Praise', I.PraiseIcon], ['Question', I.QuestionIcon], ['Copy', I.CopyIcon], ['Start over', I.RotateIcon], ['Undo', I.UndoIcon], ['Use without AI', I.PointerIcon], ['Filed on a spot', I.PinIcon], ['Download', I.DownloadIcon], ['Skip', I.SkipIcon], ['Enter', I.EnterIcon], ['Done', I.CheckIcon],
   ['Close', I.CloseIcon], ['Back', I.BackIcon], ['Next', I.ChevronIcon], ['Add', I.PlusIcon], ['Zoom out', I.MinusIcon], ['Whole route', I.FitIcon], ['Home', I.HomeIcon], ['Menu', I.MenuIcon], ['More', I.MoreIcon]];
 const MARK_NAMES: Record<string, string> = { steps: 'Steps', kerb: 'Kerb', broken: 'Broken pavement', bollard: 'Bollard or post', crossing: 'Pedestrian crossing', footway: 'Pavement', cobblestones: 'Cobblestones', road: 'Road',
-  steep: 'Steep slope', gate: 'Gate', handrail: 'Handrail', ramp: 'Ramp', bench: 'Bench', lighting: 'Street light', toilets: 'Toilets' };
+  steep: 'Steep slope', gate: 'Gate', handrail: 'Handrail', ramp: 'Ramp', bench: 'Bench', lighting: 'Street light', toilets: 'Toilets', wheelchair: 'Wheelchair access', tactile: 'Tactile paving' };
 const initialTone = (): Tone => { try { return new URLSearchParams(location.search).get('tone') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 
 function useHero() {

@@ -124,19 +124,22 @@
   --kind-bench: #d9a877;
   --kind-lighting: #fff3b0;
   --kind-toilets: #f4f5f6;
+  --kind-wheelchair: #e5b8ff;
   --kind-crossing: #e9edf2;
+  --kind-tactile: #ffc2d1;
   --kind-cobblestones: #dcc08f;
   --kind-footway: #c5d1b8;
   --kind-road: #b9aea3;
   --dash-crossing: 8 3 2 3;
+  --dash-tactile: 1 2;
   --dash-cobblestones: 1 3;
   --dash-footway: 6 4;
   --dash-road: 2 4;
   /* For a kind a new place names before it has its own hue, in this order */
-  --kind-spare-1: #e5b8ff;
-  --kind-spare-2: #b5f5d8;
-  --kind-spare-3: #ffc2d1;
-  --kind-spare-4: #f5e6a8;
+  --kind-spare-1: #b5f5d8;
+  --kind-spare-2: #f5e6a8;
+  --kind-spare-3: #d9f99d;
+  --kind-spare-4: #fbcfe8;
   --kind-casing: rgb(10 12 14 / 0.78);
   --kind-barrier: #e0905f;
   /* The older names, now the kind hues */
