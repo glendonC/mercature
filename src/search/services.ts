@@ -51,7 +51,8 @@ export async function ask(url: string, init: RequestInit, signal: AbortSignal | 
 }
 
 /** A place OpenStreetMap knows. */
-export type Found = { id: string; name: string; detail: string; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
+/** detail: the address around it, to tell answers apart; area: its town and country, for the place a walk is in. */
+export type Found = { id: string; name: string; detail: string; area: string; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
 
 let lastAsked = 0;
 /**
@@ -59,7 +60,7 @@ let lastAsked = 0;
  * near: keeps the answers within a few kilometres of a point, for the start of a walk.
  */
 export async function findPlaces(words: string, options: { near?: LonLat; lang?: string; signal?: AbortSignal } = {}): Promise<Found[]> {
-  const query = new URLSearchParams({ q: words.trim(), format: 'jsonv2', limit: '6', namedetails: '1' });
+  const query = new URLSearchParams({ q: words.trim(), format: 'jsonv2', limit: '6', namedetails: '1', addressdetails: '1' });
   if (options.lang) query.set('accept-language', options.lang);
   if (options.near) {
     const [lon, lat] = options.near, d = 0.045;
@@ -80,7 +81,10 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const name = typeof local === 'string' && local.trim() ? local.trim() : typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : parts[0];
     const type = raw.osm_type === 'node' || raw.osm_type === 'way' || raw.osm_type === 'relation' ? raw.osm_type : null;
     const detail = parts.filter(part => part !== name && !/^\d[\d -]*$/.test(part)).slice(0, 3).join(', ');
-    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
+    const address = (raw.address ?? {}) as Record<string, string>;
+    const town = address.city ?? address.town ?? address.village ?? address.hamlet ?? address.municipality ?? address.county ?? address.state;
+    const area = [town !== name ? town : undefined, address.country].filter(Boolean).join(', ');
+    found.push({ id: type ? `${type}/${raw.osm_id}` : `${lat},${lon}`, name, detail, area, position: [lon, lat], kind: String(raw.type ?? ''), osm: type ? { type, id: Number(raw.osm_id) } : null });
   }
   return found;
 }

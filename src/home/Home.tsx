@@ -151,7 +151,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
         ...others.map(cover => ({ id: cover.id, name: cover.name, image: cover.image, meta: fromRecord(cover.area, lang),
           label: t('home.explore', { name: cover.name, area: fromRecord(cover.area, lang) }), onOpen: () => onDestination(cover.id) })),
       ]}
-      saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: `${walk.area ? `${walk.area} · ` : ''}${t('search.mapOnly')}`, onOpen: () => walks.openKept(walk.id) })),
+      saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: [t('search.mapOnly'), walk.area].filter(Boolean).join(' · '), onOpen: () => walks.openKept(walk.id) })),
         ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
   </main>;
 }

@@ -1,10 +1,14 @@
 /* Home's search: a charcoal glass field under the headline, one plain line under it, and its answers in a charcoal card. */
+/* Its answers open over the place photos, so the headline block that holds them rises above the photos while they show. */
+.home-words:has(.home-search-panel) { z-index: 5; }
 .home-search { position: absolute; top: calc(100% + 26px); left: 0; width: min(440px, 100%); }
 .home-search-field { display: flex; align-items: center; gap: 0; min-height: 48px; padding: 0 2px 0 14px; border-radius: 14px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
 .home-search-field:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
 .home-search-field > .ui-icon { flex: none; color: var(--ui-muted); }
 .home-search-field input { flex: 1; min-width: 0; height: 44px; margin: 0; padding: 0 4px 0 10px; border: 0; background: transparent; color: var(--ui-ink); font: inherit; font-size: var(--font-m); letter-spacing: -0.005em; outline: none; }
 .home-search-field input::placeholder { color: var(--ui-placeholder); opacity: 1; }
+/* The field itself shows focus with one outline; the box inside it shows none. */
+.home-search-field input:focus-visible { outline: none; }
 .home-search-field input::-webkit-search-cancel-button { display: none; }
 .home-search-note { margin: 8px 0 0 4px; font-size: var(--font-xs); line-height: var(--leading-tight); color: var(--muted); text-shadow: var(--halo); }
 .home-search-panel { position: absolute; z-index: 6; top: 56px; left: 0; right: 0; max-height: min(58svh, 460px); padding-bottom: 8px; }

@@ -53,8 +53,11 @@
   .home-veil { background: linear-gradient(180deg, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 38%, transparent 48%, transparent 62%, var(--ground) 76%); }
   .home-words { left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); top: calc(92px + var(--safe-top)); width: auto; translate: none; }
   .home-words h1 { font-size: clamp(30px, 7.8vw, 40px); }
-  .home-photos { left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); bottom: calc(26px + var(--safe-bottom)); }
-  .home-photo { width: 100%; }
+  /* More than one place scrolls sideways, one card at a time, so every label keeps its line. */
+  .home-photos { left: 0; right: 0; bottom: calc(26px + var(--safe-bottom)); padding: 4px calc(16px + var(--safe-right)) 4px calc(16px + var(--safe-left)); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: calc(16px + var(--safe-left)); scrollbar-width: none; }
+  .home-photos::-webkit-scrollbar { display: none; }
+  .home-photo { flex: 0 0 min(300px, 80%); width: auto; scroll-snap-align: start; }
+  .home-photo:only-child { flex-basis: 100%; }
   .home-saved { left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); bottom: calc(26px + var(--safe-bottom)); width: auto; }
   .home-photos:has(+ .home-saved) { bottom: calc(92px + var(--safe-bottom)); }
   .home-credit { right: calc(16px + var(--safe-right)); bottom: calc(10px + var(--safe-bottom)); }

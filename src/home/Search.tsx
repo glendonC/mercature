@@ -65,7 +65,7 @@ export default function Search({ prepared, onPrepared, onWalk }: { prepared: rea
     const signal = begin();
     setStage({ kind: 'build', target, start, step: null, trouble: null });
     try {
-      const built = await buildWalk({ name: start.name, position: start.position, osm: start.osm }, { name: target.name, position: target.position, osm: target.osm }, target.detail,
+      const built = await buildWalk({ name: start.name, position: start.position, osm: start.osm }, { name: target.name, position: target.position, osm: target.osm }, target.area || target.detail,
         step => { if (!signal.aborted) setStage(now => now.kind === 'build' ? { ...now, step } : now); }, signal);
       if (signal.aborted) return;
       onWalk(built, await saveWalk(built));
@@ -87,14 +87,16 @@ export default function Search({ prepared, onPrepared, onWalk }: { prepared: rea
     if (!current.found) return <p className="home-search-line" role="status">{t('search.asking')}</p>;
     return null;
   };
-  const foundRow = (found: Found, onClick: () => void, mapOnly = true) => <Row key={found.id} icon={<PinIcon />} label={found.name} detail={[found.detail, mapOnly && t('search.mapOnly')].filter(Boolean).join(' · ')} onClick={onClick} />;
+  // The label leads, so a narrow screen never cuts it off; a start is near the place already, so its street says more than its town.
+  const foundRow = (found: Found, onClick: () => void, mapOnly = true) => <Row key={found.id} icon={<PinIcon />} label={found.name}
+    detail={mapOnly ? [t('search.mapOnly'), found.area || found.detail].filter(Boolean).join(' · ') : found.detail} onClick={onClick} />;
 
   let panel = null;
   if (stage.kind === 'find' && words.trim()) {
     const none = asked && asked.words === words.trim() && asked.found && !others.length && !matches.length;
     panel = <>
       {(matches.length > 0 || others.length > 0) && <List label={t('search.results')}>
-        {matches.map(place => <Row key={place.id} icon={<PhotoIcon />} label={place.name} detail={`${place.area} · ${t('search.photosRead')}`} onClick={() => onPrepared(place.id)} />)}
+        {matches.map(place => <Row key={place.id} icon={<PhotoIcon />} label={place.name} detail={`${t('search.photosRead')} · ${place.area}`} onClick={() => onPrepared(place.id)} />)}
         {others.map(found => foundRow(found, () => { setStage({ kind: 'start', target: found }); setStartWords(''); setStartAsked(null); }))}
       </List>}
       {none ? <p className="home-search-line" role="status">{t('search.none', { words: asked.words })}</p> : status(asked)}
