@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
-import { EDIT_KINDS, addSpot, answerOf, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteLangOf, noteOf, ownNote, saveEdits, setAnswer, setNote, type EditKind, type Edits } from '../edits/store';
+import { EDIT_KINDS, NO_NOTE, addSpot, answerOf, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteLangOf, noteOf, ownNote, removeSpot, saveEdits, setAnswer, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
 import { KIND_WORDS } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
@@ -15,12 +15,12 @@ import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
-import { addStreet, buildStreet, loadLines, mapPaths, saveLines, setCheck, wayAroundOf, type NewStreet } from '../routes/lines';
+import { addStreet, buildStreet, loadLines, mapPaths, removeStreet, saveLines, setCheck, wayAroundOf, type NewStreet } from '../routes/lines';
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { BackIcon, ChevronIcon, NoteIcon, SkipIcon, iconFor } from '../ui/icons';
-import { Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Segmented, TextButton, Tag, kindOf, markOf, type MarkKind } from '../ui';
+import { ChangeRow, Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
@@ -673,7 +673,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   };
   const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked, step.id === 'street' && !!step.found]);
   const aimTimer = useRef(0), settledDock = [insets.left, insets.right, insets.bottom].map(value => Math.round(value / 24)).join();
+  // The dock settling right after a new subject reframes it; later changes of size, such as a Before / Now line, leave the camera where it is.
+  const aimed = useRef({ key: '', at: 0 });
   useEffect(() => {
+    const key = `${aimKey} ${narrow}`;
+    if (aimed.current.key !== key) aimed.current = { key, at: performance.now() };
+    else if (performance.now() - aimed.current.at > 1500) return;
     clearTimeout(aimTimer.current);
     aimTimer.current = window.setTimeout(() => {
       const aim = aimFor(), handle = map.current;
@@ -822,6 +827,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     lines.push(step.mode === 'add' ? s.edit.addSpot : step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask);
     if (!step.mode) chips = [{ id: 'add', label: s.edit.chips.addSpot, onClick: () => go({ id: 'edit', mode: 'add' }) }, { id: 'change', label: s.edit.chips.changeSpot, onClick: () => go({ id: 'edit', mode: 'change' }) },
       { id: 'street', label: s.edit.chips.addStreet, onClick: () => go({ id: 'street' }) }, { id: 'note', label: s.edit.chips.note, onClick: () => go({ id: 'edit', mode: 'note' }) }];
+    // Every change she made, beside the choices: a tap flies the map there, Undo takes it back.
+    const list = step.mode ? [] : changesOf();
+    if (list.length) above = <Panel tone="dark" size="card" className="gs-changes"><PanelHead as="h2" title={s.edit.chips.changes} meta={String(list.length)} />
+      {list.map(change => <ChangeRow key={change.id} kind={change.kind} label={change.label} undoLabel={s.changes.undo} onOpen={() => fly(change.points)} onUndo={() => { change.undo(); setAck(s.changes.undone); }} />)}</Panel>;
     // Her note for the whole walk is her own words, kept as she wrote them; anything else she says proposes a spot.
     if (step.mode === 'add') words = hear;
     if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); go({ id: 'note' }, s.edit.noteSaved); };
@@ -840,6 +849,41 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
 
   // While a step waits behind an edit, going back to it is always one choice away.
+
+  /** Each change she made, newest kinds last: her answers, the spots she added, her notes, her streets and her word on the way around. */
+  function changesOf(): { id: string; kind: Kind | null; label: string; points: Point[]; undo: () => void }[] {
+    const list: ReturnType<typeof changesOf> = [];
+    const capital = (text: string) => `${text.charAt(0).toLocaleUpperCase()}${text.slice(1)}`;
+    for (const [key, said] of Object.entries(edits.answers)) {
+      const item = items.find(one => one.key === key); if (!item) continue;
+      const spot = 'spot' in item ? item.spot : null, title = spot ? tagOf({ kind: 'spot', id: spot.id }) : capital(s.words.marks[(item as { mark: MarkKind }).mark]((item as { count: number }).count));
+      const chip = (s.check.answers as Record<string, Record<string, string> | undefined>)[said.question]?.[said.answer] ?? said.answer;
+      list.push({ id: `answer:${key}`, kind: kindOf(spot ? spot.findings[0]?.concept ?? '' : (item as { mark: MarkKind }).mark), label: said.answer === 'notThere' || said.answer === 'gone' ? s.changes.takenOff({ tag: title }) : `${title}: ${chip}`,
+        points: spot ? [spot.at] : (item as { points: Point[] }).points, undo: () => {
+          edit(edits => setAnswer(edits, key, null));
+          if (!spot) return;
+          if (isFixed(latestEdits.current, spot.stretches)) edit(edits => clearFixed(edits, spot.stretches));
+          if (verdictOf(latest.current, spot.stretches)) commit(review => decide(review, spot.stretches, null));
+        } });
+    }
+    for (const spot of edits.added) {
+      const at = pointOf({ kind: 'added', id: spot.id });
+      list.push({ id: `added:${spot.id}`, kind: null, label: s.changes.added({ kind: s.words.added[spot.kind], at: along(data.stretches[spot.stretch].from) }), points: at ? [at] : [],
+        undo: () => edit(edits => removeSpot(isFixed(edits, [spot.stretch]) ? clearFixed(edits, [spot.stretch]) : edits, spot.id)) });
+    }
+    for (const key of Object.keys(edits.notes)) {
+      const target = key === WALK_NOTE ? null : targetOf(key), at = target && pointOf(target);
+      list.push({ id: `note:${key}`, kind: null, label: target ? `${tagOf(target)}: ${s.changes.note}` : s.changes.note, points: at ? [at] : [], undo: () => edit(edits => setNote(edits, key, NO_NOTE)) });
+    }
+    const keep = (next: typeof ways) => { setWays(next); if (!saveLines(next)) setProblem(s.notSaved); };
+    for (const street of ways.streets)
+      list.push({ id: `street:${street.id}`, kind: null, label: s.changes.street({ street: street.name ?? street.streets[0] ?? '' }), points: street.line.map(point => walk.project(point as [number, number])), undo: () => keep(removeStreet(ways, street.id)) });
+    if (ways.check && around)
+      list.push({ id: 'around', kind: null, label: s.changes.around[ways.check.works ? 'works' : 'notWorks'], points: around.line.map(point => walk.project(point as [number, number])), undo: () => keep(setCheck(ways, null)) });
+    return list;
+  }
+  /** The map flies to a change she opened. */
+  const fly = (points: Point[]) => { if (points.length) map.current?.show({ kind: 'points', points }, insets); };
 
   /** What her answer for a spot means for its outlines on a photo: fixed or gone, taken off, or still there. Unanswered gives nothing. */
   function answerAt(stretches: readonly number[]): MarkAnswer | null {
