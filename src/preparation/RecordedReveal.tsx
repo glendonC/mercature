@@ -5,7 +5,7 @@ import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destina
 import { hasRouteCanvas } from '../destinations/RouteCanvas';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import { useLanguage } from '../i18n';
-import { fromRecord } from '../i18n/records';
+import { possibleFromRecord } from '../i18n/records';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record. */
@@ -250,7 +250,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
             <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
           </div>
-          <figcaption><strong>{fromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
+          <figcaption><strong>{possibleFromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
         <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</button></footer>
       </>}
