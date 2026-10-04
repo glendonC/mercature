@@ -29,6 +29,13 @@ export function photosShown(total: number, beat: Window, now: number): number {
   return Math.max(0, Math.min(total, Math.floor((now - beat[0]) / span * (total - 1)) + 1));
 }
 
+/** How many marks have popped by now, in walking order, so a count can match what is drawn. */
+export function marksShown(total: number, beat: Window, now: number): number {
+  const pop = Math.min(POP, beat[1] * 0.5), span = Math.max(1, beat[1] - pop);
+  if (now < beat[0]) return 0;
+  return Math.min(total, Math.floor((now - beat[0]) / span * Math.max(1, total - 1)) + 1);
+}
+
 /** The time on an ease where it reaches a share of its way. */
 function inverse(ease: (u: number) => number, share: number) {
   let lo = 0, hi = 1;

@@ -25,13 +25,15 @@ test('the Qorikancha reveal replays how the walk was built and opens the inspect
   await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
   const reveal = page.getByRole('region', {name:'Qorikancha', exact:true});
   await expect(reveal.getByRole('heading', {name:'Qorikancha'})).toBeVisible();
+  // A few photos are read on the map, one after another, before the findings arrive.
+  await expect(reveal).toHaveAttribute('data-step', 'reading', {timeout: 10000});
+  await expect(reveal.getByRole('figure').first()).toBeVisible();
   await expect(reveal).toHaveAttribute('data-step', 'barriers', {timeout: 10000});
   const lines = await said();
   expect(lines.some(line => /^\d+ street photos of this walk$/.test(line))).toBe(true);
-  // Every mark the package records, not only those whose photos are published.
+  // Marks are counted as they are placed, up to every mark the package records, not only those whose photos are published.
   expect(lines).toContain('52 marks along the walk');
   expect(lines).toContain('8 might be barriers, at 5 spots');
-  await expect(reveal.getByRole('figure').first()).toBeVisible({timeout: 10000});
   await expect(reveal).not.toContainText(/recorded|unverified/i);
   await page.getByRole('button', {name:'Skip', exact:true}).click();
   // The replay lands on the canvas map before it gives way, rather than cutting to it.

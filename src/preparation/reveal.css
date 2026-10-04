@@ -25,7 +25,10 @@
 .reveal.is-leaned :is(.reveal-banner, .reveal-say) { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2); }
 .reveal-points { opacity: .9; transition: opacity .35s ease; }
 .reveal[data-phase=handoff] .reveal-points { opacity: 0; }
-.reveal-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff); transform-box: fill-box; transform-origin: center; animation: reveal-ring .6s var(--ease) both; }
+.reveal-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff); transform-box: fill-box; transform-origin: center; animation: reveal-ring 400ms var(--ease-out) both, reveal-out 220ms ease 830ms forwards; }
+/* What a photo read leaves on the map, until the findings step draws every one of them. */
+.reveal-read-mark { fill: var(--unknown); stroke: #fff; stroke-width: 1.2px; transform-box: fill-box; transform-origin: center; animation: reveal-read-mark 260ms var(--ease-out) 980ms both; transition: opacity 240ms ease; }
+.reveal:is([data-step=barriers], [data-phase=handoff]) .reveal-read-mark { opacity: 0; }
 
 .reveal-banner { position: absolute; top: calc(26px + var(--safe-top)); left: 50%; display: grid; justify-items: center; gap: 6px; width: min(560px, calc(100% - 32px)); translate: -50% 0; text-align: center; text-shadow: 0 0 10px #eceeef, 0 0 2px #eceeef; animation: reveal-banner .7s var(--ease) .7s both; pointer-events: none; }
 .reveal-banner::before { content: ''; width: 100%; height: 1px; margin-bottom: 8px; background: linear-gradient(90deg, transparent, rgb(29 33 37 / .35), transparent); animation: reveal-rule .9s var(--ease) .75s both; }
@@ -37,18 +40,23 @@
 .reveal-opening { position: absolute; left: 50%; top: 50%; margin: 0; translate: -50% -50%; font-size: var(--text-label); color: var(--muted); animation: reveal-fade .4s ease .4s both; }
 
 .reveal-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.reveal-leaders line { stroke: var(--ink); stroke-opacity: .45; stroke-width: 1; animation: reveal-fade .4s ease both; }
-.reveal-card { position: absolute; width: 196px; margin: 0; padding: 4px; border-radius: 12px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); color: var(--ui-ink); animation: reveal-card .55s var(--ease) both; }
+.reveal-leaders line { stroke: var(--ink); stroke-opacity: .45; stroke-width: 1; animation: reveal-fade 180ms ease both, reveal-out 220ms ease 830ms forwards; }
+/* A photo the model read: it opens from its dot, a light crosses it, its outlines trace, its kind lands, and it folds back into its dot. */
+.reveal-card { position: absolute; width: 196px; margin: 0; padding: 4px; border-radius: 12px; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); color: var(--ui-ink); transform-origin: var(--fold-x, 50%) var(--fold-y, 50%); animation: reveal-read-open 180ms var(--ease-out) both, reveal-read-fold 220ms var(--ease-in-out) 830ms forwards; }
 /* Laid out but unseen until its turn, so placement knows its real size; its animations start when it shows. */
 .reveal-card.is-waiting, .reveal-card.is-waiting * { visibility: hidden; animation: none; }
 .reveal-photo { position: relative; overflow: hidden; border-radius: 8px; background: var(--ui-fill); }
 .reveal-photo img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.35); }
 .reveal-photo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.reveal-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / .45) 50%, transparent 65%); transform: translateX(-100%); animation: reveal-read-pass 360ms var(--ease-in-out) 160ms both; pointer-events: none; }
 /* The photo's marks in the shared kind colours, as the route screen draws them, drawn on line first, then filled. */
-.reveal-photo :is(.ui-mark, .ui-mark-halo) { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: reveal-draw .9s cubic-bezier(.45, 0, .2, 1) .35s forwards; }
-.reveal-photo .ui-mark { fill-opacity: 0; animation: reveal-draw .9s cubic-bezier(.45, 0, .2, 1) .35s forwards, reveal-fill .4s ease 1.1s forwards; }
+.reveal-photo :is(.ui-mark, .ui-mark-halo) { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: reveal-draw 420ms var(--ease-in-out) 220ms forwards; }
+.reveal-photo .ui-mark { fill-opacity: 0; animation: reveal-draw 420ms var(--ease-in-out) 220ms forwards, reveal-fill 160ms ease 600ms forwards; }
 .reveal-card figcaption { display: grid; gap: 1px; padding: 7px 4px 3px; }
 .reveal-card strong { font-size: var(--font-xs); font-weight: 500; line-height: 1.25; color: var(--ui-ink); }
+/* The kind the outline was read as, landing as the outline closes. */
+.reveal-chip { justify-self: start; display: inline-flex; align-items: center; min-height: 22px; padding: 0 9px; border-radius: var(--radius-pill); background: rgb(255 255 255 / .1); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2); animation: reveal-chip 200ms var(--ease-out) 600ms both; }
+.reveal-chip[data-barrier] { background: color-mix(in srgb, var(--blocked) 32%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blocked) 75%, transparent); }
 .reveal-card span { font-size: var(--font-xs); color: var(--ui-muted); overflow-wrap: anywhere; }
 
 .reveal[data-phase=handoff] { background-color: transparent; }
@@ -95,6 +103,12 @@
 @keyframes reveal-banner { from { opacity: 0; translate: -50% -8px; } }
 @keyframes reveal-rule { from { transform: scaleX(0); } }
 @keyframes reveal-card { from { opacity: 0; transform: translateY(8px) scale(.94); } }
+@keyframes reveal-read-open { from { opacity: 0; transform: scale(.06); } }
+@keyframes reveal-read-fold { to { opacity: 0; transform: scale(.06); } }
+@keyframes reveal-read-pass { to { transform: translateX(100%); } }
+@keyframes reveal-read-mark { from { opacity: 0; transform: scale(0); } }
+@keyframes reveal-chip { from { opacity: 0; translate: 0 -6px; } }
+@keyframes reveal-out { to { opacity: 0; } }
 
 @media (max-width: 639px) {
   .reveal-banner { top: calc(18px + var(--safe-top)); }
@@ -108,7 +122,7 @@
 }
 @media (min-width: 640px) { .reveal-hints .reveal-credit-short { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .reveal *, .reveal *::before { animation: none !important; transition: none !important; }
+  .reveal *, .reveal *::before, .reveal *::after { animation: none !important; transition: none !important; }
   .reveal .map-route polyline, .reveal-photo :is(.ui-mark, .ui-mark-halo) { stroke-dashoffset: 0; }
   .reveal-photo .ui-mark { fill-opacity: 1; }
 }
