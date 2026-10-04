@@ -1,7 +1,7 @@
 /**
  * The two OpenStreetMap services the lines ask, each once per request and never while she types:
  * Valhalla on the FOSSGIS server for the way on foot and the kind of each edge it takes, and Overpass for what
- * OpenStreetMap says along a line. Browser and Node alike; the answers come back raw so a prepared walk can keep them.
+ * OpenStreetMap says along a line. Browser and Node alike; the answers come back raw so a prepared tour route can keep them.
  */
 import type { LineTrouble } from './shape.ts';
 
@@ -16,7 +16,7 @@ export class RouteTrouble extends Error {
 }
 
 const offline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
-/** Overpass answers 406 to a request that does not name its client. A browser names itself; Node, as when a walk is prepared, does not. */
+/** Overpass answers 406 to a request that does not name its client. A browser names itself; Node, as when a route is prepared, does not. */
 const client: Record<string, string> = typeof window === 'undefined' ? { 'User-Agent': 'mercature-routes' } : {};
 
 async function askJson(url: string, init: RequestInit, signal: AbortSignal | undefined, seconds: number): Promise<unknown> {
@@ -52,6 +52,6 @@ export async function overpass(query: string, signal?: AbortSignal): Promise<unk
   return body;
 }
 
-/** How the lines reach the services; a prepared walk swaps in recorded answers, a test a fake. */
+/** How the lines reach the services; a prepared route swaps in recorded answers, a test a fake. */
 export type Ask = { valhalla: typeof valhalla; overpass: typeof overpass };
 export const LIVE: Ask = { valhalla, overpass };

@@ -1,6 +1,6 @@
 /**
- * What a place keeps on this device besides the review: the streets she adds near the walk, her answer when the
- * guide asks her to check the way around, and a way around asked here for a walk with no package.
+ * What a place keeps on this device besides the review: the streets she adds near the tour route, her answer when the
+ * guide asks her to check the way around, and a way around asked here for a route with no package.
  * Her street is the router's way on foot between two points she tapped, with what OpenStreetMap says along it.
  * It has no street photos and nobody has checked it; nothing here says whether a person can get through.
  */
@@ -10,13 +10,13 @@ import { along, distance, project, round, tenth } from './geo.ts';
 import { STREET_LABEL, type AroundCheck, type OwnStreet, type RouteLines, type WayAround } from './shape.ts';
 import { LIVE, RouteTrouble, VALHALLA, type Ask } from './valhalla.ts';
 
-/** A tap counts as near the walk within this many metres of it. */
+/** A tap counts as near the route within this many metres of it. */
 export const NEAR_WALK = 300;
 export const LONGEST_STREET = 2000;
 export const MOST_STREETS = 20;
 /** A street before addStreet gives it an id. */
 export type NewStreet = Omit<OwnStreet, 'id'>;
-/** A line for the map's paths: the way around off the walk, or one of her streets. */
+/** A line for the map's paths: the way around off the route, or one of her streets. */
 export type MapPath = { id: string; kind: 'around' | 'street'; line: [number, number][] };
 
 const key = (place: string) => `mercature.route-lines.v1.${place}`;
@@ -28,7 +28,7 @@ const isPoint = (value: unknown): value is LonLat => Array.isArray(value) && val
 /**
  * Her street between two taps: the router's way on foot (pedestrian, no options), cut into 10 m stretches, with what
  * OpenStreetMap says about the ways it takes and the points along it. Throws RouteTrouble: too-far when a tap is more
- * than NEAR_WALK from the walk, too-long, no-walk when the router finds no way, offline, busy or failed.
+ * than NEAR_WALK from the route, too-long, no-walk when the router finds no way, offline, busy or failed.
  * Without OpenStreetMap's answer it has no kinds and osmAsOf null.
  */
 export async function buildStreet(from: LonLat, to: LonLat, walk: readonly LonLat[], { signal, ask = LIVE, now = new Date() }: { signal?: AbortSignal; ask?: Ask; now?: Date } = {}): Promise<NewStreet> {
@@ -106,14 +106,14 @@ export function addStreet(lines: RouteLines, street: NewStreet): RouteLines {
 export const removeStreet = (lines: RouteLines, id: string): RouteLines => ({ ...lines, streets: lines.streets.filter(street => street.id !== id) });
 /** Her answer after checking the way around, or null to take it back. */
 export const setCheck = (lines: RouteLines, works: boolean | null, at = new Date().toISOString()): RouteLines => ({ ...lines, check: works === null ? null : { works, at } satisfies AroundCheck });
-/** Keeps a way around asked on this device, for a walk with no package. */
+/** Keeps a way around asked on this device, for a route with no package. */
 export const setAround = (lines: RouteLines, around: WayAround | null): RouteLines => ({ ...lines, around });
 /** The way around a place has: its package's, else the one asked on this device, else null (nobody has asked yet). */
 export const wayAroundOf = (destination: { readonly wayAround?: WayAround | null } | null, lines: RouteLines | null): WayAround | null => destination?.wayAround ?? lines?.around ?? null;
 
 /**
  * The lines for the map: the whole way around, when one was found, then her streets. The whole way, because where it
- * keeps close to the walk it can still take a street beside a flight of steps; the walk is drawn over the shared ends.
+ * keeps close to the route it can still take a street beside a flight of steps; the route is drawn over the shared ends.
  */
 export function mapPaths(around: WayAround | null, streets: readonly OwnStreet[]): MapPath[] {
   const paths: MapPath[] = [];

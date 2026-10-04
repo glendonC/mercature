@@ -1,4 +1,4 @@
-/** Walks built on this device, kept in IndexedDB so they reopen offline. Nothing leaves the device. */
+/** Tour routes built on this device, kept in IndexedDB so they reopen offline. Nothing leaves the device. */
 import type { Built, PlacePackage } from './build.ts';
 import type { RoutePlace } from '../site/route.ts';
 
@@ -24,14 +24,14 @@ function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRe
   }));
 }
 
-/** A row read back is checked before use: a walk the device kept badly is left out, never opened half-read. */
+/** A row read back is checked before use: a route the device kept badly is left out, never opened half-read. */
 function valid(row: unknown): row is Row {
   const r = row as Partial<Row> | null;
   return !!r && typeof r.id === 'string' && r.place?.schema === 'mercature-place/1' && r.place.id === r.id && Array.isArray(r.place.stretches) && Array.isArray(r.place.route?.line)
     && r.place.route.line.length > 1 && Array.isArray(r.spots?.features) && r.spots.id === r.id;
 }
 
-/** Keeps a built walk; false when this device would not (private browsing, no space). */
+/** Keeps a built route; false when this device would not (private browsing, no space). */
 export async function saveWalk(built: Built): Promise<boolean> {
   try { await run('readwrite', store => store.put({ id: built.place.id, savedAt: new Date().toISOString(), place: built.place, spots: built.spots } satisfies Row)); return true; }
   catch { return false; }
@@ -42,7 +42,7 @@ export async function loadWalk(id: string): Promise<Built | null> {
   catch { return null; }
 }
 
-/** Every walk kept here, newest first. */
+/** Every route kept here, newest first. */
 export async function listWalks(): Promise<SavedWalk[]> {
   try {
     const rows = await run<unknown[]>('readonly', store => store.getAll());

@@ -1,4 +1,4 @@
-/** Small geometry on [lon, lat] points, in metres on a local flat frame. Good to a few centimetres over a walk of a few kilometres. */
+/** Small geometry on [lon, lat] points, in metres on a local flat frame. Good to a few centimetres over a tour route of a few kilometres. */
 export type LonLat = [number, number];
 
 const R = 6371008.8 * Math.PI / 180;

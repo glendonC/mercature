@@ -1,5 +1,5 @@
 /**
- * A walk built on this device from OpenStreetMap alone: the route on foot, cut into 10 m stretches, the tags along it as findings,
+ * A tour route built on this device from OpenStreetMap alone: the route on foot, cut into 10 m stretches, the tags along it as findings,
  * and spots for the model from groups of flagged stretches, the streets it follows and the buildings beside it.
  * It has the shape of a published place (mercature-place/1) with no photos, views or scan: nothing here was seen in a street photo,
  * so every stretch without a flagged tag says "no photos", and nothing states a width, height or slope.
@@ -11,7 +11,7 @@ import { esDe, esPlace } from '../i18n/names.ts';
 import type { RoutePlace, RouteSpot } from '../site/route.ts';
 import type { Coordinate, Destination, DestinationId, Finding, MapFeature, Stretch } from '../destinations/data.ts';
 
-/** One tag on or beside the walk, as src/osm/access.ts places it on the stretches. */
+/** One tag on or beside the route, as src/osm/access.ts places it on the stretches. */
 export type TagFinding = Pick<AccessFinding, 'id' | 'kind' | 'value' | 'concept' | 'label' | 'barrier' | 'osm' | 'position' | 'stretches'>;
 type Geometry = { type: string; coordinates: unknown };
 export type Feature = { type: 'Feature'; geometry: Geometry; properties: Record<string, unknown> };
@@ -22,7 +22,7 @@ export const STRETCH_METRES = 10;
 const ROUGH = new Set(['bad', 'very_bad', 'horrible', 'very_horrible', 'impassable']);
 
 /**
- * A tag that may be a barrier on foot or on wheels. OpenStreetMap is the only evidence on a walk with no street photos,
+ * A tag that may be a barrier on foot or on wheels. OpenStreetMap is the only evidence on a route with no street photos,
  * so besides steps it flags a raised kerb, a way marked not for wheelchairs, a gate, bollards and a rough surface.
  */
 export function possibleBarrier(finding: { kind: string; value: string; barrier: boolean }): boolean {
@@ -30,7 +30,7 @@ export function possibleBarrier(finding: { kind: string; value: string; barrier:
     || finding.kind === 'gate' || finding.kind === 'bollard' || (finding.kind === 'smoothness' && ROUGH.has(finding.value));
 }
 
-/** The walk cut into stretches of 10 m from its start; the last one ends where the walk does. */
+/** The route cut into stretches of 10 m from its start; the last one ends where the route does. */
 export function cut(line: readonly LonLat[]): { index: number; from: number; to: number; line: LonLat[] }[] {
   const at = along(line), total = at[at.length - 1], pieces = [];
   for (let index = 0, from = 0; from < total - 0.05; index++, from += STRETCH_METRES) {
@@ -92,7 +92,7 @@ export function features(collection: MapContext['buildings'], polygon: boolean):
 export type PlacePackage = ReturnType<typeof buildPlace>['place'];
 export type Built = { place: PlacePackage; spots: RoutePlace };
 
-/** The package and its spots for a walk between two ends, from the walk on foot, the tags along it and the map around it. */
+/** The package and its spots for a route between two ends, from the route on foot, the tags along it and the map around it. */
 export function buildPlace(input: { start: End; target: End; area: string; walked: Walked; findings: readonly TagFinding[]; context: MapContext; fetchedAt: string; aroundMetres: number; nearMetres: number }) {
   const { start, target, walked, context } = input;
   const id = walkId(start, target);
@@ -134,7 +134,7 @@ export function buildPlace(input: { start: End; target: End; area: string; walke
     };
   });
 
-  // Landmarks: both ends, the streets the walk follows longest, and the named buildings beside it.
+  // Landmarks: both ends, the streets the route follows longest, and the named buildings beside it.
   const landmark = (name: string, description: string, aliases: Record<string, string[]>): RouteSpot => ({ id: unique(slug(name)), stretches: [], landmark: name, name: { en: name, es: name }, description, aliases });
   if (start.name) spots.push(landmark(start.name, `${start.name}, where this walk starts.`, { en: ['start', 'starting point', 'beginning', start.name], es: ['inicio', 'salida', 'punto de partida', start.name], ko: ['출발점'] }));
   if (target.name && target.name !== start.name) spots.push(landmark(target.name, `${target.name}, where this walk ends.`, { en: ['end of the walk', 'destination', 'arrival', 'entrance', target.name], es: ['llegada', 'destino', 'entrada', target.name], ko: ['도착지', '입구'] }));
@@ -179,23 +179,23 @@ export function buildPlace(input: { start: End; target: End; area: string; walke
 }
 
 
-/** The place the route screen shows, from a built package. A built walk has no package folder, photos or views. */
+/** The place the route screen shows, from a built package. A built route has no package folder, photos or views. */
 export function toDestination(place: PlacePackage): Destination {
   const findings: Finding[] = place.findings.map(f => ({ id: f.id, viewId: null, photoId: null, label: f.label, concept: f.concept, score: null, outline: [], verified: false, barrier: f.barrier, osm: f.osm.tags, position: f.position, stretches: f.stretches }));
   const stretches: Stretch[] = place.stretches.map(s => ({ index: s.index, from: s.from_m, to: s.to_m, status: s.status === 'barrier' ? 'barrier' : 'no-photos', line: s.line, findings: s.findings, views: [] }));
   return {
-    // A built walk is not one of the registered destinations; its id only keys what this device keeps for it.
+    // A built route is not one of the registered destinations; its id only keys what this device keeps for it.
     id: place.id as DestinationId, title: place.title, place: place.place, localOnly: false, assets: '', origin: place.route.frame.origin,
     line: place.route.line, lengthMetres: place.route.length_m, start: place.request.start, target: { name: place.request.destination.name, position: place.request.destination.position },
     photos: [], views: [], stretches, pieces: [], findings, walkFindings: findings.map(f => ({ id: f.id, concept: f.concept, label: f.label, barrier: f.barrier, position: f.position, stretches: f.stretches })),
     marks: [], scan: null, buildings: features(place.map_context.buildings, true), ways: features(place.map_context.ways, false),
-    // Every kind OpenStreetMap lists along the walk, with its own flags, for the guide's walk check.
+    // Every kind OpenStreetMap lists along the route, with its own flags, for the guide's route check.
     access: [...place.osm.findings],
     sources: place.sources.map(s => ({ name: s.name, credit: s.credit, licence: s.licence, link: s.link })),
   };
 }
 
-/** Where a point lies along the walk, for placing what a search found near it. */
+/** Where a point lies along the route, for placing what a search found near it. */
 export function metresAlong(point: LonLat, line: readonly LonLat[]): { metres: number; away: number } {
   return project(point, line, along(line));
 }

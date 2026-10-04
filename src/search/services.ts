@@ -1,12 +1,12 @@
 /**
  * The three OpenStreetMap services a search may ask, each once per tap and never while typing:
- * Nominatim for places (at most one request a second, by its usage policy), Valhalla on the FOSSGIS server for the walk on foot,
- * and Overpass for the map and its tags around the walk.
+ * Nominatim for places (at most one request a second, by its usage policy), Valhalla on the FOSSGIS server for the tour route on foot,
+ * and Overpass for the map and its tags around the route.
  */
 import { along, decodePolyline6, distance, type LonLat } from './geo.ts';
 
 export type Trouble = 'offline' | 'busy' | 'none' | 'no-walk' | 'too-long' | 'failed';
-/** A plain reason a search or a walk could not be had, for one line of text. */
+/** A plain reason a search or a route could not be had, for one line of text. */
 export class SearchTrouble extends Error {
   readonly kind: Trouble;
   readonly status: number;
@@ -18,7 +18,7 @@ export const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
 export const OVERPASS = 'https://overpass-api.de/api/interpreter';
 /** A second public Overpass server, asked once when the first is busy or slow. */
 export const OVERPASS_AGAIN = 'https://maps.mail.ru/osm/tools/overpass/api/interpreter';
-/** The longest walk built here: about an hour on foot, and an Overpass request the public server answers quickly. */
+/** The longest route built here: about an hour on foot, and an Overpass request the public server answers quickly. */
 export const LONGEST_WALK = 5000;
 
 const pause = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
@@ -53,8 +53,8 @@ export async function ask(url: string, init: RequestInit, signal: AbortSignal | 
 }
 
 /** A place OpenStreetMap knows. */
-/** detail: the address around it, to tell answers apart; area: its town and country, for the place a walk is in.
- * broad: a whole city, region or country, too big to be the end of a walk. */
+/** detail: the address around it, to tell answers apart; area: its town and country, for the place a route is in.
+ * broad: a whole city, region or country, too big to be the end of a route. */
 export type Found = { id: string; name: string; detail: string; area: string; broad: boolean; road: boolean; position: LonLat; kind: string; osm: { type: 'node' | 'way' | 'relation'; id: number } | null };
 
 const fold = (text: string) => text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -62,7 +62,7 @@ const fold = (text: string) => text.normalize('NFKD').replace(/[\u0300-\u036f]/g
 let lastAsked = 0;
 /**
  * Places matching the words, best first. One request per call, spaced at least a second from the last.
- * near: keeps the answers within a few kilometres of a point, for the start of a walk.
+ * near: keeps the answers within a few kilometres of a point, for the start of a route.
  */
 export async function findPlaces(words: string, options: { near?: LonLat; lang?: string; signal?: AbortSignal } = {}): Promise<Found[]> {
   const query = new URLSearchParams({ q: words.trim(), format: 'jsonv2', limit: '6', namedetails: '1', addressdetails: '1', extratags: '1' });
@@ -96,7 +96,7 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const box = Array.isArray(raw.boundingbox) ? (raw.boundingbox as string[]).map(Number) : [];
     const span = box.length === 4 && box.every(Number.isFinite) ? distance([box[2], box[0]], [box[3], box[1]]) : 0;
     const rank = Number(raw.place_rank ?? 30), people = Number((raw.extratags as Record<string, string> | null)?.population ?? NaN);
-    // Big: a region, state or country, or a city of more than 20 000 people. A village or a small town is walked to its centre,
+    // Big: a region, state or country, or a city of more than 20 000 people. A village or a small town is routed to its centre,
     // whatever its outline says; an area that is not a place (a park, a campus) is big when it spans more than 3 km.
     const place = raw.category === 'place' || raw.category === 'boundary';
     const broad = rank > 0 && rank <= 12 || (place && rank <= 16 && (people > 20000 || (!(people >= 0) && span > 8000))) || (place && people > 50000)
@@ -111,11 +111,11 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
   return kept.map((item, i) => ({ item, i })).sort((a, b) => Number(partialRoad(a.item)) - Number(partialRoad(b.item)) || a.i - b.i).map(({ item }) => item);
 }
 
-/** A named street the walk follows, from the walk's own turn by turn directions, in metres along it. */
+/** A named street the route follows, from the route's own turn by turn directions, in metres along it. */
 export type Street = { name: string; from: number; to: number };
 export type Walked = { line: LonLat[]; lengthMetres: number; streets: Street[]; fetchedAt: string };
 
-/** The walk on foot between two points, as Valhalla's pedestrian costing finds it on OpenStreetMap. */
+/** The route on foot between two points, as Valhalla's pedestrian costing finds it on OpenStreetMap. */
 export async function walkBetween(from: LonLat, to: LonLat, signal?: AbortSignal): Promise<Walked> {
   if (distance(from, to) > LONGEST_WALK) throw new SearchTrouble('too-long');
   const request = { locations: [{ lat: from[1], lon: from[0] }, { lat: to[1], lon: to[0] }], costing: 'pedestrian', directions_options: { units: 'kilometers', language: 'en-US' } };
@@ -123,7 +123,7 @@ export async function walkBetween(from: LonLat, to: LonLat, signal?: AbortSignal
   try {
     body = await ask(VALHALLA, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) }, signal, 30);
   } catch (error) {
-    // Valhalla answers 400 when it finds no walk (no path, or a point too far from any way).
+    // Valhalla answers 400 when it finds no route (no path, or a point too far from any way).
     if (error instanceof SearchTrouble && error.status === 400) throw new SearchTrouble('no-walk');
     throw error;
   }

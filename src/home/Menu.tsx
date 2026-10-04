@@ -26,7 +26,7 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
   const sheet = useRef<HTMLDialogElement>(null);
   const close = () => sheet.current?.close();
   const go = (run: () => void) => { close(); run(); };
-  // Credit the covers this device can show: a place that opens here, nothing a deployed screen never draws.
+  // Credit only the covers this device can open.
   const openable = useOpenable();
   return <>
     <IconButton label={t('home.menu')} className={`menu-button ${className}`.trim()} onClick={() => sheet.current?.showModal()}><MenuIcon/></IconButton>

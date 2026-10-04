@@ -1,6 +1,6 @@
 .welcome-shell {
   --home-ink: var(--ink);
-  /* The route canvas's ground and word halo, so Home and the walk it opens look like one place. */
+  /* The route canvas's ground and word halo, so Home and the tour route it opens look like one place. */
   --ground: color-mix(in srgb, var(--ink) 4%, var(--paper));
   --halo: 0 0 2px var(--ground), 0 0 6px var(--ground), 0 0 12px var(--ground);
   /* The installed app draws under a phone's status bar, rounded corners and home indicator; every edge keeps clear of them. */

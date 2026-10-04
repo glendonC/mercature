@@ -1,8 +1,8 @@
 import { ACCESS_KINDS, type AccessFinding, type AccessKind } from './access.ts';
 
 /**
- * One thing the guide asks her to check on a walk: every OpenStreetMap finding of one kind, where it lies and what
- * OpenStreetMap says there. barrier: one of its findings may be a barrier, as the walk marks them. says: each distinct
+ * One thing the guide asks her to check on a tour route: every OpenStreetMap finding of one kind, where it lies and what
+ * OpenStreetMap says there. barrier: one of its findings may be a barrier, as the route marks them. says: each distinct
  * line OpenStreetMap gives, with its stretches, the most widespread first. Nobody has checked any of it on site.
  */
 export type CheckItem = {
@@ -17,11 +17,11 @@ export type CheckFinding = Pick<AccessFinding, 'id' | 'kind' | 'value' | 'label'
 
 /** The order she goes through them in: what may block the way first, then crossings and the ground, then what helps on the way. */
 const ORDER: readonly AccessKind[] = ['steps', 'kerb', 'gate', 'bollard', 'crossing', 'tactile_paving', 'surface', 'smoothness', 'bench', 'toilets', 'lit', 'handrail', 'ramp', 'wheelchair'];
-/** A slope or a width is never said on a walk; such a line is dropped even if a caller passes one in. */
+/** A slope or a width is never said on a route; such a line is dropped even if a caller passes one in. */
 const MEASURE = /\b(width|wide|incline|slope|gradient|steep)\b|\d\s?(cm|mm|%|°)/i;
 const sorted = (values: Iterable<number>) => [...new Set(values)].sort((a, b) => a - b);
 
-/** Groups a walk's OpenStreetMap findings into the guide's check items, barrier items first. */
+/** Groups a route's OpenStreetMap findings into the guide's check items, barrier items first. */
 export function checkItems(findings: readonly CheckFinding[]): CheckItem[] {
   const items: CheckItem[] = [];
   for (const kind of ORDER) {

@@ -1,9 +1,9 @@
 /**
- * The way between a walk's two ends that avoids its mapped steps, as OpenStreetMap's router suggests it.
+ * The way between a tour route's two ends that avoids its mapped steps, as OpenStreetMap's router suggests it.
  * Valhalla's pedestrian costing takes step_penalty, a cost in seconds added for each flight of steps (checked on the
- * live server: 30 by default, and Qorikancha's walk turns off Loreto's steps between 35 and 40). With an hour per
+ * live server: 30 by default, and Qorikancha's route turns off Loreto's steps between 35 and 40). With an hour per
  * flight the router goes around wherever a way exists, so the answer's own edges are read again and any steps left
- * on it mean there is no way around. A prepared walk keeps the raw answers, so its package gives the same bytes offline.
+ * on it mean there is no way around. A prepared route keeps the raw answers, so its package gives the same bytes offline.
  */
 import { ACCESS_KINDS, accessFindings, accessKinds, accessQuery, type AccessFinding, type AccessKind, type LonLat, type OsmElement, type StretchLine } from '../osm/access.ts';
 import { along, decodePolyline6, distance, pointAt, project, slice, tenth } from './geo.ts';
@@ -11,15 +11,15 @@ import { AROUND_LABEL, STRETCH_METRES, type LineStretch, type MappedSteps, type 
 import { LIVE, RouteTrouble, VALHALLA, type Ask } from './valhalla.ts';
 
 export const AROUND_OPTIONS: Readonly<Record<string, number>> = { step_penalty: 3600 };
-/** Within this many metres of the walk, the way counts as on it. */
+/** Within this many metres of the route, the way counts as on it. */
 const ON_WALK = 5;
-/** How close OpenStreetMap's tags must lie to a stretch, as for the walk's own findings. */
+/** How close OpenStreetMap's tags must lie to a stretch, as for the route's own findings. */
 const NEAR = 3;
 const ATTRIBUTES = ['edge.use', 'edge.way_id', 'edge.names', 'edge.begin_shape_index', 'edge.end_shape_index', 'shape'];
 
 type Edge = { use?: unknown; way_id?: unknown; names?: unknown; begin_shape_index?: unknown; end_shape_index?: unknown };
 type Leg = { shape?: unknown; maneuvers?: { street_names?: unknown }[] };
-/** The answers a way around is built from, kept raw: the walk's own edges, and, when it has mapped steps, the router's way, that way's edges and what OpenStreetMap says along it. */
+/** The answers a way around is built from, kept raw: the route's own edges, and, when it has mapped steps, the router's way, that way's edges and what OpenStreetMap says along it. */
 export type AroundAnswers = {
   readonly schema: 'mercature-way-around-answers/1';
   readonly server: string;
@@ -30,8 +30,8 @@ export type AroundAnswers = {
   readonly overpass: { readonly query: string; readonly body: unknown } | null;
 };
 /**
- * A walk as the way around needs it: its line, length and 10 m stretches, and the mapped steps its record already
- * places on them. A recorded walk's own steps win over the router's match, which can take a street beside a flight.
+ * A route as the way around needs it: its line, length and 10 m stretches, and the mapped steps its record already
+ * places on them. A recorded route's own steps win over the router's match, which can take a street beside a flight.
  */
 export type Walk = { readonly line: readonly LonLat[]; readonly metres: number; readonly stretches: readonly StretchLine[]; readonly steps?: readonly MappedSteps[] };
 
@@ -76,8 +76,8 @@ export function cutStretches(line: readonly LonLat[]): LineStretch[] {
 }
 
 /**
- * Where the way runs apart from the walk: the first and last point more than ON_WALK metres off it, widened to the
- * points on it either side. walkMetres scales the walk's metres to the length its record gives.
+ * Where the way runs apart from the route: the first and last point more than ON_WALK metres off it, widened to the
+ * points on it either side. walkMetres scales the route's metres to the length its record gives.
  */
 export function apartOf(way: readonly LonLat[], walk: readonly LonLat[], walkMetres?: number): WayAround['apart'] {
   const at = along(way), walkAt = along(walk), total = at[at.length - 1] ?? 0, samples: number[] = [], scale = walkMetres && walkAt[walkAt.length - 1] ? walkMetres / walkAt[walkAt.length - 1] : 1;
@@ -89,7 +89,7 @@ export function apartOf(way: readonly LonLat[], walk: readonly LonLat[], walkMet
   return { leaves: tenth(scale * project(pointAt(way, at, from), walk, walkAt).metres), rejoins: tenth(scale * project(pointAt(way, at, to), walk, walkAt).metres), from: tenth(from), to: tenth(to), line: slice(way, at, from, to) };
 }
 
-/** The apart part widened to every stretch of the walk with mapped steps on it, since the way goes around all of them. */
+/** The apart part widened to every stretch of the route with mapped steps on it, since the way goes around all of them. */
 function covering(apart: NonNullable<WayAround['apart']>, way: readonly LonLat[], walk: Walk, avoids: readonly MappedSteps[]): NonNullable<WayAround['apart']> {
   const indexes = avoids.flatMap(item => item.stretches);
   if (!indexes.length) return apart;
@@ -100,7 +100,7 @@ function covering(apart: NonNullable<WayAround['apart']>, way: readonly LonLat[]
   if (lastLine?.length && (last + 1) * STRETCH_METRES > rejoins) { rejoins = Math.min(walk.metres, (last + 1) * STRETCH_METRES); to = Math.max(to, project(lastLine[lastLine.length - 1], way, at).metres); }
   return { leaves: tenth(leaves), rejoins: tenth(rejoins), from: tenth(from), to: tenth(to), line: slice(way, at, from, to) };
 }
-/** The walk's stretches nearest to each point, for steps the walk's own findings did not place. */
+/** The route's stretches nearest to each point, for steps the route's own findings did not place. */
 const nearestStretches = (points: readonly LonLat[], stretches: readonly StretchLine[]): number[] =>
   [...new Set(points.map(point => stretches.map(stretch => ({ index: stretch.index, away: project(point, stretch.line, along(stretch.line)).away })).sort((a, b) => a.away - b.away || a.index - b.index)[0]?.index).filter((index): index is number => index !== undefined))].sort((a, b) => a - b);
 
@@ -128,7 +128,7 @@ export function kindsAlong(body: unknown, stretches: readonly LineStretch[], tak
 export function wayAroundFrom(answers: AroundAnswers, walk: Walk): WayAround {
   const avoids: MappedSteps[] = [...walk.steps ?? []];
   for (const steps of stepsIn(answers.walkTrace.body)) {
-    // Placed on the walk's stretches as the walk's own OpenStreetMap findings are, so both name the same stretches.
+    // Placed on the route's stretches as the route's own OpenStreetMap findings are, so both name the same stretches.
     const placed = accessFindings([{ type: 'way', id: steps.way, tags: { highway: 'steps' }, geometry: steps.line.map(([lon, lat]) => ({ lat, lon })) }], walk.stretches, { nearMetres: NEAR });
     const stretches = placed[0]?.stretches ?? nearestStretches(steps.line, walk.stretches), known = avoids.findIndex(item => item.way === steps.way);
     if (known < 0) avoids.push({ way: steps.way, name: steps.name, label: 'Steps', stretches });
@@ -140,14 +140,14 @@ export function wayAroundFrom(answers: AroundAnswers, walk: Walk): WayAround {
   const shape = legOf(answers.route?.body)?.shape;
   if (typeof shape !== 'string' || !answers.routeTrace || stepsIn(answers.routeTrace.body).length) return { ...base, status: 'none', routed: routedOf(answers, AROUND_OPTIONS) };
   const line = lineOf(shape), near = apartOf(line, walk.line, walk.metres), apart = near && covering(near, line, walk, avoids);
-  // A way with no steps that never leaves the walk means the walk has none on the router's map either.
+  // A way with no steps that never leaves the route means the route has none on the router's map either.
   if (!apart) return { ...base, avoids: [], status: 'same', routed: routedOf(answers, AROUND_OPTIONS) };
   const stretches = cutStretches(line), lengthMetres = tenth(along(line).at(-1) ?? 0);
   return { ...base, status: 'found', line, lengthMetres, apart, stretches, ...kindsAlong(answers.overpass?.body, stretches, takenWays(answers.routeTrace.body)), streets: streetsOf(answers.route?.body), routed: routedOf(answers, AROUND_OPTIONS) };
 }
 
 /**
- * Asks for everything a way around needs: the walk's edges, and only when it has mapped steps, the router's way
+ * Asks for everything a way around needs: the route's edges, and only when it has mapped steps, the router's way
  * with an hour per flight, that way's edges, and what OpenStreetMap says along it. Without OpenStreetMap's answer
  * the way still comes back, with no kinds and osmAsOf null.
  */
@@ -166,13 +166,13 @@ export async function askWayAround(line: readonly LonLat[], ask: Ask = LIVE, sig
   return { ...answers, route: { request, body }, routeTrace, overpass: found ? { query, body: found } : null };
 }
 
-/** The way around a walk built on this device, asked live. Keep it with setAround so it stays offline. */
+/** The way around a route built on this device, asked live. Keep it with setAround so it stays offline. */
 export async function findWayAround(line: readonly LonLat[], { signal, ask = LIVE }: { signal?: AbortSignal; ask?: Ask } = {}): Promise<WayAround> {
   return wayAroundFrom(await askWayAround(line, ask, signal), { line, metres: along(line).at(-1) ?? 0, stretches: cutStretches(line) });
 }
 
 type RouteRecord = { route: { line: LonLat[]; length_m: number }; stretches: { index: number; line: LonLat[] }[]; findings: { concept?: unknown; label?: unknown; stretches?: unknown; osm?: { type?: unknown; id?: unknown; tags?: Record<string, unknown> } | null }[] };
-/** A recorded walk (mercature-route/1) as the way around needs it, with its own words for each mapped flight of steps. */
+/** A recorded route (mercature-route/1) as the way around needs it, with its own words for each mapped flight of steps. */
 export function recordWalk(record: RouteRecord): Walk {
   const steps: MappedSteps[] = [];
   for (const finding of record.findings) {

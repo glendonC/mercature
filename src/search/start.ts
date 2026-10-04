@@ -1,6 +1,6 @@
 /**
- * Where a walk to a searched place starts when nobody says: a named transit stop, square, park or landmark a few hundred metres
- * away on OpenStreetMap, never an address, else a point about 400 m away that the walk names by the street it leaves on.
+ * Where a tour route to a searched place starts when nobody says: a named transit stop, square, park or landmark a few hundred metres
+ * away on OpenStreetMap, never an address, else a point about 400 m away that the route names by the street it leaves on.
  */
 import { distance, type LonLat } from './geo.ts';
 import { OVERPASS, overpassAt, type OsmElement } from './services.ts';
@@ -42,12 +42,12 @@ export function startQuery([lon, lat]: LonLat): string {
     `way(${near})[highway~"^(primary|secondary|tertiary)$"][name];);out center tags 300;`;
 }
 
-/** Points about 400 m south, east, north and west, with no name yet: the walk names each by the street it leaves on. */
+/** Points about 400 m south, east, north and west, with no name yet: the route names each by the street it leaves on. */
 export const aroundPoints = (target: LonLat): End[] => [[0, -1], [1, 0], [0, 1], [-1, 0]].map(([east, north]) => ({ name: '',
   position: [target[0] + east * 400 / (111195 * Math.cos(target[1] * Math.PI / 180)), target[1] + north * 400 / 111195] as LonLat }));
 
 /**
- * Starts to try for a walk to the target, best first: up to three named places nearby, then points around it.
+ * Starts to try for a route to the target, best first: up to three named places nearby, then points around it.
  * The lookup gets three seconds on one server, so a busy one costs her little.
  */
 export async function findStarts(target: LonLat, signal?: AbortSignal): Promise<End[]> {

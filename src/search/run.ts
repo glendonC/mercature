@@ -1,5 +1,5 @@
 /**
- * Builds a map-only walk on this device in two parts, so it opens fast: first a start if none was given and the walk on foot from Valhalla,
+ * Builds a map-only tour route on this device in two parts, so it opens fast: first a start if none was given and the route on foot from Valhalla,
  * which opens at once with nothing on it yet; then OpenStreetMap along it from Overpass, added when it arrives.
  */
 import { accessFindings, accessQuery, mapContext } from '../osm/access.ts';
@@ -14,18 +14,18 @@ export const AROUND_METRES = 15, CONTEXT_METRES = 25, NEAR_METRES = 3;
 export const READ_SECONDS = 8;
 const EMPTY = { buildings: { type: 'FeatureCollection' as const, features: [] }, ways: { type: 'FeatureCollection' as const, features: [] } };
 
-/** The longest walk on foot a picked start may give before the next one is tried. */
+/** The longest route on foot a picked start may give before the next one is tried. */
 export const START_WALK = 900;
-/** How many starts are tried, one walk request each. */
+/** How many starts are tried, one route request each. */
 const TRIES = 3;
-/** A start with no name takes the first street the walk follows that is not a trail. */
+/** A start with no name takes the first street the route follows that is not a trail. */
 const named = (start: End, walked: Walked): End => start.name ? start : { ...start, name: walked.streets.find(street => !TRAIL.test(street.name))?.name || 'Nearby street' };
 
-/** The walk on foot, before OpenStreetMap is read along it. */
+/** The route on foot, before OpenStreetMap is read along it. */
 export type Routed = { preview: Built; base: { start: End; target: End; area: string; walked: Walked; aroundMetres: number; nearMetres: number } };
 
 export async function routeWalk(target: End, area: string, signal?: AbortSignal, given?: End): Promise<Routed> {
-  // Each start is judged by the walk it gives: the first under 900 m on foot wins, else the shortest tried.
+  // Each start is judged by the route it gives: the first under 900 m on foot wins, else the shortest tried.
   let best: { start: End; walked: Walked } | null = null, trouble: unknown = null;
   for (const start of given ? [given] : (await findStarts(target.position, signal)).slice(0, TRIES)) {
     try {

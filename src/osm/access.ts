@@ -1,7 +1,7 @@
 /**
- * What OpenStreetMap says about getting along a walk: steps, handrails, ramps, surfaces, kerbs, crossings, gates,
- * bollards, benches, toilets, lighting and wheelchair tags, placed on the walk's 10 m stretches.
- * Pure and browser-safe: an Overpass JSON answer goes in, findings come out, in a browser for a new walk or in Node
+ * What OpenStreetMap says about getting along a tour route: steps, handrails, ramps, surfaces, kerbs, crossings, gates,
+ * bollards, benches, toilets, lighting and wheelchair tags, placed on the route's 10 m stretches.
+ * Pure and browser-safe: an Overpass JSON answer goes in, findings come out, in a browser for a new route or in Node
  * when a place is packaged. Every finding is OpenStreetMap's claim, never checked here. Widths and inclines are never
  * read, so no finding states a width, height or slope.
  */
@@ -36,7 +36,7 @@ export type AccessFinding = {
 };
 export type StretchLine = { readonly index: number; readonly line: readonly LonLat[] };
 export type AccessOptions = {
-  /** How close a way or a node on the walk must be, in metres. */
+  /** How close a way or a node on the route must be, in metres. */
   readonly nearMetres?: number;
   /** How close a bench or toilets must be, in metres. */
   readonly amenityMetres?: number;
@@ -72,7 +72,7 @@ const WHEELCHAIR: Readonly<Record<string, string>> = { no: 'not wheelchair acces
 const WAY_KINDS = new Set<AccessKind>(['steps', 'handrail', 'ramp', 'surface', 'smoothness', 'lit', 'wheelchair', 'crossing', 'kerb', 'tactile_paving']);
 
 /**
- * The Overpass query for one walk: the paths, streets and buildings around it for the map, and the nodes that carry
+ * The Overpass query for one route: the paths, streets and buildings around it for the map, and the nodes that carry
  * what a visitor meets on the way. line is [lon, lat] points; one request answers both.
  */
 export function accessQuery(line: readonly LonLat[], aroundMetres = 15, contextMetres = 40): string {
@@ -149,10 +149,10 @@ function samples(line: readonly Point[], step: number, margin: number): { at: Po
 }
 
 /**
- * Places what OpenStreetMap says on the walk. A way is sampled every metre, from half a metre inside each end, and
+ * Places what OpenStreetMap says on the route. A way is sampled every metre, from half a metre inside each end, and
  * each sample counts on its nearest stretch when that stretch passes within nearMetres and runs along the way
  * (|cos| above 0.8). So a short flight is caught on the stretch it sits on, a way that only ends where a stretch
- * begins stays off it, and a street the walk only crosses is left out. A node goes to its nearest stretch within
+ * begins stays off it, and a street the route only crosses is left out. A node goes to its nearest stretch within
  * nearMetres, a bench or toilets within amenityMetres. Sorted by stretch, then id, so the same answer gives the same list.
  */
 export function accessFindings(elements: readonly OsmElement[], stretches: readonly StretchLine[], { nearMetres = 3, amenityMetres = 15 }: AccessOptions = {}): AccessFinding[] {

@@ -23,23 +23,23 @@ export type GuideLine = { text: string; working?: boolean };
 /** What one search asked and what came back. */
 type Asked = { words: string; found: Found[] | null; trouble: Trouble | null };
 type Stage = { kind: 'find' } | { kind: 'build'; target: Found; trouble: Trouble | null } | { kind: 'start'; target: Found; from: string };
-/** A walk just built, offered again with another start. */
+/** A tour route just built, offered again with another start. */
 export type Again = { target: Found; from: string };
 
 /**
  * Home's search. Typing filters the places prepared here at once, offline. Enter or the round button asks OpenStreetMap once.
- * One tap on any other place builds a map-only walk to it on this device, from a start picked nearby, and opens it as soon as
- * the way on foot is known; what OpenStreetMap says along it is added when it arrives. A walk just built can take another start from here.
+ * One tap on any other place builds a map-only route to it on this device, from a start picked nearby, and opens it as soon as
+ * the way on foot is known; what OpenStreetMap says along it is added when it arrives. A route just built can take another start from here.
  */
 export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview, again, recent = [], onRecent, onForget }: {
   prepared: readonly Prepared[];
   onPrepared: (id: string) => void;
-  /** The walk on foot, opened at once; rest brings it with what OpenStreetMap says along it. */
+  /** The route on foot, opened at once; rest brings it with what OpenStreetMap says along it. */
   onWalk: (built: Built, rest: Promise<Built>, target: Found) => void;
   onLine: (line: GuideLine | null) => void;
   onPreview: (built: Built | null) => void;
   again?: Again | null;
-  /** Walks built on this device, newest first, offered while the field is focused and empty. */
+  /** Routes built on this device, newest first, offered while the field is focused and empty. */
   recent?: readonly SavedWalk[];
   onRecent?: (id: string) => void;
   onForget?: (id: string) => void;
@@ -80,7 +80,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
       const typed = matchPrepared(text, prepared);
       if (!found.length) onLine(typed.length ? null : { text: say.none });
       else if (!buildable.length && kept.length) onLine({ text: say.tooBig({ place: kept[0].name }) });
-      // One clear answer and nothing prepared by that name: the walk starts building at once.
+      // One clear answer and nothing prepared by that name: the route starts building at once.
       else if (buildable.length === 1 && !typed.length) void build(buildable[0]);
       else onLine(buildable.length > 1 ? { text: say.several } : null);
     } catch (error) {
@@ -115,7 +115,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
       if (signal.aborted) return;
       onPreview(routed.preview);
       setStage({ kind: 'find' });
-      // The walk opens now; OpenStreetMap along it arrives on its own, even after this field has gone.
+      // The route opens now; OpenStreetMap along it arrives on its own, even after this field has gone.
       onWalk(routed.preview, readWalk(routed), target);
     } catch (error) {
       if (signal.aborted) return;

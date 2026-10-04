@@ -1,7 +1,6 @@
-// The guide's lines for search and its one-tap build, in English and Spanish, as Experience wrote them for SCRIPT[lang].search.
-// Canvas adds the key to the Script type; Experience owns the words. One line each at 390 px. Human voice, no filler.
-// place: the searched name as OpenStreetMap gives it ("Narikala", "Machu Picchu"); es with its article when it has one.
-// count: things OpenStreetMap lists along the walk so far (steps, kerbs, crossings, benches...), live while it reads.
+// Guide lines for search and the one-tap build, in English and Spanish. One line each at 390 px.
+// place: the searched name as OpenStreetMap gives it ("Narikala", "Machu Picchu"); Spanish uses its article when it has one.
+// count: things OpenStreetMap lists along the tour route so far (steps, kerbs, crossings, benches), updated while it reads.
 
 import { esPlace } from '../i18n/names';
 // esPlace gives a place name its Spanish article; cap capitalises the first letter.

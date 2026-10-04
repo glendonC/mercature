@@ -31,7 +31,7 @@ type Props = {
   saved?: SavedEntry[];
   onOpenSaved: (entry: SavedEntry) => void;
 };
-/** The walk drawn behind Home, and the first place it offers. */
+/** The tour route drawn behind Home, and the first place it offers. */
 const HERO = 'cusco-qorikancha';
 const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
 /** Places that open here: a published package on any host, a local record only where it answers on this device. */
@@ -51,7 +51,7 @@ export function useOpenable(): (id: string) => boolean {
   }, []);
   return id => (isDestinationId(id) && !!PACKAGES[id]) || local.has(id);
 }
-/** The hero walk behind Home, and its spots as markers. */
+/** The hero route behind Home, and its spots as markers. */
 function useHero(): { data: Destination | null; walk: Walk | null; markers: Marker[] } {
   const [data, setData] = useState<Destination | null>(null);
   useEffect(() => {
@@ -65,13 +65,13 @@ function useHero(): { data: Destination | null; walk: Walk | null; markers: Mark
   return { data, walk, markers: spotMarkers(walk, review) };
 }
 const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
-/** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
+/** The part of the screen the route may use: beside the words on a wide screen, between them on a phone. */
 function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLElement | null>, search: RefObject<HTMLElement | null>): Insets {
   const [insets, setInsets] = useState<Insets>({ top: 96, right: 24, bottom: 220, left: 24 });
   useLayoutEffect(() => {
     const fit = () => {
       const wide = window.innerWidth >= 640, text = words.current?.getBoundingClientRect(), row = places.current?.getBoundingClientRect();
-      // On a phone the walk sits below the search field and its line, not under them.
+      // On a phone the route sits below the search field and its line, not under them.
       const field = search.current?.querySelector('.home-search-row')?.getBoundingClientRect();
       const next: Insets = {
         top: wide ? 96 : Math.max(text?.bottom ?? 80, field?.bottom ?? 0) + 16,
@@ -91,12 +91,12 @@ function useFree(words: RefObject<HTMLElement | null>, places: RefObject<HTMLEle
   }, [words, places, search]);
   return insets;
 }
-/** The history entry a walk built on this device adds while it is open, so Back returns Home and a return to Home reopens it. */
+/** The history entry a route built on this device adds while it is open, so Back returns Home and a return to Home reopens it. */
 const walkOf = (state: unknown): string | null => (state as { mercatureWalk?: unknown } | null)?.mercatureWalk as string ?? null;
-/** Walks built on this device: the ones kept here, and the one open in the route screen. */
+/** Routes built on this device: the ones kept here, and the one open in the route screen. */
 function useWalks() {
   const [kept, setKept] = useState<SavedWalk[]>([]);
-  /** reading: the walk is open and OpenStreetMap along it is on its way; busy: it did not come. */
+  /** reading: the route is open and OpenStreetMap along it is on its way; busy: it did not come. */
   const [open, setOpen] = useState<{ built: Built; data: Destination; kept: boolean; reading: 'reading' | 'busy' | null } | null>(null);
   const refresh = () => { void listWalks().then(setKept); };
   const show = (built: Built | null, kept = true, reading: 'reading' | null = null) => {
@@ -114,7 +114,7 @@ function useWalks() {
     if (walkOf(history.state) === built.place.id) history.replaceState({ mercatureWalk: built.place.id }, '');
     else history.pushState({ mercatureWalk: built.place.id }, '');
     show(built, true, rest ? 'reading' : null); refresh();
-    // The rest of the walk replaces the open one in place and is kept on the device once it is whole.
+    // The rest of the route replaces the open one in place and is kept on the device once it is whole.
     rest?.then(async full => {
       const kept = await saveWalk(full);
       setOpen(now => now?.built.place.id === full.place.id ? { built: full, data: toDestination(full.place), kept, reading: null } : now);
@@ -145,7 +145,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     const observer = new ResizeObserver(fit); observer.observe(line); observer.observe(box);
     return () => observer.disconnect();
   });
-  // What the guide says while she searches, the walk being built drawn behind it, and the last walk built, which can take another start.
+  // What the guide says while she searches, the route being built drawn behind it, and the last route built, which can take another start.
   const [line, setLine] = useState<GuideLine | null>(null);
   const [talking, setTalking] = useState(false);
   const [preview, setPreview] = useState<Built | null>(null);

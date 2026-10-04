@@ -6,7 +6,7 @@ import './Home.css';
 export type PlacePhoto = {
   id: string;
   name: string;
-  /** One quiet line under the name: where it is, how long the walk is, what it still flags. */
+  /** One quiet line under the name. */
   meta: string;
   /** What a screen reader hears instead of the photo's own words. */
   label: string;
