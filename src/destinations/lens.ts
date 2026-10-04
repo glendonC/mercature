@@ -15,8 +15,9 @@ export type Tilt = {
   /** Most degrees the plane may turn to get there. */
   swing: number;
 };
-/** The map point at the centre of the screen, pixels per map unit there, and the lean from 0 (flat) to 1 (full tilt). */
-export type View = { x: number; y: number; k: number; lean: number };
+/** The map point at the centre of the screen, pixels per map unit there, the lean from 0 (flat) to 1 (full tilt), and the degrees
+ * the map turns clockwise beyond its tilt's yaw, at full lean. */
+export type View = { x: number; y: number; k: number; lean: number; turn?: number };
 export type Box = { left: number; top: number; right: number; bottom: number };
 export type Lens = {
   view: View;
@@ -31,7 +32,8 @@ export type Lens = {
   /** How far a ground point lies inside the nearest depth the lens draws faithfully; below zero it is too close to the viewer, so a
    * shape on the ground is cut there before it is drawn. */
   near: (p: Point) => number;
-  /** The tilt it leans with, so a layer can lift things off the ground in step with it. */
+  /** The tilt it leans with, its yaw including the view's turn, so a layer can lift things off the ground in step with it. Never
+   * give it back to lens(), which would add the turn twice. */
   tilt: Tilt;
 };
 
@@ -63,7 +65,8 @@ export function aimed(tilt: Tilt, from: Point, to: Point): Tilt {
 
 /** Projects the map plane, leaning back about the centre of the screen, with a perspective of the tilt's depth. */
 export function lens(view: View, tilt: Tilt, width: number, height: number): Lens {
-  const pitch = view.lean * tilt.pitch * RADIANS, yaw = view.lean * tilt.yaw * RADIANS, d = tilt.depth;
+  const turned = { ...tilt, yaw: tilt.yaw + (view.turn ?? 0) };
+  const pitch = view.lean * tilt.pitch * RADIANS, yaw = view.lean * turned.yaw * RADIANS, d = tilt.depth;
   const cp = Math.cos(pitch), sp = Math.sin(pitch), cy = Math.cos(yaw), sy = Math.sin(yaw);
   const cx = width / 2, cz = height / 2;
   const at = (p: Point, up = 0): Point => {
@@ -84,7 +87,16 @@ export function lens(view: View, tilt: Tilt, width: number, height: number): Len
     return Math.sqrt(Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])));
   };
   const near = (p: Point) => d * 0.8 - ((p[0] - view.x) * view.k * sy + (p[1] - view.y) * view.k * cy) * sp;
-  return { view, width, height, at, ground, scale, near, tilt };
+  return { view, width, height, at, ground, scale, near, tilt: turned };
+}
+
+/** Degrees folded into -180 to 180. */
+export const folded = (degrees: number) => ((degrees % 360) + 540) % 360 - 180;
+/** The turn that makes a compass heading point up the screen, reached from the current turn the shorter way round, and none while
+ * the heading already points within a few degrees of up. */
+export function turnToward(heading: number, tilt: Tilt, current = 0, within = 15): number {
+  const off = folded(-heading - tilt.yaw - current);
+  return Math.abs(off) <= within ? current : current + off;
 }
 
 /** The view at one lean that centres the points in a screen box and fills it, within zoom limits. */

@@ -1,18 +1,22 @@
 import { forwardRef, memo, useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
-import type { Destination } from './data';
-import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
-import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
+import type { Coordinate, Destination } from './data';
+import GeographicMap, { routeFrame, viewSector, type MapWords } from './GeographicMap';
+import { aimed, folded, framing, hazeAt, lens, tiltChosen, tiltFor, turnToward, type Box, type Lens, type Tilt, type View } from './lens';
 import './destinations.css';
 import './map.css';
 import RouteFx from '../fx/RouteFx';
 import { riseWave } from '../fx/rise';
 import { useChanges } from '../fx/changes';
-import type { Point, Walk } from './walk';
-import { AddedIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
+import type { Point, Run, Walk } from './walk';
+import { AddedIcon, BollardIcon, BrokenPavementIcon, CobblestonesIcon, CrossingIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, iconFor, type Icon } from '../ui/icons';
 
 export type Insets = { top: number; right: number; bottom: number; left: number };
-export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
-export type MarkerIcon = 'steps' | 'kerb' | 'path' | 'no-photos' | 'fixed' | 'added' | 'dismissed';
+/** open: a possible barrier nobody has answered; barrier: she says it is still there; fixed: she fixed it; not-barrier: she says it
+ * is none; added: her own record of something the photos missed; osm: an OpenStreetMap record, drawn quietly on the ground. */
+export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'no-photos' | 'landmark' | 'clear' | 'fixed' | 'added' | 'osm';
+/** What OpenStreetMap records along a walk, as the place records name the kinds. */
+export type OsmKind = 'steps' | 'handrail' | 'ramp' | 'surface' | 'smoothness' | 'kerb' | 'tactile_paving' | 'crossing' | 'gate' | 'bollard' | 'bench' | 'toilets' | 'lit' | 'wheelchair';
+export type MarkerIcon = OsmKind | 'path' | 'no-photos' | 'fixed' | 'added' | 'dismissed';
 export type Marker = {
   id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number;
   /** A short caption beside the marker, such as "Steps · 340 m". Where it would collide it shortens to the part before " · ", or hides. */
@@ -21,8 +25,15 @@ export type Marker = {
   icon?: MarkerIcon | Icon;
   /** Visitor messages filed at this spot, shown with the caption, or as a small count when the caption is hidden. Say it in the label too. */
   count?: number;
+  /** The record says the icon's thing is missing, such as no handrail or no ramp: the icon is struck through. Say it in the label too. */
+  missing?: boolean;
 };
-const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, dismissed: RemoveIcon };
+const ICONS: Partial<Record<MarkerIcon, Icon>> = {
+  steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, dismissed: RemoveIcon,
+  surface: CobblestonesIcon, smoothness: BrokenPavementIcon, crossing: CrossingIcon, bollard: BollardIcon,
+};
+/** A marker's icon: its own, a marker kind's, or the shared set's for the kind it names. */
+const glyphOf = (icon: Marker['icon']): Icon | null => typeof icon === 'string' ? ICONS[icon] ?? iconFor(icon === 'lit' ? 'lighting' : icon) : icon ?? null;
 type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 /** Whether a line through screen points, or a single point, passes through a box. */
@@ -39,12 +50,22 @@ function crosses(points: Point[], r: Rect) {
     return true;
   });
 }
+/** A line beside the walk, in [lon, lat]: a way around the walk's mapped steps, or a street she added, which only the map shows. */
+export type MapPath = { id: string; kind: 'around' | 'street'; line: Coordinate[] };
+/** What the camera can show: the whole walk, some points (a spot's path, a finding, a message's spots), or a photo's view on the
+ * ground with any points, such as the spot it shows. */
+export type Shot = { kind: 'route' } | { kind: 'points'; points: Point[] } | { kind: 'photo'; view: string; points?: Point[] };
 export type MapHandle = {
+  /** The whole walk at its own bearing. */
   fit: (animate?: boolean) => void;
   /** Moves the camera so a map point lands on a screen point, optionally closer in. */
   focus: (at: Point, screen: Point, zoom?: number) => void;
   /** Shows every given point inside the free part of the screen, never closer than a street. */
   frame: (points: Point[], free: Insets) => void;
+  /** Shows a shot whole inside the free part of the screen, the insets by default, never closer than a street. The whole walk
+   * returns to its own bearing; points keep the bearing the map has; a photo's view turns the map only as far as it takes to look
+   * up the screen, the way the photo looks. */
+  show: (shot: Shot, free?: Insets, animate?: boolean) => void;
   size: () => { width: number; height: number; fitK: number };
 };
 type Props = {
@@ -58,8 +79,9 @@ type Props = {
   insets: Insets;
   highlight: Point[] | null;
   onMarker: (id: string) => void;
-  /** A tap on the map itself, with the scale where it landed so the caller can judge what is near. */
-  onMap: (at: Point, pixelsPerMetre: number) => void;
+  /** A tap on the map itself, never on a marker or a photo that opens: where it landed, the scale there so the caller can judge
+   * what is near, and its [lon, lat]. */
+  onMap: (at: Point, pixelsPerUnit: number, lonLat: Coordinate) => void;
   /** A tap on one of the photos this place can open, with the view to show. Without it, such a tap is a tap on the map. */
   onPhoto?: (viewId: string) => void;
   /** Rendered beside the selected marker on wide screens. */
@@ -81,9 +103,25 @@ type Props = {
   onHover?: (markerId: string | null) => void;
   /** A marker the page points at, such as a hovered message row: drawn raised, without moving the camera. */
   hovered?: string | null;
+  /** The page asks her to tap a place: a crosshair, and a ring under a fine pointer where her tap would land, on the walk, or
+   * anywhere when 'free'. The tap still arrives through onMap. */
+  picking?: boolean | 'free';
+  /** Lines beside the walk, drawn under it. "Whole route" shows them too. */
+  paths?: MapPath[];
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NO_PATHS: MapPath[] = [];
+/** The point of a polyline nearest a point. */
+function nearestOn(points: Point[], p: Point): Point {
+  let best: Point = points[0] ?? p, d = Infinity;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], dx = b[0] - a[0], dy = b[1] - a[1], squared = dx * dx + dy * dy;
+    const u = squared ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / squared)) : 0, q: Point = [a[0] + u * dx, a[1] + u * dy];
+    if (Math.hypot(q[0] - p[0], q[1] - p[1]) < d) { d = Math.hypot(q[0] - p[0], q[1] - p[1]); best = q; }
+  }
+  return best;
+}
 const line = (points: Point[], to?: (p: Point) => Point) => points.map(p => to ? to(p) : p).map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 const settle = (t: number) => 1 - Math.pow(1 - t, 3);
 const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
@@ -97,21 +135,29 @@ const Cameras = memo(function Cameras({ walk, open, lens }: { walk: Walk; open: 
   return <g className="route-cameras"><path d={dots(walk.cameras)} /><path d={dots(open)} className="is-open-ring" /><path d={dots(open)} className="is-open" /></g>;
 });
 /** Over the shared map's blue walk: the stretches without photos, the selected spot, and where the open photo was taken. */
-const Overlay = memo(function Overlay({ walk, highlight, photo, lens }: { walk: Walk; highlight: Point[] | null; photo: Point | null; lens: Lens | null }) {
+const Overlay = memo(function Overlay({ unseen, highlight, photo, lens }: { unseen: Run[]; highlight: Point[] | null; photo: Point | null; lens: Lens | null }) {
   const to = lens ? (p: Point) => lens.at(p) : undefined, at = photo && (to ? to(photo) : photo);
   return <g className="route-overlay">
-    {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path, to)} /><polyline className="route-unseen" points={line(run.path, to)} /></g>)}
+    {unseen.map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path, to)} /><polyline className="route-unseen" points={line(run.path, to)} /></g>)}
     {highlight && <><polyline className="route-highlight-halo" points={line(highlight, to)} /><polyline className="route-highlight" points={line(highlight, to)} /></>}
     {at && <><path className="route-photo-ring" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /><path className="route-photo-at" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /></>}
   </g>;
 });
 
+/** Lines beside the walk, under it: a way around in a quieter blue, a street she added as a thin dashed line. */
+const Paths = memo(function Paths({ paths, lens }: { paths: { id: string; kind: MapPath['kind']; points: Point[] }[]; lens: Lens | null }) {
+  const to = lens ? (p: Point) => lens.at(p) : undefined;
+  return <g className="route-paths">{paths.map(path => <g key={path.id} data-kind={path.kind}>
+    <polyline className="route-path-halo" points={line(path.points, to)} /><polyline className="route-path-line" points={line(path.points, to)} />
+  </g>)}</g>;
+});
+
 /** The walk shaded by what was found: a soft clay glow where a barrier may be, a grey hatch where no photo was taken. */
-const Zones = memo(function Zones({ walk, glowing, lens }: { walk: Walk; glowing: string; lens: Lens | null }) {
+const Zones = memo(function Zones({ walk, unseen, glowing, lens }: { walk: Walk; unseen: Run[]; glowing: string; lens: Lens | null }) {
   const hatch = useId(), to = lens ? (p: Point) => lens.at(p) : undefined, ids = new Set(glowing.split(' '));
   return <g className="route-zones">
     <defs><pattern id={hatch} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V5" /></pattern></defs>
-    {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <polyline key={`u${i}`} points={line(run.path, to)} className="is-unseen" stroke={`url(#${hatch})`} />)}
+    {unseen.map((run, i) => <polyline key={`u${i}`} points={line(run.path, to)} className="is-unseen" stroke={`url(#${hatch})`} />)}
     {walk.spots.filter(spot => ids.has(spot.id)).map(spot => <g key={spot.id}><polyline points={line(spot.path, to)} className="is-glow-wide" /><polyline points={line(spot.path, to)} className="is-glow" /></g>)}
   </g>;
 });
@@ -143,7 +189,7 @@ function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] =
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -161,9 +207,17 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [data, walk]);
   const openDots = useMemo(() => openable.map(photo => photo.at), [openable]);
   const photoAt = useMemo(() => { const view = data.views.find(item => item.id === photoView), photo = view && data.photos.find(item => item.id === view.photoId); return photo ? walk.project(photo.position) : null; }, [data, walk, photoView]);
-  /** The flat fit and the free box it fills, from the insets. */
-  const fitFlat = useCallback((width: number, height: number) => {
-    const { minX, minY, maxX, maxY } = walk.extent, i = insetsRef.current;
+  /** The runs of the walk no photo shows. A walk built from the map alone had no photos read at all, so it draws plain. */
+  const unseen = useMemo(() => data.photos.length ? walk.runs.filter(run => run.kind === 'no-photos') : [], [data, walk]);
+  const frameOf = useMemo(() => routeFrame(data), [data]), perMetre = frameOf.scale;
+  // Kept by what the lines are, so a page that builds them anew on every render does not move the camera.
+  const pathsKey = JSON.stringify(paths);
+  const drawn = useMemo(() => (JSON.parse(pathsKey) as MapPath[]).map(path => ({ id: path.id, kind: path.kind, points: path.line.map(walk.project) })), [pathsKey, walk]);
+  /** The whole route with the lines beside it, and a key for it. */
+  const whole = useMemo(() => ({ points: [...reach, ...drawn.flatMap(path => path.points)], key: drawn.map(path => `${path.id}:${path.points.length}`).join(' ') }), [reach, drawn]);
+  /** The flat fit and the free box it fills, from the insets or the free part of the screen given. */
+  const fitFlat = useCallback((width: number, height: number, i: Insets = insetsRef.current) => {
+    const { minX, minY, maxX, maxY } = walk.extent;
     const w = Math.max(1, width - i.left - i.right), h = Math.max(1, height - i.top - i.bottom);
     const k = Math.min(w / Math.max(maxX - minX, 40), h / Math.max(maxY - minY, 40)) * 0.9;
     const sx = i.left + w / 2, sy = i.top + h / 2;
@@ -186,18 +240,20 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [walk, reach, fitFlat]);
   const tilt = tiltOf(size.width, size.height);
   /** Block height in map units: the same few metres for every building. */
-  const rise = useMemo(() => tilt.rise * routeFrame(data).scale, [data, tilt]);
+  const rise = tilt.rise * perMetre;
 
   // Fitting a leaning map takes a few passes, and every drag asks for the fit, so keep it per screen and lean.
   const fits = useRef(new Map<string, View>());
-  const fitCamera = useCallback((width: number, height: number, lean = goal.current): View => {
-    const { flat, free, key } = fitFlat(width, height), known = fits.current.get(`${key} ${lean}`);
+  // The first framing shows the walk alone, as the reveal before it did; "Whole route" shows the lines beside it too.
+  const fitCamera = useCallback((width: number, height: number, lean = goal.current, i?: Insets, beside = false): View => {
+    const { flat, free, key } = fitFlat(width, height, i), points = beside && whole.key ? whole.points : reach, at = `${key} ${lean} ${beside ? whole.key : ''}`, known = fits.current.get(at);
     if (known) return known;
-    const fit = lean ? framing(reach, free, lean, tiltOf(width, height), width, height, flat) : flat;
-    fits.current.set(`${key} ${lean}`, fit);
+    const fit = lean ? framing(points, free, lean, tiltOf(width, height), width, height, flat) : flat;
+    fits.current.set(at, fit);
     return fit;
-  }, [reach, fitFlat, tiltOf]);
-  useEffect(() => { fits.current.clear(); aims.current.clear(); }, [fitCamera]);
+  }, [reach, whole, fitFlat, tiltOf]);
+  useEffect(() => { aims.current.clear(); }, [tiltOf]);
+  useEffect(() => { fits.current.clear(); }, [fitCamera]);
 
   // One loop moves the camera and the lean; a gesture stops the camera and leaves the lean to finish.
   const tween = useRef<Tween | null>(null);
@@ -214,7 +270,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const c = tween.current, l = leanTween.current;
     if (c) {
       const t = Math.min(1, (now - c.started) / c.duration), e = c.ease(t);
-      next = { ...next, x: c.from.x + (c.to.x - c.from.x) * e, y: c.from.y + (c.to.y - c.from.y) * e, k: c.from.k * Math.pow(c.to.k / c.from.k, e) };
+      const turn = (c.from.turn ?? 0) + ((c.to.turn ?? 0) - (c.from.turn ?? 0)) * e;
+      next = { ...next, x: c.from.x + (c.to.x - c.from.x) * e, y: c.from.y + (c.to.y - c.from.y) * e, k: c.from.k * Math.pow(c.to.k / c.from.k, e), turn };
       if (t >= 1) tween.current = null;
     }
     if (l) {
@@ -230,23 +287,28 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     if (tween.current || leanTween.current || riseTween.current != null) frame.current = requestAnimationFrame(time => step.current(time));
   };
   const run = useCallback(() => { if (!frame.current) frame.current = requestAnimationFrame(time => step.current(time)); }, []);
-  const go = useCallback((target: View, animate = true) => {
+  const go = useCallback((aim: View, animate = true) => {
     const from = live.current;
+    // The map turns the shorter way round.
+    const target = from ? { ...aim, turn: (from.turn ?? 0) + folded((aim.turn ?? 0) - (from.turn ?? 0)) } : aim;
     if (!from || !animate || quiet()) { tween.current = null; const next = { ...target, lean: from?.lean ?? target.lean }; live.current = next; setCamera(next); return; }
-    tween.current = { from, to: target, started: performance.now(), duration: 520, ease: settle };
+    // A move that turns the map takes longer, so the turn reads as one with the flight.
+    const turning = Math.abs((target.turn ?? 0) - (from.turn ?? 0));
+    tween.current = { from, to: target, started: performance.now(), duration: 520 + Math.min(400, turning * 3), ease: settle };
     run();
   }, [run]);
-  const limits = useCallback(() => { const fit = fitCamera(size.width, size.height).k; return { min: fit * 0.6, max: fit * 9 }; }, [fitCamera, size]);
+  // As close as nine times the whole walk, or 30 m across the screen for a long walk.
+  const limits = useCallback(() => { const fit = fitCamera(size.width, size.height).k; return { min: fit * 0.6, max: Math.max(fit * 9, Math.min(size.width, size.height) / (30 * perMetre)) }; }, [fitCamera, size, perMetre]);
   /** Keeps the walk on screen whatever the person drags. */
   const clamp = useCallback((c: View): View => {
     const { minX, minY, maxX, maxY } = walk.extent, { min, max } = limits(), k = Math.max(min, Math.min(max, c.k));
     const hw = size.width / 2 / k, hh = size.height / 2 / k;
     return { ...c, k, x: Math.max(minX - hw + 30 / k, Math.min(maxX + hw - 30 / k, c.x)), y: Math.max(minY - hh + 30 / k, Math.min(maxY + hh - 30 / k, c.y)) };
   }, [walk, limits, size]);
-  /** The view at a zoom and lean that puts a map point under a screen point. */
-  const place = useCallback((at: Point, screen: Point, k: number, lean: number): View => {
-    const offset = lens({ x: 0, y: 0, k, lean }, tiltOf(size.width, size.height), size.width, size.height).ground(screen);
-    return { x: at[0] - offset[0], y: at[1] - offset[1], k, lean };
+  /** The view at a zoom, lean and turn that puts a map point under a screen point. */
+  const place = useCallback((at: Point, screen: Point, k: number, lean: number, turn = 0): View => {
+    const offset = lens({ x: 0, y: 0, k, lean, turn }, tiltOf(size.width, size.height), size.width, size.height).ground(screen);
+    return { x: at[0] - offset[0], y: at[1] - offset[1], k, lean, turn };
   }, [size, tiltOf]);
 
   useLayoutEffect(() => {
@@ -256,14 +318,17 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const fitted = useRef(false);
+  // The first size frames the whole walk; a new size keeps the camera in bounds.
+  const fitted = useRef(false), measured = useRef('');
   useEffect(() => {
     if (!size.width || !size.height) return;
+    const key = `${size.width} ${size.height}`;
     if (!fitted.current) {
       fitted.current = true; go(fitCamera(size.width, size.height), false);
       if (settled && riseIn && !quiet()) { riseTween.current = performance.now(); run(); }
     }
-    else if (live.current) go(clamp(live.current), false);
+    else if (live.current && measured.current !== key) go(clamp(live.current), false);
+    measured.current = key;
   }, [size, fitCamera, go, clamp, settled, riseIn, run]);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
@@ -336,35 +401,51 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(spot.at);
     if (!chosen && (x < 0 || x > size.width || y < 0 || y > size.height)) return;
     if (y >= top && y <= bottom - 28) return;
-    go(clamp(place(spot.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean)));
+    go(clamp(place(spot.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean, aim.turn)));
   // Only a new selection or a new band moves the camera; a person's own panning is left alone.
   }, [chosen?.id, clearBottom]);
 
+  /** Frames a shot inside the free part of the screen; see MapHandle.show. */
+  const show = useCallback((shot: Shot, free: Insets = insetsRef.current, animate = true) => {
+    const { width, height } = size;
+    if (!width || !height) return;
+    if (shot.kind === 'route') { lastOpened.current = null; go(fitCamera(width, height, goal.current, free, true), animate); return; }
+    const lean = goal.current, current = tween.current?.to ?? live.current ?? fitCamera(width, height), tilt = tiltOf(width, height);
+    const sector = shot.kind === 'photo' ? viewSector(data, shot.view, walk.project, perMetre) : null;
+    const points = [...(shot.points ?? []), ...(sector?.points ?? [])];
+    if (!points.length) return;
+    // Never closer than a street: whatever is shown keeps 35 m around its middle in view.
+    const xs = points.map(p => p[0]), ys = points.map(p => p[1]), mid: Point = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+    const street = Array.from({ length: 12 }, (_, i): Point => [mid[0] + Math.cos(i * Math.PI / 6) * 35 * perMetre, mid[1] + Math.sin(i * Math.PI / 6) * 35 * perMetre]);
+    // The margin inside the free box shrinks with it, so a short box still shows the shot whole; a marker stands above its spot.
+    const w = Math.max(1, width - free.left - free.right), h = Math.max(1, height - free.top - free.bottom), mx = Math.min(28, w * 0.08), my = Math.min(28, h * 0.08);
+    const inner: Box = { left: free.left + mx, top: free.top + my + Math.min(22, h * 0.08), right: width - free.right - mx, bottom: height - free.bottom - my };
+    const fit = fitCamera(width, height).k, at = (turn: number) => framing([...points, ...street], inner, lean, tilt, width, height, { ...current, turn }, { min: fit * 0.6, max: Infinity });
+    // The flat map never turns. A photo's view turns the map to look up the screen; points keep the bearing the map has, unless
+    // the walk's own bearing shows them clearly larger.
+    const kept = current.turn ?? 0;
+    if (!lean || !sector) { const keep = at(kept), home = lean && kept ? at(0) : keep; go(clamp(home.k > keep.k * 1.2 ? home : keep), animate); return; }
+    go(clamp(at(turnToward(sector.heading, tilt, kept))), animate);
+  }, [size, go, fitCamera, tiltOf, data, walk, perMetre, clamp]);
+
   useImperativeHandle(ref, () => ({
-    fit: (animate = true) => { lastOpened.current = null; go(fitCamera(size.width, size.height), animate); },
+    fit: (animate = true) => show({ kind: 'route' }, undefined, animate),
     focus: (at, screen, zoom) => {
       const current = live.current ?? fitCamera(size.width, size.height);
-      go(clamp(place(at, screen, Math.max(current.k, zoom ?? current.k), goal.current)));
+      go(clamp(place(at, screen, Math.max(current.k, zoom ?? current.k), goal.current, current.turn)));
     },
-    frame: (points, free) => {
-      if (!points.length) return;
-      const xs = points.map(p => p[0]), ys = points.map(p => p[1]), fit = fitCamera(size.width, size.height).k;
-      const w = Math.max(1, size.width - free.left - free.right), h = Math.max(1, size.height - free.top - free.bottom);
-      if (goal.current) {
-        const inner: Box = { left: free.left + w * 0.1, top: free.top + h * 0.1, right: size.width - free.right - w * 0.1, bottom: size.height - free.bottom - h * 0.1 };
-        go(clamp(framing(points, inner, goal.current, tiltOf(size.width, size.height), size.width, size.height, live.current ?? fitCamera(size.width, size.height), { min: fit * 0.6, max: fit * 2.4 })));
-        return;
-      }
-      const k = Math.max(fit * 0.6, Math.min(fit * 2.4, w / Math.max(Math.max(...xs) - Math.min(...xs), 1) * 0.8, h / Math.max(Math.max(...ys) - Math.min(...ys), 1) * 0.8));
-      const sx = free.left + w / 2, sy = free.top + h / 2, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-      go(clamp({ k, x: cx - (sx - size.width / 2) / k, y: cy - (sy - size.height / 2) / k, lean: 0 }));
-    },
+    frame: (points, free) => show({ kind: 'points', points }, free),
+    show,
     size: () => ({ ...size, fitK: fitCamera(size.width, size.height).k }),
-  }), [go, fitCamera, clamp, place, size, tiltOf]);
+  }), [go, fitCamera, clamp, place, size, show]);
 
   const view = useMemo(() => camera && size.width ? lens(camera, tilt, size.width, size.height) : null, [camera, tilt, size]);
   useEffect(() => { if (view && onLens) onLens(view); }, [view, onLens]);
   const toScreen = (p: Point): Point => view ? view.at(p) : [-999, -999];
+
+  // Asked to tap a place, a ring follows a fine pointer where the tap would land.
+  const [pick, setPick] = useState<Point | null>(null);
+  useEffect(() => { if (!picking) setPick(null); }, [picking]);
 
   // Drag to pan, pinch or wheel to zoom; a tap without movement selects the walk under it.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -380,6 +461,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     gesture.current = { moved: gesture.current?.moved ?? false, camera: live.current ?? camera!, x, y, spread };
   }
   function move(event: ReactPointerEvent<HTMLDivElement>) {
+    if (picking && view && event.pointerType !== 'touch' && !pointers.current.size) {
+      const { x, y } = local(event), at = view.ground([x, y]), on = picking === 'free' ? at : nearestOn(walk.route, at), seen = view.at(on);
+      setPick(picking === 'free' || Math.hypot(seen[0] - x, seen[1] - y) <= 28 ? on : null);
+    }
     if (!pointers.current.has(event.pointerId) || !gesture.current) return;
     pointers.current.set(event.pointerId, local(event));
     const points = [...pointers.current.values()], g = gesture.current;
@@ -391,7 +476,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     lastOpened.current = null;
     const anchor = lens(g.camera, tilt, size.width, size.height).ground([g.x, g.y]);
     tween.current = null;
-    const next = clamp(place(anchor, [x, y], k, live.current?.lean ?? g.camera.lean));
+    const next = clamp(place(anchor, [x, y], k, live.current?.lean ?? g.camera.lean, g.camera.turn));
     live.current = next; setCamera(next);
   }
   function up(event: ReactPointerEvent<HTMLDivElement>) {
@@ -402,9 +487,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     gesture.current = null;
     if (!tap || event.type !== 'pointerup' || !view) return;
     // A photo that can open takes a tap within a finger's reach of its dot; anywhere else is the map.
-    const near = onPhoto ? openable.map(photo => ({ photo, d: Math.hypot(view.at(photo.at)[0] - point.x, view.at(photo.at)[1] - point.y) })).filter(item => item.d <= 22).sort((a, b) => a.d - b.d)[0] : undefined;
+    const near = onPhoto && !picking ? openable.map(photo => ({ photo, d: Math.hypot(view.at(photo.at)[0] - point.x, view.at(photo.at)[1] - point.y) })).filter(item => item.d <= 22).sort((a, b) => a.d - b.d)[0] : undefined;
     if (near && onPhoto) { onPhoto(near.photo.viewId); return; }
-    const at = view.ground([point.x, point.y]); onMap(at, view.scale(at));
+    const at = view.ground([point.x, point.y]); onMap(at, view.scale(at), frameOf.unproject(at));
   }
   useEffect(() => {
     const element = box.current!;
@@ -417,7 +502,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       const r = element.getBoundingClientRect(), sx = event.clientX - r.left, sy = event.clientY - r.top;
       const anchor = lens(c, tiltOf(r.width, r.height), r.width, r.height).ground([sx, sy]);
       tween.current = null; lastOpened.current = null;
-      const next = clamp(place(anchor, [sx, sy], c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), c.lean));
+      const next = clamp(place(anchor, [sx, sy], c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), c.lean, c.turn));
       live.current = next; setCamera(next);
     };
     element.addEventListener('wheel', wheel, { passive: false });
@@ -461,7 +546,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Markers sit on their spots unless their 44 px targets would overlap, or a marker would cover the credit chip; then they step
   // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
   const lift = flat ? 0 : 11, keepClear: Rect[] = still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }];
-  const spots = markers.map(marker => toScreen(marker.at)), apart = spread(spots, markers.map(marker => marker.selected), 46, keepClear);
+  // An OpenStreetMap record stays on its spot, under the others, and never pushes one aside unless it is the one chosen.
+  const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => marker.state !== 'osm' || marker.selected ? [i] : []);
+  const apart = [...spots], stepped = spread(standing.map(i => spots[i]), standing.map(i => markers[i].selected), 46, keepClear);
+  standing.forEach((i, j) => { apart[i] = stepped[j]; });
   const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }));
   const anchor = cardFor ? placed.find(p => p.marker.id === cardFor) : null;
   let cardStyle: { left: number; top: number } | null = null, leader: { left: number; top: number; width: number } | null = null;
@@ -481,13 +569,14 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
   // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
-  const own = new Map(placed.map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
+  const quietly = (marker: Marker) => marker.state === 'osm' && !marker.selected && marker.id !== lifted;
+  const own = new Map(placed.filter(p => !quietly(p.marker)).map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
   const taken: Rect[] = [...own.values()];
   if (zoomBox) taken.push(zoomBox);
   if (!still) taken.push(chip(creditX, creditWidth));
   const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
   for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === lifted) - Number(a.marker.selected || a.marker.id === lifted))) {
-    if (!marker.tag || !camera) continue;
+    if (!marker.tag || !camera || quietly(marker)) continue;
     const y = at[1] - (flat ? 0 : 11), raised = marker.selected || marker.id === lifted, forms = [...new Set([marker.tag, marker.tag.split(' · ')[0]])];
     for (const text of forms) {
       const w = Math.round(text.length * 7 + 18 + (marker.icon ? 15 : 0) + (marker.count ? 26 : 0)), h = size.width > 640 ? 23 : 24;
@@ -517,16 +606,18 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     lastOpened.current = null;
     const fit = fitCamera(size.width, size.height), current = live.current ?? fit;
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
-    go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
+    if (level <= 1) show({ kind: 'route' }); else go(clamp({ ...current, k: fit.k * level }));
   };
   // How much a circle on the ground flattens, for the ring under the selected marker.
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
-  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
+  const picked = pick && view ? view.at(pick) : null;
+  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} data-picking={picking && !still ? '' : undefined} style={flat ? undefined : squash}
+    onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => setPick(null)} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
-      lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
-      <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
+      lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} unseen={unseen} glowing={glowing} lens={flat ? null : view} /><Paths paths={drawn} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
+      <Overlay unseen={unseen} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
-    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} markers={markers} hover={lifted} changes={changes} />}
+    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={view?.tilt} markers={markers} hover={lifted} changes={changes} />}
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
@@ -537,19 +628,20 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
       {placed.map(({ marker, at }) => {
         const caption = captions.get(marker.id), count = marker.count ? marker.count > 99 ? '99+' : String(marker.count) : '';
-        const Glyph = typeof marker.icon === 'string' ? ICONS[marker.icon] : marker.icon;
+        const Glyph = glyphOf(marker.icon);
         const inside = <>
-          <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
+          <span className="route-marker-dot" aria-hidden="true">{marker.state === 'osm' && Glyph ? <Glyph size={12} /> : marker.rank ?? ''}</span>
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
             onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
             onFocus={event => { if (event.currentTarget.matches(':focus-visible')) raise(marker.id); }} onBlur={() => { if (pointedNow.current === marker.id) raise(null); }}>{inside}</button>;
       })}
     </div>
+    {picked && <span className="route-pick" style={{ left: picked[0], top: picked[1] }} aria-hidden="true" />}
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}
     {card && <div className="route-card-slot" ref={cardBox} style={cardStyle ?? { left: -9999, top: 0 }}>{card}</div>}
   </div>;

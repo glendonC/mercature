@@ -26,18 +26,25 @@
 .route-marker-dot { --ring: var(--blocked); position: relative; display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: rgb(255 255 255 / 0.78); box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 1px rgb(255 255 255 / 0.55), 0 1px 4px rgb(20 22 24 / 0.14); color: var(--ink); font-size: var(--font-xs); font-weight: 500; line-height: 1; opacity: var(--haze, 1); transition: transform var(--motion-fast) var(--ease-out), translate var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
 .route-marker-dot::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--ring); }
 .route-marker[data-state=open] .route-marker-dot::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--blocked); opacity: 0; animation: route-pulse 2.4s var(--ease) infinite; }
-.route-marker[data-state=barrier] .route-marker-dot, .route-marker[data-state=fixed] .route-marker-dot { border-radius: 3px; }
+.route-marker:is([data-state=barrier], [data-state=fixed], [data-state=added]) .route-marker-dot { border-radius: 3px; }
 .route-marker[data-state=barrier] .route-marker-dot::before { width: 6px; height: 6px; border-radius: 1px; }
 .route-marker[data-state=not-barrier] .route-marker-dot::before { display: none; }
 .route-marker[data-state=not-barrier] .route-marker-dot { --ring: var(--unknown); width: 12px; height: 12px; }
 .route-marker[data-state=no-photos] .route-marker-dot { --ring: var(--unknown); width: 13px; height: 13px; }
 .route-marker[data-state=no-photos] .route-marker-dot::before { width: 9px; height: 1.5px; border-radius: 1px; transform: rotate(-45deg); }
 .route-marker[data-state=fixed] .route-marker-dot, .route-marker[data-state=clear] .route-marker-dot { --ring: var(--reachable); }
+/* Her own record of something the photos missed: a clay square with a plus */
+.route-marker[data-state=added] .route-marker-dot::before { width: 7px; height: 7px; border-radius: 0; background: linear-gradient(var(--ring) 0 0) center / 100% 1.5px no-repeat, linear-gradient(var(--ring) 0 0) center / 1.5px 100% no-repeat; }
+/* An OpenStreetMap record: a small muted icon, quiet under the markers that stand for her check; struck through when it records a lack */
+.route-marker[data-state=osm] .route-marker-dot { --ring: color-mix(in srgb, var(--ink) 28%, transparent); width: 20px; height: 20px; background: rgb(255 255 255 / 0.74); box-shadow: inset 0 0 0 1px var(--ring), 0 1px 3px rgb(20 22 24 / 0.1); color: color-mix(in srgb, var(--ink) 74%, transparent); }
+.route-marker[data-state=osm] .route-marker-dot::before { display: none; }
+.route-marker[data-state=osm][data-missing] .route-marker-dot::after { content: ''; position: absolute; width: 16px; height: 1.5px; border-radius: 1px; background: currentColor; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.8); transform: rotate(-45deg); }
 .route-marker[data-state=fixed] .route-marker-dot::before { width: 6px; height: 3px; border-radius: 0; background: none; border: solid var(--reachable); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
 .route-marker[data-state=landmark] .route-marker-dot { --ring: var(--ink); width: 11px; height: 11px; box-shadow: inset 0 0 0 1px var(--ink), 0 1px 3px rgb(20 22 24 / 0.12); }
 .route-marker[data-state=landmark] .route-marker-dot::before { width: 4px; height: 4px; }
 .route-marker[data-rank] .route-marker-dot { --ring: var(--ink); width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgb(255 255 255 / 0.88); box-shadow: inset 0 0 0 1.5px var(--ink), 0 0 0 4px rgb(255 255 255 / 0.5), 0 1px 5px rgb(20 22 24 / 0.16); }
 .route-marker[data-rank] .route-marker-dot::before, .route-marker[data-rank] .route-marker-dot::after { display: none; }
+.route-marker[data-state=osm] { z-index: 0; }
 .route-marker[data-state=no-photos], .route-marker[data-state=landmark] { z-index: 1; }
 .route-marker[aria-pressed=true], .route-marker[data-rank] { z-index: 3; }
 .route-marker[aria-pressed=true] .route-marker-dot { transform: scale(1.2); box-shadow: inset 0 0 0 2px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink), 0 0 12px 5px rgb(255 255 255 / 0.8); }
@@ -47,7 +54,7 @@
 .route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.8); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: var(--ink); pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
 .route-marker[data-side=left] .route-marker-tag { left: auto; right: calc(50% + 14px); }
 .route-marker-tag .ui-icon { flex: none; color: var(--ring-ink, var(--ink)); }
-.route-marker:is([data-state=open], [data-state=barrier]) { --ring-ink: var(--blocked); }
+.route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) { --ring-ink: var(--blocked); }
 .route-marker:is([data-state=fixed], [data-state=clear]) { --ring-ink: var(--reachable); }
 .route-marker:is([data-state=no-photos], [data-state=not-barrier]) { --ring-ink: var(--unknown); }
 .route-marker-said { display: inline-flex; align-items: center; gap: 3px; margin-left: 3px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -95,6 +102,9 @@
 .route-map[data-lean] :is(.route-marker-dot, .route-marker-tag, .route-marker-count) { translate: 0 -11px; }
 .route-map[data-lean] .route-marker:is(:focus-visible, [data-hovered]) .route-marker-dot { translate: 0 -15px; }
 .route-map[data-lean] .route-marker::after { content: ''; position: absolute; left: calc(50% - 0.5px); top: calc(50% - 5px); width: 1px; height: 5px; background: color-mix(in srgb, var(--ink) 55%, transparent); opacity: var(--haze, 1); pointer-events: none; }
+/* An OpenStreetMap record lies on the ground, with no stem, until it is chosen or raised */
+.route-map[data-lean] .route-marker[data-state=osm]:not([aria-pressed=true], [data-hovered], :focus-visible) .route-marker-dot { translate: none; }
+.route-map[data-lean] .route-marker[data-state=osm]:not([aria-pressed=true], [data-hovered], :focus-visible)::after { display: none; }
 .route-map[data-lean] .route-marker[aria-pressed=true]::before { content: ''; position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border: 1.5px solid var(--ink); border-radius: 50%; opacity: 0; transform: scaleY(var(--squash, 1)) scale(0.35); animation: map-ground-ring 2.4s var(--ease-out) infinite; pointer-events: none; }
 /* The selected marker keeps one pulse, its ring on the ground, on the map's one beat. */
 .route-map[data-lean] .route-marker[aria-pressed=true] .route-marker-dot::after { animation: none; opacity: 0; }
@@ -125,3 +135,15 @@
 .route-nudges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .route-nudges line { stroke: color-mix(in srgb, var(--ink) 50%, transparent); stroke-width: 1; }
 .route-nudges circle { fill: var(--ink); stroke: var(--surface); stroke-width: 1; }
+
+/* Lines beside the walk, under it: a way around in a quieter blue, a street she added as a thin dashed ink line (map only) */
+.route-paths polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.route-paths .route-path-halo { stroke: var(--surface); stroke-width: 7px; opacity: 0.85; }
+.route-paths [data-kind=around] .route-path-line { stroke: color-mix(in srgb, var(--reachable) 60%, var(--surface)); stroke-width: 3px; }
+.route-paths [data-kind=street] .route-path-halo { stroke-width: 6px; }
+.route-paths [data-kind=street] .route-path-line { stroke: color-mix(in srgb, var(--ink) 62%, transparent); stroke-width: 2px; stroke-dasharray: 5 4; stroke-linecap: butt; }
+
+/* Asked to tap a place: a crosshair, and a ring on the ground where the tap would land */
+.route-map[data-picking], .route-map[data-picking]:active { cursor: crosshair; }
+.route-pick { position: absolute; z-index: 5; width: 24px; height: 24px; margin: -12px 0 0 -12px; border: 1.5px solid var(--ink); border-radius: 50%; background: rgb(255 255 255 / 0.4); box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7); transform: scaleY(var(--squash, 1)); pointer-events: none; }
+.route-pick::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: var(--ink); }

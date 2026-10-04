@@ -23,7 +23,23 @@ export function routeFrame(data: Destination, zoom = 1, focus?: Coordinate) {
   /** East and north metres in the route frame, as retained reconstruction points use. */
   const fromMetres = (east: number, north: number): Coordinate => [400 + (east - centre[0]) * scale, 250 - (north - centre[1]) * scale];
   const project = (point: Coordinate): Coordinate => { const p = metres(point, origin); return fromMetres(p[0], p[1]); };
-  return { project, fromMetres, scale, origin };
+  /** The coordinate under a point of the route frame, the inverse of project. */
+  const unproject = (point: Coordinate): Coordinate => {
+    const east = (point[0] - 400) / scale + centre[0], north = (250 - point[1]) / scale + centre[1], r = 6371008.8 * Math.PI / 180;
+    return [origin[0] + east / (Math.cos(origin[1] * Math.PI / 180) * r), origin[1] + north / r];
+  };
+  return { project, unproject, fromMetres, scale, origin };
+}
+
+/** What a photo view looks at on the ground: from where it was taken, along its recorded compass direction, as wide as its field of
+ * view (90 degrees for a cut from a panorama, 65 for a photo, as its marks were cast) and as deep as its marks reach, 30 m. The apex
+ * comes first, then the far edge from left to right. */
+export function viewSector(data: Destination, viewId: string, project: (point: Coordinate) => Point, perMetre: number): { heading: number; points: Point[] } | null {
+  const view = data.views.find(item => item.id === viewId), photo = view && data.photos.find(item => item.id === view.photoId);
+  const heading = view?.heading ?? photo?.heading;
+  if (!view || !photo || heading == null) return null;
+  const [x, y] = project(photo.position), half = (view.heading != null ? 90 : 65) / 2, reach = 30 * perMetre;
+  return { heading, points: [[x, y], ...Array.from({ length: 13 }, (_, i): Point => { const a = (heading - half + 2 * half * i / 12) * Math.PI / 180; return [x + Math.sin(a) * reach, y - Math.cos(a) * reach]; })] };
 }
 
 const area = (ring: Point[]) => ring.reduce((sum, a, i) => { const b = ring[(i + 1) % ring.length]; return sum + a[0] * b[1] - b[0] * a[1]; }, 0) / 2;
@@ -192,15 +208,10 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
   const ordered = useMemo(() => captureOrder(data.photos), [data.photos]);
   const firstView = useMemo(() => new Map(data.views.map(view => [view.photoId, view.id] as const).reverse()), [data.views]);
   const visible = shown == null ? ordered : ordered.slice(0, shown);
-  const selectedHeading = selectedView?.heading ?? selectedPhoto?.heading;
   const scaleMetres = zoom > 1 ? 20 : 50;
   const target = project(data.target.position);
-  /** What the open photo looks at, on the ground: from where it was taken, along its recorded compass direction, as wide as its field
-   * of view (90 degrees for a cut from a panorama, 65 for a photo, as its marks were cast) and as deep as its marks reach, 30 m. */
-  const wedge = selectedPhoto && selectedHeading != null ? (() => {
-    const [x, y] = frame(selectedPhoto.position), half = (selectedView?.heading != null ? 90 : 65) / 2, reach = 30 * scale;
-    return [[x, y] as Point, ...Array.from({ length: 13 }, (_, i): Point => { const a = (selectedHeading - half + 2 * half * i / 12) * Math.PI / 180; return [x + Math.sin(a) * reach, y - Math.cos(a) * reach]; })];
-  })() : null;
+  /** What the open photo looks at, on the ground. */
+  const wedge = selected ? viewSector(data, selected, frame, scale)?.points ?? null : null;
   const seenWedge = wedge && lens ? nearSide(wedge, lens).map(p => lens.at(p)) : wedge;
   return <section className={`destination-map ${className}`} hidden={hidden} aria-label={t('map.label')}><svg ref={svgRef} viewBox={lens ? `0 0 ${lens.width} ${lens.height}` : viewBox} role="group" aria-label={t('map.svg')}>
     {!lens && <rect width="800" height="500" className="map-ground"/>}
