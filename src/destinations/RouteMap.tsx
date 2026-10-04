@@ -1,7 +1,7 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 import type { Destination } from './data';
 import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
-import { aimed, framing, lens, tiltChosen, tiltFor, type Box, type Lens, type View } from './lens';
+import { aimed, framing, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
 import './destinations.css';
 import './map.css';
 import type { Point, Walk } from './walk';
@@ -74,29 +74,43 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const goal = useRef(0);
   const insetsRef = useRef(insets);
   insetsRef.current = insets;
-  /** The lean for a screen width, turned so the walk runs the way that width reads best. */
-  const tiltOf = useCallback((width: number) => aimed(tiltFor(width), walk.route[0] ?? [0, 0], walk.route.at(-1) ?? [0, 0]), [walk]);
-  const tilt = tiltOf(size.width);
+  const reach = useMemo(() => [...walk.route, walk.target.at, ...(walk.start ? [walk.start.at] : [])], [walk]);
+  /** The flat fit and the free box it fills, from the insets. */
+  const fitFlat = useCallback((width: number, height: number) => {
+    const { minX, minY, maxX, maxY } = walk.extent, i = insetsRef.current;
+    const w = Math.max(1, width - i.left - i.right), h = Math.max(1, height - i.top - i.bottom);
+    const k = Math.min(w / Math.max(maxX - minX, 40), h / Math.max(maxY - minY, 40)) * 0.9;
+    const sx = i.left + w / 2, sy = i.top + h / 2;
+    const flat: View = { k, x: (minX + maxX) / 2 - (sx - width / 2) / k, y: (minY + maxY) / 2 - (sy - height / 2) / k, lean: 0 };
+    const free: Box = { left: i.left + w * 0.05, top: i.top + h * 0.05, right: width - i.right - w * 0.05, bottom: height - i.bottom - h * 0.05 };
+    return { flat, free, key: [width, height, i.top, i.right, i.bottom, i.left].join(' ') };
+  }, [walk]);
+  /** The lean for a screen and its free box, turned to lay the walk across or stand it upright, whichever shows it larger. */
+  const aims = useRef(new Map<string, Tilt>());
+  const tiltOf = useCallback((width: number, height: number): Tilt => {
+    const { flat, free, key } = fitFlat(width, height), known = aims.current.get(key);
+    if (known) return known;
+    if (!width || !height) return tiltFor(width);
+    const [across, upright] = [tiltFor(width).course, 90].map(course => aimed({ ...tiltFor(width), course }, walk.route[0] ?? [0, 0], walk.route.at(-1) ?? [0, 0]));
+    const size = (tilt: Tilt) => framing(reach, free, 1, tilt, width, height, flat).k;
+    const chosen = size(upright) > size(across) * 1.05 ? upright : across;
+    aims.current.set(key, chosen);
+    return chosen;
+  }, [walk, reach, fitFlat]);
+  const tilt = tiltOf(size.width, size.height);
   /** Block height in map units: the same few metres for every building. */
   const rise = useMemo(() => tilt.rise * routeFrame(data).scale, [data, tilt]);
-  const reach = useMemo(() => [...walk.route, walk.target.at, ...(walk.start ? [walk.start.at] : [])], [walk]);
 
   // Fitting a leaning map takes a few passes, and every drag asks for the fit, so keep it per screen and lean.
   const fits = useRef(new Map<string, View>());
   const fitCamera = useCallback((width: number, height: number, lean = goal.current): View => {
-    const { minX, minY, maxX, maxY } = walk.extent, i = insetsRef.current;
-    const key = [width, height, lean, i.top, i.right, i.bottom, i.left].join(' '), known = fits.current.get(key);
+    const { flat, free, key } = fitFlat(width, height), known = fits.current.get(`${key} ${lean}`);
     if (known) return known;
-    const w = Math.max(1, width - i.left - i.right), h = Math.max(1, height - i.top - i.bottom);
-    const k = Math.min(w / Math.max(maxX - minX, 40), h / Math.max(maxY - minY, 40)) * 0.9;
-    const sx = i.left + w / 2, sy = i.top + h / 2;
-    const flat = { k, x: (minX + maxX) / 2 - (sx - width / 2) / k, y: (minY + maxY) / 2 - (sy - height / 2) / k, lean: 0 };
-    const free: Box = { left: i.left + w * 0.05, top: i.top + h * 0.05, right: width - i.right - w * 0.05, bottom: height - i.bottom - h * 0.05 };
-    const fit = lean ? framing(reach, free, lean, tiltOf(width), width, height, flat) : flat;
-    fits.current.set(key, fit);
+    const fit = lean ? framing(reach, free, lean, tiltOf(width, height), width, height, flat) : flat;
+    fits.current.set(`${key} ${lean}`, fit);
     return fit;
-  }, [walk, reach, tiltOf]);
-  useEffect(() => fits.current.clear(), [fitCamera]);
+  }, [reach, fitFlat, tiltOf]);
+  useEffect(() => { fits.current.clear(); aims.current.clear(); }, [fitCamera]);
 
   // One loop moves the camera and the lean; a gesture stops the camera and leaves the lean to finish.
   const tween = useRef<Tween | null>(null);
@@ -137,7 +151,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [walk, limits, size]);
   /** The view at a zoom and lean that puts a map point under a screen point. */
   const place = useCallback((at: Point, screen: Point, k: number, lean: number): View => {
-    const offset = lens({ x: 0, y: 0, k, lean }, tiltOf(size.width), size.width, size.height).ground(screen);
+    const offset = lens({ x: 0, y: 0, k, lean }, tiltOf(size.width, size.height), size.width, size.height).ground(screen);
     return { x: at[0] - offset[0], y: at[1] - offset[1], k, lean };
   }, [size, tiltOf]);
 
@@ -183,7 +197,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const current = tween.current?.to ?? live.current;
     if (!chosen || !current || !size.height) return;
     const top = insetsRef.current.top, bottom = size.height - clearBottom, aim = { ...current, lean: goal.current };
-    const [x, y] = lens(aim, tiltOf(size.width), size.width, size.height).at(chosen.at);
+    const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(chosen.at);
     if (y >= top && y <= bottom - 28) return;
     go(clamp(place(chosen.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean)));
   // Only a new selection or a new band moves the camera; a person's own panning is left alone.
@@ -201,7 +215,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       const w = Math.max(1, size.width - free.left - free.right), h = Math.max(1, size.height - free.top - free.bottom);
       if (goal.current) {
         const inner: Box = { left: free.left + w * 0.1, top: free.top + h * 0.1, right: size.width - free.right - w * 0.1, bottom: size.height - free.bottom - h * 0.1 };
-        go(clamp(framing(points, inner, goal.current, tiltOf(size.width), size.width, size.height, live.current ?? fitCamera(size.width, size.height), { min: fit * 0.6, max: fit * 2.4 })));
+        go(clamp(framing(points, inner, goal.current, tiltOf(size.width, size.height), size.width, size.height, live.current ?? fitCamera(size.width, size.height), { min: fit * 0.6, max: fit * 2.4 })));
         return;
       }
       const k = Math.max(fit * 0.6, Math.min(fit * 2.4, w / Math.max(Math.max(...xs) - Math.min(...xs), 1) * 0.8, h / Math.max(Math.max(...ys) - Math.min(...ys), 1) * 0.8));
@@ -256,7 +270,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       event.preventDefault();
       const c = live.current; if (!c) return;
       const r = element.getBoundingClientRect(), sx = event.clientX - r.left, sy = event.clientY - r.top;
-      const anchor = lens(c, tiltOf(r.width), r.width, r.height).ground([sx, sy]);
+      const anchor = lens(c, tiltOf(r.width, r.height), r.width, r.height).ground([sx, sy]);
       tween.current = null;
       const next = clamp(place(anchor, [sx, sy], c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), c.lean));
       live.current = next; setCamera(next);

@@ -37,10 +37,10 @@ const HIGHEST = 12;
 /** The yaw here is a default; aimed() sets it for each walk. */
 export const TILT = {
   wide: { pitch: 50, yaw: 0, depth: 1150, rise: 5, course: 35, swing: 20 },
-  phone: { pitch: 40, yaw: 0, depth: 900, rise: 5, course: 90, swing: 35 },
+  phone: { pitch: 40, yaw: 0, depth: 900, rise: 5, course: 35, swing: 35 },
 } satisfies Record<string, Tilt>;
 
-/** Phones lean less and turn the walk upright, so it fills a narrow screen; wide screens lay it across. */
+/** Phones lean less and may turn further, so the walk can stand upright when that shows it larger. */
 export const tiltFor = (width: number): Tilt => width > 640 ? TILT.wide : TILT.phone;
 
 /** Turns the plane so a walk from one point to another runs at the screen angle the tilt prefers, within its swing. */
