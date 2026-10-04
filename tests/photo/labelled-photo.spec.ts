@@ -76,3 +76,22 @@ test('trace draws the outlines and lands every label, and is still under reduced
   await expect(page.locator('.pd-trace .lp')).toHaveAttribute('data-traced', 'true', { timeout: 500 });
   await expect(page.locator('.pd-trace .lp')).not.toHaveAttribute('data-trace');
 });
+
+test('her answers recolour each chip and outline, Before shows the photo as read, and a photo nobody read shows only its credit', async ({ page }) => {
+  await page.goto('/?ui=photo');
+  const guide = page.locator('.pd-guide');
+  const fixed = guide.locator('.lp-chip[data-answer=fixed]');
+  await expect(fixed).toHaveCount(0);
+  await guide.getByRole('button', { name: 'Now' }).click();
+  await expect(fixed.first()).toBeVisible();
+  await expect(fixed.first()).toHaveAttribute('aria-label', /You marked it gone or fixed$/);
+  await expect(guide.locator('.lp-mark[data-answer=fixed]').first()).toBeAttached();
+  await expect(guide.locator('.lp-note')).toHaveText(/^You checked this on 4 October$/);
+  await guide.getByRole('button', { name: 'Before' }).click();
+  await expect(guide.locator('[data-answer]')).toHaveCount(0);
+
+  const bare = page.locator('.pd-bare .lp');
+  await expect(bare.locator('.lp-image')).toBeVisible();
+  await expect(bare.locator('.lp-chip, .lp-mark, .lp-more, .lp-note')).toHaveCount(0);
+  await expect(bare.locator('.lp-credit')).toContainText('CC BY-SA 4.0');
+});

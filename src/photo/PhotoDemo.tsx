@@ -5,7 +5,7 @@ import { fromRecord } from '../i18n/records';
 import { IconButton, Panel, PanelHead, Segmented, TextButton } from '../ui';
 import { BackIcon, ChevronIcon, iconFor, PhotoIcon, RotateIcon } from '../ui/icons';
 import { LabelledPhoto } from './LabelledPhoto';
-import { photoOf } from './marks';
+import { photoOf, type MarkAnswer } from './marks';
 import './demo.css';
 
 const HERO: DestinationId = 'cusco-qorikancha';
@@ -32,6 +32,12 @@ export default function PhotoDemo() {
   // ?select=none opens with nothing selected.
   useEffect(() => setSelected(new URLSearchParams(location.search).get('select') === 'none' ? null : findings.find(m => m.flagged)?.id ?? findings[0]?.id ?? null), [findings]);
   const [replay, setReplay] = useState(0);
+  // Before and Now: Now gives the findings on this photo her answers in turn, as the guide's toggle would.
+  const [now, setNow] = useState(() => new URLSearchParams(location.search).get('answers') === 'now');
+  const answers = useMemo(() => {
+    const cycle: MarkAnswer[] = ['fixed', 'not-barrier', 'still-there'];
+    return Object.fromEntries(findings.map((m, i) => [m.id, cycle[i % cycle.length]]));
+  }, [findings]);
   const [traced, setTraced] = useState(false);
   if (error) return <main className="pd"><p role="alert">{error}</p></main>;
   if (!data || !shown) return <main className="pd" aria-busy="true" />;
@@ -54,13 +60,18 @@ export default function PhotoDemo() {
         <LabelledPhoto {...shown} height={240} fit="cover" selected={selected} onSelect={setSelected} />
       </Panel>
       <Panel className="pd-guide" aria-label="Guide panel">
-        <PanelHead as="h2" title="Guide panel" meta={picked ? fromRecord(picked.label, lang) : '352 px'} />
-        <LabelledPhoto {...shown} selected={selected} onSelect={setSelected} />
+        <PanelHead as="h2" title="Guide panel" meta={picked ? fromRecord(picked.label, lang) : '352 px'}
+          actions={<Segmented label="Answers" value={now ? 'now' : 'before'} onChange={(next: string) => setNow(next === 'now')} options={[{ value: 'before', label: 'Before' }, { value: 'now', label: 'Now' }]} />} />
+        <LabelledPhoto {...shown} selected={selected} onSelect={setSelected} answers={now ? answers : undefined} review={now ? { state: 'checked', at: '2026-10-04' } : undefined} />
         <div className="pd-steps">{findings.map(m => <TextButton key={m.id} icon={<StepIcon kind={m.concept} />} muted={m.id !== selected} onClick={() => setSelected(m.id)}>{fromRecord(m.label, lang)}</TextButton>)}</div>
       </Panel>
       <Panel className="pd-trace" aria-label="Trace">
         <PanelHead as="h2" title="Trace" meta={traced ? 'Traced' : 'Tracing'} actions={<TextButton icon={<RotateIcon />} onClick={() => { setTraced(false); setReplay(n => n + 1); }}>Replay</TextButton>} />
         <LabelledPhoto key={`${shown.view.id}-${replay}`} {...shown} mode="trace" zoomable={false} fit="cover" height={264} credit="overlay" onTraced={() => setTraced(true)} />
+      </Panel>
+      <Panel className="pd-bare" aria-label="Not read">
+        <PanelHead as="h2" title="Not read" meta="A street photo with no marks" />
+        <LabelledPhoto {...shown} marks={[]} />
       </Panel>
       <Panel className="pd-wide" aria-label="Whole view">
         <PanelHead as="h2" title="Whole view" meta={`${shown.marks.length} marks · ${shown.view.id}`} />
