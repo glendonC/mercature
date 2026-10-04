@@ -33,11 +33,11 @@ node scripts/release/proof.mjs --serve dist
 
 `serve.mjs` serves `dist` under `/mercature/` the way Pages does. `proof.mjs` uses a 390 px phone viewport:
 
-1. Opens Home, Narikala from its published package, then the Qorikancha reveal and route from its own.
+1. Opens Home, Narikala and its 3D from its published package, then the Qorikancha reveal and route from its own.
 2. Downloads the model, checks every file came from the site and that its license is served beside it.
 3. Checks the service worker scope is `/mercature/`.
 4. Reads the messages in the guide: the model answers the Korean demo message, and filing its first spot gives a reply with Copy.
-5. Stops the server, restarts the browser with no network, and answers it again.
+5. Stops the server, restarts the browser with no network, answers it again, and opens Narikala and its 3D, which are kept the first time they open.
 
 Screenshots and `report.json` go to `.local/release/`. To check the live site, pass its URL instead of `--serve dist`.
 

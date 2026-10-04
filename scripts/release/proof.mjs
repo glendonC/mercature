@@ -1,6 +1,6 @@
 /**
  * Phone-width proof of a deployed build, local or live:
- *   1. Home, Narikala from its published package, then the Qorikancha reveal and route from its own, at 390 px.
+ *   1. Home, Narikala and its 3D from its published package, then the Qorikancha reveal and route from its own, at 390 px.
  *   2. The model downloads from the app's own origin, never from the Hub, and its MIT license is served beside it.
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
@@ -75,8 +75,10 @@ async function launch(offline) {
   report.transfer[phase] = { requests: 0, bytes: 0 };
   if (inMemory && context) return context.pages()[0];
   const options = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow', ...(offline ? { proxy } : {}) };
+  // Headless Chromium draws WebGL2 only in software; phones draw it, so the proof does too.
+  const launchArgs = browserName === 'chromium' ? { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {};
   if (inMemory) browser = await engine.launch({ headless: true });
-  context = inMemory ? await browser.newContext(options) : await engine.launchPersistentContext(profile, { headless: true, ...options });
+  context = inMemory ? await browser.newContext(options) : await engine.launchPersistentContext(profile, { headless: true, ...launchArgs, ...options });
   // Library calls wait forever by default; a changed screen should fail the proof instead.
   context.setDefaultTimeout(60_000);
   await context.setOffline(offline);
@@ -148,6 +150,44 @@ const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.k
 /** The inbox opens the Korean Example by its row; the guide reads the messages in order, the Korean one first. */
 const openMessage = page => inbox ? page.locator(`.ri-row[data-row="${ROW}"]`).click() : page.getByRole('button', { name: 'Read messages', exact: true }).click();
 
+/** Narikala from Home: the places it fetched, and whether its last marker shows. */
+async function openNarikala(page) {
+  const places = [];
+  const onPlace = response => { if (/\/places\//.test(response.url())) places.push(`${response.status()} ${new URL(response.url()).pathname}`); };
+  page.on('response', onPlace);
+  await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
+  const skip = page.getByRole('button', { name: 'Skip', exact: true });
+  await skip.waitFor();
+  await skip.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
+  const marker = await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor({ timeout: 15_000 })
+    .then(() => page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 })).then(() => true, () => false);
+  page.off('response', onPlace);
+  return { places, marker };
+}
+/** The 3D of Narikala's Sololaki ridge steps, from the spot's photo card: whether it stays drawn, and how each piece arrived. */
+async function openSpace(page, expected) {
+  if (!(await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2')))) return null;
+  const pieces = [];
+  const name = url => new URL(url).pathname.split('/').pop();
+  const onPiece = response => { if (/\/pieces\/[^/]+\.bin$/.test(response.url())) pieces.push(`${response.status()}${response.fromServiceWorker() ? ' from the worker' : ''} ${name(response.url())}`); };
+  const onFailed = request => { if (/\/pieces\//.test(request.url())) pieces.push(`failed ${name(request.url())}`); };
+  page.on('response', onPiece);
+  page.on('requestfailed', onFailed);
+  await page.locator('.route-marker[aria-label^="Sololaki ridge, 210 to 420 m"]').first().click({ force: true });
+  const three = page.getByRole('group', { name: 'Show the photo or the 3D' }).getByRole('button', { name: '3D', exact: true });
+  await three.click();
+  await page.locator('.space3d-canvas').waitFor();
+  for (const until = Date.now() + 20_000; pieces.length < expected && Date.now() < until;) await page.waitForTimeout(250);
+  // A 3D that cannot draw falls back to the photo and drops the switch.
+  await page.waitForTimeout(1500);
+  const shown = (await three.getAttribute('aria-pressed').catch(() => null)) === 'true' && (await page.locator('.space3d-canvas').count()) > 0;
+  page.off('response', onPiece);
+  page.off('requestfailed', onFailed);
+  return { shown, pieces };
+}
+const spaceOk = (space, expected) => !!space?.shown && space.pieces.length === expected && space.pieces.every(piece => piece.startsWith('200'));
+const describeSpace = space => `${space.shown ? 'drawn' : 'not drawn'}; ${space.pieces.join(', ')}`;
+
 try {
   if (serve) await startServer();
   profile = await mkdtemp(join(tmpdir(), 'mercature-proof-'));
@@ -172,20 +212,18 @@ try {
     manifest.icons.map(icon => `${icon.sizes} ${icon.purpose} ${icon.status}`).join(', '));
   await page.screenshot({ path: resolve(out, 'home-390.png') });
 
-  // Narikala opens from its own package, then Home again for Qorikancha.
-  const narikala = [];
-  const onNarikala = response => { if (/\/places\//.test(response.url())) narikala.push(`${response.status()} ${new URL(response.url()).pathname}`); };
-  page.on('response', onNarikala);
-  await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
-  const skipNarikala = page.getByRole('button', { name: 'Skip', exact: true });
-  await skipNarikala.waitFor();
-  await skipNarikala.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
-  await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor();
-  const gulua = await page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
-  page.off('response', onNarikala);
+  // Narikala opens from its own package and its 3D from its pieces, then Home again for Qorikancha.
+  const narikala = await openNarikala(page);
   await page.screenshot({ path: resolve(out, 'narikala-390.png') });
-  check('Narikala opens from its published package', gulua && narikala.includes(`200 ${base.pathname}places/narikala/place.json`),
-    `${narikala.filter(line => line.endsWith('place.json')).join(', ')}; Data Gulua Rise marker ${gulua ? 'shown' : 'missing'}`);
+  check('Narikala opens from its published package', narikala.marker && narikala.places.includes(`200 ${base.pathname}places/narikala/place.json`),
+    `${narikala.places.filter(line => line.endsWith('place.json')).join(', ')}; Data Gulua Rise marker ${narikala.marker ? 'shown' : 'missing'}`);
+  const listed = (await (await fetch(new URL('places/narikala/pieces/space.json', base))).json()).pieces.length;
+  const space = inbox ? null : await openSpace(page, listed);
+  report.space = { listed, online: space };
+  if (space) {
+    await page.screenshot({ path: resolve(out, 'narikala-3d-390.png') });
+    check("Narikala's 3D opens from its published pieces", spaceOk(space, listed), describeSpace(space));
+  } else check("Narikala's 3D opens from its published pieces", null, inbox ? 'not on the inbox' : 'no WebGL2 in this browser');
   await page.goto(app);
 
   const placeRequests = [];
@@ -274,15 +312,17 @@ try {
   await page.screenshot({ path: resolve(out, 'answer-offline-390.png') });
   check(inMemory ? 'Korean demo message answered again from the stored model' : 'Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && unread && offered === 0 && !!fresh?.answer?.model && matches(again),
     `${describe(again)}; read afresh by ${fresh?.answer?.model ?? 'nothing'}`);
-  // Narikala is kept on first use, not at install: it opened online above, so it opens again now.
+  // Narikala and its 3D are kept on first use, not at install: they opened online above, so they open again now.
   await page.goto(app);
-  await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
-  const skipAgain = page.getByRole('button', { name: 'Skip', exact: true });
-  await skipAgain.waitFor();
-  await skipAgain.click({ timeout: 3_000 }).catch(() => undefined); // The reveal may hand off by itself first.
-  const narikalaAgain = await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor({ timeout: 15_000 }).then(() => page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 })).then(() => true, () => false);
+  const narikalaAgain = await openNarikala(page);
   await page.screenshot({ path: resolve(out, 'narikala-again-390.png') });
-  check(inMemory ? 'Narikala opens again' : 'Narikala opens offline after one online visit', narikalaAgain, narikalaAgain ? 'Data Gulua Rise marker shown' : 'not shown');
+  check(inMemory ? 'Narikala opens again' : 'Narikala opens offline after one online visit', narikalaAgain.marker, narikalaAgain.marker ? 'Data Gulua Rise marker shown' : 'not shown');
+  const spaceAgain = space ? await openSpace(page, listed) : null;
+  report.space.again = spaceAgain;
+  if (spaceAgain) {
+    await page.screenshot({ path: resolve(out, 'narikala-3d-again-390.png') });
+    check(inMemory ? "Narikala's 3D opens again" : "Narikala's 3D opens offline after one online visit", spaceOk(spaceAgain, listed), describeSpace(spaceAgain));
+  }
   check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
   const screen = await context?.pages()[0]?.evaluate(() => [document.querySelector('.ui-dialogue')?.textContent, ...[...document.querySelectorAll('.ui-choice')].map(choice => choice.textContent)].join(' | ').slice(0, 300)).catch(() => '');
