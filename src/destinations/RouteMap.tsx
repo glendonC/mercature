@@ -117,8 +117,9 @@ const Zones = memo(function Zones({ walk, glowing, lens }: { walk: Walk; glowing
   </g>;
 });
 
-/** Moves apart markers whose targets would overlap on screen, so each keeps a whole one; a selected marker stays where it is. */
-function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
+/** Moves apart markers whose targets would overlap on screen, so each keeps a whole one, and steps them off any box the map keeps
+ * clear by the shortest way out; a selected marker stays where it is. */
+function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] = []): Point[] {
   const out = points.map((p): Point => [p[0], p[1]]);
   for (let pass = 0; pass < 24; pass++) {
     let moved = false;
@@ -128,6 +129,14 @@ function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
       const ux = d > 0.01 ? dx / d : 0, uy = d > 0.01 ? dy / d : 1, push = gap - d, share = pinned[i] ? 0 : pinned[j] ? 1 : 0.5;
       out[i] = [out[i][0] - ux * push * share, out[i][1] - uy * push * share];
       out[j] = [out[j][0] + ux * push * (1 - share), out[j][1] + uy * push * (1 - share)];
+      moved = true;
+    }
+    for (let i = 0; i < out.length; i++) for (const r of avoid) {
+      const [x, y] = out[i];
+      if (pinned[i] || x <= r.x || x >= r.x + r.w || y <= r.y || y >= r.y + r.h) continue;
+      const ways: Point[] = [[r.x - x, 0], [r.x + r.w - x, 0], [0, r.y - y], [0, r.y + r.h - y]];
+      const [dx, dy] = ways.reduce((a, b) => Math.hypot(a[0], a[1]) <= Math.hypot(b[0], b[1]) ? a : b);
+      out[i] = [x + dx, y + dy];
       moved = true;
     }
     if (!moved) break;
@@ -430,33 +439,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const observer = new ResizeObserver(measure); observer.observe(element);
     return () => observer.disconnect();
   }, [card, cardFor]);
-  // Markers sit on their spots unless their 44 px targets would overlap; then they step apart, and a hairline leads back.
-  const spots = markers.map(marker => toScreen(marker.at)), apart = spread(spots, markers.map(marker => marker.selected), 46);
-  const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }));
-  const anchor = cardFor ? placed.find(p => p.marker.id === cardFor) : null;
-  let cardStyle: { left: number; top: number } | null = null, leader: { left: number; top: number; width: number } | null = null;
-  if (anchor && card && camera) {
-    const [sx, sy] = anchor.at, gap = 30;
-    const right = sx + gap + cardSize.width <= size.width - 16 || sx < size.width / 2;
-    const left = right ? sx + gap : sx - gap - cardSize.width;
-    const top = Math.max(insets.top, Math.min(size.height - insets.bottom - cardSize.height, sy - cardSize.height * 0.42));
-    cardStyle = { left, top };
-    if (sy > top + 12 && sy < top + cardSize.height - 12) leader = { left: right ? sx + 12 : left + cardSize.width, top: sy, width: gap - 12 };
-  }
   // The flat map frames itself through the view box, which the reveal lands on; a leaning map is drawn in screen pixels.
   const flat = !view || view.view.lean < 0.001;
-  const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
-  /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
-  const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier' || marker.state === 'check').map(marker => marker.id).join(' ');
-  /** Markers that the lean pushes up under the place title lose their tags; every marker fades with the haze it stands in. */
-  const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
-  const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
-  // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
-  const own = new Map(placed.map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
-  const taken: Rect[] = [...own.values()];
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
   const zoomBox: Rect | null = controls && bounds && controls.width ? { x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 } : null;
-  if (zoomBox) taken.push(zoomBox);
   // The credit chip takes the bottom corner of the free map that the whole walk leaves clear, the right one when both are, judged
   // at the whole-route framing with the chip open, so it never hops while the map moves or the chip folds. Where the open line
   // would cover the walk either way, it folds sooner, before the light reaches the end of the walk.
@@ -468,12 +454,38 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const left = chip(Math.max(8, insets.left), w), right = seen(chip(size.width - Math.max(8, insets.right) - w, w));
     return right && !seen(left) && !(zoomBox && overlaps(zoomBox, left)) ? { left: true, crowded: false } : { left: false, crowded: right };
   })();
-  if (!still) { const w = Math.max(60, creditText.length * 6.6 + 18); taken.push(chip(creditLeft ? Math.max(8, insets.left) : size.width - Math.max(8, insets.right) - w, w)); }
+  const creditWidth = Math.max(60, creditText.length * 6.6 + 18), creditX = creditLeft ? Math.max(8, insets.left) : size.width - Math.max(8, insets.right) - creditWidth;
   useEffect(() => {
     if (leaning && !landed) return;
     const timer = window.setTimeout(() => setCredit(false), crowded ? 3000 : 6000);
     return () => clearTimeout(timer);
   }, [leaning, landed, crowded]);
+  // Markers sit on their spots unless their 44 px targets would overlap, or a marker would cover the credit chip; then they step
+  // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
+  const lift = flat ? 0 : 11, keepClear: Rect[] = still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }];
+  const spots = markers.map(marker => toScreen(marker.at)), apart = spread(spots, markers.map(marker => marker.selected), 46, keepClear);
+  const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }));
+  const anchor = cardFor ? placed.find(p => p.marker.id === cardFor) : null;
+  let cardStyle: { left: number; top: number } | null = null, leader: { left: number; top: number; width: number } | null = null;
+  if (anchor && card && camera) {
+    const [sx, sy] = anchor.at, gap = 30;
+    const right = sx + gap + cardSize.width <= size.width - 16 || sx < size.width / 2;
+    const left = right ? sx + gap : sx - gap - cardSize.width;
+    const top = Math.max(insets.top, Math.min(size.height - insets.bottom - cardSize.height, sy - cardSize.height * 0.42));
+    cardStyle = { left, top };
+    if (sy > top + 12 && sy < top + cardSize.height - 12) leader = { left: right ? sx + 12 : left + cardSize.width, top: sy, width: gap - 12 };
+  }
+  const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
+  /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
+  const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier' || marker.state === 'check').map(marker => marker.id).join(' ');
+  /** Markers that the lean pushes up under the place title lose their tags; every marker fades with the haze it stands in. */
+  const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
+  const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
+  // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
+  const own = new Map(placed.map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
+  const taken: Rect[] = [...own.values()];
+  if (zoomBox) taken.push(zoomBox);
+  if (!still) taken.push(chip(creditX, creditWidth));
   const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
   for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === lifted) - Number(a.marker.selected || a.marker.id === lifted))) {
     if (!marker.tag || !camera) continue;
@@ -521,6 +533,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
+    {/* A backdrop keeps the plain credit line its page places; a map people use gets the folding control, under its markers. */}
+    {!still && <button type="button" className="route-credit" aria-expanded={credit} aria-label={words.credit} onClick={() => setCredit(open => !open)}
+      style={creditLeft ? { left: Math.max(8, insets.left), bottom: creditBottom } : { right: Math.max(8, insets.right), bottom: creditBottom }}><span data-tone="dark">{creditText}</span></button>}
     <div className="route-markers">
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
       {placed.map(({ marker, at }) => {
@@ -540,9 +555,6 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     </div>
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}
     {card && <div className="route-card-slot" ref={cardBox} style={cardStyle ?? { left: -9999, top: 0 }}>{card}</div>}
-    {/* A backdrop keeps the plain credit line its page places; a map people use gets the folding control. */}
-    {!still && <button type="button" className="route-credit" aria-expanded={credit} aria-label={words.credit} onClick={() => setCredit(open => !open)}
-      style={creditLeft ? { left: Math.max(8, insets.left), bottom: creditBottom } : { right: Math.max(8, insets.right), bottom: creditBottom }}><span data-tone="dark">{creditText}</span></button>}
   </div>;
 });
 export default RouteMap;
