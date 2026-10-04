@@ -22,7 +22,9 @@
 .reveal:not([data-step=barriers], [data-phase=handoff]) .route-zones { opacity: 0; }
 .reveal-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 /* Words sit over the map's free part, left of the panel the route screen opens on wide screens. */
-.reveal.is-leaned :is(.reveal-banner, .reveal-say) { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2); }
+.reveal.is-leaned .reveal-banner { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2); }
+/* The guide's line never leans with the map: it stays at the true bottom centre, clear of the credits row */
+.reveal .reveal-say { padding-bottom: calc(58px + var(--safe-bottom)); }
 .reveal-points { opacity: .9; transition: opacity .35s ease; }
 .reveal[data-phase=handoff] .reveal-points { opacity: 0; }
 .reveal-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff); transform-box: fill-box; transform-origin: center; animation: reveal-ring 400ms var(--ease-out) both, reveal-out 220ms ease 830ms forwards; }
@@ -86,9 +88,8 @@
 .reveal[data-step=barriers] .reveal-mark.is-barrier { fill: var(--blocked); animation: reveal-mark .35s var(--ease) var(--at) both, reveal-barrier .6s var(--ease); }
 /* The possible barriers stay through the landing, where the canvas's spots take their place. */
 .reveal[data-phase=handoff] :is(.reveal-ticks, .reveal-marks) { opacity: 0; transition: opacity .3s ease; }
-/* The guide floats above its own line, clear of it; the dialogue draws itself at the bottom centre. */
-.reveal-bot { position: absolute; z-index: 6; left: calc(50% - 32px); bottom: calc(160px + var(--safe-bottom)); }
-.reveal.is-leaned .reveal-bot { left: calc((100% + var(--free-left, 0px) - var(--free-right, 0px)) / 2 - 32px); }
+/* The guide stands beside its line (placed from the line's measured edge); before the first line it waits where the line will be */
+.reveal-bot { position: absolute; z-index: 6; left: calc(50% - 160px); bottom: calc(58px + var(--safe-bottom)); transition: left var(--motion-panel) var(--ease-out); }
 .glyph-photo { fill: var(--ink); opacity: .55; }
 .glyph-walk { fill: none; stroke: var(--reachable); stroke-width: 2.4; stroke-linecap: round; }
 .glyph-ticks { fill: none; stroke: var(--ink); stroke-opacity: .6; stroke-width: 1.4; }
@@ -117,7 +118,9 @@
 @media (max-width: 639px) {
   .reveal-banner { top: calc(18px + var(--safe-top)); }
   .reveal-banner h1 { font-size: 20px; }
-  .reveal-say { bottom: calc(54px + var(--safe-bottom)); font-size: 16px; gap: 8px; }
+  /* On a phone the line gives up the bot's width plus 12 px, as on Home, so the guide stands beside it */
+  .reveal .reveal-say { left: auto; right: calc(16px + var(--safe-right, 0px)); width: calc(100% - 44px - var(--companion) - var(--safe-left, 0px) - var(--safe-right, 0px)); transform: none; padding-bottom: calc(50px + var(--safe-bottom)); }
+  .reveal-bot { left: calc(16px + var(--safe-left, 0px)); bottom: calc(50px + var(--safe-bottom)); }
   .reveal-banner p { font-size: var(--text-phone-min); }
   .reveal-hints { padding-left: calc(16px + var(--safe-left)); font-size: var(--text-phone-min); }
   .reveal-hints .reveal-credit-long { display: none; }

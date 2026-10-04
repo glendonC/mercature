@@ -133,6 +133,22 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const [lens, setLens] = useState<Lens | null>(null);
   /** The guide talks while a page of its line types in. */
   const [talking, setTalking] = useState(false);
+  // The guide stands beside its line, as on Home: 12 px left of the line's measured left edge, level with its bottom; above the line's place before it speaks
+  const [botAt, setBotAt] = useState<CSSProperties | null>(null);
+  useLayoutEffect(() => {
+    const place = () => {
+      const line = document.querySelector('.reveal-say .ui-dialogue-line'), bot = document.querySelector<HTMLElement>('.reveal-bot'), host = bot?.offsetParent;
+      if (!line || !bot || !host) { setBotAt(previous => previous && null); return; }
+      const at = line.getBoundingClientRect(), frame = host.getBoundingClientRect();
+      const left = Math.round(Math.max(8, at.left - frame.left - 12 - bot.offsetWidth)), bottom = Math.round(frame.bottom - at.bottom);
+      setBotAt(previous => previous?.left === left && previous?.bottom === bottom ? previous : { left, bottom });
+    };
+    place();
+    const line = document.querySelector('.reveal-say .ui-dialogue-line'), watch = new ResizeObserver(place);
+    if (line) watch.observe(line);
+    addEventListener('resize', place);
+    return () => { watch.disconnect(); removeEventListener('resize', place); };
+  });
   const narrow = useNarrow();
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
@@ -376,7 +392,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           <figcaption><strong className="reveal-chip" data-barrier={card.findings.some(f => f.barrier) || undefined}>{kindOf(data, card.findings.find(f => f.barrier) ?? card.findings[0], lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
         {phase === 'play' && line && <Dialogue key={beat} className="reveal-say" label={t('common.guide')} say={line} onTalking={setTalking} advanceAfter={900} />}
-        <Companion className="reveal-bot" talking={talking} />
+        <Companion className="reveal-bot" talking={talking} style={botAt ?? undefined} />
         <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
