@@ -25,12 +25,21 @@
 .welcome-chrome { position: absolute; z-index: 10; inset: calc(30px + var(--safe-top)) calc(4vw + var(--safe-right)) auto calc(4vw + var(--safe-left)); display: flex; align-items: center; justify-content: space-between; }
 .welcome-brand { font-size: 20px; letter-spacing: -.05em; font-weight: 400; }
 
-/* The headline, beside the walk on a wide screen and above it on a phone */
-.home-words { position: absolute; z-index: 2; left: calc(4vw + var(--safe-left)); top: 50%; translate: 0 -54%; width: min(560px, 46vw); }
+/* The left column: the headline, the search, what is ready to open and the places, as one group between the header and the
+   guide's line. On a wide screen the free height splits 45 to 55 around it, so it sits a little above the middle; on a phone
+   the words stay under the header and the places rest above the guide's line. */
+.home-column { position: absolute; z-index: 5; top: calc(74px + 16px + var(--safe-top)); bottom: calc(var(--guide) + 16px); left: calc(4vw + var(--safe-left)); width: min(560px, 46vw); display: flex; flex-direction: column; pointer-events: none; }
+.home-column > * { pointer-events: auto; flex: none; }
+.home-column::before { content: ''; flex: 45 1 0; }
+.home-column::after { content: ''; flex: 55 1 0; }
+.home-words { position: relative; z-index: 2; }
 .home-words h1 { margin: 0; font-size: clamp(36px, 4.3vw, 62px); font-weight: 300; letter-spacing: -.05em; line-height: 1.05; }
 
 /* A place is its own photograph: a squircle, quiet until you reach for it, with a charcoal label on it. */
-.home-photos { position: absolute; z-index: 3; left: calc(4vw + var(--safe-left)); bottom: calc(36px + var(--safe-bottom)); display: flex; align-items: flex-end; gap: 14px; }
+/* Room above and below for a card's lift and its label's focus ring, which the row's scrolling would otherwise clip. */
+.home-photos { position: relative; display: flex; align-items: flex-end; gap: 14px; margin: -6px 0; padding: 6px 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.home-photos::-webkit-scrollbar { display: none; }
+.home-photos:not(.is-end) { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); }
 .home-photo { position: relative; display: block; width: clamp(260px, 26vw, 400px); aspect-ratio: 1.9; padding: 0; border: 0; border-radius: 0; background: transparent; transition: translate var(--motion-hover) var(--ease-out); }
 .home-photo-frame { display: block; width: 100%; height: 100%; mask: url('../covers/photo-squircle-mask.png') center / 100% 100% no-repeat; }
 .home-photo img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .52; filter: saturate(.7); transition: opacity var(--motion-panel) var(--ease-out), filter var(--motion-panel) var(--ease-out); }
@@ -48,45 +57,34 @@
 .home-photo-name { font-size: var(--font-s); font-weight: 500; line-height: var(--leading-tight); color: rgb(242 243 244); }
 .home-photo-meta { font-size: var(--font-xs); line-height: var(--leading-tight); color: rgb(242 243 244 / .72); }
 
-.home-saved { position: absolute; z-index: 3; left: calc(4vw + var(--safe-left)); bottom: calc(36px + var(--safe-bottom)); width: min(320px, 92vw); }
-.home-photos:has(+ .home-saved) { bottom: calc(128px + var(--safe-bottom)); }
+.home-saved { margin-top: 12px; width: min(320px, 100%); }
 
 @media (max-width: 639px) {
   .welcome-shell { min-height: 700px; }
   .welcome-chrome { inset: calc(16px + var(--safe-top)) calc(20px + var(--safe-right)) auto calc(20px + var(--safe-left)); }
   .home-veil { background: linear-gradient(180deg, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 38%, transparent 48%, transparent 62%, var(--ground) 76%); }
-  .home-words { left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); top: calc(92px + var(--safe-top)); width: auto; translate: none; }
+  .home-column { top: calc(92px + var(--safe-top)); bottom: calc(var(--guide) + 14px); left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); width: auto; }
+  .home-column::before, .home-column::after { display: none; }
+  .home-column .home-ready { margin-top: auto; }
   .home-words h1 { font-size: clamp(30px, 7.8vw, 40px); }
   /* More than one place scrolls sideways, one card at a time, so every label keeps its line. */
-  .home-photos { left: 0; right: 0; bottom: calc(26px + var(--safe-bottom)); padding: 4px calc(16px + var(--safe-right)) 4px calc(16px + var(--safe-left)); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: calc(16px + var(--safe-left)); scrollbar-width: none; }
-  .home-photos::-webkit-scrollbar { display: none; }
-  /* A clipped edge fades, so a card cut off at the right reads as more to scroll to. */
-  .home-photos { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); }
-  .home-photos.is-end { -webkit-mask-image: none; mask-image: none; }
+  /* The row runs to the screen's edges, one card at a time, so every label keeps its line. */
+  .home-photos { margin: 0 calc(-16px - var(--safe-right)) 0 calc(-16px - var(--safe-left)); padding: 4px calc(16px + var(--safe-right)) 4px calc(16px + var(--safe-left)); scroll-padding-inline: calc(16px + var(--safe-left)); }
   .home-photo { flex: 0 0 min(300px, 80%); width: auto; scroll-snap-align: start; }
   .home-photo:only-child { flex-basis: 100%; }
-  .home-saved { left: calc(16px + var(--safe-left)); right: calc(16px + var(--safe-right)); bottom: calc(26px + var(--safe-bottom)); width: auto; }
-  .home-photos:has(+ .home-saved) { bottom: calc(92px + var(--safe-bottom)); }
+  .home-saved { width: auto; }
   .home-credit { right: calc(16px + var(--safe-right)); bottom: calc(10px + var(--safe-bottom)); }
 }
 
-/* The guide's line at the bottom; everything that rests on the bottom edge sits above it. */
+/* The guide's line at the bottom; the column and the map's credit rest above it. */
 .site-home { --guide: 0px; }
-.site-home .home-photos { bottom: calc(var(--guide) + 20px + var(--safe-bottom)); }
-.site-home .home-saved { bottom: calc(var(--guide) + 20px + var(--safe-bottom)); }
-.site-home .home-photos:has(+ .home-saved) { bottom: calc(var(--guide) + 112px + var(--safe-bottom)); }
 .site-home .home-credit { bottom: calc(var(--guide) + 2px + var(--safe-bottom)); }
-@media (max-width: 639px) {
-  .site-home .home-photos { bottom: calc(var(--guide) + 14px + var(--safe-bottom)); }
-  .site-home .home-saved { bottom: calc(var(--guide) + 14px + var(--safe-bottom)); }
-  .site-home .home-photos:has(+ .home-saved) { bottom: calc(var(--guide) + 80px + var(--safe-bottom)); }
-}
+/* On a wide screen two places fill the column's width; a third scrolls under the fade. A short screen keeps them lower. */
 @media (min-width: 640px) {
-  .site-home .home-photo { width: clamp(220px, 19vw, 320px); }
+  .site-home .home-photo { flex: 0 0 calc((100% - 14px) / 2); width: auto; scroll-snap-align: start; }
 }
-/* A short wide screen keeps each card wide enough for its line, and lower. */
 @media (min-width: 640px) and (max-height: 760px) {
-  .site-home .home-photo { width: clamp(240px, 21vw, 300px); aspect-ratio: 2.7; }
+  .site-home .home-photo { aspect-ratio: 2.7; }
 }
 
 /* The guide stands just left of its line, bottom-aligned with it, never on the box. A screen too narrow to keep it beside the box gives the box less width. */
@@ -97,5 +95,5 @@
 }
 
 /* A small label over the place photos: what is there to open. */
-.home-ready { position: absolute; z-index: 3; top: calc(var(--photos-top, 100%) - 18px); left: calc(4vw + var(--safe-left) + 4px); margin: 0; font-size: var(--font-xs); font-weight: 500; color: var(--muted); text-shadow: var(--halo); }
-@media (max-width: 639px) { .home-ready { left: calc(16px + var(--safe-left) + 4px); top: calc(var(--photos-top, 100%) - 14px); } }
+.home-ready { margin: 26px 0 4px 4px; font-size: var(--font-xs); font-weight: 500; color: var(--muted); text-shadow: var(--halo); }
+@media (max-width: 639px) { .home-ready { margin-bottom: 2px; } }

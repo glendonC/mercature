@@ -8,7 +8,7 @@ import RouteCanvas from '../destinations/RouteCanvas';
 import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
-import { isFixed, loadEdits } from '../edits/store';
+import { answerOf, isFixed, loadEdits } from '../edits/store';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import Menu from './Menu';
@@ -64,10 +64,12 @@ function useHero(): { data: Destination | null; walk: Walk | null; markers: Mark
   const review = useMemo(() => data && loadReview(data.id).review, [data]);
   const edits = useMemo(() => data && loadEdits(data.id).edits, [data]);
   if (!walk || !review || !edits) return { data, walk: null, markers: [], flagged: 0 };
-  /** What the walk still flags, by the route screen's own rule: nothing she has removed or fixed, plus the spots she added. */
-  const kept = walk.spots.filter(spot => spot.kind === 'flagged' && verdictOf(review, spot.stretches) !== 'not-barrier' && !isFixed(edits, spot.stretches));
-  const mine = edits.added.filter(spot => !isFixed(edits, [spot.stretch]));
-  return { data, walk, markers: spotMarkers(walk, review), flagged: kept.length + mine.length };
+  /** The flagged spots still to check, by the guide's own rule: one she has answered (other than "not sure"), removed or fixed is checked. */
+  const left = walk.spots.filter(spot => spot.kind === 'flagged').filter(spot => {
+    const said = answerOf(edits, spot.id)?.answer;
+    return !((!!said && said !== 'unknown') || verdictOf(review, spot.stretches) === 'not-barrier' || isFixed(edits, spot.stretches));
+  });
+  return { data, walk, markers: spotMarkers(walk, review), flagged: left.length };
 }
 const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
 /** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
@@ -144,11 +146,10 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     const root = shell.current, line = root?.querySelector<HTMLElement>('.home-guide');
     if (!root || !line) return;
     const box = line.querySelector<HTMLElement>('.ui-dialogue-line') ?? line;
-    // Its height lifts the photos above it; its left edge places the bot beside it, since the box narrows to its words.
-    const photos = root.querySelector<HTMLElement>('.home-photos');
-    const fit = () => { root.style.setProperty('--guide', `${line.offsetHeight}px`); if (photos) root.style.setProperty('--photos-top', `${photos.getBoundingClientRect().top - root.getBoundingClientRect().top}px`); root.style.setProperty('--guide-left', `${box.getBoundingClientRect().left - root.getBoundingClientRect().left}px`); };
+    // Its height bounds the column above it; its left edge places the bot beside it, since the box narrows to its words.
+    const fit = () => { root.style.setProperty('--guide', `${line.offsetHeight}px`); root.style.setProperty('--guide-left', `${box.getBoundingClientRect().left - root.getBoundingClientRect().left}px`); };
     fit();
-    const observer = new ResizeObserver(fit); observer.observe(line); observer.observe(box); if (photos) observer.observe(photos);
+    const observer = new ResizeObserver(fit); observer.observe(line); observer.observe(box);
     return () => observer.disconnect();
   });
   // What the guide says while she searches, the walk being built drawn behind it, and the last walk built, which can take another start.
@@ -172,6 +173,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     <div className="home-veil" aria-hidden="true"/>
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
+    <div className="home-column">
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1>
       <div ref={search}><Search key={again ? `again ${again.target.id}` : 'search'} prepared={prepared} onPrepared={onDestination} recent={walks.kept} onRecent={walks.openKept} onForget={walks.forget} onLine={setLine} onPreview={setPreview} again={again}
         onWalk={(built, rest, target) => { setAgain({ target, from: built.place.request.start.name }); walks.openWalk(built, rest); }}/></div>
@@ -186,6 +188,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
           label: t('home.explore', { name: cover.name, area: fromRecord(cover.area, lang) }), onOpen: () => onDestination(cover.id) })),
       ]}
       saved={saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))}/>
+    </div>
     <Companion className="home-bot" talking={talking}/>
     <Dialogue className="home-guide" label={t('home.guide')} lang={lang} say={line?.text ?? SCRIPT[lang].home.greet} onTalking={setTalking} continueLabel={t('home.more')}/>
   </main>;

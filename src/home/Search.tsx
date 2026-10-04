@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLanguage } from '../i18n';
 import { SCRIPT } from '../guide/script';
 import { IconButton, List, Panel, PanelHead, Row, Section } from '../ui';
@@ -52,6 +52,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
   const [startWords, setStartWords] = useState('');
   const [startFound, setStartFound] = useState<Found[] | null>(null);
   const field = useRef<HTMLInputElement>(null);
+  const card = useRef<HTMLElement>(null);
   const [focused, setFocused] = useState(false);
   const work = useRef<AbortController | null>(null);
   useEffect(() => () => { work.current?.abort(); onLine(null); onPreview(null); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -171,6 +172,12 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
     </>;
   }
 
+  // The answers open downward and stop short of the guide's line, scrolling inside what is left.
+  useLayoutEffect(() => {
+    const panel = card.current, guide = document.querySelector('.home-guide');
+    if (!panel || !guide) return;
+    panel.style.maxHeight = `${Math.max(160, guide.getBoundingClientRect().top - panel.getBoundingClientRect().top - 12)}px`;
+  });
   return <div className="home-search" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape' && (words || stage.kind !== 'find')) { event.stopPropagation(); clear(); } }}>
     <form role="search" onSubmit={submit} aria-label={t('search.label')} className="home-search-row" data-tone="dark">
       <div className="home-search-field">
@@ -180,6 +187,6 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
       </div>
       <IconButton type="submit" label={t('search.go')} className="home-search-go"><SearchIcon /></IconButton>
     </form>
-    {panel && <Panel size="card" scroll className="home-search-panel" aria-label={t('search.results')}>{panel}</Panel>}
+    {panel && <Panel ref={card} size="card" scroll className="home-search-panel" aria-label={t('search.results')}>{panel}</Panel>}
   </div>;
 }
