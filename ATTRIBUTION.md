@@ -14,25 +14,27 @@ Outfit is Copyright 2021 The Outfit Project Authors, licensed under the [SIL Ope
 
 React and React DOM use MIT; Vite and TypeScript use MIT and Apache-2.0 respectively; Playwright uses Apache-2.0. Exact versions and transitive dependencies are recorded in the lockfile; their distributions retain their licenses.
 
-The guide on the hidden farm workspace and the loopback inspection screen uses [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
+The on-screen guide on the route screen, the hidden farm workspace and the loopback inspection screen use [bot-avatars](https://libraries.dev/bots) 0.1.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Bot-avatars-MIT.txt). Colors and motion settings are adapted to Mercature. Bot animation represents interface state, not proof of AI inference.
 
 [thinking-orbs](https://libraries.dev/orbs) 0.3.2 by Jakub Antalik, Copyright 2026, under the [MIT license](licenses/Thinking-orbs-MIT.txt), is listed as a dependency but not used by the app.
 
 ## Published place package
 
-`public/places/qorikancha` ships 27 views of Mapillary street photos along the Qorikancha walk (12 crops of 360° photos and 15 resized photos), the records of the 403 photos used, OpenStreetMap context and the walking route. Each photo keeps its contributor, capture date, source link and license (CC BY-SA 4.0) in `place.json`, and the app shows them with the photo. The views are adaptations and remain under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Map data is from OpenStreetMap contributors under the ODbL. No point clouds are published.
+`public/places/qorikancha` and `public/places/narikala` ship 27 and 72 views of Mapillary street photos along their routes (on Qorikancha 12 crops of 360° photos and 15 resized photos; on Narikala resized photos), the records of the 403 and 359 photos used, OpenStreetMap context, what OpenStreetMap records along each route, the walking route and its way around, and 5 thinned 3D pieces each. Each photo keeps its contributor, capture date, source link and license (CC BY-SA 4.0) in `place.json`, and the app shows them with the photo. The views are adaptations and remain under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The 3D pieces are built from those photos by VGGT-1B-Commercial, credited by contributor, and shared under CC BY-SA 4.0 as well. Map data is from OpenStreetMap contributors under the ODbL.
 
 ## Local destination inspection
 
-The local Mapillary route records (Narikala and Swayambhu), their images and every point cloud are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
+The local Mapillary route record (Swayambhu), the full-size images and the full point clouds are supplied locally and excluded from version control and build output. Their per-image creator, capture date, source link and license are displayed from the original records. Geographic context retains OpenStreetMap contributor attribution and ODbL terms. Existing local-only and no-redistribution restrictions remain enforced; displaying a reconstruction does not grant redistribution or measured-access acceptance.
 
 ## Mark
 
 The Mercature mark samples land outlines from [Natural Earth](https://www.naturalearthdata.com/) 1:110m, version 4.1.0 (public domain), as redistributed by [world-atlas](https://github.com/topojson/world-atlas) 2.0.2.
 
-## Recorded destination examples
+## Route preparation
 
-The destination records, including the published Qorikancha package, were prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data and SAM 3 photo outlines (SAM License). The local-only records also hold VGGT-1B-Commercial reconstructions (custom licence), which are not published. Those tools are not part of this application; each keeps its own licence.
+The route records, including the published Qorikancha and Narikala packages, were prepared earlier with [Valhalla](https://github.com/valhalla/valhalla) routes (MIT) on OpenStreetMap data, SAM 3 photo outlines (SAM License) and VGGT-1B-Commercial reconstructions (custom license); thinned pieces of the reconstructions are published with each route. What OpenStreetMap records along each route comes from the Overpass API, and each way around from the Valhalla server at openstreetmap.de. Those tools are not part of this application; each keeps its own license.
+
+Search asks OpenStreetMap's Nominatim, the Overpass API (with maps.mail.ru as a second server) and the Valhalla server at openstreetmap.de; their answers are © OpenStreetMap contributors under the ODbL.
 
 ## Language model and runtime
 

@@ -24,28 +24,44 @@ Peru welcomed over four million international visitors in 2025, and 7 in 10 of i
 in businesses of ten people or fewer. Small tour operators live on what visitors tell them, and much
 of it arrives in languages they cannot read, about places they cannot easily check.
 
-Mercature keeps a tour operator's walk on her phone, built from public street photos, and reads
-her visitors' messages for her. A small multilingual model on the phone says whether a message is a
-problem, praise or a question and which spot on the walk it means, and the map flies there. A reply
-in the visitor's language is drafted from fixed templates and what her map says, ready to copy. When
-the model is unsure she taps the spot herself. She keeps the map current: mark a spot fixed, add a
-note, remove a spot or add one. After one download, it works offline.
+Mercature keeps a tour operator's route on her phone, built from public street photos and
+OpenStreetMap, and an on-screen guide takes her through it. At each spot that might give visitors
+trouble, she sees the street photo where a model outlined steps or a kerb and what OpenStreetMap
+records there, and answers what is there now. Where she has no way around, the guide offers the one
+OpenStreetMap's router finds, and she decides whether to keep it. Then her visitors' messages: a
+small multilingual model on the phone says which spot each one means, or Not sure, and the app fills
+a reply in English, Spanish or Korean from fixed templates and her answers. She adds what the photos
+missed, compares Before and Now, and copies a route note for the next group. Every change needs her
+tap, and after one download it works offline.
 
 Built for the World Bank Small AI for Development challenge, tourism track.
 
 <sub>Figures: 4,157,469 international visitors to Peru in 2025, preliminary (MINCETUR, <a href="https://www.gob.pe/institucion/mincetur/informes-publicaciones/7619520-reportes-de-turismo-reporte-mensual-de-turismo-diciembre-2025">Reporte Mensual de Turismo, diciembre 2025</a>, 14 January 2026); 71.7% of Peru's employed people work in units of 1 to 10 people, 88.6% of them informally (INEI, <a href="https://m.inei.gob.pe/media/MenuRecursivo/boletines/01-informe-tecnico-empleo-nacional.pdf">mercado laboral, enero a diciembre 2025</a>, February 2026).</sub>
 
-## The Qorikancha walk
+## The Qorikancha route
 
-A real route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
+A real tour route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
-segmentation model scanned 116 views of those photos once, when the route was prepared, and made 480
+segmentation model scanned 116 views of those photos once, on a GPU when the route was prepared, and made 480
 marks above its threshold. It left out 1 pothole mark, because the photos show a manhole or drain cover there; the package keeps 287 of the other 479 (footway, cobblestones, kerbs, road, steps, crossings, broken pavement), the
-218 near the walk and 69 more on the 27 published photos. Separately, the walk's build has 52 findings
+218 near the route and 69 more on the 27 published photos. Separately, the route's build has 52 findings
 of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as
 possible barriers, at 5 spots; none has been checked by a person.
-A stretch with no flagged barrier means only that no barrier was seen in the photos: Mercature
-claims no widths, slopes or reachability.
+
+OpenStreetMap adds 44 records along the route, fetched once and never checked: the 5 steps on Calle
+Loreto with no handrail and no ramp, stone setts or cobblestones on 58 of the 60 stretches, lighting
+on 41, 18 benches, 2 crossings, and one toilet tagged with limited wheelchair access. Widths and
+inclines are left out on purpose. OpenStreetMap's router suggests a way around those steps, 679 m
+instead of 594; nobody has checked it.
+A stretch with nothing flagged means only that nothing was flagged in its photos: Mercature claims
+no widths, heights, slopes or reachability.
+
+## Other routes
+
+Narikala in Tbilisi, from the cable car to the fortress gate, is a second tour route prepared the
+same way: 1,019 m, 359 street photos, 49 possible barriers. Home search finds any other place on
+OpenStreetMap and builds a route to it on the device from the map alone, with no street photos read;
+such a route is labelled as from the map.
 
 ## The model
 
@@ -53,7 +69,7 @@ claims no widths, slopes or reachability.
 trimmed to Latin and Korean script, with three small trained heads, runs in the browser with ONNX
 Runtime Web. It downloads once and then works with no connection: 83,783,194 bytes stored on the device, about 52 MB over the network because GitHub Pages compresses it. It answers only
 from fixed lists and says Not sure when unsure. On the 48 held-out English, Spanish and Korean farm
-messages that name a spot, it put the right spot first 46 times; moved to the Qorikancha walk with no new
+messages that name a spot, it put the right spot first 46 times; moved to the Qorikancha route with no new
 training, 28 of the 31 that name one. It failed on Quechua, so messages that do not look like English, Spanish or
 Korean now always get Not sure. The phone also learns from her: each message she files on a spot leaves an
 example on the device (its embedding and a sketch of its spelling, never the text), and later similar messages
@@ -61,7 +77,7 @@ that fail the language check rank that spot first, still as Not sure. On
 machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and
 7.3, 8.8 and 9.4 of 16 (means of 20 draws) with one, two and three linked messages per spot. A Korean message lost its right
 spot in a few draws, so after that test the memory was limited to messages that fail the language
-check. A simpler keyword match is not enough: exact aliases find the spot as often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the walk they pick exactly the right spots for only 3 of 34 messages. One message takes a median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
+check. A simpler keyword match is not enough: exact aliases find the spot as often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the route they pick exactly the right spots for only 3 of 34 messages. One message takes a median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
 with the CPU slowed six times; no phone has been measured.
 All test messages are synthetic, written by a large language model; the farm-tour messages from the
 brief's persona, Noor, trained the model's heads. Details: [model and
@@ -70,6 +86,12 @@ evaluation](docs/language.md). Privacy, consent, bias and oversight: [responsibl
 ## Get started
 
 Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). The 84 MB model downloads only when you tap Download on a message; after that one download, it works offline. Interface in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
+
+Search is the one feature that goes online. Typing filters the prepared places on your device;
+Enter sends the typed words to OpenStreetMap's Nominatim. Building a route asks the Valhalla server
+at openstreetmap.de for the route on foot, and the Overpass API (overpass-api.de, or maps.mail.ru as
+a second server) for map data near it. A built route is kept on the device. Visitor messages, her
+answers and her edits never leave it.
 
 To run it locally, you need Node.js 22.12 or newer.
 
@@ -103,11 +125,14 @@ Set `MERCATURE_PORT` to use a port other than 4173.
 ## Data and credits
 
 Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on every photo; this
-repository ships the route's package in `public/places/qorikancha`, with 27 credited photo views (12 crops of 360° photos and 15 resized photos). Places and paths are
-from OpenStreetMap (ODbL), the walking route from Valhalla, outlines from SAM 3. Partial 3D from VGGT
-exists only in a local install; the published package has no points. Test messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources
-behind every figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses
-are in [attribution](ATTRIBUTION.md).
+repository ships the routes' packages in `public/places/qorikancha` and `public/places/narikala`, with
+27 and 72 credited photo views. Places, paths and the records along each route are from OpenStreetMap
+(ODbL), the routes on foot and the ways around from Valhalla, outlines from SAM 3, and partial 3D from
+VGGT, published in thinned pieces under CC BY-SA 4.0 like the photos they come from. Search uses
+OpenStreetMap's Nominatim, the Valhalla server at openstreetmap.de and the Overpass API. Test
+messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources behind every
+figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses are in
+[attribution](ATTRIBUTION.md).
 
 ## Documentation
 
