@@ -37,9 +37,17 @@ if (record.schema !== 'mercature-route/1' || record.id !== id || record.syntheti
 const round = (value, places) => Math.round(value * 10 ** places) / 10 ** places;
 const position = point => point == null ? null : [round(point[0], 7), round(point[1], 7)];
 const views = new Map(record.views.filter(view => view.file).map(view => [view.id, view]));
+// Nothing published states a slope or a width: a finding drawn from an incline or width tag stays out, no kept tag
+// carries one, and a stretch flagged only by such a finding is what its photos make it (seen and clear, or no photos).
+const MEASURES = /^(incline|width)$/;
+const measured = new Set(record.findings.filter(f => MEASURES.test((f.concept ?? '').split('=')[0])).map(f => f.id));
+const barrierIds = new Set(record.findings.filter(f => f.barrier === true && !measured.has(f.id)).map(f => f.id));
+const statusOf = s => s.status !== 'barrier' || s.findings.some(id => barrierIds.has(id)) ? s.status : (s.views ?? []).length ? 'clear' : 'no_photos';
+const unmeasured = osm => osm && { ...osm, tags: osm.tags && Object.fromEntries(Object.entries(osm.tags).filter(([key]) => !MEASURES.test(key))) };
+const barriers = record.stretches.filter(s => statusOf(s) === 'barrier').length;
 
 // Every view behind a finding on a flagged stretch ships at its retained size.
-const flagged = new Set(record.stretches.filter(stretch => stretch.status !== 'clear').map(stretch => stretch.index));
+const flagged = new Set(record.stretches.filter(stretch => statusOf(stretch) !== 'clear').map(stretch => stretch.index));
 const evidence = [...new Set(record.findings.filter(f => f.view_id && f.stretches.some(i => flagged.has(i))).map(f => f.view_id))].sort();
 for (const id of evidence) if (!views.has(id)) throw new Error(`Finding view ${id} is not retained.`);
 // About one more view every few stretches for the reveal: forward-facing first, then by id.
@@ -66,10 +74,10 @@ for (const id of evidence) {
 }
 for (const id of reveal) shipped.set(id, { role: 'reveal', ...resize(id, REVEAL) });
 
-const findings = record.findings.map(f => ({
+const findings = record.findings.filter(f => !measured.has(f.id)).map(f => ({
   id: f.id, label: f.label, concept: f.concept, barrier: f.barrier === true, score: f.score, verified: false, source: f.source, model: f.model, note: f.note,
   photo_id: f.photo_id, view_id: f.view_id, stretches: f.stretches, position: position(f.position),
-  box: f.box, outline: f.outline?.map(([x, y]) => [round(x, 1), round(y, 1)]) ?? null, osm: f.osm,
+  box: f.box, outline: f.outline?.map(([x, y]) => [round(x, 1), round(y, 1)]) ?? null, osm: unmeasured(f.osm),
 }));
 
 // SAM 3's marks: every one above its prompt's threshold (sam3-prompts.json, the prompts file the build used) on the
@@ -132,8 +140,8 @@ const place = {
   sources: record.sources.filter(s => SOURCES.includes(s.id)),
   request: { start: { name: record.request.start.name, position: position(record.request.start.position) }, destination: { name: record.request.destination.name, position: position(record.request.destination.position), osm: record.request.destination.osm } },
   route: { kind: record.route.kind, provider: record.route.provider, fetched_at: record.route.fetched_at, frame: record.route.frame, length_m: round(record.route.length_m, 1), line: record.route.line.map(position) },
-  summary: record.summary,
-  stretches: record.stretches.map(s => ({ index: s.index, from_m: round(s.from_m, 1), to_m: round(s.to_m, 1), status: s.status, line: s.line.map(position), findings: s.findings, views: (s.views ?? []).filter(id => shipped.has(id)) })),
+  summary: { ...record.summary, barriers, line: record.summary.line.replace(/flagged on \d+ stretch/, `flagged on ${barriers} stretch`) },
+  stretches: record.stretches.map(s => ({ index: s.index, from_m: round(s.from_m, 1), to_m: round(s.to_m, 1), status: statusOf(s), line: s.line.map(position), findings: s.findings.filter(id => !measured.has(id)), views: (s.views ?? []).filter(id => shipped.has(id)) })),
   findings,
   views: [...shipped.entries()].sort(([a], [b]) => a < b ? -1 : 1).map(([id, file]) => {
     const view = views.get(id);

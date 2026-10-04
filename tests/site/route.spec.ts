@@ -44,13 +44,14 @@ for (const place of Object.values(ROUTE_PLACES)) {
   });
 
   test(`${place.id}: every flagged stretch belongs to exactly one spot, grouped as the map draws them`, () => {
-    test.skip(!record, 'The local route record is not available.');
+    // The published package is what the map reads, so the markers are taken from it, as committed.
+    const published = JSON.parse(readFileSync(resolve('public/places', place.folder, 'place.json'), 'utf8'));
     type RecordStretch = { index: number; status: string; findings: string[]; from_m: number; to_m: number };
     // The map's own rule (buildWalk in src/destinations/walk.ts): a run without photos, or flagged stretches in a row
     // that share a possible barrier with the run, is one marker, and the route screen names each marker by its first stretch.
-    const barrier = new Set(record.findings.filter((finding: { barrier: boolean }) => finding.barrier).map((finding: { id: string }) => finding.id));
+    const barrier = new Set(published.findings.filter((finding: { barrier: boolean }) => finding.barrier).map((finding: { id: string }) => finding.id));
     const runs: { stretches: number[]; status: string; findings: Set<string> }[] = [];
-    for (const stretch of record.stretches as RecordStretch[]) {
+    for (const stretch of published.stretches as RecordStretch[]) {
       if (stretch.status === 'clear') continue;
       const last = runs.at(-1), findings = stretch.status === 'no_photos' ? [] : stretch.findings.filter(id => barrier.has(id));
       if (last && last.status === stretch.status && last.stretches.at(-1) === stretch.index - 1 && (stretch.status === 'no_photos' || findings.some(id => last.findings.has(id)))) {
@@ -59,7 +60,7 @@ for (const place of Object.values(ROUTE_PLACES)) {
     }
     expect(spots.filter(spot => spot.stretches.length).map(spot => spot.stretches).sort((a, b) => a[0] - b[0])).toEqual(runs.map(run => run.stretches));
     for (const spot of spots.filter(spot => spot.stretches.length)) {
-      const group = spot.stretches.map(index => record.stretches[index] as RecordStretch);
+      const group = spot.stretches.map(index => published.stretches[index] as RecordStretch);
       expect(spot.name.en).toContain(`(${Math.round(group[0].from_m)} to ${Math.round(group.at(-1)!.to_m)} m)`);
     }
   });

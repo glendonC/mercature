@@ -108,10 +108,16 @@ export const NARIKALA_PLACE: RoutePlace = {
       aliases: { en: ['no photos', 'unseen part'], es: ['sin fotos', 'tramo sin fotos'], ko: ['사진 없음'] },
     },
     {
-      id: 'steps-870-920', stretches: [87, 88, 89, 90, 91], landmark: 'ჯემალ აჯიაშვილის ქუჩა',
-      name: { en: 'Steps on Jemal Ajiashvili Street (870 to 920 m)', es: 'Escalones en la calle Jemal Ajiashvili (870 a 920 m)' },
+      id: 'steps-870-890', stretches: [87, 88], landmark: 'ჯემალ აჯიაშვილის ქუჩა',
+      name: { en: 'Steps on Jemal Ajiashvili Street (870 to 890 m)', es: 'Escalones en la calle Jemal Ajiashvili (870 a 890 m)' },
       description: 'Steps and kerbs on the cobbled lane of Jemal Ajiashvili Street towards the fortress, suggested by a model in street photos and not verified.',
       aliases: { en: ['steps', 'stairs', 'kerb', 'cobbled lane', 'cobblestones', 'lane to the fortress', 'steep street'], es: ['escalones', 'bordillo', 'calle empedrada', 'adoquines'], ko: ['계단', '연석', '자갈길', '돌길'] },
+    },
+    {
+      id: 'steps-890-910', stretches: [89, 90], landmark: 'ჯემალ აჯიაშვილის ქუჩა',
+      name: { en: 'Steps on Jemal Ajiashvili Street (890 to 910 m)', es: 'Escalones en la calle Jemal Ajiashvili (890 a 910 m)' },
+      description: 'More steps and kerbs on Jemal Ajiashvili Street where it meets Data Gulua Rise, suggested by a model in street photos and not verified.',
+      aliases: { en: ['steps', 'stairs', 'kerb', 'cobbled lane', 'lane to the fortress'], es: ['escalones', 'bordillo', 'calle empedrada'], ko: ['계단', '연석', '돌길'] },
     },
     {
       id: 'steps-920-990', stretches: [92, 93, 94, 95, 96, 97, 98], landmark: 'დათა გულუას აღმართი',
