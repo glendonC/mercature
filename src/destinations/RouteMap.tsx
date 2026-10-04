@@ -4,6 +4,8 @@ import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
 import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
 import './destinations.css';
 import './map.css';
+import RouteFx from '../fx/RouteFx';
+import { riseWave } from '../fx/rise';
 import type { Point, Walk } from './walk';
 import { AddedIcon, FixedIcon, KerbIcon, LookIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
 
@@ -57,6 +59,8 @@ type Props = {
   still?: boolean;
   /** Starts at the leaned framing, with no flat first frame and no lean-in, for a map that opens with a leaned replay. */
   settled?: boolean;
+  /** A settled map raises its blocks from the walk outward as it first shows. */
+  riseIn?: boolean;
   /** Called with the map's projection whenever it changes, to draw in step with the map. It runs on every frame of a move. */
   onLens?: (lens: Lens) => void;
   /** A fine pointer entering a marker, or keyboard focus reaching it, with its id; null when it leaves. Touch never hovers. */
@@ -116,7 +120,7 @@ function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, onLens, onHover, hovered = null }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -174,6 +178,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // One loop moves the camera and the lean; a gesture stops the camera and leaves the lean to finish.
   const tween = useRef<Tween | null>(null);
   const leanTween = useRef<{ from: number; to: number; started: number } | null>(null);
+  /** When a settled map began raising its blocks; each frame of the rise draws the map again without moving its camera. */
+  const riseTween = useRef<number | null>(null);
+  const [, setRiseFrame] = useState(0);
   const frame = useRef(0);
   const step = useRef<(now: number) => void>(() => {});
   step.current = now => {
@@ -191,8 +198,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       next = { ...next, lean: l.from + (l.to - l.from) * sway(t) };
       if (t >= 1) leanTween.current = null;
     }
+    if (riseTween.current != null) {
+      if (now - riseTween.current >= LEAN_FOR) riseTween.current = null;
+      setRiseFrame(n => n + 1);
+    }
     live.current = next; setCamera(next);
-    if (tween.current || leanTween.current) frame.current = requestAnimationFrame(time => step.current(time));
+    if (tween.current || leanTween.current || riseTween.current != null) frame.current = requestAnimationFrame(time => step.current(time));
   };
   const run = useCallback(() => { if (!frame.current) frame.current = requestAnimationFrame(time => step.current(time)); }, []);
   const go = useCallback((target: View, animate = true) => {
@@ -224,13 +235,30 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const fitted = useRef(false);
   useEffect(() => {
     if (!size.width || !size.height) return;
-    if (!fitted.current) { fitted.current = true; go(fitCamera(size.width, size.height), false); }
+    if (!fitted.current) {
+      fitted.current = true; go(fitCamera(size.width, size.height), false);
+      if (settled && riseIn && !quiet()) { riseTween.current = performance.now(); run(); }
+    }
     else if (live.current) go(clamp(live.current), false);
-  }, [size, fitCamera, go, clamp]);
+  }, [size, fitCamera, go, clamp, settled, riseIn, run]);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   // The reveal lands on the flat map, which it can match; once it has gone, the map leans back.
   const [landed, setLanded] = useState(false);
+  /** As the map first leans or rises, its blocks go up from the walk outward. */
+  const wave = useMemo(() => riseWave(data, walk, LEAN_FOR), [data, walk]);
+  const rising = leanTween.current?.started ?? riseTween.current;
+  /** While a replay covers this map its spots wait; once it lifts, or as the map leans in, they arrive in walking order. */
+  const [arriving, setArriving] = useState<'wait' | 'go' | null>(() => !still && leaning && !!document.querySelector('.reveal') ? 'wait' : null);
+  useEffect(() => {
+    if (!landed || still) return;
+    if (quiet()) { setArriving(null); return; }
+    setArriving('go');
+    const timer = window.setTimeout(() => setArriving(null), 1400);
+    return () => clearTimeout(timer);
+  }, [landed, still]);
+  /** Raised each time the whole route is shown again, so the motion layer can run the light along it once more. */
+  const [replay, setReplay] = useState(0);
   useEffect(() => {
     if (!leaning) return;
     const reveal = document.querySelector('.reveal'), host = reveal?.parentNode;
@@ -254,6 +282,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // a tap opens it again.
   const [credit, setCredit] = useState(true);
   useEffect(() => { const timer = window.setTimeout(() => setCredit(false), 6000); return () => clearTimeout(timer); }, []);
+
+  // The marker raised by a fine pointer or keyboard focus, as the map sees it, so a page that does not point at markers itself
+  // still gets the raise and the motion layer's ring; a marker the page points at comes first.
+  const [pointed, setPointed] = useState<string | null>(null);
+  const lifted = hovered ?? (markers.some(marker => marker.id === pointed) ? pointed : null);
+  const point = (id: string | null) => { setPointed(id); onHover?.(id); };
 
   // The selected marker, or the one last opened while it is still in view, stays in the free band between the place title
   // and the guide, or any sheet, as they change. Panning or the whole route lets the last one go.
@@ -392,9 +426,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
   if (controls && bounds && controls.width) taken.push({ x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 });
   const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
-  for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === hovered) - Number(a.marker.selected || a.marker.id === hovered))) {
+  for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === lifted) - Number(a.marker.selected || a.marker.id === lifted))) {
     if (!marker.tag || !camera) continue;
-    const y = at[1] - (flat ? 0 : 11), raised = marker.selected || marker.id === hovered, forms = [...new Set([marker.tag, marker.tag.split(' · ')[0]])];
+    const y = at[1] - (flat ? 0 : 11), raised = marker.selected || marker.id === lifted, forms = [...new Set([marker.tag, marker.tag.split(' · ')[0]])];
     for (const text of forms) {
       const w = Math.round(text.length * 7 + 18 + (marker.icon ? 15 : 0) + (marker.count ? 26 : 0)), h = size.width > 640 ? 23 : 24;
       const side = (['right', 'left'] as const).find(side => {
@@ -422,14 +456,17 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const fit = fitCamera(size.width, size.height), current = live.current ?? fit;
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
+    // Whole route runs the light along the walk again; zooming out as far as it goes does not.
+    if (typeof action !== 'function') setReplay(n => n + 1);
   };
   // How much a circle on the ground flattens, for the ring under the selected marker.
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
-  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
+  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
-      lens={flat ? undefined : view} rise={rise} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
+      lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
+    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} landed={landed} replay={replay} markers={markers} focus={lifted ?? markers.find(marker => marker.rank === 1)?.id ?? null} hover={lifted} photoView={photoView} />}
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
@@ -439,16 +476,15 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
         const caption = captions.get(marker.id), count = marker.count ? marker.count > 99 ? '99+' : String(marker.count) : '';
         const Glyph = typeof marker.icon === 'string' ? ICONS[marker.icon] : marker.icon;
         const inside = <>
-          <span className="route-marker-ping" aria-hidden="true" />
           <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === hovered || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => onMarker(marker.id)}
-            onPointerEnter={event => { if (event.pointerType !== 'touch') onHover?.(marker.id); }} onPointerLeave={event => { if (event.pointerType !== 'touch') onHover?.(null); }}
-            onFocus={event => { if (event.currentTarget.matches(':focus-visible')) onHover?.(marker.id); }} onBlur={() => onHover?.(null)}>{inside}</button>;
+            onPointerEnter={event => { if (event.pointerType !== 'touch') point(marker.id); }} onPointerLeave={event => { if (event.pointerType !== 'touch') point(null); }}
+            onFocus={event => { if (event.currentTarget.matches(':focus-visible')) point(marker.id); }} onBlur={() => point(null)}>{inside}</button>;
       })}
     </div>
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}

@@ -28,6 +28,8 @@ export type Lens = {
   ground: (s: Point) => Point;
   /** Screen pixels per map unit around a map point. */
   scale: (p: Point) => number;
+  /** The tilt it leans with, so a layer can lift things off the ground in step with it. */
+  tilt: Tilt;
 };
 
 const RADIANS = Math.PI / 180;
@@ -78,7 +80,7 @@ export function lens(view: View, tilt: Tilt, width: number, height: number): Len
     const a = at(p), b = at([p[0] + 1, p[1]]), c = at([p[0], p[1] + 1]);
     return Math.sqrt(Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])));
   };
-  return { view, width, height, at, ground, scale };
+  return { view, width, height, at, ground, scale, tilt };
 }
 
 /** The view at one lean that centres the points in a screen box and fills it, within zoom limits. */

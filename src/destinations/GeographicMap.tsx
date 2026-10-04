@@ -83,9 +83,9 @@ const xy = (p: Point) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
 const shape = (points: Point[]) => `M${points.map(xy).join('L')}Z`;
 
 /** The ground drawn through a lens: streets, then each block from the farthest to the nearest, walls before its roof. */
-function Ground({ plan, lens, rise, label }: { plan: Plan; lens: Lens; rise: number; label: (name: string) => string }) {
+function Ground({ plan, lens, rise, riseOf, label }: { plan: Plan; lens: Lens; rise: number; riseOf?: (id: string) => number; label: (name: string) => string }) {
   const blocks = plan.buildings.flatMap(building => {
-    const up = rise * building.stature, walls = { lit: '', front: '', shade: '' };
+    const up = rise * building.stature * (riseOf?.(building.id) ?? 1), walls = { lit: '', front: '', shade: '' };
     // A block wholly off screen is not drawn; one just below the edge may still rise into view.
     const outline = building.rings[0].points.map(p => lens.at(p)), margin = 60;
     if (outline.every(p => p[0] < -margin) || outline.every(p => p[0] > lens.width + margin) || outline.every(p => p[1] < -margin) || outline.every(p => p[1] > lens.height + margin * 2.5)) return [];
@@ -150,6 +150,8 @@ type Props = {
   lens?: Lens;
   /** Height of the blocks drawn for buildings through a lens, in map units. */
   rise?: number;
+  /** While the blocks first rise, the share of its height each has reached, by building id. Without it every block is whole. */
+  riseOf?: (id: string) => number;
   /** A backdrop: no zoom buttons, scale bar or north arrow. The credit stays. */
   still?: boolean;
   /** Draws the map credit line; a host that shows the credit itself turns it off. */
@@ -158,7 +160,7 @@ type Props = {
 export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: string };
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
-export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, lens, rise = 0, still = false, credit = true }: Props) {
+export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, lens, rise = 0, riseOf, still = false, credit = true }: Props) {
   const { t } = useLanguage();
   const fog = useId();
   const words = given ?? { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
@@ -188,7 +190,7 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
   })() : null;
   return <section className={`destination-map ${className}`} hidden={hidden} aria-label={t('map.label')}><svg ref={svgRef} viewBox={lens ? `0 0 ${lens.width} ${lens.height}` : viewBox} role="group" aria-label={t('map.svg')}>
     {!lens && <rect width="800" height="500" className="map-ground"/>}
-    {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} label={name => name || t('map.building')}/> : base}
+    {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} riseOf={riseOf} label={name => name || t('map.building')}/> : base}
     {lens && <>
       <defs><linearGradient id={fog} x1="0" y1="0" x2="0" y2="1"><stop offset={HAZE.solid / HAZE.clear} className="map-fog-far"/><stop offset="1" className="map-fog-clear"/></linearGradient></defs>
       <rect width={lens.width} height={lens.height * HAZE.clear} fill={`url(#${fog})`} opacity={lens.view.lean} pointerEvents="none"/>
