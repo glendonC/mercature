@@ -24,15 +24,16 @@ export const KIND_ORDER: readonly Kind[] = ['steps', 'kerb', 'broken', 'steep', 
 /** Ground kinds: drawn dashed and quieter (--dash-<kind>). */
 export const GROUND_KINDS: ReadonlySet<Kind> = new Set(['crossing', 'cobblestones', 'footway', 'road']);
 
-/** The kind of a concept or a map tag, such as 'handrail=yes', 'ramp', 'highway=street_lamp' or 'steps'. */
+/** The kind of a concept or a map tag, such as 'handrail=yes', 'ramp', 'highway=street_lamp' or 'steps'. A tag that says a thing is absent, such as 'ramp=no', has no kind: it must never draw as the thing. */
 export function kindOf(concept: string): Kind | null {
   const c = concept.toLowerCase();
+  if (/=\s*no\b/.test(c)) return null;
   if (/handrail|railing/.test(c)) return 'handrail';
   if (/ramp/.test(c)) return 'ramp';
   if (/steep|incline|slope/.test(c)) return 'steep';
   if (/gate|turnstile/.test(c)) return 'gate';
   if (/bench|seat/.test(c)) return 'bench';
-  if (/lamp|light/.test(c)) return 'lighting';
+  if (/lamp|light|\blit\b/.test(c)) return 'lighting';
   if (/toilet|restroom|\bwc\b/.test(c)) return 'toilets';
   return markOf(c);
 }
