@@ -17,7 +17,8 @@
 .route-canvas button { color: inherit; }
 .route-canvas button:focus-visible, .route-canvas textarea:focus-visible, .route-canvas select:focus-visible, .route-canvas a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* Map */
+/* Map, and the tab panel that holds it with whatever is open over it */
+.route-view { position: absolute; inset: 0; }
 .route-map { position: absolute; inset: 0; overflow: clip; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
 .route-map:active { cursor: grabbing; }
 .route-canvas .destination-map { position: absolute; inset: 0; height: auto; --map-ground: var(--ground); }
@@ -64,7 +65,7 @@
 .route-card-close { position: absolute; z-index: 2; top: 18px; right: 20px; width: 36px; height: 36px; background: var(--glass-panel); box-shadow: var(--shadow-s); }
 .route-card-close::before { content: ''; position: absolute; inset: -4px; }
 .route-card h2 { margin: 12px 0 2px; padding-right: 40px; font-size: 19px; font-weight: 400; line-height: 1.25; letter-spacing: -0.02em; }
-.route-card h2:focus { outline: none; }
+.route-card:focus { outline: none; }
 .route-card-line { margin: 0; font-size: var(--text-label); color: var(--muted); }
 .route-card-quiet { display: flex; gap: 8px; align-items: baseline; margin: 10px 0 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
 .route-mark { flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--blocked); transform: translateY(1px); }

@@ -8,6 +8,7 @@ import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type 
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
 import RouteMap, { type MapHandle, type Marker } from './RouteMap';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot, type Walk } from './walk';
+import { spotState } from './markers';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import InterfaceLanguage from '../i18n/LanguageSwitch';
@@ -148,7 +149,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const stretchesOfKey = (key: string): number[] => { const target = targetOf(key); return !target || target.kind === 'landmark' ? [] : target.kind === 'spot' ? walk.spots.find(spot => spot.id === target.id)!.stretches : [target.index]; };
 
   // Selection and camera
+  /** What had focus when the card opened, so closing it returns there. */
+  const opener = useRef<HTMLElement | null>(null);
+  const returning = useRef<(HTMLElement | null)[] | null>(null);
   function open(target: Selection | null, move = true) {
+    if (target) { const active = document.activeElement; opener.current = active instanceof HTMLElement && active !== document.body && !active.closest('.route-card') ? active : null; }
     setSelection(target); setPage(0); setSaid('');
     if (!target || !move || !map.current) return;
     const at = pointOf(target); if (!at) return;
@@ -156,6 +161,24 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     const screen: Point = narrow ? [width / 2, 104 + Math.max(60, height * 0.4 - 104) / 2] : [Math.max(tab === 'place' ? 120 : 420, width * 0.34), height * 0.48];
     map.current.focus(at, screen, fitK * 1.9);
   }
+  /** Closes the card. When focus was in it, focus goes back to what opened it, or else to its marker. */
+  function close() {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest('.route-card')) returning.current = [opener.current, root.current?.querySelector<HTMLElement>('.route-marker[aria-pressed=true]') ?? null];
+    open(null);
+  }
+  useEffect(() => {
+    const wanted = returning.current;
+    if (!wanted || selection) return;
+    returning.current = null;
+    // On phones the card takes the panel's place in the sheet, so the opener may come back as a new button with the same words.
+    const again = (element: HTMLElement) => element.isConnected ? element
+      : [...root.current?.querySelectorAll<HTMLElement>('button') ?? []].find(button => button.textContent === element.textContent && button.getAttribute('aria-label') === element.getAttribute('aria-label')) ?? null;
+    for (const element of wanted) {
+      const target = element && again(element);
+      if (target) { target.focus({ preventScroll: true }); return; }
+    }
+  }, [selection]);
   function tapMap(at: Point, k: number) {
     const index = nearestStretch(data, walk, at);
     const stretch = index === null ? null : data.stretches[index];
@@ -257,7 +280,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const rankOf = (target: Selection) => { const rank = candidates.findIndex(id => same(targetOf(id), target)) + 1; return rank || undefined; };
   const markers: Marker[] = walk.spots.map(spot => {
     const verdict = verdictOf(review, spot.stretches), name = spotName(spot), target: Selection = { kind: 'spot', id: spot.id };
-    const state = spot.kind === 'no-photos' ? 'no-photos' : verdict ?? 'open';
+    const state = spotState(spot, review);
     const status = spot.kind === 'no-photos' ? t.noPhotos : verdict ? t.verdicts[verdict] : t.unreviewed;
     return { id: spot.id, at: spot.at, state, selected: same(selection, target), rank: rankOf(target), tag: spot.kind === 'no-photos' ? t.noPhotos : verdict ? t.verdicts[verdict] : undefined, label: `${name}, ${status}` };
   });
@@ -305,9 +328,9 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   })();
   const card = selection && <SpotCard key={JSON.stringify(selection)} t={t} lang={lang} selection={selection} walk={walk} data={data} review={review} views={views} photos={photos} asset={asset}
     page={page} setPage={setPage} name={selection.kind === 'spot' ? spotName(walk.spots.find(spot => spot.id === selection.id)!) : selection.kind === 'landmark' ? nameOfKey(selection.id) : t.noBarrier}
-    onJudge={judge} onClose={() => open(null)} link={linking ? () => link(selection) : undefined} />;
+    onJudge={judge} onClose={close} link={linking ? () => link(selection) : undefined} />;
 
-  const messagesPanel = <section className="route-panel" aria-label={t.views.messages}>
+  const messagesPanel = <section className="route-panel">
     {!current ? <>
       <label className="route-label" htmlFor={`${tabsId}-message`}>{t.message}</label>
       <textarea id={`${tabsId}-message`} value={draft} maxLength={500} placeholder={t.messagePlaceholder} onChange={event => { setDraft(event.target.value); setDraftLang(guessLanguage(event.target.value)); }} />
@@ -335,7 +358,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   const replyMessage = review.messages.find(message => message.id === replyFor) ?? review.messages[0] ?? null;
   const replyLanguageNow = replyLanguage ?? (replyMessage ? replyLang(replyMessage.language) : 'en');
   const note = noteText(noteLang);
-  const changesPanel = <section className="route-panel route-changes" aria-label={t.views.changes}>
+  const changesPanel = <section className="route-panel route-changes">
     {!decided.length && !review.messages.length && <p className="route-quiet">{t.guide.nothing}</p>}
     {decided.length > 0 && <><h2>{t.spots}</h2><ul className="route-list">{decided.map(({ spot, verdict }) =>
       <li key={spot.id}><button onClick={() => open({ kind: 'spot', id: spot.id })}><span>{spotName(spot)}</span><span className="route-verdict" data-verdict={verdict}>{t.verdicts[verdict]}</span></button></li>)}</ul></>}
@@ -390,11 +413,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   }
   const insets = narrow ? { top: 112, right: 20, bottom: 150, left: 20 } : { top: 150, right: 60, bottom: 110, left: 70 };
 
-  return <main ref={root} className="route-canvas" data-tab={tab} data-sheet={narrow && !!sheetContent} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && selection) open(null); }}>
+  return <main ref={root} className="route-canvas" data-tab={tab} data-sheet={narrow && !!sheetContent} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && selection) close(); }}>
     <header className="route-bar">
       <button className="route-icon-button" onClick={onHome} aria-label={t.home}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>
       <div className="route-tabs" role="tablist" aria-label={t.workspace}>
-        {TABS.map((item, index) => <button key={item} id={`${tabsId}-${item}`} role="tab" aria-selected={tab === item} tabIndex={tab === item ? 0 : -1} onKeyDown={event => keyTabs(event, index)} onClick={() => { setTab(item); setSaid(''); setSelection(null); }}>
+        {TABS.map((item, index) => <button key={item} id={`${tabsId}-${item}`} role="tab" aria-selected={tab === item} aria-controls={`${tabsId}-view`} tabIndex={tab === item ? 0 : -1} onKeyDown={event => keyTabs(event, index)} onClick={() => { setTab(item); setSaid(''); setSelection(null); }}>
           {t.views[item]}{item === 'place' && left > 0 && <span className="route-count" aria-hidden="true">{left}</span>}
         </button>)}
       </div>
@@ -405,9 +428,13 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
       <p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p>
       <p className="route-recorded">{t.recorded}</p>
     </div>
-    <RouteMap ref={map} data={data} photoView={shownView ?? ''} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
-      onMap={tapMap} words={t.map} clearBottom={(narrow ? sheetHeight : 0) + footHeight + 12} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
-    {!narrow && panel}
+    {/* The panel and the sheet come before the map, so Tab reaches them first; their positions keep the visual order. */}
+    <div className="route-view" role="tabpanel" id={`${tabsId}-view`} aria-labelledby={`${tabsId}-${tab}`}>
+      {!narrow && panel}
+      {narrow && sheetContent && <div className="route-sheet" ref={sheet}>{sheetContent}<p className="route-sheet-credit">{t.creditsShort}</p></div>}
+      <RouteMap ref={map} data={data} photoView={shownView ?? ''} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight} onMarker={id => { const target = markerTarget(id); if (target) open(target); }}
+        onMap={tapMap} words={t.map} clearBottom={(narrow ? sheetHeight : 0) + footHeight + 12} card={!narrow ? card : null} cardFor={!narrow ? selectedMarker : null} ariaLabel={data.title} />
+    </div>
     {problem && <p className="route-problem" role="alert">{problem === 'unreadable' ? t.unreadable : t.notSaved}<button className="route-icon-button" aria-label={t.close} onClick={() => setProblem('')}><Close /></button></p>}
     <footer className="route-foot" ref={foot}>
       {tab === 'place' ? <div className="route-task" aria-label={t.task(left)}>
@@ -423,7 +450,6 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
         <small>{narrow ? t.creditsShort : t.credits}</small>
       </div>
     </footer>
-    {narrow && sheetContent && <div className="route-sheet" ref={sheet}>{sheetContent}<p className="route-sheet-credit">{t.creditsShort}</p></div>}
   </main>;
 }
 
@@ -452,8 +478,9 @@ function SpotCard({ t, lang, selection, walk, data, review, views, photos, asset
   asset: (file: string) => string; page: number; setPage: (page: number) => void; name: string;
   onJudge: (spot: Spot, verdict: Verdict | null) => void; onClose: () => void; link?: () => void;
 }) {
-  const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { heading.current?.focus({ preventScroll: true }); }, []);
+  // Focus starts on the card itself, so Tab meets Close, the photo and the pager in the order they are seen.
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => { box.current?.focus({ preventScroll: true }); }, []);
   const spot = selection.kind === 'spot' ? walk.spots.find(item => item.id === selection.id) ?? null : null;
   const stretch = selection.kind === 'stretch' ? data.stretches[selection.index] : null;
   const verdict = spot ? verdictOf(review, spot.stretches) : null;
@@ -470,10 +497,10 @@ function SpotCard({ t, lang, selection, walk, data, review, views, photos, asset
   if (shown?.viewId) figure = <Evidence key={shown.id} t={t} view={views.get(shown.viewId)!} finding={shown} photo={photos.get(views.get(shown.viewId)!.photoId)} asset={asset} lang={lang} alt={`${fromRecord(shown.label, lang)}, ${name}`} pager={pager} />;
   else if (shown?.osm) figure = <div className="route-map-record"><strong>{fromRecord(shown.label, lang)}</strong><span>OpenStreetMap</span>{pager}</div>;
   else if (plainView) figure = <Evidence key={plainView.id} t={t} view={plainView} finding={null} photo={photos.get(plainView.photoId)} asset={asset} lang={lang} alt={name} />;
-  return <section className="route-card" aria-label={name}>
+  return <section className="route-card" aria-label={name} ref={box} tabIndex={-1}>
     <button className="route-icon-button route-card-close" aria-label={t.close} onClick={onClose}><Close /></button>
     {figure}
-    <h2 ref={heading} tabIndex={-1}>{name}</h2>
+    <h2>{name}</h2>
     {stretch && range && <p className="route-card-line">{range}</p>}
     {shown && <p className="route-card-quiet"><span className="route-mark" aria-hidden="true" />{fromRecord(shown.label, lang)}. {shown.viewId ? t.suggestion : t.mapRecord}</p>}
     {spot?.kind === 'no-photos' && <p className="route-card-quiet">{t.noPhotos}</p>}

@@ -27,3 +27,22 @@ test('a decision on a recorded photo is kept by stretch and writes the visitor n
   await openRoute(page);
   await expect(page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m, Barrier confirmed$/})).toBeVisible();
 });
+
+test('the keyboard opens a card at its Close button, returns to the marker and reaches the message box before the map', async ({page}) => {
+  test.setTimeout(30000);
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await openRoute(page);
+  const marker = page.getByRole('button', {name:/^Calle Loreto, 340 to 350 m/});
+  await marker.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('region', {name:'Calle Loreto, 340 to 350 m', exact:true})).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', {name:'Close', exact:true})).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(marker).toBeFocused();
+  await page.getByRole('tab', {name:'Messages', exact:true}).click();
+  const panel = page.getByRole('tabpanel', {name:'Messages'});
+  await expect(panel.getByRole('textbox', {name:'Visitor message'})).toBeVisible();
+  expect(await panel.evaluate(view => !!(view.querySelector('textarea')!.compareDocumentPosition(view.querySelector('.route-marker')!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+});
