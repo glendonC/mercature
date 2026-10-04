@@ -1003,11 +1003,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
           // Asking the visitor where is always offered when the spot is uncertain, and comes first when nobody could place it.
           const ask: Chip = { id: 'askWhere', label: s.messages.chips.askWhere, onClick: () => file(step.at, null, true) };
           const sure = !!first && (answer?.status === 'ready' || !!answer?.remembered);
+          // At most four choices: an unsure reading offers its spots and "No, another spot"; asking the visitor and "Not about a spot" come after that.
           if (!first || step.another) chips.push({ ...ask, primary: true });
-          if (first && (answer?.status === 'ready' || answer?.remembered) && !step.another) chips.push({ id: 'yes', label: s.messages.chips.yes, primary: true, onClick: () => file(step.at, first) });
-          else if (first && !step.another) for (const [i, key] of answer!.candidates.entries()) { const target = targetOf(key); if (target) chips.push({ id: `c${i}`, label: tagOf(target), onClick: () => file(step.at, target) }); }
-          if (first && !step.another) chips.push({ id: 'another', label: s.messages.chips.another, onClick: () => setStep({ ...step, another: true }) }, ...(sure ? [] : [ask]));
-          chips.push({ id: 'noSpot', label: s.messages.chips.noSpot, onClick: () => file(step.at, null) });
+          if (sure && !step.another) chips.push({ id: 'yes', label: s.messages.chips.yes, primary: true, onClick: () => file(step.at, first) });
+          else if (first && !step.another) for (const [i, key] of answer!.candidates.slice(0, 3).entries()) { const target = targetOf(key); if (target) chips.push({ id: `c${i}`, label: tagOf(target), onClick: () => file(step.at, target) }); }
+          if (first && !step.another) chips.push({ id: 'another', label: s.messages.chips.another, onClick: () => setStep({ ...step, another: true }) });
+          if (!first || step.another || sure) chips.push({ id: 'noSpot', label: s.messages.chips.noSpot, onClick: () => file(step.at, null) });
         }
       }
       quiet = { id: 'skip', label: s.messages.chips.skip, onClick: () => go(nextMessage(step.at)) };
