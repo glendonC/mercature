@@ -42,14 +42,14 @@
   --unknown: #5f6368;
   /* The way: a route line and its scan highlight share the access blue */
   --accent: var(--reachable);
-  /* Type */
+  /* Type: the older names, now set on the scale below */
   --text-display: clamp(40px, 6vw, 84px);
-  --text-title: 22px;
+  --text-title: var(--font-xl);
   --text-guide: 18px;
-  --text-body: 15px;
-  --text-label: 14px;
-  --text-caption: 12px;
-  --text-phone-min: 13px;
+  --text-body: var(--font-m);
+  --text-label: var(--font-s);
+  --text-caption: var(--font-xs);
+  --text-phone-min: var(--font-xs);
   /* Shape and depth */
   --radius-s: 8px;
   --radius-m: 12px;
