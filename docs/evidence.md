@@ -84,7 +84,7 @@ The second place in the app: a walking route in Tbilisi, Georgia, from the Narik
 | Photos | 359 Mapillary photo records by 7 contributors, captured between March 2016 and November 2025. They cover 66 of the 102 stretches; 360 m has no photos |
 | Scan marks in the package | SAM 3 made 510 marks above its threshold on 121 views and 7 pothole marks were left out (manhole and drain covers); the package keeps 383 |
 | Findings | 166: 140 SAM 3 photo outlines and 26 OpenStreetMap tags |
-| Possible barriers | 49 (35 steps outlines and 14 OpenStreetMap steps tags), on 56 stretches |
+| Possible barriers | 49 (35 steps outlines and 14 OpenStreetMap steps tags), at 14 spots on 56 stretches |
 | OpenStreetMap along the route | 95 records: steps on 51 stretches, handrail tags (yes on some, no on others) on 47, ramp=no on 39, surface on 40, wheelchair=no on 26, lighting on 11, 2 gates, 20 benches and 1 toilet |
 | Way around | OpenStreetMap's router suggests 3,444.6 m instead of 1,019.5 m to avoid the steps; nobody has checked it |
 | Checked by a person | None in the recorded data |

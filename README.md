@@ -59,7 +59,7 @@ no widths, heights, slopes or reachability.
 ## Other routes
 
 Narikala in Tbilisi, from the cable car to the fortress gate, is a second tour route prepared the
-same way: 1,019 m, 359 street photos, 49 possible barriers. Home search finds any other place on
+same way: 1,019 m, 359 street photos, 49 possible barriers, at 14 spots. Home search finds any other place on
 OpenStreetMap and builds a route to it on the device from the map alone, with no street photos read;
 such a route is labelled as from the map.
 
