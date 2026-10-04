@@ -29,7 +29,7 @@ type DialogueProps = {
   meta?: ReactNode;
   /** Her own words: a Composer, under the line. */
   composer?: ReactNode;
-  /** A step back: a GlassCircle with BackIcon, at the left of the field's row. Leave it out when there is nothing to go back to. */
+  /** A step back: a GlassCircle with BackIcon. It hangs at the dialogue's left, level with its last row, so the line stays centred; on a phone it takes the row's start. Leave it out when there is nothing to go back to. */
   back?: ReactNode;
   /** Quiet secondary actions inside the line, at its end, such as "Skip for now": TextButton muted. */
   actions?: ReactNode;
@@ -93,13 +93,17 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
   useLayoutEffect(() => {
     if (say === undefined) return;
     const context = document.createElement('canvas').getContext('2d');
+    // A screen may make the dialogue narrower than the default (Home leaves room for the bot beside it): once its words overflow the box, the box's own width rules
+    let cap = Infinity;
     const run = () => {
       const element = box.current;
+      const section = element?.parentElement;
+      if (element && section && element.getBoundingClientRect().width > section.clientWidth + 1) cap = section.clientWidth;
       if (!element || !context) { setLaid({ pages: typeof say === 'string' ? [say] : [...say], widths: [] }); return; }
       const style = getComputedStyle(element), narrow = matchMedia('(max-width: 640px)').matches;
       context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
       const measure = (text: string) => context.measureText(text).width;
-      const outer = narrow ? innerWidth - 32 : Math.min(640, innerWidth - 48);
+      const outer = Math.min(cap, narrow ? innerWidth - 32 : Math.min(640, innerWidth - 48));
       // Room for the words: the box less its padding at both ends and the continue mark's room
       const width = outer - 2 * parseFloat(style.paddingLeft) - 26 - 4;
       const pages = paginate(say, width, measure);
@@ -108,8 +112,12 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
     };
     run();
     document.fonts?.ready.then(run).catch(() => undefined);
-    addEventListener('resize', run);
-    return () => removeEventListener('resize', run);
+    const resize = () => { cap = Infinity; run(); };
+    const fit = new ResizeObserver(() => { const element = box.current, section = element?.parentElement; if (element && section && element.getBoundingClientRect().width > section.clientWidth + 1) run(); });
+    if (box.current?.parentElement) fit.observe(box.current.parentElement);
+    if (box.current) fit.observe(box.current);
+    addEventListener('resize', resize);
+    return () => { removeEventListener('resize', resize); fit.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   return laid;
@@ -177,22 +185,23 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
           {more && !typing && <button type="button" className="ui-dialogue-more" aria-label={continueLabel} title={continueLabel} onClick={event => { event.stopPropagation(); next(); }}><span /></button>}
         </>}
     </div>
-    {(back || composer) && <div className="ui-dialogue-row">{back}{composer}</div>}
+    {back && <div className="ui-dialogue-back">{back}</div>}
+    {composer && <div className="ui-dialogue-row">{composer}</div>}
   </section>;
 }
 
-type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
+type CompanionProps = { children?: ReactNode; working?: boolean; talking?: boolean; /** happy: a smile, only on good news (her change saved, a reply ready, the walk checked) */ mood?: 'happy'; /** px; --companion by default */ size?: number; className?: string; style?: CSSProperties };
 /**
  * The guide itself, on screen all the time: the bot floating free where the screen places it (64 px, 52 on a phone; --companion), never on the dialogue.
- * Its face follows what it really does, never at random: idle, eyes only (it looks around and blinks); talking while a page types, a mouth and a light bob;
- * working only while something real runs (the model reading, the map service, a route being found), with a thin arc. Working never shows the mouth,
- * so the library's wide working grin never appears.
+ * Its face follows what it really does, never at random: idle, eyes only (it looks around and blinks); talking while a page types, eyes and a light bob;
+ * working only while something real runs (the model reading, the map service, a route being found), with a thin arc; mood="happy" smiles, and only on good news.
+ * Working never shows the mouth, so the library's wide working grin never appears.
  * Leave children out for the guide's own bot.
  */
-export function Companion({ children, working, talking, size, className, style }: CompanionProps) {
+export function Companion({ children, working, talking, mood, size, className, style }: CompanionProps) {
   const [color] = useState(() => (typeof document !== 'undefined' && getComputedStyle(document.documentElement).getPropertyValue('--field').trim()) || 'gray');
   return <span className={cx('ui-companion', className)} data-working={working || undefined} data-talking={talking || undefined} style={style} aria-hidden="true">
-    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={talking && !working ? 'mouth' : 'eyes'} size={size ?? 'var(--companion)'} color={color}
+    <span className="ui-companion-bot">{children ?? <BotAvatar type="blob" state={working ? 'working' : 'default'} face={mood === 'happy' && !working ? 'mouth' : 'eyes'} size={size ?? 'var(--companion)'} color={color}
       shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" />}</span>
   </span>;
 }

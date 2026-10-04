@@ -2,8 +2,8 @@
    Each part is its own charcoal surface over the map; the room around them lets taps through to the map. */
 
 /* Dialogue: one clean line on its own at the bottom, her field under it */
-.ui-dialogue { position: absolute; z-index: 10; left: 50%; bottom: 0; display: grid; gap: var(--chat-gap); width: max-content; min-width: min(280px, 100% - 2 * var(--chat-edge)); max-width: min(var(--chat-width), 100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); max-height: calc(100% - var(--chat-top)); padding-bottom: calc(var(--chat-edge) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); color: var(--line-ink); }
-.ui-dialogue-line { min-height: 48px; padding: 12px 18px; border-radius: var(--radius-panel); background: var(--line-surface); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); font-size: var(--chat-text); line-height: var(--chat-leading); overflow-wrap: anywhere; animation: ui-line-in var(--motion-panel) var(--ease-out) both; }
+.ui-dialogue { position: absolute; z-index: 10; left: 50%; bottom: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--chat-gap); width: max-content; min-width: min(280px, 100% - 2 * var(--chat-edge)); max-width: min(var(--chat-width), 100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); max-height: calc(100% - var(--chat-top)); padding-bottom: calc(var(--chat-edge) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); color: var(--line-ink); }
+.ui-dialogue-line { min-width: 0; max-width: 100%; min-height: 48px; padding: 12px 18px; border-radius: var(--radius-panel); background: var(--line-surface); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); font-size: var(--chat-text); line-height: var(--chat-leading); overflow-wrap: anywhere; animation: ui-line-in var(--motion-panel) var(--ease-out) both; }
 .ui-dialogue-line:lang(ko), .ui-dialogue-line :lang(ko), .ui-copy-text:lang(ko) { word-break: keep-all; }
 .ui-dialogue-meta { margin: 0 0 2px; font-size: var(--font-xs); line-height: var(--leading-tight); color: var(--line-muted); font-variant-numeric: tabular-nums; }
 .ui-dialogue-text { display: grid; gap: 4px; }
@@ -16,10 +16,10 @@
 .ui-dialogue-text .ui-dialogue-page { max-width: 100%; margin-inline: auto; text-wrap: wrap; }
 .ui-dialogue-line[data-advance] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-untyped { color: transparent; }
-/* The field's row: Back at its left, the field filling the rest */
-.ui-dialogue-row { display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
+/* The field's row, and Back: outside the box's left edge, level with the last row, so the line and the field stay centred on the screen */
+.ui-dialogue-row { display: flex; min-width: 0; }
 .ui-dialogue-row > .ui-composer { flex: 1; min-width: 0; }
-.ui-dialogue-row > .ui-glass-circle { margin-bottom: 0; }
+.ui-dialogue-back { position: absolute; right: calc(100% + 8px); bottom: calc(var(--chat-edge) + env(safe-area-inset-bottom, 0px)); display: grid; }
 /* Quiet actions inside the line, at its end */
 .ui-dialogue-actions { display: flex; justify-content: flex-end; margin: 2px -10px -8px 0; }
 /* The continue mark: a small white triangle in the corner, when another page follows */
@@ -92,6 +92,11 @@
 .ui-scroll-fade[data-more-end] { --fade-end: var(--fade, 28px); }
 
 @media (max-width: 640px) {
+  /* No room outside on a phone: Back takes the start of the bottom row, the line and the field share the rest */
+  .ui-dialogue:has(.ui-dialogue-back) { grid-template-columns: 48px minmax(0, 1fr); column-gap: 8px; }
+  .ui-dialogue:has(.ui-dialogue-back) > :not(.ui-dialogue-back) { grid-column: 2; }
+  .ui-dialogue-back { position: static; grid-column: 1; grid-row: 1 / span 2; align-self: end; }
+  .ui-dialogue:not(:has(.ui-dialogue-row)) .ui-dialogue-back { grid-row: 1; }
   .ui-dialogue { width: calc(100% - 2 * var(--chat-edge) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }
   .ui-composer-field { font-size: 16px; }
   .ui-dialogue-line { padding: 11px 14px; }

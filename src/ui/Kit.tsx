@@ -116,9 +116,9 @@ export default function Kit() {
       <div className="kit-edit-bar"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><BeforeNow /></div>
       <Companion className="kit-companion" working={scene === 'reading'} talking={talking} />
       {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
-      <Dialogue key={scene} label="Guide" say={said} back={scene === 'check' || scene === 'message' ? <GlassCircle label="Back"><I.BackIcon /></GlassCircle> : undefined}
+      <Dialogue key={scene} label="Guide" say={said} back={scene === 'check' || scene === 'message' || scene === 'note' ? <GlassCircle label="Back"><I.BackIcon /></GlassCircle> : undefined}
         actions={scene === 'check' ? <TextButton muted icon={<I.SkipIcon />}>Skip for now</TextButton> : undefined} onTalking={setTalking} continueLabel="More" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
-        composer={scene === 'long' ? undefined : <Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />} />
+        composer={scene === 'long' || scene === 'note' ? undefined : <Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />} />
     </div>
 
     <div className="kit-sheet-body">
@@ -148,7 +148,7 @@ export default function Kit() {
 
       <Specimen wide title="Guide's dialogue" note="One clean line on its own at the bottom, her field under it. The guide floats in the map beside what it talks about; her choices are their own list beside the photo or message.">
         <div className="kit-dialogues">
-          <div className="kit-row"><Companion /><Companion talking /><Companion working /></div>
+          <div className="kit-row"><Companion /><Companion talking /><Companion mood="happy" /><Companion working /></div>
           <Dialogue className="kit-static-dialogue" label="Guide, one line" say="Hi. I can help you check this walk and answer visitors." composer={<Composer label="In your words" sendLabel="Send" onSend={() => {}} />} />
           <Dialogue className="kit-static-dialogue" label="Guide, working" working workingLabel="Reading" />
           <Choices className="kit-choices-demo" label="What is there now?"><Choice selected icon={<I.CheckIcon />}>Still there</Choice><Choice disabled icon={<I.FixedIcon />}>Fixed</Choice><Choice disabled icon={<I.RemoveIcon />}>Not a barrier</Choice></Choices>
