@@ -1,13 +1,8 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { ThinkingOrb } from 'thinking-orbs';
 import SceneFrame from '../components/SceneFrame';
 import SceneProgress from '../components/SceneProgress';
 import Companion from '../components/Companion';
-import SpatialView from '../spatial/SpatialView';
-import { DEFAULT_PROFILE, SYNTHETIC_SCENE } from '../spatial/fixtures';
-import { solveScene } from '../spatial/solver';
-import { validateScene } from '../spatial/validation';
-import type { Result } from '../spatial/contracts';
 import { useLanguage } from '../i18n';
 import './preparation.css';
 
@@ -57,45 +52,5 @@ export function Preparation({optionsContent, title, provenance, sourceLabel, sta
   </SceneFrame>;
 }
 
+/** Where the spatial workspace opens: the selected feature and the view's rotation. */
 export type AuthoredViewState = {selectedId: string | null; rotation: number};
-export default function AuthoredPreparation({onHome, onReady}: {onHome: () => void; onReady: (state: AuthoredViewState) => void}) {
-  const { t } = useLanguage();
-  const [controlsTarget, setControlsTarget] = useState<HTMLDivElement | null>(null);
-  const [stage, setStage] = useState<'views' | 'scene'>('views');
-  const [result, setResult] = useState<Result | null>(null);
-  const [error, setError] = useState('');
-  const [selected, setSelected] = useState<string | null>('bench');
-  const [rotation, setRotation] = useState(0);
-  const enter = () => onReady({selectedId: selected, rotation});
-  useEffect(() => {
-    if (stage !== 'scene') return;
-    let cancelled = false;
-    const frame = requestAnimationFrame(() => {
-      try {
-        validateScene(SYNTHETIC_SCENE);
-        const checked = solveScene(SYNTHETIC_SCENE, DEFAULT_PROFILE);
-        if (!cancelled) setResult(checked);
-      } catch (e) { if (!cancelled) setError((e as Error).message); }
-    });
-    return () => { cancelled = true; cancelAnimationFrame(frame); };
-  }, [stage]);
-  return <Preparation optionsContent={<div ref={setControlsTarget}/>} title={t('home.courtyard')} provenance={t('prep.courtyard.provenance')} sourceLabel={t('prep.courtyard.source')} stage={stage} busy={stage === 'scene' && !result && !error} onHome={onHome} onSkip={enter}
-    message={t(stage === 'views' ? 'prep.courtyard.start' : error ? 'prep.courtyard.attention' : result ? 'prep.sceneReady' : 'prep.courtyard.checking')}
-    detail={stage === 'views' ? t('prep.courtyard.detail') : result ? t('prep.courtyard.explore') : undefined}
-    action={stage === 'views' ? t('prep.loadScene') : result ? t('prep.enterScene') : undefined} onAction={stage === 'views' ? () => setStage('scene') : enter} error={error}>
-    {result ? <div className="preparation-authored-scene"><SpatialView controlsTarget={controlsTarget} rotation={rotation} onRotationChange={setRotation} scene={SYNTHETIC_SCENE} result={result} selectedId={selected} onSelect={setSelected} view="3d" compact /></div> : <Layout/>}
-  </Preparation>;
-}
-function Layout() {
-  const { t } = useLanguage();
-  const scene = SYNTHETIC_SCENE;
-  return <div className="preparation-layout"><svg viewBox="-1 -1 14 10" role="img" aria-label={t('prep.courtyard.layout')}>
-    <defs><pattern id="preparation-grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#71867c22" strokeWidth=".025"/></pattern></defs>
-    <rect width="12" height="8" rx=".12" fill="#e8eee7" stroke="#a8b9ae" strokeWidth=".025"/><rect width="12" height="8" fill="url(#preparation-grid)"/>
-    {scene.obstacles.map(obstacle => <rect key={obstacle.id} x={obstacle.bounds.minX} y={8-obstacle.bounds.maxY} width={obstacle.bounds.maxX-obstacle.bounds.minX} height={obstacle.bounds.maxY-obstacle.bounds.minY} rx=".04" fill={obstacle.movable ? '#b58865' : '#89998e'}/>)}
-    {scene.unknown.map(area => <rect key={area.id} x={area.bounds.minX} y={8-area.bounds.maxY} width={area.bounds.maxX-area.bounds.minX} height={area.bounds.maxY-area.bounds.minY} fill="#dcded3" stroke="#a8afa1" strokeWidth=".03" strokeDasharray=".1 .1"/>)}
-    <circle cx={scene.start.x} cy={8-scene.start.y} r=".1" fill="#283e40"/>
-    <text x="2" y="4.55" textAnchor="middle">{t('prep.courtyard.entrance')}</text><text x="7.2" y="4.4">{t('prep.courtyard.bench')}</text><path d="M6.2 4.4H7" stroke="#697e71" strokeWidth=".025"/>
-    <text x="6" y="8.65" textAnchor="middle">12 m</text><text x="-.5" y="4.1" textAnchor="middle" transform="rotate(-90,-.5,4.1)">8 m</text>
-  </svg><span className="preparation-layout-caption">{t('prep.courtyard.caption')}</span></div>;
-}

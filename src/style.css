@@ -176,32 +176,3 @@ a {
     font-size: var(--text-phone-min);
   }
 }
-.loading-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  background: rgb(246 247 247 / 0.93);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 18px;
-  font-size: 15px;
-}
-.loading-ring {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--line);
-  border-top-color: var(--ink);
-  border-radius: 50%;
-  animation: loading-spin 1s linear infinite;
-}
-@keyframes loading-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .loading-ring {
-    animation: none;
-  }
-}

@@ -10,8 +10,7 @@ test('the Qorikancha reveal replays the published records and opens the inspecti
   test.setTimeout(25000);
   await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
   await page.goto('/');
-  await page.getByRole('textbox', {name:'Explore a place'}).fill('Plaza de Armas');
-  await page.locator('#place-results button').first().click();
+  await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
   const reveal = page.getByRole('region', {name:'Qorikancha', exact:true});
   await expect(reveal.getByRole('heading', {name:'Qorikancha'})).toBeVisible();
   await expect(reveal).toContainText('Plaza de Armas to the ticket booth · 594 m');
@@ -41,12 +40,9 @@ test('a photo-only place replays its photo and still opens its map', async ({pag
   await expect(page.getByText('No retained 3D at this destination')).toBeVisible();
 });
 
-test('a place without its records stays an unlabeled photo on Home and is not offered in search', async ({page}) => {
+test('a place without its records is not offered on Home', async ({page}) => {
   await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
   await page.goto('/');
   await expect(page.getByRole('button', {name:'Explore Qorikancha · Cusco'})).toBeVisible();
   await expect(page.getByRole('button', {name:'Explore Narikala · Tbilisi'})).toHaveCount(0);
-  await expect(page.locator('.welcome-photo.is-ambient')).toHaveCount(2);
-  await page.getByRole('textbox', {name:'Explore a place'}).fill('Narikala');
-  await expect(page.getByRole('button', {name:/^Narikala/})).toHaveCount(0);
 });
