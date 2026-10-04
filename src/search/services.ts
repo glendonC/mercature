@@ -158,7 +158,8 @@ export async function overpass(query: string, signal?: AbortSignal, seconds = 12
   const main = overpassAt(OVERPASS, query, both, seconds);
   let timer = 0;
   const backup = new Promise<{ elements: OsmElement[]; fetchedAt: string }>((resolve, reject) => {
-    const go = () => { clearTimeout(timer); overpassAt(OVERPASS_AGAIN, query, both, seconds + 6).then(resolve, reject); };
+    let asked = false;
+    const go = () => { clearTimeout(timer); if (asked) return; asked = true; overpassAt(OVERPASS_AGAIN, query, both, seconds + 6).then(resolve, reject); };
     timer = setTimeout(go, 3000) as unknown as number;
     main.catch(error => { if (!signal?.aborted && !(error instanceof SearchTrouble && error.kind === 'offline')) go(); else reject(error); });
   });
