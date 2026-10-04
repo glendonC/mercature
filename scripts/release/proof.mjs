@@ -1,7 +1,7 @@
 /**
  * Phone-width proof of a deployed build, local or live:
  *   1. Home, the Qorikancha reveal and the route from its published package, at 390 px.
- *   2. The model downloads from the app's own origin, never from the Hub.
+ *   2. The model downloads from the app's own origin, never from the Hub, and its MIT license is served beside it.
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
  *      message afresh: Start over clears the first answer, never the model.
@@ -12,10 +12,11 @@
  */
 import { chromium, webkit } from '@playwright/test';
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { TRIMMED_ENCODER } from '../../src/language/model.ts';
 
 const args = process.argv.slice(2);
 const option = name => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
@@ -170,6 +171,9 @@ try {
   const hub = fetched.filter(item => !item.path.startsWith(base.pathname) || /huggingface|hf\.co/.test(item.path));
   check('model files come from the app origin', fetched.some(item => item.path.startsWith(`${base.pathname}models/`)) && hub.length === 0 && !report.offsite.some(item => /huggingface|hf\.co/.test(item.url)),
     fetched.map(item => `${item.status} ${item.path}`).join(', '));
+  const licensePath = `${TRIMMED_ENCODER.directory}LICENSE.txt`;
+  const license = await fetch(new URL(licensePath, base)).then(async response => ({ status: response.status, text: await response.text() }), () => ({ status: 'failed', text: '' }));
+  check('model license is served beside the weights', license.status === 200 && license.text === await readFile('licenses/multilingual-e5-small-MIT.txt', 'utf8'), `${license.status} ${licensePath}`);
   check('no request left the app origin', report.offsite.length === 0, report.offsite.map(item => item.url).join(', '));
   report.stored = await page.evaluate(async () => {
     const name = (await caches.keys()).find(key => key.startsWith('mercature-model-'));

@@ -8,7 +8,8 @@ Mercature is a static site. [`pages.yml`](../.github/workflows/pages.yml) publis
 2. Downloads the pinned encoder from the Hugging Face Hub and checks its hashes. The files are cached by encoder revision.
 3. Trims the vocabulary to Latin and Hangul ([model](language.md)).
 4. Stops unless the trimmed files match the sizes and SHA-256 hashes the app pins, and give identical embeddings for all evaluation texts. Otherwise the app would fall back to the larger Hub download.
-5. Builds and publishes `dist`.
+5. Puts the encoder's [MIT license](../licenses/multilingual-e5-small-MIT.txt) beside the trimmed files as `LICENSE.txt`.
+6. Builds and publishes `dist`.
 
 The app then downloads the model from the site itself rather than the Hub, and the service worker keeps the app for offline use.
 
@@ -33,7 +34,7 @@ node scripts/release/proof.mjs --serve dist
 `serve.mjs` serves `dist` under `/mercature/` the way Pages does. `proof.mjs` uses a 390 px phone viewport:
 
 1. Opens Home, the Qorikancha reveal and the route from its published package.
-2. Downloads the model and checks every file came from the site.
+2. Downloads the model, checks every file came from the site and that its license is served beside it.
 3. Checks the service worker scope is `/mercature/`.
 4. Answers the Korean demo message.
 5. Stops the server, restarts the browser with no network, and answers it again.
