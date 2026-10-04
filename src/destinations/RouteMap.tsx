@@ -1,6 +1,7 @@
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 import type { Destination } from './data';
-import GeographicMap, { type MapWords } from './GeographicMap';
+import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
+import { aimed, framing, lens, tiltChosen, tiltFor, type Box, type Lens, type View } from './lens';
 import './destinations.css';
 import './map.css';
 import type { Point, Walk } from './walk';
@@ -28,7 +29,7 @@ type Props = {
   insets: Insets;
   highlight: Point[] | null;
   onMarker: (id: string) => void;
-  /** A tap on the map itself, with the current scale so the caller can judge what is near. */
+  /** A tap on the map itself, with the scale where it landed so the caller can judge what is near. */
   onMap: (at: Point, pixelsPerMetre: number) => void;
   /** Rendered beside the selected marker on wide screens. */
   card?: ReactNode;
@@ -42,56 +43,103 @@ type Props = {
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const line = (points: Point[]) => points.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+const line = (points: Point[], to?: (p: Point) => Point) => points.map(p => to ? to(p) : p).map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+const settle = (t: number) => 1 - Math.pow(1 - t, 3);
+const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
+/** How long the map takes to lean back once the reveal has landed on it. */
+const LEAN_FOR = 1000;
+type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number };
 
 /** Every recorded camera, faint, beneath the walk. */
-const Cameras = memo(function Cameras({ walk }: { walk: Walk }) {
+const Cameras = memo(function Cameras({ walk, lens }: { walk: Walk; lens: Lens | null }) {
+  if (lens) return <g className="route-cameras"><path d={walk.cameras.map(c => { const p = lens.at(c); return `M${p[0].toFixed(1)} ${p[1].toFixed(1)}h0`; }).join('')} style={{ strokeWidth: 2.6 * lens.view.k }} /></g>;
   return <g className="route-cameras">{walk.cameras.map((c, i) => <circle key={i} cx={c[0].toFixed(1)} cy={c[1].toFixed(1)} r="1.3" />)}</g>;
 });
 /** Over the shared map's blue walk: the stretches without photos, and the selected spot. */
-const Overlay = memo(function Overlay({ walk, highlight }: { walk: Walk; highlight: Point[] | null }) {
+const Overlay = memo(function Overlay({ walk, highlight, lens }: { walk: Walk; highlight: Point[] | null; lens: Lens | null }) {
+  const to = lens ? (p: Point) => lens.at(p) : undefined;
   return <g className="route-overlay">
-    {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path)} /><polyline className="route-unseen" points={line(run.path)} /></g>)}
-    {highlight && <><polyline className="route-highlight-halo" points={line(highlight)} /><polyline className="route-highlight" points={line(highlight)} /></>}
+    {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path, to)} /><polyline className="route-unseen" points={line(run.path, to)} /></g>)}
+    {highlight && <><polyline className="route-highlight-halo" points={line(highlight, to)} /><polyline className="route-highlight" points={line(highlight, to)} /></>}
   </g>;
 });
 
 const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, card, cardFor, ariaLabel, clearBottom, words, still = false }, ref) {
+  const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const [camera, setCamera] = useState<Camera | null>(null);
-  const live = useRef<Camera | null>(null);
-  const frame = useRef(0);
+  const [camera, setCamera] = useState<View | null>(null);
+  const live = useRef<View | null>(null);
+  /** The lean the map is heading for. Framing aims at it, so a frame still holds when the lean settles. */
+  const goal = useRef(0);
   const insetsRef = useRef(insets);
   insetsRef.current = insets;
+  /** The lean for a screen width, turned so the walk runs the way that width reads best. */
+  const tiltOf = useCallback((width: number) => aimed(tiltFor(width), walk.route[0] ?? [0, 0], walk.route.at(-1) ?? [0, 0]), [walk]);
+  const tilt = tiltOf(size.width);
+  /** Block height in map units: the same few metres for every building. */
+  const rise = useMemo(() => tilt.rise * routeFrame(data).scale, [data, tilt]);
+  const reach = useMemo(() => [...walk.route, walk.target.at, ...(walk.start ? [walk.start.at] : [])], [walk]);
 
-  const fitCamera = useCallback((width: number, height: number): Camera => {
+  // Fitting a leaning map takes a few passes, and every drag asks for the fit, so keep it per screen and lean.
+  const fits = useRef(new Map<string, View>());
+  const fitCamera = useCallback((width: number, height: number, lean = goal.current): View => {
     const { minX, minY, maxX, maxY } = walk.extent, i = insetsRef.current;
+    const key = [width, height, lean, i.top, i.right, i.bottom, i.left].join(' '), known = fits.current.get(key);
+    if (known) return known;
     const w = Math.max(1, width - i.left - i.right), h = Math.max(1, height - i.top - i.bottom);
     const k = Math.min(w / Math.max(maxX - minX, 40), h / Math.max(maxY - minY, 40)) * 0.9;
     const sx = i.left + w / 2, sy = i.top + h / 2;
-    return { k, x: (minX + maxX) / 2 - (sx - width / 2) / k, y: (minY + maxY) / 2 - (sy - height / 2) / k };
-  }, [walk]);
-  const go = useCallback((target: Camera, animate = true) => {
-    cancelAnimationFrame(frame.current);
+    const flat = { k, x: (minX + maxX) / 2 - (sx - width / 2) / k, y: (minY + maxY) / 2 - (sy - height / 2) / k, lean: 0 };
+    const free: Box = { left: i.left + w * 0.05, top: i.top + h * 0.05, right: width - i.right - w * 0.05, bottom: height - i.bottom - h * 0.05 };
+    const fit = lean ? framing(reach, free, lean, tiltOf(width), width, height, flat) : flat;
+    fits.current.set(key, fit);
+    return fit;
+  }, [walk, reach, tiltOf]);
+  useEffect(() => fits.current.clear(), [fitCamera]);
+
+  // One loop moves the camera and the lean; a gesture stops the camera and leaves the lean to finish.
+  const tween = useRef<Tween | null>(null);
+  const leanTween = useRef<{ from: number; to: number; started: number } | null>(null);
+  const frame = useRef(0);
+  const step = useRef<(now: number) => void>(() => {});
+  step.current = now => {
+    frame.current = 0;
+    let next = live.current;
+    if (!next) return;
+    const c = tween.current, l = leanTween.current;
+    if (c) {
+      const t = Math.min(1, (now - c.started) / c.duration), e = c.ease(t);
+      next = { ...next, x: c.from.x + (c.to.x - c.from.x) * e, y: c.from.y + (c.to.y - c.from.y) * e, k: c.from.k * Math.pow(c.to.k / c.from.k, e) };
+      if (t >= 1) tween.current = null;
+    }
+    if (l) {
+      const t = Math.min(1, (now - l.started) / LEAN_FOR);
+      next = { ...next, lean: l.from + (l.to - l.from) * sway(t) };
+      if (t >= 1) leanTween.current = null;
+    }
+    live.current = next; setCamera(next);
+    if (tween.current || leanTween.current) frame.current = requestAnimationFrame(time => step.current(time));
+  };
+  const run = useCallback(() => { if (!frame.current) frame.current = requestAnimationFrame(time => step.current(time)); }, []);
+  const go = useCallback((target: View, animate = true) => {
     const from = live.current;
-    if (!from || !animate || quiet()) { live.current = target; setCamera(target); return; }
-    const started = performance.now(), duration = 520;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - started) / duration), e = 1 - Math.pow(1 - t, 3);
-      const next = { x: from.x + (target.x - from.x) * e, y: from.y + (target.y - from.y) * e, k: from.k * Math.pow(target.k / from.k, e) };
-      live.current = next; setCamera(next);
-      if (t < 1) frame.current = requestAnimationFrame(tick);
-    };
-    frame.current = requestAnimationFrame(tick);
-  }, []);
+    if (!from || !animate || quiet()) { tween.current = null; const next = { ...target, lean: from?.lean ?? target.lean }; live.current = next; setCamera(next); return; }
+    tween.current = { from, to: target, started: performance.now(), duration: 520, ease: settle };
+    run();
+  }, [run]);
   const limits = useCallback(() => { const fit = fitCamera(size.width, size.height).k; return { min: fit * 0.6, max: fit * 9 }; }, [fitCamera, size]);
   /** Keeps the walk on screen whatever the person drags. */
-  const clamp = useCallback((c: Camera): Camera => {
+  const clamp = useCallback((c: View): View => {
     const { minX, minY, maxX, maxY } = walk.extent, { min, max } = limits(), k = Math.max(min, Math.min(max, c.k));
     const hw = size.width / 2 / k, hh = size.height / 2 / k;
-    return { k, x: Math.max(minX - hw + 30 / k, Math.min(maxX + hw - 30 / k, c.x)), y: Math.max(minY - hh + 30 / k, Math.min(maxY + hh - 30 / k, c.y)) };
+    return { ...c, k, x: Math.max(minX - hw + 30 / k, Math.min(maxX + hw - 30 / k, c.x)), y: Math.max(minY - hh + 30 / k, Math.min(maxY + hh - 30 / k, c.y)) };
   }, [walk, limits, size]);
+  /** The view at a zoom and lean that puts a map point under a screen point. */
+  const place = useCallback((at: Point, screen: Point, k: number, lean: number): View => {
+    const offset = lens({ x: 0, y: 0, k, lean }, tiltOf(size.width), size.width, size.height).ground(screen);
+    return { x: at[0] - offset[0], y: at[1] - offset[1], k, lean };
+  }, [size, tiltOf]);
 
   useLayoutEffect(() => {
     const element = box.current!;
@@ -108,30 +156,55 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [size, fitCamera, go, clamp]);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
+  // The reveal lands on the flat map, which it can match; once it has gone, the map leans back.
+  const [landed, setLanded] = useState(false);
+  useEffect(() => {
+    if (!leaning) return;
+    const reveal = document.querySelector('.reveal'), host = reveal?.parentNode;
+    if (!reveal || !host) { setLanded(true); return; }
+    const watch = new MutationObserver(() => { if (!reveal.isConnected) { watch.disconnect(); setLanded(true); } });
+    watch.observe(host, { childList: true });
+    return () => watch.disconnect();
+  }, [leaning]);
+  useEffect(() => {
+    if (!landed || !size.width || !live.current || goal.current === 1) return;
+    goal.current = 1;
+    const target = fitCamera(size.width, size.height);
+    if (quiet()) { live.current = target; setCamera(target); return; }
+    const now = performance.now();
+    tween.current = { from: live.current, to: target, started: now, duration: LEAN_FOR, ease: sway };
+    leanTween.current = { from: live.current.lean, to: 1, started: now };
+    run();
+  }, [landed, size, fitCamera, run]);
+
   useImperativeHandle(ref, () => ({
     fit: (animate = true) => go(fitCamera(size.width, size.height), animate),
     focus: (at, screen, zoom) => {
       const current = live.current ?? fitCamera(size.width, size.height);
-      const k = Math.max(current.k, zoom ?? current.k);
-      go(clamp({ k, x: at[0] - (screen[0] - size.width / 2) / k, y: at[1] - (screen[1] - size.height / 2) / k }));
+      go(clamp(place(at, screen, Math.max(current.k, zoom ?? current.k), goal.current)));
     },
     frame: (points, free) => {
       if (!points.length) return;
       const xs = points.map(p => p[0]), ys = points.map(p => p[1]), fit = fitCamera(size.width, size.height).k;
       const w = Math.max(1, size.width - free.left - free.right), h = Math.max(1, size.height - free.top - free.bottom);
+      if (goal.current) {
+        const inner: Box = { left: free.left + w * 0.1, top: free.top + h * 0.1, right: size.width - free.right - w * 0.1, bottom: size.height - free.bottom - h * 0.1 };
+        go(clamp(framing(points, inner, goal.current, tiltOf(size.width), size.width, size.height, live.current ?? fitCamera(size.width, size.height), { min: fit * 0.6, max: fit * 2.4 })));
+        return;
+      }
       const k = Math.max(fit * 0.6, Math.min(fit * 2.4, w / Math.max(Math.max(...xs) - Math.min(...xs), 1) * 0.8, h / Math.max(Math.max(...ys) - Math.min(...ys), 1) * 0.8));
       const sx = free.left + w / 2, sy = free.top + h / 2, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-      go(clamp({ k, x: cx - (sx - size.width / 2) / k, y: cy - (sy - size.height / 2) / k }));
+      go(clamp({ k, x: cx - (sx - size.width / 2) / k, y: cy - (sy - size.height / 2) / k, lean: 0 }));
     },
     size: () => ({ ...size, fitK: fitCamera(size.width, size.height).k }),
-  }), [go, fitCamera, clamp, size]);
+  }), [go, fitCamera, clamp, place, size, tiltOf]);
 
-  const toScreen = (p: Point): Point => camera ? [(p[0] - camera.x) * camera.k + size.width / 2, (p[1] - camera.y) * camera.k + size.height / 2] : [-999, -999];
-  const toMap = (sx: number, sy: number): Point => camera ? [camera.x + (sx - size.width / 2) / camera.k, camera.y + (sy - size.height / 2) / camera.k] : [0, 0];
+  const view = camera && size.width ? lens(camera, tilt, size.width, size.height) : null;
+  const toScreen = (p: Point): Point => view ? view.at(p) : [-999, -999];
 
   // Drag to pan, pinch or wheel to zoom; a tap without movement selects the walk under it.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const gesture = useRef<{ moved: boolean; camera: Camera; x: number; y: number; spread: number } | null>(null);
+  const gesture = useRef<{ moved: boolean; camera: View; x: number; y: number; spread: number } | null>(null);
   function local(event: ReactPointerEvent) { const r = box.current!.getBoundingClientRect(); return { x: event.clientX - r.left, y: event.clientY - r.top }; }
   function down(event: ReactPointerEvent<HTMLDivElement>) {
     if (still || (event.target as HTMLElement).closest('button, a, .route-card')) return;
@@ -149,10 +222,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     if (Math.hypot(x - g.x, y - g.y) > 4) g.moved = true;
     let k = g.camera.k;
     if (points.length > 1 && g.spread > 0) { k = g.camera.k * Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) / g.spread; g.moved = true; }
-    const anchor: Point = [g.camera.x + (g.x - size.width / 2) / g.camera.k, g.camera.y + (g.y - size.height / 2) / g.camera.k];
     if (!g.moved) return;
-    cancelAnimationFrame(frame.current);
-    const next = clamp({ k, x: anchor[0] - (x - size.width / 2) / k, y: anchor[1] - (y - size.height / 2) / k });
+    const anchor = lens(g.camera, tilt, size.width, size.height).ground([g.x, g.y]);
+    tween.current = null;
+    const next = clamp(place(anchor, [x, y], k, live.current?.lean ?? g.camera.lean));
     live.current = next; setCamera(next);
   }
   function up(event: ReactPointerEvent<HTMLDivElement>) {
@@ -161,7 +234,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     pointers.current.delete(event.pointerId);
     if (pointers.current.size) { const rest = [...pointers.current.values()][0]; gesture.current = { moved: true, camera: live.current!, x: rest.x, y: rest.y, spread: 0 }; return; }
     gesture.current = null;
-    if (tap && event.type === 'pointerup' && camera) onMap(toMap(point.x, point.y), camera.k);
+    if (tap && event.type === 'pointerup' && view) { const at = view.ground([point.x, point.y]); onMap(at, view.scale(at)); }
   }
   useEffect(() => {
     const element = box.current!;
@@ -171,15 +244,14 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       event.preventDefault();
       const c = live.current; if (!c) return;
       const r = element.getBoundingClientRect(), sx = event.clientX - r.left, sy = event.clientY - r.top;
-      const anchor: Point = [c.x + (sx - r.width / 2) / c.k, c.y + (sy - r.height / 2) / c.k];
-      const k = c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018));
-      cancelAnimationFrame(frame.current);
-      const next = clamp({ k, x: anchor[0] - (sx - r.width / 2) / k, y: anchor[1] - (sy - r.height / 2) / k });
+      const anchor = lens(c, tiltOf(r.width), r.width, r.height).ground([sx, sy]);
+      tween.current = null;
+      const next = clamp(place(anchor, [sx, sy], c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), c.lean));
       live.current = next; setCamera(next);
     };
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
-  }, [clamp, still]);
+  }, [clamp, place, still, tiltOf]);
 
   // Card placement beside its marker, flipped or nudged to stay inside the canvas.
   const cardBox = useRef<HTMLDivElement>(null);
@@ -201,8 +273,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     cardStyle = { left, top };
     if (sy > top + 12 && sy < top + cardSize.height - 12) leader = { left: right ? sx + 12 : left + cardSize.width, top: sy, width: gap - 12 };
   }
+  // The flat map frames itself through the view box, which the reveal lands on; a leaning map is drawn in screen pixels.
+  const flat = !view || view.view.lean < 0.001;
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
   const placed = markers.map(marker => ({ marker, at: toScreen(marker.at) }));
+  /** Markers that the lean pushes up under the place title recede with the haze. */
+  const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   // Labels never cover a marker or each other; earlier labels win.
   const taken: { x: number; y: number; w: number; h: number }[] = placed.map(p => ({ x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }));
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
@@ -221,18 +297,21 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
   };
-  return <div className="route-map" ref={box} data-still={still || undefined} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
-    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} underlay={<Cameras walk={walk} />}>
-      <Overlay walk={walk} highlight={highlight} />
+  // How much a circle on the ground flattens, for the ring under the selected marker.
+  const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
+  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
+    <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still}
+      lens={flat ? undefined : view} rise={rise} underlay={<Cameras walk={walk} lens={flat ? null : view} />}>
+      <Overlay walk={walk} highlight={highlight} lens={flat ? null : view} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
     <div className="route-markers">
-      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} style={{ left: at[0], top: at[1] }} aria-hidden="true">
+      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-hidden="true">
         <span className="route-marker-dot">{marker.rank ?? ''}</span>
       </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
-        data-rank={marker.rank} style={{ left: at[0], top: at[1] }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
+        data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1] }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
         <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
         {marker.tag && <span className="route-marker-tag" aria-hidden="true">{marker.tag}</span>}
       </button>)}
