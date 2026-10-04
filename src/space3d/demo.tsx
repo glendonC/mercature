@@ -1,9 +1,9 @@
-// A page for looking at the 3D view on its own in the dev server: /src/space3d/demo.html?intro=1&settle=1&focus=34&still
+// A page for looking at the 3D view on its own in the dev server: /src/space3d/demo.html?intro=1&settle=1&focus=34&still&place=tbilisi-narikala
 // The walk's spots show as the map's markers; State turns every marker to the next state, so the 3D's easing can be seen.
 import { StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../style.css';
-import { loadDestination, type Destination } from '../destinations/data';
+import { isDestinationId, loadDestination, type Destination } from '../destinations/data';
 import { spotMarkers } from '../destinations/markers';
 import type { Marker, MarkerState } from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
@@ -18,7 +18,7 @@ function Demo() {
   const [turn, setTurn] = useState(0);
   const [selected, setSelected] = useState<string | null>(query.get('select'));
   const [before, setBefore] = useState(false);
-  useEffect(() => { loadDestination('cusco-qorikancha').then(setData, error => setSaid(String(error))); }, []);
+  useEffect(() => { const place = query.get('place') ?? ''; loadDestination(isDestinationId(place) ? place : 'cusco-qorikancha').then(setData, error => setSaid(String(error))); }, []);
   const focus = query.get('focus')?.split(',').map(Number) ?? null, areas = query.get('areas')?.split(',') ?? null;
   const walk = useMemo(() => data ? buildWalk(data) : null, [data]);
   // Before shows the walk as recorded; Now adds a spot of her own beside the steps at 340 m and rings the steps as changed.

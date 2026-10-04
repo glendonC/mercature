@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { decodeArea } from '../../src/space3d/space.ts';
 
-test('the published 3D areas decode, match their record, sit within 0.5 m and stay in the phone budget', () => {
-  const dir = 'public/places/qorikancha/pieces/';
+for (const folder of ['qorikancha', 'narikala']) test(`${folder}'s published 3D areas decode, match their record, sit within 0.5 m and stay in the phone budget`, () => {
+  const dir = `public/places/${folder}/pieces/`;
   const space = JSON.parse(readFileSync(`${dir}space.json`, 'utf8'));
-  const record = JSON.parse(readFileSync('public/places/qorikancha/place.json', 'utf8'));
+  const record = JSON.parse(readFileSync(`public/places/${folder}/place.json`, 'utf8'));
   let total = 0;
   for (const piece of space.pieces) {
     const bytes = readFileSync(`${dir}${piece.id}.bin`);

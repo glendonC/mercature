@@ -22,7 +22,7 @@ const SQUARE = 'Its shape cannot be read: the open square comes out as streaks f
 const SCATTER = 'Its shape cannot be read: scattered points with no clear wall or ground.';
 const LEFT_OUT = {
   'cusco-qorikancha': { s01: 'Its shape cannot be read: a few photos give fans of streaks.', s02: SQUARE, s03: SQUARE, s04: SQUARE, s05: SQUARE, s07: SQUARE, s08: SQUARE, s09: SQUARE, s10: SQUARE, s11: SCATTER, s17: SCATTER },
-  'tbilisi-narikala': {},
+  'tbilisi-narikala': { s01: 'Its shape cannot be read: a single slab of wall with nothing around it.', s08: 'Its shape cannot be read: a small piece apart from the walk.', s10: SCATTER, s11: 'Its shape cannot be read: a pale lump with no clear wall or ground.' },
 };
 const FOLDERS = { 'cusco-qorikancha': 'qorikancha', 'tbilisi-narikala': 'narikala' };
 
