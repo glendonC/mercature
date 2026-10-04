@@ -11,7 +11,7 @@ test('the guide goes through the walk, and her answer takes a spot off her map',
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await openGuide(page);
-  await page.locator('.ui-choice').first().click();
+  await page.getByRole('button', {name:'Go through the walk', exact:true}).click();
   const progress = page.locator('.gs-card-meta > span').first();
   await expect(progress).toHaveText(/^1 of \d+$/);
   await page.getByRole('button', {name:/no steps/i}).click();
@@ -26,7 +26,7 @@ test('a visitor message she files herself gets a reply in the visitor language, 
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await openGuide(page);
-  await page.locator('.ui-choice').nth(1).click();
+  await page.getByRole('button', {name:'Read messages', exact:true}).click();
   // No model is stored in a fresh browser, so she places it herself.
   await page.getByRole('button', {name:/myself/i}).click();
   await page.locator('.route-marker[aria-label^="Calle Loreto, 340 to 350 m"]').click();
