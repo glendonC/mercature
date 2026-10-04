@@ -40,7 +40,7 @@ test('search filters prepared places as she types, and one clear answer builds a
   await expect(page.getByText('Search asks OpenStreetMap online.')).toHaveCount(0);
   const field = page.getByRole('textbox', {name:'Search a place'});
   await field.fill('Qorikanca');
-  await expect(page.locator('.home-search-panel').getByRole('button', {name:/Qorikancha/})).toContainText('Street photos read');
+  await expect(page.locator('.home-search-panel').getByRole('button', {name:/Qorikancha/})).toContainText('With street photos');
   expect(asked).toHaveLength(0);
   await field.fill('Museo de Arte de Lima');
   await field.press('Enter');

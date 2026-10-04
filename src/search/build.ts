@@ -22,7 +22,7 @@ export const STRETCH_METRES = 10;
 const ROUGH = new Set(['bad', 'very_bad', 'horrible', 'very_horrible', 'impassable']);
 
 /**
- * A tag that may be a barrier on foot or on wheels. OpenStreetMap is the only evidence on a walk with no photos read,
+ * A tag that may be a barrier on foot or on wheels. OpenStreetMap is the only evidence on a walk with no street photos,
  * so besides steps it flags a raised kerb, a way marked not for wheelchairs, a gate, bollards and a rough surface.
  */
 export function possibleBarrier(finding: { kind: string; value: string; barrier: boolean }): boolean {
@@ -159,7 +159,7 @@ export function buildPlace(input: { start: End; target: End; area: string; walke
     attribution: {
       map: '© OpenStreetMap contributors, under the Open Database License 1.0 (https://www.openstreetmap.org/copyright).',
       route: 'Walk on foot from Valhalla on the FOSSGIS server, on OpenStreetMap data.',
-      findings: 'Findings are OpenStreetMap tags that nobody has verified on site. No street photos were read, so every stretch says no photos.',
+      findings: 'Findings are OpenStreetMap tags that nobody has verified on site. This walk has no street photos, so every stretch says no photos.',
     },
     sources: [
       { id: 'openstreetmap', name: 'OpenStreetMap', role: 'Map, places and tags', credit: '© OpenStreetMap contributors', licence: 'ODbL 1.0', licence_url: 'https://opendatacommons.org/licenses/odbl/1-0/', link: 'https://www.openstreetmap.org/copyright' },
@@ -167,7 +167,7 @@ export function buildPlace(input: { start: End; target: End; area: string; walke
     ],
     request: { start: { name: start.name, position: fix(start.position) }, destination: { name: target.name, position: fix(target.position), osm: target.osm ?? null } },
     route: { kind: 'route', provider: 'valhalla', fetched_at: walked.fetchedAt, frame: { axes: 'east-north-up', origin: [origin[0], origin[1], 0] as [number, number, number] }, length_m: length, line: line.map(fix) },
-    summary: { length_m: length, stretches: stretches.length, barriers: flaggedCount, seen: 0, no_photos_m: length, not_checked: 0, line: `${Math.round(length)} m on foot. Map only: no street photos read. OpenStreetMap tags flag possible barriers on ${flaggedCount} of ${stretches.length} stretches.` },
+    summary: { length_m: length, stretches: stretches.length, barriers: flaggedCount, seen: 0, no_photos_m: length, not_checked: 0, line: `${Math.round(length)} m on foot, from the map. OpenStreetMap tags flag possible barriers on ${flaggedCount} of ${stretches.length} stretches.` },
     stretches: packageStretches,
     findings: findings.map(f => ({ id: f.id, label: f.label, concept: f.concept || f.kind, barrier: f.barrier, score: null, verified: false, source: 'openstreetmap', model: null, note: null, photo_id: null, view_id: null, stretches: [...f.stretches], position: f.position && fix([f.position[0], f.position[1]]), box: null, outline: null, osm: { type: f.osm.type, id: f.osm.id, tags: { ...f.osm.tags } } })),
     views: [] as never[], photos: [] as never[],
