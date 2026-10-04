@@ -25,6 +25,7 @@
 .ri-title { margin: 2px 0 2px; font-size: var(--font-m); font-weight: 500; line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
 .ri-lead { margin: 2px 0 8px; font-size: var(--font-s); }
 .ri-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.ri-scan { display: grid; gap: 2px; margin: 8px 0 0; }
 .ri-counts b { font-weight: 500; }
 .ri-raised { margin: 8px 0 0; font-size: var(--font-xs); }
 .ri-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; margin-top: 4px; font-size: var(--font-xs); color: var(--ui-muted); }

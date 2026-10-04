@@ -10,7 +10,7 @@ import { useEditWords } from '../i18n/edit';
 import { fromRecord } from '../i18n/records';
 import Menu, { type MenuPlace } from '../home/Menu';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
-import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
+import { DESTINATIONS, type Coordinate, type Destination, type Finding, type Photo, type View } from './data';
 import { EXAMPLES } from './examples';
 import { spotState } from './markers';
 import RouteMap, { type Insets, type MapHandle, type Marker } from './RouteMap';
@@ -19,7 +19,7 @@ import { iconFor } from '../ui/icons';
 import AddSpot from './edit/AddSpot';
 import MarkFixed from './edit/MarkFixed';
 import OwnNoteEditor from './edit/OwnNote';
-import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, markOf, type LegendItem } from '../ui';
+import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, markOf, MARK_ORDER, type LegendItem } from '../ui';
 import { BackIcon, ChevronIcon, CloseIcon, CopyIcon, DownloadIcon, FixedIcon, KerbIcon, MessageIcon, MoreIcon, NoPhotosIcon, NoteIcon, PathIcon, PinIcon, PlusIcon, PointerIcon, PraiseIcon, ProblemIcon, QuestionIcon, RemoveIcon, RotateIcon, StepsIcon, UndoIcon, AddedIcon } from '../ui/icons';
 import './route-inbox.css';
 
@@ -180,6 +180,13 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   }
   const nameOfKey = (key: string) => { const target = targetOf(key); return target ? nameOf(target) : key; };
   const removed = (stretches: readonly number[]) => verdictOf(review, stretches) === 'not-barrier';
+  /** Every mark the scan outlined on a photo; a package without a scan has only its findings. */
+  const findingLabels = useMemo(() => new Map(data.findings.map(f => [f.id, f.label])), [data.findings]);
+  const marksOn = (viewId: string): PhotoMark[] => {
+    // A mark that is one of the place's findings keeps the finding's own words.
+    const scanned = data.marks.filter(mark => mark.viewId === viewId && mark.outline.length > 2).map(mark => ({ ...mark, label: (mark.finding && findingLabels.get(mark.finding)) || mark.label, named: !!mark.finding }));
+    return scanned.length ? scanned : data.findings.filter(f => f.viewId === viewId).map(f => ({ ...f, flagged: f.barrier, named: true }));
+  };
 
   // Panels and camera
   const [pane, setPane] = useState<Pane>({ kind: 'inbox' });
@@ -214,6 +221,27 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     else leave.current = window.setTimeout(() => setHover(now => now?.from === from ? null : now), from === 'map' ? 90 : 0);
   }
   useEffect(() => () => clearTimeout(leave.current), []);
+  // A marker that slides under a still pointer while the camera moves is not hovered: only a pointer that moved, or keyboard focus, counts.
+  const moved = useRef(0), still = useRef(0);
+  useEffect(() => {
+    let last: [number, number] | null = null;
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' || (last && Math.abs(event.clientX - last[0]) + Math.abs(event.clientY - last[1]) < 1)) return;
+      last = [event.clientX, event.clientY]; moved.current = performance.now();
+    };
+    addEventListener('pointermove', move, { passive: true });
+    return () => removeEventListener('pointermove', move);
+  }, []);
+  const entering = useRef<string | null>(null);
+  function hoverMap(id: string | null) {
+    entering.current = id;
+    if (!id || document.activeElement?.matches('.route-marker:focus-visible')) { hoverFrom('map', id); return; }
+    // The move that brings the pointer onto a marker is dispatched after the marker hears it enter, so decide on the next frame.
+    requestAnimationFrame(() => {
+      const now = performance.now();
+      if (entering.current === id && now - moved.current < 150 && now >= still.current) hoverFrom('map', id);
+    });
+  }
   const pointAt = (target: Target | null) => ({
     onPointerEnter: (event: { pointerType: string }) => { if (target && event.pointerType !== 'touch') hoverFrom('row', markerIdOf(target)); },
     onPointerLeave: () => hoverFrom('row', null),
@@ -409,7 +437,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     return <>
       <h2 className="ri-title">{nameOf(target)}</h2>
       <p className="ri-row-meta">{kind}{target.kind === 'added' && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}</p>
-      {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={data.findings.filter(f => f.viewId === view.id)} lead={lead} pager={null} t={t} />}
+      {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={marksOn(view.id)} lead={lead} pager={null} t={t} />}
       <Section heading="h2" title={w.visitors(filed.length)}>
         {latest && <List inset><Row static icon={<Tag tone="solid" lang={said}>{latest.language.toUpperCase()}</Tag>} label={<span lang={said}>{latest.text}</span>} /></List>}
       </Section>
@@ -485,6 +513,10 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   function copy(text: string) { navigator.clipboard.writeText(text).then(() => setSaid(w.copied), () => setSaid(t.copyFailed)); }
 
   // Panels
+  /** Every kind the model marked in the photos within a few metres of the walk, possible barriers first. */
+  const scanned: LegendItem[] = [...(data.scan?.kinds ?? [])].filter(kind => kind.nearRoute > 0)
+    .sort((a, b) => order(a.concept) - order(b.concept))
+    .map(kind => { const Icon = iconFor(kind.concept); return { mark: markOf(kind.concept) ?? undefined, barrier: kind.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: `${fromRecord(kind.label, lang)} ${kind.nearRoute}` }; });
   const counts = (() => {
     const kept = walk.spots.filter(spot => spot.kind === 'flagged' && !removed(spot.stretches) && !isFixed(edits, spot.stretches));
     const by: Record<Subject, number> = { steps: 0, kerb: 0, path: 0 };
@@ -501,6 +533,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     <p className="ri-guide">{w.guide}</p>
     <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
       <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
+      {scanned.length > 0 && <div className="ri-scan"><span className="ri-meta">{w.scanned}</span><Legend items={scanned} /></div>}
       {raised.length > 0 && <p className="ri-raised"><span className="ri-meta">{w.raised}</span> {raised.map(([key, n]) => `${nameOfKey(key)} (${n})`).join(' · ')}</p>}
       {note && <div className="ri-note">
         <span>{w.note}</span>
@@ -578,7 +611,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const own = noteOf(edits, key);
     const flagged = spot?.kind === 'flagged', mine = target.kind === 'added', clear = target.kind === 'stretch';
     const view = shown?.viewId ? views.get(shown.viewId)! : plainView;
-    const outlines = view ? data.findings.filter(f => f.viewId === view.id) : [];
+    const outlines = view ? marksOn(view.id) : [];
     return <>
       <Back onClick={home} label={w.back} />
       <h2 className="ri-title">{name}</h2>
@@ -640,8 +673,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     </Panel>
     <div className="ri-map">
       <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
-        onMarker={id => { clearTimeout(leave.current); setHover(null); const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap}
-        onHover={id => hoverFrom('map', id)} hovered={hover?.id ?? null} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
+        onMarker={id => { clearTimeout(leave.current); setHover(null); still.current = performance.now() + 650; const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap}
+        onHover={hoverMap} hovered={hover?.id ?? null} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
     </div>
   </main>;
 }
@@ -665,10 +698,20 @@ function KindMark({ kind }: { kind: Subject | 'noPhotos' }) {
   return <Icon size={14} />;
 }
 
+/** A mark drawn on a photo: from the scan, or a finding. barrier: its kind can be a barrier; flagged: one of the walk's possible barriers. */
+type PhotoMark = { id: string; concept: string; label: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; named?: boolean };
+const SURFACES: ReadonlySet<string> = new Set(['footway', 'cobblestones', 'road', 'crossing']);
+/** Kinds in the order the legend and the summary list them: possible barriers, then the ground. */
+const order = (concept: string) => { const kind = markOf(concept); const at = kind ? MARK_ORDER.indexOf(kind) : -1; return at < 0 ? MARK_ORDER.length : at; };
+/** Drawing order: the ground first and quiet, kinds that can be barriers above it, the walk's possible barriers on top. */
+const layer = (mark: PhotoMark) => mark.flagged ? 3 : mark.barrier ? 2 : SURFACES.has(markOf(mark.concept) ?? '') ? 0 : 1;
+
 /** One legend entry per kind on the photo, possible barriers first, each with its hue and icon. */
-function legendOf(marks: readonly Finding[], lang: UiLang): LegendItem[] {
-  const kinds = new Map([...marks].sort((a, b) => Number(b.barrier) - Number(a.barrier)).map(f => [f.concept, f]));
-  return [...kinds.values()].map(f => { const Icon = iconFor(f.concept); return { mark: markOf(f.concept) ?? undefined, barrier: f.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: fromRecord(f.label, lang) }; });
+function legendOf(marks: readonly PhotoMark[], lang: UiLang): LegendItem[] {
+  // One entry per kind, worded by a finding where the kind has one.
+  const kinds = new Map<string, PhotoMark>();
+  for (const mark of [...marks].sort((a, b) => order(a.concept) - order(b.concept) || Number(!!b.named) - Number(!!a.named))) { const kind = markOf(mark.concept) ?? mark.concept; if (!kinds.has(kind)) kinds.set(kind, mark); }
+  return [...kinds.values()].map(mark => { const Icon = iconFor(mark.concept); return { mark: markOf(mark.concept) ?? undefined, barrier: mark.barrier, icon: Icon ? <Icon size={15} /> : undefined, label: fromRecord(mark.label, lang) }; });
 }
 
 /** Frames a small outline closely so a person can judge it; a tap shows the whole photo. */
@@ -684,17 +727,17 @@ function zoomOn(view: View, finding: Finding | null) {
 }
 
 /** A recorded photo with every mark the model drew on it: barriers in clay, the rest quiet. */
-function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly Finding[]; lead: Finding | null;
+function PhotoWithMarks({ view, photo, asset, lang, marks, lead, pager, t, still = false }: { view: View; photo: Photo | undefined; asset: (file: string) => string; lang: UiLang; marks: readonly PhotoMark[]; lead: Finding | null;
   pager: { at: number; total: number; go: (page: number) => void } | null; t: (typeof COPY)[keyof typeof COPY]; still?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [whole, setWhole] = useState(false);
   const zoom = zoomOn(view, lead);
   const date = photo?.capturedAt ? new Date(photo.capturedAt).toLocaleDateString(lang === 'es' ? 'es-PE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
-  const drawn = [...marks].filter(f => f.outline.length > 2).sort((a, b) => Number(a.barrier) - Number(b.barrier));
+  const drawn = [...marks].filter(mark => mark.outline.length > 2).sort((a, b) => layer(a) - layer(b));
   const image = <div className="ri-photo-image" style={{ transform: zoom && !whole ? zoom : undefined }}>
     {failed ? <span className="ri-photo-missing" /> : <img src={asset(view.file)} alt={lead ? fromRecord(lead.label, lang) : ''} onError={() => setFailed(true)} />}
     {!failed && drawn.length > 0 && <svg viewBox={`0 0 ${view.width} ${view.height}`} preserveAspectRatio="none" aria-hidden="true">
-      {drawn.map(f => { const points = f.outline.map(p => p.join(',')).join(' '), barrier = f.barrier || undefined; return <g key={f.id}><polygon className="ui-mark-halo" data-barrier={barrier} points={points} /><polygon className="ui-mark" data-mark={markOf(f.concept) ?? undefined} data-barrier={barrier} points={points} /></g>; })}
+      {drawn.map(f => { const points = f.outline.map(p => p.join(',')).join(' '), barrier = f.flagged || undefined; return <g key={f.id}><polygon className="ui-mark-halo" data-barrier={barrier} points={points} /><polygon className="ui-mark" data-mark={markOf(f.concept) ?? undefined} data-barrier={barrier} points={points} /></g>; })}
     </svg>}
   </div>;
   return <figure className="ri-photo" style={{ '--ratio': view.height / view.width } as CSSProperties}>
