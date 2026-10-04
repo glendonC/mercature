@@ -34,15 +34,15 @@ Small tour operators in Peru hear from visitors in languages they cannot read, a
 routes they cannot easily check. Peru had 4,157,469 international visitors in 2025, and 71.7% of its
 workers are in units of 1 to 10 people.
 
-Mercature puts the operator's route on her phone, built from public street photos and OpenStreetMap.
-An on-screen guide takes her to each spot that might give visitors trouble, with the street photo
-where a model outlined steps or a kerb, what OpenStreetMap records there and who it affects. She says
-what is there now, keeps a way around if it works, adds what the photos missed and compares Before
-and Now.
+Mercature puts a tour operator's route on a phone, built from public street photos and
+OpenStreetMap. An on-screen guide goes to each spot that might give visitors trouble and shows the
+street photo where a model outlined steps or a kerb, what OpenStreetMap records there and who it
+affects. The operator answers what is there now, keeps a way around if it works, adds what the photos
+missed and compares Before and Now.
 
-A small multilingual model on the phone reads her visitors' messages and says which spot each one
-means, or Not sure, so she decides. Replies in English, Spanish or Korean are filled from fixed
-templates and her answers, never generated. The model is multilingual-e5-small trimmed to 84 MB, with
+A small multilingual model on the phone reads visitors' messages and says which spot each one
+means, or Not sure, so the operator decides. Replies in English, Spanish or Korean are filled from
+fixed templates and the operator's answers, never generated. The model is multilingual-e5-small trimmed to 84 MB, with
 three small trained classifiers; it runs in the browser and works offline after one download.
 
 Two real routes, in Cusco and Tbilisi, are built from 403 and 359 public street photos, with partial
@@ -64,12 +64,12 @@ The one-page report: [docs/report.pdf](docs/report.pdf).
     <td width="50%" valign="top">
       <strong>Check the route</strong><br>
       The guide shows each spot that might stop a visitor: the street photo, the model's outline and
-      what OpenStreetMap records there. She says what is there now.
+      what OpenStreetMap records there. The operator says what is there now.
     </td>
     <td width="50%" valign="top">
       <strong>Edit the map</strong><br>
       Add what the photos missed or change a spot, and undo any change. Before / Now compares the
-      route with and without her changes. Some spots also open in 3D.
+      route with and without the operator's changes. Some spots also open in 3D.
     </td>
   </tr>
   <tr>
@@ -80,11 +80,11 @@ The one-page report: [docs/report.pdf](docs/report.pdf).
     <td width="50%" valign="top">
       <strong>Read messages</strong><br>
       The model places each English, Spanish or Korean message on the spot it means, or answers Not
-      sure and she picks. Replies are filled in the visitor's language from fixed templates.
+      sure and the operator picks. Replies are filled in the visitor's language from fixed templates.
     </td>
     <td width="50%" valign="top">
       <strong>Share a route note</strong><br>
-      Her answers become a note for the next visitors, in English, Spanish or Korean.
+      The operator's answers become a note for the next visitors, in English, Spanish or Korean.
     </td>
   </tr>
   <tr>
@@ -119,9 +119,9 @@ on the device. Architecture and how to add a place: [docs/architecture.md](docs/
 | Speed | 25 to 38 ms per message in Chromium on the development Mac, 156 to 221 ms with the CPU slowed six times. No phone measured yet |
 | Output | A spot from the place's own list, or Not sure with up to three candidates. It never writes text |
 | Languages | English, Spanish and Korean. Anything else, such as Quechua, is always Not sure |
-| Memory | Messages she places become examples on the phone, stored as numbers and never as text, and used only for messages the model cannot read |
+| Memory | Messages the operator places on a spot become examples on the phone, stored as numbers and never as text, and used only for messages the model cannot read |
 
-Replies, the route note and the guide's lines are fixed templates filled from her answers. Details:
+Replies, the route note and the guide's lines are fixed templates filled from the operator's answers. Details:
 [docs/language.md](docs/language.md).
 
 ## Results
@@ -135,7 +135,7 @@ Replies, the route note and the guide's lines are fixed templates filled from he
 | Machine-translated Quechua, right spot first after three linked messages per spot | 9.4 of 16, from 5 |
 | Offline, after one download | A new message read with networking off, no request made |
 
-The model's heads were trained on synthetic messages about Noor's farm from the brief. Every test
+The model's heads were trained on synthetic messages about the farm tour in the challenge brief. Every test
 message was written by a large language model, and none has been reviewed by a native speaker.
 Method, failures and data: [docs/language.md](docs/language.md) and [docs/evidence.md](docs/evidence.md).
 
@@ -168,8 +168,8 @@ Sources, and what the data does not cover: [docs/evidence.md](docs/evidence.md).
 - A way around is OpenStreetMap's router's suggestion, unchecked.
 - Quechua examples are machine-translated. The Spanish interface and the Spanish and Korean replies
   and notes have not been reviewed by a native speaker.
-- The operator decides. Nothing on the map changes without her tap, and she copies every reply
-  herself.
+- The operator decides. Nothing on the map changes without a tap from the operator, and every reply
+  is copied by hand.
 
 Privacy, consent, bias and oversight: [docs/product.md](docs/product.md#responsible-ai).
 
@@ -180,8 +180,8 @@ Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/).
 Search is the one feature that goes online. Typing filters the prepared places on your device;
 Enter sends the typed words to OpenStreetMap's Nominatim. Building a route asks the Valhalla server
 at openstreetmap.de for the route on foot, and the Overpass API (overpass-api.de, or maps.mail.ru as
-a second server) for map data near it. A built route is kept on the device. Visitor messages, her
-answers and her edits never leave it.
+a second server) for map data near it. A built route is kept on the device. Visitor messages,
+answers and edits never leave it.
 
 To run it locally, you need Node.js 22.12 or newer.
 
