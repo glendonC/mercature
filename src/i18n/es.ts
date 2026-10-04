@@ -140,18 +140,15 @@ export const es = {
   'recorded.cover': 'Portada: {credit}, {license}',
   'recorded.explore': 'Explorar {name}',
 
-  // Recorded reveal
-  'reveal.label': '{name}, preparación registrada',
+  // Opening a place
   'reveal.route': 'De {start} a {target}',
   'reveal.route.qorikancha': 'De la Plaza de Armas a la boletería',
-  'reveal.opening': 'Abriendo la ruta registrada',
+  'reveal.opening': 'Abriendo {name}',
   'reveal.photosOf': '{shown} de {total} fotos',
   'reveal.photo': '{count} foto',
   'reveal.photos': '{count} fotos',
   'reveal.span': '{from} a {to}',
-  'reveal.no3d': 'Sin 3D aquí',
   'reveal.areas': '{shown} de {total} áreas en 3D',
-  'reveal.suggestion': 'Sugerencia del modelo, sin verificar',
   'reveal.credit': 'Fotos de calle: colaboradores de Mapillary, CC BY-SA 4.0 · Mapa © OpenStreetMap',
   'reveal.creditShort': 'Mapillary, CC BY-SA 4.0 · © OpenStreetMap',
 

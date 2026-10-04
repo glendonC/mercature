@@ -4,6 +4,8 @@ import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
 import { hasRouteCanvas } from '../destinations/RouteCanvas';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
+import { useLanguage } from '../i18n';
+import { fromRecord } from '../i18n/records';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record. */
@@ -45,7 +47,7 @@ function fitView(data: Destination, width: number, height: number, top: number):
   return [(minX + maxX) / 2 - width / 2 / scale, (minY + maxY) / 2 - (top + (bottom - top) / 2) / scale, width / scale, height / scale];
 }
 
-const month = (iso: string | null) => iso ? new Date(iso).toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+const month = (iso: string | null, locale: string) => iso ? new Date(iso).toLocaleDateString(locale, { month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
 const year = (iso: string | null) => iso?.slice(0, 4) ?? '';
 
 /** Up to four photos with model outlines, barriers first, spread along the route from start to end. */
@@ -70,6 +72,7 @@ function chooseCards(data: Destination): Card[] {
 
 /** Plays the retained preparation of a recorded place, then opens its inspection on the same map. */
 export default function RecordedReveal({ id, onHome, onOpen }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void }) {
+  const { t, rich, lang, locale } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
   const [failed, setFailed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -222,14 +225,15 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const last = ordered[Math.max(0, shown - 1)];
   const first = year(ordered[0]?.capturedAt ?? null), final = year(ordered.at(-1)?.capturedAt ?? null);
-  const span = first && final ? first === final ? first : `${first} to ${final}` : '';
+  const span = first && final ? first === final ? first : t('reveal.span', { from: first, to: final }) : '';
+  const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
   const toCanvas = !!data && hasRouteCanvas(data);
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
     {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${toCanvas ? ' to-canvas' : ''}`} data-phase={phase} role="region" aria-label={name}>
       {data && <>
         <div className="reveal-map" ref={mapBox}>
-          <GeographicMap data={data} selected={phase === 'play' || toCanvas ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')}
+          <GeographicMap data={data} selected={phase === 'play' || toCanvas ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')} words={{ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }}
             underlay={layer && <image href={layer.url} x={LAYER.x} y={LAYER.y} width={LAYER.width} height={LAYER.height} preserveAspectRatio="none" className="reveal-points"/>}>
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
@@ -237,8 +241,8 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
         <div className="reveal-scan" aria-hidden="true"/>
         <header className="reveal-banner">
           <h1>{name}</h1>
-          <p>{data.start ? `${data.start.name} to ${targetName}` : data.title} · {Math.round(data.lengthMetres).toLocaleString('en')} m</p>
-          <div className="reveal-counter">{shown < total ? <><span><strong>{shown}</strong> of {total} photos</span><span className="reveal-when">{month(last?.capturedAt ?? null)}</span></> : <><span><strong>{total}</strong> {total === 1 ? 'photo' : 'photos'}{span ? `, ${span}` : ''}</span><span className="reveal-when">{layer && <><strong>{layer.areas}</strong> of {data.pieces.length} areas in 3D</>}</span></>}</div>
+          <p>{route} · {t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) })}</p>
+          <div className="reveal-counter">{shown < total ? <><span>{rich('reveal.photosOf', { shown: <strong>{shown}</strong>, total })}</span><span className="reveal-when">{month(last?.capturedAt ?? null, locale)}</span></> : <><span>{rich(total === 1 ? 'reveal.photo' : 'reveal.photos', { count: <strong>{total}</strong> })}{span ? `, ${span}` : ''}</span><span className="reveal-when">{layer && rich('reveal.areas', { shown: <strong>{layer.areas}</strong>, total: data.pieces.length })}</span></>}</div>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[0])} y2={spot.top + (spot.top > spot.y ? 0 : (innerWidth < 640 ? CARD.phone : CARD.wide)[1])}/>; })}</svg>
         {surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <figure key={card.view.id} className="reveal-card" style={{ left: spot.left, top: spot.top }}>
@@ -246,11 +250,11 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
             <img src={assetUrl(data, card.view.file)} alt=""/>
             <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
           </div>
-          <figcaption><strong>{card.findings.find(f => f.barrier)?.label ?? card.findings[0].label}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
+          <figcaption><strong>{fromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
-        <footer className="reveal-hints"><span className="reveal-credit-long">Street photos: Mapillary contributors, CC BY-SA 4.0 · Map © OpenStreetMap</span><span className="reveal-credit-short">Mapillary, CC BY-SA 4.0 · © OpenStreetMap</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>Skip</button></footer>
+        <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</button></footer>
       </>}
-      {!data && <p className="reveal-opening" role="status">Opening {name}</p>}
+      {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
     </div>}
   </div>;
 }

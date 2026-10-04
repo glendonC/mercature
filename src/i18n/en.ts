@@ -137,18 +137,15 @@ export const en = {
   'recorded.cover': 'Cover: {credit}, {license}',
   'recorded.explore': 'Explore {name}',
 
-  // Recorded reveal
-  'reveal.label': '{name}, recorded preparation',
+  // Opening a place
   'reveal.route': '{start} to {target}',
   'reveal.route.qorikancha': 'Plaza de Armas to the ticket booth',
-  'reveal.opening': 'Opening the recorded route',
+  'reveal.opening': 'Opening {name}',
   'reveal.photosOf': '{shown} of {total} photos',
   'reveal.photo': '{count} photo',
   'reveal.photos': '{count} photos',
   'reveal.span': '{from} to {to}',
-  'reveal.no3d': 'No 3D here',
   'reveal.areas': '{shown} of {total} areas in 3D',
-  'reveal.suggestion': 'Model suggestion, unverified',
   'reveal.credit': 'Street photos: Mapillary contributors, CC BY-SA 4.0 · Map © OpenStreetMap',
   'reveal.creditShort': 'Mapillary, CC BY-SA 4.0 · © OpenStreetMap',
 
