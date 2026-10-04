@@ -55,11 +55,13 @@ const choices = new Map<string, 'photo' | 'space'>();
  * The photo of a spot, with a switch to the 3D of the same stretches when the 3D covers them.
  * Without 3D there, or without WebGL2, it is the photo alone, unchanged.
  */
-export function PhotoOr3D({ data, stretches, children, markers, onMarker, onMark, height, className }: {
+export function PhotoOr3D({ data, stretches, children, markers, onMarker, onMark, height, className, orbit = true }: {
   data: Destination; stretches: readonly number[]; children: ReactNode;
   markers?: Marker[]; onMarker?: (id: string) => void; onMark?: (mark: ScanMark) => void;
   /** The 3D's height in pixels, to match the photo's; 4:3 when left out. */
   height?: number; className?: string;
+  /** Let the 3D circle its area while she leaves it alone. */
+  orbit?: boolean;
 }) {
   const { lang } = useLanguage(), words = WORDS[lang === 'es' ? 'es' : 'en'];
   const space = useSpace(data), here = covers(space, stretches);
@@ -69,7 +71,7 @@ export function PhotoOr3D({ data, stretches, children, markers, onMarker, onMark
   const setShown = (value: 'photo' | 'space') => { choices.set(key, value); redraw(n => n + 1); };
   const [broken, setBroken] = useState(false);
   if (!here || broken) return <>{children}</>;
-  const props: Space3DProps = { data, markers, onMarker, onMark, focus: [...stretches], onUnavailable: () => { setBroken(true); setShown('photo'); } };
+  const props: Space3DProps = { data, markers, onMarker, onMark, orbit, focus: [...stretches], onUnavailable: () => { setBroken(true); setShown('photo'); } };
   return <div className={['space3d-switch', className].filter(Boolean).join(' ')}>
     <Segmented label={words.choose} value={shown} onChange={setShown} options={[{ value: 'photo', label: words.photo }, { value: 'space', label: words.space }]} />
     {shown === 'photo' ? children : <div className="space3d-frame" style={height ? { height } : undefined}><Suspense fallback={<div className="space3d space3d-pane" />}><Space3D {...props} className="space3d-pane" /></Suspense></div>}

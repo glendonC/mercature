@@ -32,6 +32,8 @@ export type Space3DProps = {
   onIntroEnd?: () => void;
   /** No WebGL2, or the 3D could not load: show the map or the photo instead. */
   onUnavailable?: (reason: string) => void;
+  /** Slowly circle the shown area after a few seconds without input; any input stops it until she has left it alone again. */
+  orbit?: boolean;
   /** Hide the zoom and fit controls, for a still replay. */
   still?: boolean;
   /** Read the areas from another folder than the place's package, for review. */
@@ -48,6 +50,9 @@ const WORDS = {
 
 /** Times of the assembly, in seconds. */
 const RISE_FROM = 0.15, RISE_SPREAD = 1.5, LINE_FROM = 0.5, LINE_FOR = 1.7, PINS_FROM = 2.1, PINS_FOR = 0.55, SETTLE_FROM = 2.75, SETTLE_FOR = 1.05;
+/** The orbit starts after this long without input, again after this long once she has touched it, turns once in this long, and
+ * paints at most every this many ms, so a phone stays cool. */
+const ORBIT_AFTER = 5000, ORBIT_AGAIN = 8000, ORBIT_FOR = 45000, PAINT_EVERY = 33;
 const MIN_PITCH = 0.14, MAX_PITCH = 1.5, OBLIQUE = 0.78;
 
 const css = (name: string, fallback: string) => (typeof document === 'undefined' ? '' : getComputedStyle(document.documentElement).getPropertyValue(name).trim()) || fallback;
@@ -80,7 +85,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   return { target, yaw, pitch, distance: radius / Math.sin(half) * 1.02 };
 }
 
-export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, pace = 1, onIntroEnd, onUnavailable, still = false, from, tone = 'dark', className }: Space3DProps) {
+export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, play = true, pace = 1, onIntroEnd, onUnavailable, orbit = false, still = false, from, tone = 'dark', className }: Space3DProps) {
   const { lang } = useLanguage();
   const words = WORDS[lang === 'es' ? 'es' : 'en'];
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
@@ -95,6 +100,8 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   const dirty = useRef(true);
   const pins = useRef<(Pin & { scan?: ScanMark })[]>([]);
   const matrix = useRef<Float32Array | null>(null);
+  /** When she last gave any input, and whether she has at all. */
+  const input = useRef({ at: performance.now(), touched: false });
   const callbacks = useRef({ onMarker, onMark, onIntroEnd, onUnavailable });
   callbacks.current = { onMarker, onMark, onIntroEnd, onUnavailable };
 
@@ -203,7 +210,8 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     resize();
     const observer = new ResizeObserver(resize);
     if (host.current) observer.observe(host.current);
-    let settleFrom: Camera | null = null;
+    let settleFrom: Camera | null = null, painted = 0, orbited = 0;
+    const circling = orbit && !still && !calm;
     const origin: Coordinate = [data.origin[0], data.origin[1]];
     const tour = [...space.pieces].map(p => { const [x, y] = metres(p.center, origin), along = nearest(walk, x, y).along; return { at: [x, y, groundAt(space, along) + 2] as Vec3, along }; }).sort((a, b) => a.along - b.along).map(p => p.at);
     const tourYaw = camera.current?.yaw ?? 0;
@@ -235,7 +243,14 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
         const k = ease((t - SETTLE_FROM) / SETTLE_FOR), to = overview(), turn = Math.atan2(Math.sin(to.yaw - settleFrom.yaw), Math.cos(to.yaw - settleFrom.yaw));
         camera.current = { target: settleFrom.target.map((v, i) => v + (to.target[i] - v) * k) as Vec3, pitch: settleFrom.pitch + (to.pitch - settleFrom.pitch) * k, yaw: settleFrom.yaw + turn * k, distance: settleFrom.distance * Math.pow(to.distance / settleFrom.distance, k) };
       }
+      // Idle, the camera circles its target; a frame drawn for the orbit alone waits its turn.
+      if (circling && !playing && !goal.current && !gesture.current && camera.current && now - input.current.at >= (input.current.touched ? ORBIT_AGAIN : ORBIT_AFTER)) {
+        if (!moving && !dirty.current && now - painted < PAINT_EVERY) return;
+        camera.current = { ...camera.current, yaw: camera.current.yaw - 2 * Math.PI * Math.min(now - (orbited || now), 100) / ORBIT_FOR };
+        orbited = now; moving = true;
+      } else orbited = 0;
       if (!moving && !dirty.current) return;
+      painted = now;
       dirty.current = false;
       if (!camera.current) return;
       const reveal = playing ? walk.length * ease((t - LINE_FROM) / LINE_FOR) : walk.length + 1;
@@ -247,7 +262,18 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!ended && calm) { ended = true; callbacks.current.onIntroEnd?.(); }
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [space, intro, settle, walk, play, pace]);
+  }, [space, intro, settle, walk, play, pace, orbit, still]);
+  // Any pointer, key, wheel or touch stops the orbit until she has left it alone again.
+  useEffect(() => {
+    if (!orbit || still) return;
+    const touch = (event: Event) => {
+      if (event.type === 'pointermove' && (event as PointerEvent).pointerType === 'mouse' && !((event as PointerEvent).movementX || (event as PointerEvent).movementY)) return;
+      input.current = { at: performance.now(), touched: true };
+    };
+    const kinds = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
+    kinds.forEach(kind => addEventListener(kind, touch, { capture: true, passive: true }));
+    return () => kinds.forEach(kind => removeEventListener(kind, touch, { capture: true }));
+  }, [orbit, still]);
 
   // Touch and mouse: one finger or the left button turns, two fingers pinch and pan, the right button or Shift pans, the wheel zooms.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
