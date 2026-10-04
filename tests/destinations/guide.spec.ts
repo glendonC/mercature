@@ -12,9 +12,10 @@ test('the guide goes through the walk, and her answer takes a spot off her map',
   await page.evaluate(() => localStorage.clear());
   await openGuide(page);
   await page.locator('.ui-choice').first().click();
-  await expect(page.locator('.ui-dialogue-meta')).toHaveText(/^1 of \d+$/);
+  const progress = page.locator('.gs-card-meta > span').first();
+  await expect(progress).toHaveText(/^1 of \d+$/);
   await page.getByRole('button', {name:/no steps/i}).click();
-  await expect(page.locator('.ui-dialogue-meta')).toHaveText(/^2 of \d+$/);
+  await expect(progress).toHaveText(/^2 of \d+$/);
   const review = await page.evaluate(() => JSON.parse(localStorage.getItem('mercature.route-review.v1.cusco-qorikancha')!));
   expect(review.decisions['0'].verdict).toBe('not-barrier');
 });
