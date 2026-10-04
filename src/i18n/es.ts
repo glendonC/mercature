@@ -4,7 +4,7 @@ import type { Key } from './en';
  * Neutral Latin American Spanish, informal "tú" for the person running the place.
  * Glossary: place lugar, spot punto, message mensaje, fix arreglo, plan plan, path check revisión de caminos,
  * model modelo (only the AI), Connected Conectado, Blocked Bloqueado, Unknown Desconocido,
- * Not sure Sin certeza, Example Ejemplo.
+ * Not sure Sin certeza, Example Ejemplo, flagged señalado (a mark on a photo is marca).
  */
 export const es = {
   // Language switch
@@ -44,9 +44,9 @@ export const es = {
   'home.onPhone': 'Lugares en este teléfono',
   'home.open': 'Abrir',
   'home.onFoot': '{area} · {metres} m a pie',
-  'home.flaggedSpots': '{n} puntos marcados',
-  'home.oneFlaggedSpot': '1 punto marcado',
-  'home.noFlaggedSpots': 'Ningún punto marcado',
+  'home.flaggedSpots': '{n} puntos señalados',
+  'home.oneFlaggedSpot': '1 punto señalado',
+  'home.noFlaggedSpots': 'Ningún punto señalado',
   'home.title': 'Un modelo de accesibilidad{br}espacial y editable',
   'home.menu': 'Menú',
   'home.closeMenu': 'Cerrar',
