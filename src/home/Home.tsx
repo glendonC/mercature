@@ -18,7 +18,7 @@ import { Companion, Dialogue } from '../ui';
 import { SCRIPT } from '../guide/script';
 import { toDestination, type Built } from '../search/build';
 import type { Prepared } from '../search/prepared';
-import { listWalks, loadWalk, type SavedWalk } from '../search/store';
+import { forgetWalk, listWalks, loadWalk, type SavedWalk } from '../search/store';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -119,7 +119,7 @@ function useWalks() {
     show(built, kept); refresh();
   }
   function closeWalk() { if (walkOf(history.state)) history.back(); else setOpen(null); refresh(); }
-  return { kept, open, openWalk, closeWalk, openKept: (id: string) => void loadWalk(id).then(built => { if (built) openWalk(built); }) };
+  return { kept, open, openWalk, closeWalk, openKept: (id: string) => void loadWalk(id).then(built => { if (built) openWalk(built); }), forget: (id: string) => void forgetWalk(id).then(refresh) };
 }
 export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   const { t, rich, lang } = useLanguage();
@@ -161,7 +161,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1>
-      <div ref={search}><Search key={again ? `again ${again.target.id}` : 'search'} prepared={prepared} onPrepared={onDestination} onLine={setLine} onPreview={setPreview} again={again}
+      <div ref={search}><Search key={again ? `again ${again.target.id}` : 'search'} prepared={prepared} onPrepared={onDestination} recent={walks.kept} onRecent={walks.openKept} onForget={walks.forget} onLine={setLine} onPreview={setPreview} again={again}
         onWalk={(built, kept, target) => { setAgain({ target, from: built.place.request.start.name }); walks.openWalk(built, kept); }}/></div>
     </div>
     <Places label={t('home.onPhone')} savedLabel={t('home.onDevice')}
@@ -172,8 +172,7 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
         ...others.map(cover => ({ id: cover.id, name: cover.name, image: cover.image, meta: fromRecord(cover.area, lang),
           label: t('home.explore', { name: cover.name, area: fromRecord(cover.area, lang) }), onOpen: () => onDestination(cover.id) })),
       ]}
-      saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: [t('search.mapOnly'), walk.area].filter(Boolean).join(' · '), onOpen: () => walks.openKept(walk.id) })),
-        ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
+      saved={saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))}/>
     <Companion className="home-bot" talking={talking}/>
     <Dialogue className="home-guide" label={t('home.guide')} lang={lang} say={line?.text ?? SCRIPT[lang].home.greet} onTalking={setTalking} continueLabel={t('home.more')}/>
   </main>;

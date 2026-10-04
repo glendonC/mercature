@@ -7,7 +7,7 @@ import { SEARCH_LINES } from '../search/lines';
 import { matchPrepared, type Prepared } from '../search/prepared';
 import { buildWalk } from '../search/run';
 import { findPlaces, SearchTrouble, type Found, type Trouble } from '../search/services';
-import { saveWalk } from '../search/store';
+import { saveWalk, type SavedWalk } from '../search/store';
 import './search.css';
 
 const fold = (text: string) => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -32,13 +32,17 @@ export type Again = { target: Found; from: string };
  * One tap on any other place builds a map-only walk to it on this device, from a start picked nearby, and opens it;
  * the guide's line says each stage. A walk just built can take another start from here.
  */
-export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview, again }: {
+export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview, again, recent = [], onRecent, onForget }: {
   prepared: readonly Prepared[];
   onPrepared: (id: string) => void;
   onWalk: (built: Built, kept: boolean, target: Found) => void;
   onLine: (line: GuideLine | null) => void;
   onPreview: (built: Built | null) => void;
   again?: Again | null;
+  /** Walks built on this device, newest first, offered while the field is focused and empty. */
+  recent?: readonly SavedWalk[];
+  onRecent?: (id: string) => void;
+  onForget?: (id: string) => void;
 }) {
   const { t, lang } = useLanguage();
   const say = SEARCH_LINES[lang];
@@ -48,6 +52,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
   const [startWords, setStartWords] = useState('');
   const [startFound, setStartFound] = useState<Found[] | null>(null);
   const field = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
   const work = useRef<AbortController | null>(null);
   useEffect(() => () => { work.current?.abort(); onLine(null); onPreview(null); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -135,7 +140,12 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
   const preparedInstead = <Section title={say.prepared}><List>{prepared.map(preparedRow)}</List></Section>;
   // Nothing renders until there is something to tap.
   let panel = null;
-  if (stage.kind === 'find' && clean) {
+  if (stage.kind === 'find' && !clean && focused && recent.length) {
+    panel = <Section title={t('search.recent')}><ul className="ui-list home-search-recent">{recent.map(walk => <li key={walk.id}>
+      <Row icon={<PinIcon />} label={walk.target} detail={walk.area} onMouseDown={event => event.preventDefault()} onClick={() => onRecent?.(walk.id)} />
+      <IconButton label={t('search.forget', { name: walk.target })} onMouseDown={event => event.preventDefault()} onClick={() => onForget?.(walk.id)}><CloseIcon size={16} /></IconButton>
+    </li>)}</ul></Section>;
+  } else if (stage.kind === 'find' && clean) {
     const rows = [
       ...matches.map(preparedRow),
       ...others.map(found => <Row key={found.id} icon={<PinIcon />} label={found.name} onClick={() => void build(found)}
@@ -167,7 +177,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
     </>;
   }
 
-  return <div className="home-search" onKeyDown={event => { if (event.key === 'Escape' && (words || stage.kind !== 'find')) { event.stopPropagation(); clear(); } }}>
+  return <div className="home-search" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape' && (words || stage.kind !== 'find')) { event.stopPropagation(); clear(); } }}>
     <form role="search" onSubmit={submit} aria-label={t('search.label')} className="home-search-row" data-tone="dark">
       <div className="home-search-field">
         <SearchIcon />

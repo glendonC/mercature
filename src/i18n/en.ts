@@ -56,6 +56,8 @@ export const en = {
   'home.more': 'More',
   'home.guide': 'Guide',
   'search.label': 'Search a place',
+  'search.recent': 'Recent',
+  'search.forget': 'Remove {name} from this device',
   'search.ask': 'Look up “{words}” on OpenStreetMap',
   'search.from': 'From {name}',
   'search.go': 'Search',

@@ -60,6 +60,8 @@ export const es = {
   'home.more': 'Más',
   'home.guide': 'Guía',
   'search.label': 'Buscar un lugar',
+  'search.recent': 'Recientes',
+  'search.forget': 'Quitar {name} de este dispositivo',
   'search.ask': 'Buscar “{words}” en OpenStreetMap',
   'search.from': 'Desde {name}',
   'search.go': 'Buscar',

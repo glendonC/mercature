@@ -48,6 +48,18 @@ test('search filters prepared places as she types, and one clear answer builds a
   await expect(page.locator('.gs-place')).toContainText('Plaza Prueba, 507 m on foot');
   await expect(page.locator('.guide-screen .ui-dialogue')).toContainText(/about 500 m/i, { timeout: 8000 });
   expect(asked).toHaveLength(1);
+  // Back on Home the walk is no card: it waits under Recent while the empty field has focus, and can be removed.
+  await page.goBack();
+  await expect(page.locator('.home-saved')).toHaveCount(0);
+  // Home first offers this walk another start; Escape leaves that, and the empty field shows Recent.
+  await expect(page.getByRole('textbox', {name:'Where does the walk start?'})).toBeVisible();
+  await field.focus();
+  await page.keyboard.press('Escape');
+  await field.focus();
+  const recent = page.locator('.home-search-recent li', { hasText: 'Museo de Arte de Lima' });
+  await expect(recent).toBeVisible();
+  await recent.getByRole('button', { name: 'Remove Museo de Arte de Lima from this device' }).click();
+  await expect(page.locator('.home-search-recent')).toHaveCount(0);
 });
 
 test('a whole city asks for a landmark, and offline offers the prepared walks', async ({page, context}) => {
