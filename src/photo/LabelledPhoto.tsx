@@ -50,7 +50,6 @@ const MAX_ZOOM = 5, DRAW_MS = 600, LAND_MS = 280;
 const CHIP_H = 24, CHIP_FONT = '500 13px Outfit, system-ui, sans-serif';
 /** The chip's padding, kind disc and gap around its words, as photo.css draws them. */
 const CHIP_EXTRA = 35;
-const CREDIT_STRIP = 30;
 
 let measurer: CanvasRenderingContext2D | null | undefined;
 function textWidth(text: string) {
@@ -100,6 +99,10 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
   const lang = chosen ?? appLang, words = PHOTO_WORDS[lang] ?? PHOTO_WORDS.en;
   const frame = useRef<HTMLDivElement>(null);
   const size = useSize(frame);
+  const creditRef = useRef<HTMLElement>(null);
+  const creditSize = useSize(creditRef);
+  /** The credit's height over the photo, which chips and controls keep clear of. */
+  const strip = credit === 'overlay' ? creditSize?.h ?? 30 : 0;
   const reduced = useReducedMotion();
   const [zoom, setZoomState] = useState<Zoom>(REST);
   const zoomRef = useRef<Zoom>(REST);
@@ -148,12 +151,12 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
     void fontsReady;
     const first = ranked.filter(m => m.id === selected), last = ranked.filter(m => m.id === focused && m.id !== selected);
     const order = [...first, ...ranked.filter(m => m.id !== selected && m.id !== focused), ...last];
-    const avoid: Box[] = [{ x: size.w - 56, y: size.h - 36 - (credit === 'overlay' ? CREDIT_STRIP : 0), w: 52, h: 32 }];
+    const avoid: Box[] = [{ x: size.w - 56, y: size.h - 36 - strip, w: 52, h: 32 }];
     if (zoomed) avoid.push({ x: size.w - 48, y: 4, w: 44, h: 44 });
-    if (credit === 'overlay') avoid.push({ x: 0, y: size.h - CREDIT_STRIP, w: size.w, h: CREDIT_STRIP });
+    if (strip) avoid.push({ x: 0, y: size.h - strip, w: size.w, h: strip });
     const weighty = new Set(marks.filter(m => m.barrier || m.flagged || m.id === selected).map(m => m.id));
     return placeLabels(order.map(m => ({ id: m.id, points: projected.get(m.id) ?? [], w: Math.ceil(textWidth(nameOf(m))) + CHIP_EXTRA, h: CHIP_H, force: m.id === selected || m.id === focused })), size, budget, avoid, weighty);
-  }, [projected, size, ranked, marks, selected, focused, budget, credit, zoomed, nameOf, fontsReady]);
+  }, [projected, size, ranked, marks, selected, focused, budget, strip, zoomed, nameOf, fontsReady]);
   const spots = useMemo(() => new Map(layout?.placed.map(p => [p.id, p]) ?? []), [layout]);
   const hidden = useMemo(() => ranked.filter(m => !spots.has(m.id)), [ranked, spots]);
   const ready = !!layout;
@@ -270,7 +273,7 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
   const pointsOf = (id: string) => (projected?.get(id) ?? []).map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 
   return <figure className={className ? `lp ${className}` : 'lp'} data-credit={credit} data-has-selected={hasSelected || undefined}
-    data-trace={tracing || undefined} data-traced={mode === 'trace' && (traceDone || reduced) ? true : undefined} style={{ '--lp-draw': `${draw}ms` } as CSSProperties}>
+    data-trace={tracing || undefined} data-traced={mode === 'trace' && (traceDone || reduced) ? true : undefined} style={{ '--lp-draw': `${draw}ms`, '--lp-strip': `${strip}px` } as CSSProperties}>
     <div ref={frame} className="lp-frame" data-zoomed={zoomed || undefined} data-zoomable={zoomable || undefined} style={height != null ? { height } : { aspectRatio: `${view.width} / ${view.height}` }}
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
       onClickCapture={onClickCapture} onClick={onClick} onDoubleClick={onDoubleClick} onKeyDown={onKeyDown}>
@@ -316,7 +319,7 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
       </>}
       {zoomable && zoomed && <button type="button" className="lp-reset" aria-label={words.whole} title={words.whole} onClick={() => base && size && animateTo(bound(REST, base, size))}><FitIcon size={18} /></button>}
     </div>
-    <figcaption className="lp-credit">
+    <figcaption ref={creditRef} className="lp-credit">
       <span>{photo.creator}{date ? `, ${date}` : ''} · {/BY-SA-4\.0/i.test(photo.licence) ? <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{licenceName(photo.licence)}</a> : licenceName(photo.licence)} · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</span>
       <span className="lp-note">{words.note}</span>
     </figcaption>

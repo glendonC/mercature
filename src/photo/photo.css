@@ -84,8 +84,8 @@
 .lp-list button { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-s); background: none; color: #fff; font: 500 13px/1.2 Outfit, system-ui, sans-serif; text-align: start; cursor: pointer; }
 .lp-list button:hover { background: rgb(255 255 255 / 0.08); }
 .lp-list .lp-badge { position: static; margin-inline-start: auto; }
-.lp[data-credit=overlay] .lp-more { bottom: 38px; }
-.lp[data-credit=overlay] .lp-list { bottom: 74px; max-height: calc(100% - 86px); }
+.lp[data-credit=overlay] .lp-more { bottom: calc(var(--lp-strip) + 8px); }
+.lp[data-credit=overlay] .lp-list { bottom: calc(var(--lp-strip) + 44px); max-height: calc(100% - var(--lp-strip) - 56px); }
 
 /* The credit: always shown, never below 13 px */
 .lp-credit { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 10px; font-size: var(--font-xs); line-height: var(--leading); color: var(--ui-muted, var(--muted)); }
