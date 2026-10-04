@@ -34,7 +34,8 @@ export type Limits = {
 
 /**
  * Chosen on the farm's training and dev messages only (scripts/language/memory.mjs calibrate),
- * before any held-out or route message was scored with a memory.
+ * before any held-out or route message was scored with a memory. The app applies only the
+ * second: on the held-out messages the first once put a wrong spot first and gained nothing.
  */
 export const MEMORY = Object.freeze({
   /** Messages that look like English, Spanish or Korean: cosine of embeddings. */

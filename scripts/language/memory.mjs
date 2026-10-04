@@ -4,6 +4,8 @@
  *   node scripts/language/memory.mjs dev         dev families against training examples, a dry run of the evaluation
  *   node scripts/language/memory.mjs test        held-out farm messages, once, after the freeze
  *   node scripts/language/memory.mjs route       Qorikancha walk messages, once, after the freeze
+ * With --restricted, as the app runs after the held-out run: only messages that fail the language
+ * check use the memory.
  * A memory holds k confirmed examples per spot, drawn from messages disjoint from the scored ones,
  * either in Quechua only or in each of English, Spanish, Korean and Quechua. Every scored message
  * runs through the model; the memory changes only the spot order, with the app's own code.
@@ -17,6 +19,7 @@ import { FARM_FEATURES, HEADS_PATH, asExpected, concernsPlace, confidentWrong, e
 
 const MODES = ['calibrate', 'dev', 'test', 'route'];
 const mode = process.argv.slice(2).find(arg => MODES.includes(arg)) ?? 'calibrate';
+const restricted = process.argv.includes('--restricted');
 
 const steps = (from, to, step) => Array.from({ length: Math.round((to - from) / step) + 1 }, (_, i) => Number((from + i * step).toFixed(3)));
 /** Fixed before any held-out or route message was scored with a memory. */
@@ -282,7 +285,7 @@ if (mode === 'calibrate') {
         const examples = k ? drawMemory(memoryLanguages, k, draw) : [];
         const kept = examples.map(asExample);
         const outcomes = queries.map(query => {
-          const recalled = kept.length ? recall(query, kept, spotSet, query.supported) : null;
+          const recalled = kept.length && !(restricted && query.supported) ? recall(query, kept, spotSet, query.supported) : null;
           if (recalled && !query.supported && query.base.candidates.length) {
             const closest = examples.filter(example => example.places[0] === recalled.spot).sort((a, b) => overlap(query.grams, grams.get(b.id)) - overlap(query.grams, grams.get(a.id)))[0];
             const shared = [...wordsOf(query.message.text)].filter(word => wordsOf(closest.text).has(word));
@@ -330,9 +333,9 @@ if (mode === 'calibrate') {
     checks.quechua = { top1AtZero: zero.top1, top1AtThree: mean(three.top1), top3AtZero: zero.top3, top3AtThree: mean(three.top3), withPlace: zero.withPlace };
     checks.quechua.improved = mean(three.top1) >= zero.top1 + 3 && mean(three.top3) >= zero.top3;
   }
-  output = { mode, protocol: PROTOCOL, limits: MEMORY, pool: Object.fromEntries(spots.map(spot => [spot, Object.fromEntries(['en', 'es', 'ko', 'qu'].map(lang => [lang, pool.filter(m => m.places[0] === spot && m.lang === lang).length]))])), checks, results, changes, spelling, browserCheck };
+  output = { mode, restricted, protocol: PROTOCOL, limits: MEMORY, pool: Object.fromEntries(spots.map(spot => [spot, Object.fromEntries(['en', 'es', 'ko', 'qu'].map(lang => [lang, pool.filter(m => m.places[0] === spot && m.lang === lang).length]))])), checks, results, changes, spelling, browserCheck };
   console.log(JSON.stringify({ checks, top1: Object.fromEntries(Object.entries(results).map(([name, byK]) => [name, Object.fromEntries(Object.entries(byK).map(([k, byLang]) => [k, Object.fromEntries(Object.entries(byLang).map(([lang, t]) => [lang, `${mean(t.top1)}/${t.withPlace} top3 ${mean(t.top3)} false ${mean(t.falseTriggers)} lost ${mean(t.lost)}`]))]))])) }, null, 1));
 }
-const out = resolve('.local/language', `memory-${mode}.json`);
+const out = resolve('.local/language', `memory-${mode}${restricted ? '-restricted' : ''}.json`);
 await writeFile(out, JSON.stringify(output, null, 2));
 console.log(`Written to ${out}`);

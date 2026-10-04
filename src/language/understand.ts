@@ -27,9 +27,9 @@ export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place' | 'reme
  *     or the message does not look like English, Spanish or Korean.
  *   no-place: the message is not about a part of the site (price, booking, taste); no candidates.
  *   unclear-place: the top features are too close to call; candidates are offered in order.
- *   remembered: the first candidate comes from messages the operator linked to a spot before
- *     (remember()), either because the message does not look like English, Spanish or Korean,
- *     or because that spot differs from the model's own first one. Kind and issue type are the model's.
+ *   remembered: the message does not look like English, Spanish or Korean, and its first
+ *     candidate comes from a similar message the operator linked to a spot before (remember()).
+ *     Kind and issue type stay null.
  * unavailable: no usable model on this device; the manual workflow continues.
  * invalid: the message cannot be processed.
  */
@@ -265,7 +265,9 @@ export async function understand(message: string, site: Place): Promise<Understa
     const scores = score(query, index, loaded.heads);
     const supported = looksSupported(message);
     let decision = decide(scores, loaded.heads, supported);
-    const examples = await examplesOf(loaded, site.id);
+    // Only messages that fail the language check: on held-out messages the English, Spanish and
+    // Korean recall once put a wrong spot first (docs/language.md), and it gained nothing there.
+    const examples = supported ? [] : await examplesOf(loaded, site.id);
     if (examples.length) {
       const recalled = recall({ vector: query, grams: sketch(message) }, examples, new Set(index.map(feature => feature.id)), supported);
       decision = remembered(decision, scores, recalled, supported);

@@ -21,6 +21,8 @@ import { loadMessages } from './data.mjs';
 
 const split = process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? 'dev';
 const fromHub = process.argv.includes('--hub');
+/** --restricted compares with memory.mjs --restricted, as the app applies the memory. */
+const restricted = process.argv.includes('--restricted') ? '-restricted' : '';
 /** --throttle 6 slows the page's CPU sixfold, a rough stand-in for a mid-range phone; it is not a phone. */
 const throttleArg = process.argv.indexOf('--throttle');
 const throttle = throttleArg > 0 ? Number(process.argv[throttleArg + 1]) : 1;
@@ -105,7 +107,7 @@ try {
     answers.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });
   }
   result.answers = answers;
-  const memory = JSON.parse(await readFile(resolve(`.local/language/memory-${split}.json`), 'utf8').catch(() => 'null'))?.browserCheck;
+  const memory = JSON.parse(await readFile(resolve(`.local/language/memory-${split}${restricted}.json`), 'utf8').catch(() => 'null'))?.browserCheck;
   if (memory) {
     const kept = [];
     for (const example of memory.examples) kept.push(await page.evaluate(([text, place, spot]) => window.languageCheck.remember(text, place, spot), [example.text, placeName, example.spot]));
@@ -164,6 +166,6 @@ if (nodeResults) {
   const byId = new Map(nodeResults.rows.map(row => [row.id, row.decision]));
   result.matchesNode = `${result.answers.filter(answer => sameDecision(byId.get(answer.id), answer)).length}/${result.answers.length}`;
 }
-await writeFile(resolve(`.local/language/browser-${split}${throttle > 1 ? `-throttle${throttle}` : ''}.json`), JSON.stringify(result, null, 2));
+await writeFile(resolve(`.local/language/browser-${split}${restricted}${throttle > 1 ? `-throttle${throttle}` : ''}.json`), JSON.stringify(result, null, 2));
 const { answers, ...summary } = result;
 console.log(JSON.stringify(summary, null, 2));

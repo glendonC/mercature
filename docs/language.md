@@ -1,6 +1,6 @@
 # Message understanding
 
-A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise. It also learns from her: a message she links to a spot helps rank that spot for similar messages later, on the phone.
+A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise. It also learns from her: in a language the model cannot read, such as Quechua, a message she links to a spot helps rank that spot first for similar messages later, on the phone.
 
 ## What runs on the phone
 
@@ -142,12 +142,12 @@ The heads were trained only on farm messages. To see whether they carry over, 44
 
 ## Learning from the operator's confirmations
 
-When the operator links a message to a spot ("Yes, this spot"), the phone keeps that message as an example for the place: the 384 numbers the model computed for it, a sketch of its spelling, the spot and the time, never the text. A new message that is close to a kept example, and not as close to another spot's, gets that spot first. The tool adapts to a place's visitors and to a language the encoder cannot read, such as Quechua, from the operator's own decisions: no retraining, no server, nothing leaves the phone.
+When the operator links a message to a spot ("Yes, this spot"), the phone keeps that message as an example for the place: the 384 numbers the model computed for it, a sketch of its spelling, the spot and the time, never the text. A new message in a language the encoder cannot read, such as Quechua, that is close to a kept example gets that spot first. The tool adapts to the operator's own visitors from her own decisions: no retraining, no server, nothing leaves the phone. English, Spanish and Korean messages are left to the model (see the restriction below).
 
 - **Only the order changes.** Every message still runs through the model, and kind and issue type are always the model's own. Nothing is answered from storage.
-- **A person decides.** When the memory puts a different spot first than the model, or the message is not in English, Spanish or Korean, the answer is *Not sure* with the reason `remembered`, so the screen can say the first spot is where a similar message was linked before. The memory never turns *Not sure* into a confident answer and never acts on a message the model judged to be about no place.
-- **English, Spanish and Korean** are compared by embedding: the closest kept example needs a cosine of at least 0.935 and a lead of 0.005 over the closest example of any other spot. The bar is high because e5 cosines are compressed: two Korean training and dev messages about different spots reach 0.93.
-- **Other languages** are compared by spelling: the cosine of their character trigram counts, hashed into 65,536 buckets (`sketch` in `src/language/memory.ts`), must reach 0.5. The encoder does not separate Quechua topics (next section), but a Quechua message about the restroom or the steps tends to share words with one the operator already linked there.
+- **A person decides.** When the memory supplies the first spot, the answer is *Not sure* with the reason `remembered`, so the screen can say the first spot is where a similar message was linked before. The memory never gives a confident answer and never acts on a message the model judged to be about no place.
+- **Compared by spelling:** the cosine of the two messages' character trigram counts, hashed into 65,536 buckets (`sketch` in `src/language/memory.ts`), must reach 0.5. The encoder does not separate Quechua topics (next section), but a Quechua message about the restroom or the steps tends to share words with one the operator already linked there.
+- **English, Spanish and Korean** were compared by embedding in the preregistered rule: the closest kept example needed a cosine of at least 0.935 and a lead of 0.005 over the closest example of any other spot (high, because e5 cosines are compressed: two Korean training and dev messages about different spots reach 0.93). The app no longer applies this part.
 - **Storage.** The model's Cache Storage, one entry per place, keyed by model files and revision, at most 100 examples per place (oldest dropped). `remember(message, place, spotId)` adds one, linking the same message again replaces it, `forgetPlace(placeId)` deletes them (Start over) and `rememberedCount(placeId)` counts them. With no kept example every answer is exactly what it was before.
 
 ### Data for the memory
@@ -211,6 +211,17 @@ Right spot first on the held-out farm messages, memory with examples in all four
 - **Qorikancha walk.** No English (9 of 10), Spanish (9 of 10) or Korean (10 of 11) answer changed at any k. Quechua went from 1 of 3 to 1.85, 2.6 and 3 of 3 at k = 1, 2 and 3; three messages are too few to claim anything. Unlike on the farm, all 40 spelling matches at k = 3 shared a street or landmark name with the kept example (Plaza de Armas, Loreto, Maruri).
 - **Same in the browser.** With no examples, Chromium gave the same decisions as Node for 88 of 88 held-out and 44 of 44 route messages, reason included. With 68 and 56 kept examples (all four languages, k = 1, first draw) they agreed again on 88 of 88 and 44 of 44; the examples survived an offline restart, and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout.json`, `browser-memory-route.json`).
 
+### Restriction, decided after the held-out run
+
+1. The preregistered rule failed the ship rule on Korean: with the all-language memory, one negated message (f022-ko) got a wrong first spot in 1 of 20 draws at k = 1 and 3 of 20 at k = 2, always shown as *Not sure*.
+2. After the held-out run it was decided that the memory acts only on messages that fail the language check. English, Spanish and Korean messages are then answered exactly as without a memory, by construction: the memory is not consulted for them.
+3. The Quechua figures above were measured under the frozen Quechua rule, which this restriction leaves unchanged; they are the same with and without it.
+4. On the Qorikancha walk, 3 Quechua messages are too few to claim anything.
+
+Run as the app now applies it (`--restricted`; `memory-heldout-restricted.json`, `memory-route-restricted.json`): every English, Spanish and Korean decision equals the run without a memory at every k, in both memories, and the Quechua figures equal those above. Chromium gave the same decisions as Node with no examples (88 of 88, 44 of 44) and with 68 and 56 kept examples (88 of 88, 44 of 44), and after `forgetPlace` every answer was back to the first run (`browser-memory-heldout-restricted.json`, `browser-memory-route-restricted.json`).
+
+The embedding of each linked message is still stored, although only its spelling sketch is used now.
+
 ### Limits
 
 - **Tiny samples.** 16 Quechua farm messages naming a spot and 3 on the route. One message more or less moves the Quechua figures by 6 points on the farm and 33 on the route.
@@ -270,7 +281,7 @@ An earlier trial with the same encoder accepted a feature only when its cosine s
 
 ## Reproduce
 
-Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`), and the memory's calibration, held-out, route and Chromium runs (`memory-calibration.json`, `memory-heldout.json`, `memory-route.json`, `browser-memory-heldout.json`, `browser-memory-route.json`). Each has every decision, ranking and timing.
+Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`), and the memory's calibration, held-out, route and Chromium runs, frozen and restricted (`memory-*.json`, `browser-memory-*.json`). Each has every decision, ranking and timing.
 
 
 Node 24 or newer, from the repository root:
@@ -289,7 +300,8 @@ node scripts/language/browser.mjs dev
 node scripts/language/memory.mjs calibrate
 node scripts/language/memory.mjs test
 node scripts/language/memory.mjs route
-node scripts/language/browser.mjs test
+node scripts/language/memory.mjs test --restricted
+node scripts/language/browser.mjs test --restricted
 ```
 
 `provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `trim.mjs` writes the trimmed encoder to `public/models/` (not in version control), where the app serves it; it needs [uv](https://docs.astral.sh/uv/) to run the ONNX edit with `onnx` and `numpy`. `evaluate.mjs` takes `--variant latin-hangul` to evaluate it. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium (the trimmed files if `public/models/` has them, otherwise the Hub URLs, redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.

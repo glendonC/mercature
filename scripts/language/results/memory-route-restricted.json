@@ -1,0 +1,1805 @@
+{
+  "mode": "route",
+  "restricted": true,
+  "protocol": {
+    "examplesPerSpot": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "memories": {
+      "qu": [
+        "qu"
+      ],
+      "all": [
+        "en",
+        "es",
+        "ko",
+        "qu"
+      ]
+    },
+    "draws": {
+      "calibrate": 10,
+      "dev": 20,
+      "test": 20,
+      "route": 20
+    },
+    "seed": {
+      "calibrate": "calibrate",
+      "dev": "dev",
+      "test": "heldout",
+      "route": "route"
+    },
+    "calibration": {
+      "queries": "every farm training and dev message (English, Spanish, Korean and Quechua), with examples from its own family left out",
+      "objective": "right first spots gained minus 3 times right first spots lost, over both memories, k = 1 to 3 and all draws",
+      "groups": "messages that pass the language check (English, Spanish, Korean), compared by embedding cosine, and those that do not, compared by spelling-sketch cosine; each pair chosen on its own messages",
+      "grid": {
+        "supported": {
+          "similarity": [
+            0.8,
+            0.805,
+            0.81,
+            0.815,
+            0.82,
+            0.825,
+            0.83,
+            0.835,
+            0.84,
+            0.845,
+            0.85,
+            0.855,
+            0.86,
+            0.865,
+            0.87,
+            0.875,
+            0.88,
+            0.885,
+            0.89,
+            0.895,
+            0.9,
+            0.905,
+            0.91,
+            0.915,
+            0.92,
+            0.925,
+            0.93,
+            0.935,
+            0.94,
+            0.945,
+            0.95,
+            0.955,
+            0.96,
+            0.965,
+            0.97,
+            0.975,
+            0.98
+          ],
+          "lead": [
+            0,
+            0.005,
+            0.01,
+            0.015,
+            0.02,
+            0.03,
+            0.04,
+            0.05
+          ]
+        },
+        "unsupported": {
+          "similarity": [
+            0.05,
+            0.075,
+            0.1,
+            0.125,
+            0.15,
+            0.175,
+            0.2,
+            0.225,
+            0.25,
+            0.275,
+            0.3,
+            0.325,
+            0.35,
+            0.375,
+            0.4,
+            0.425,
+            0.45,
+            0.475,
+            0.5,
+            0.525,
+            0.55,
+            0.575,
+            0.6,
+            0.625,
+            0.65,
+            0.675,
+            0.7,
+            0.725,
+            0.75,
+            0.775,
+            0.8,
+            0.825,
+            0.85,
+            0.875,
+            0.9,
+            0.925,
+            0.95
+          ],
+          "lead": [
+            0,
+            0.01,
+            0.02,
+            0.03,
+            0.05,
+            0.075,
+            0.1,
+            0.15,
+            0.2
+          ]
+        }
+      },
+      "ties": "the higher similarity, then the higher lead"
+    },
+    "ship": [
+      "With no examples, every decision equals the published run (88 of 88 held-out, 44 of 44 route).",
+      "Quechua: on the held-out farm messages with a Quechua memory, the right spot comes first for at least 3 more of the 16 messages naming one at k = 3 (mean over draws), and top-3 does not fall.",
+      "English, Spanish and Korean: for each language, place, memory and k, the mean over draws of top-1, top-3 and as-expected answers is not below k = 0, and confident wrong answers are not above it."
+    ]
+  },
+  "limits": {
+    "supported": {
+      "similarity": 0.935,
+      "lead": 0.005
+    },
+    "unsupported": {
+      "similarity": 0.5,
+      "lead": 0
+    }
+  },
+  "pool": {
+    "steps-0-10": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "kerb-80-100": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "steps-130-140": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "no-photos-150-170": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "steps-340-350": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "steps-590-594": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "plaza-de-armas": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "qorikancha-ticket-booth": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "catedral-del-cusco": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "iglesia-de-la-compania-de-jesus": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "calle-loreto": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "iglesia-de-santo-domingo": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "monasterio-de-santa-catalina-de-sena": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    },
+    "portal-de-carrizos": {
+      "en": 3,
+      "es": 3,
+      "ko": 3,
+      "qu": 3
+    }
+  },
+  "checks": {
+    "identicalWithoutMemory": "44/44",
+    "regressions": []
+  },
+  "results": {
+    "qu": {
+      "0": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": 1,
+          "top3": 2,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": {
+            "mean": 1.85,
+            "min": 1,
+            "max": 3
+          },
+          "top3": {
+            "mean": 2.1,
+            "min": 1,
+            "max": 3
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "changed": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "falseTriggers": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          },
+          "gained": {
+            "mean": 0.85,
+            "min": 0,
+            "max": 2
+          },
+          "lost": 0
+        }
+      },
+      "2": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": {
+            "mean": 2.6,
+            "min": 2,
+            "max": 3
+          },
+          "top3": {
+            "mean": 2.6,
+            "min": 2,
+            "max": 3
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "changed": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "falseTriggers": 0,
+          "gained": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "lost": 0
+        }
+      },
+      "3": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": 3,
+          "top3": 3,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": 2,
+          "changed": 2,
+          "falseTriggers": 0,
+          "gained": 2,
+          "lost": 0
+        }
+      }
+    },
+    "all": {
+      "0": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": 1,
+          "top3": 2,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": {
+            "mean": 1.85,
+            "min": 1,
+            "max": 3
+          },
+          "top3": {
+            "mean": 2.1,
+            "min": 1,
+            "max": 3
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "changed": {
+            "mean": 0.95,
+            "min": 0,
+            "max": 2
+          },
+          "falseTriggers": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          },
+          "gained": {
+            "mean": 0.85,
+            "min": 0,
+            "max": 2
+          },
+          "lost": 0
+        }
+      },
+      "2": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": {
+            "mean": 2.6,
+            "min": 2,
+            "max": 3
+          },
+          "top3": {
+            "mean": 2.6,
+            "min": 2,
+            "max": 3
+          },
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "changed": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "falseTriggers": 0,
+          "gained": {
+            "mean": 1.6,
+            "min": 1,
+            "max": 2
+          },
+          "lost": 0
+        }
+      },
+      "3": {
+        "ko": {
+          "messages": 14,
+          "withPlace": 11,
+          "top1": 10,
+          "top3": 11,
+          "ready": 4,
+          "readyWrong": 1,
+          "expected": 13,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "en": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 4,
+          "readyWrong": 2,
+          "expected": 11,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 13,
+          "withPlace": 10,
+          "top1": 9,
+          "top3": 10,
+          "ready": 2,
+          "readyWrong": 0,
+          "expected": 12,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 4,
+          "withPlace": 3,
+          "top1": 3,
+          "top3": 3,
+          "ready": 0,
+          "readyWrong": 0,
+          "expected": 3,
+          "remembered": 2,
+          "changed": 2,
+          "falseTriggers": 0,
+          "gained": 2,
+          "lost": 0
+        }
+      }
+    }
+  },
+  "changes": {
+    "qu": {
+      "0": {},
+      "1": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 15,
+          "first": {
+            "steps-0-10": 13,
+            "monasterio-de-santa-catalina-de-sena": 2
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 4,
+          "first": {
+            "steps-340-350": 4
+          }
+        }
+      },
+      "2": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 20,
+          "first": {
+            "steps-0-10": 20
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 12,
+          "first": {
+            "steps-340-350": 12
+          }
+        }
+      },
+      "3": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 20,
+          "first": {
+            "steps-0-10": 20
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 20,
+          "first": {
+            "steps-340-350": 20
+          }
+        }
+      }
+    },
+    "all": {
+      "0": {},
+      "1": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 15,
+          "first": {
+            "steps-0-10": 13,
+            "monasterio-de-santa-catalina-de-sena": 2
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 4,
+          "first": {
+            "steps-340-350": 4
+          }
+        }
+      },
+      "2": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 20,
+          "first": {
+            "steps-0-10": 20
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 12,
+          "first": {
+            "steps-340-350": 12
+          }
+        }
+      },
+      "3": {
+        "r001-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-0-10"
+          ],
+          "before": "plaza-de-armas",
+          "draws": 20,
+          "first": {
+            "steps-0-10": 20
+          }
+        },
+        "r003-qu": {
+          "lang": "qu",
+          "places": [
+            "steps-340-350"
+          ],
+          "before": "calle-loreto",
+          "draws": 20,
+          "first": {
+            "steps-340-350": 20
+          }
+        }
+      }
+    }
+  },
+  "spelling": {
+    "qu": {
+      "0": {
+        "recalls": 0,
+        "right": 0,
+        "sharedWord": 0,
+        "sharedName": 0,
+        "words": {}
+      },
+      "1": {
+        "recalls": 19,
+        "right": 17,
+        "sharedWord": 19,
+        "sharedName": 17,
+        "words": {
+          "catedralpa": 9,
+          "loreto": 4,
+          "maruriwan": 4,
+          "tupasqanpi": 4,
+          "rumi": 4,
+          "kanchu": 4,
+          "ancha": 6,
+          "karqan": 6,
+          "plaza": 4,
+          "armasmanta": 4
+        }
+      },
+      "2": {
+        "recalls": 32,
+        "right": 32,
+        "sharedWord": 32,
+        "sharedName": 32,
+        "words": {
+          "catedralpa": 10,
+          "loreto": 12,
+          "maruriwan": 12,
+          "tupasqanpi": 12,
+          "rumi": 12,
+          "kanchu": 12,
+          "plaza": 10,
+          "armasmanta": 10,
+          "ancha": 10,
+          "karqan": 10
+        }
+      },
+      "3": {
+        "recalls": 40,
+        "right": 40,
+        "sharedWord": 40,
+        "sharedName": 40,
+        "words": {
+          "plaza": 20,
+          "armasmanta": 20,
+          "ancha": 20,
+          "karqan": 20,
+          "loreto": 20,
+          "maruriwan": 20,
+          "tupasqanpi": 20,
+          "rumi": 20,
+          "kanchu": 20
+        }
+      }
+    },
+    "all": {
+      "0": {
+        "recalls": 0,
+        "right": 0,
+        "sharedWord": 0,
+        "sharedName": 0,
+        "words": {}
+      },
+      "1": {
+        "recalls": 19,
+        "right": 17,
+        "sharedWord": 19,
+        "sharedName": 17,
+        "words": {
+          "catedralpa": 9,
+          "loreto": 4,
+          "maruriwan": 4,
+          "tupasqanpi": 4,
+          "rumi": 4,
+          "kanchu": 4,
+          "ancha": 6,
+          "karqan": 6,
+          "plaza": 4,
+          "armasmanta": 4
+        }
+      },
+      "2": {
+        "recalls": 32,
+        "right": 32,
+        "sharedWord": 32,
+        "sharedName": 32,
+        "words": {
+          "catedralpa": 10,
+          "loreto": 12,
+          "maruriwan": 12,
+          "tupasqanpi": 12,
+          "rumi": 12,
+          "kanchu": 12,
+          "plaza": 10,
+          "armasmanta": 10,
+          "ancha": 10,
+          "karqan": 10
+        }
+      },
+      "3": {
+        "recalls": 40,
+        "right": 40,
+        "sharedWord": 40,
+        "sharedName": 40,
+        "words": {
+          "plaza": 20,
+          "armasmanta": 20,
+          "ancha": 20,
+          "karqan": 20,
+          "loreto": 20,
+          "maruriwan": 20,
+          "tupasqanpi": 20,
+          "rumi": 20,
+          "kanchu": 20
+        }
+      }
+    }
+  },
+  "browserCheck": {
+    "examples": [
+      {
+        "id": "re002-en",
+        "text": "As we walked out of the main square past the cathedral, the pavement suddenly dropped down in two levels and my grandmother's walker could not get over them. Two strangers had to lift it for her.",
+        "spot": "steps-0-10"
+      },
+      {
+        "id": "re003-es",
+        "text": "Voy en silla de ruedas. ¿Hay alguna forma de salir de la Plaza de Armas para empezar el recorrido sin pasar por las gradas que están junto a la catedral?",
+        "spot": "steps-0-10"
+      },
+      {
+        "id": "re001-ko",
+        "text": "대성당을 뒤로하고 아르마스 광장을 막 빠져나오자마자 계단이 있어서, 아기를 태운 채로 유모차를 들고 내려가야 했어요. 거기에 경사로가 있으면 정말 좋겠어요.",
+        "spot": "steps-0-10"
+      },
+      {
+        "id": "re002-qu",
+        "text": "Catedralpa qayllanta plazamanta lluqsishaqtiyku, pampa qunqaylla iskay kutita uraykurqan, hatun mamaypa andadorninqa mana pasayta atirqanchu. Iskay mana riqsisqa runakuna huqaripurqanku.",
+        "spot": "steps-0-10"
+      },
+      {
+        "id": "re004-en",
+        "text": "The kerb at the edge of the square by the Portal de Carrizos is far too high, and there's no ramp to get down and cross toward the Compañía church. I was stuck there in my wheelchair until someone helped.",
+        "spot": "kerb-80-100"
+      },
+      {
+        "id": "re004-es",
+        "text": "El sardinel al borde de la plaza, junto al Portal de Carrizos, es altísimo y no tiene rampa para bajar y cruzar hacia la Compañía. Me quedé atascado con la silla de ruedas hasta que alguien me ayudó.",
+        "spot": "kerb-80-100"
+      },
+      {
+        "id": "re004-ko",
+        "text": "포르탈 데 카리소스 옆 광장 가장자리 연석이 너무 높고 경사로도 없어서 라 콤파니아 성당 쪽으로 건너갈 수가 없었어요. 누가 도와줄 때까지 휠체어로 꼼짝도 못 했네요.",
+        "spot": "kerb-80-100"
+      },
+      {
+        "id": "re005-qu",
+        "text": "Portal de Carrizospa ukhunmanta lluqsispa Compañía iglesiaman rinaypaq, veredaqa qunqaylla tukukurqan, pistataq ancha uraypi kasharqan, mana pisi pisimanta uraykunapaq kanchu. Wawa carritoq ñawpaq ruedankunata huqarispa pistaman uraykachinay karqan.",
+        "spot": "kerb-80-100"
+      },
+      {
+        "id": "re009-en",
+        "text": "We're doing the walk with a stroller tomorrow. Are the steps at the start of Calle Loreto, right next to the Compañía church, few enough to lift it over, or should we take another street?",
+        "spot": "steps-130-140"
+      },
+      {
+        "id": "re009-es",
+        "text": "Mañana hacemos el recorrido con un coche de bebé. ¿Las gradas al comienzo de la calle Loreto, pegadas a la Compañía, son pocas como para cargarlo, o mejor vamos por otra calle?",
+        "spot": "steps-130-140"
+      },
+      {
+        "id": "re008-ko",
+        "text": "라 콤파니아 성당에서 로레토 거리로 조금 들어가면 잉카 돌담 사이 돌길이 층층이 높낮이가 져 있어서 휠체어로는 더 이상 갈 수가 없었어요. 결국 광장으로 되돌아갔어요.",
+        "spot": "steps-130-140"
+      },
+      {
+        "id": "re007-qu",
+        "text": "Compañía iglesiaq waqtanta Calle Loretoman yaykuspalla, Inka pirqakunaq chawpinpi gradakuna kan, tawnawan puriq mamaytaq mana hap'ikunanpaq imatapas tarirqanchu. Allillamanta, sapankanta uraykurqan.",
+        "spot": "steps-130-140"
+      },
+      {
+        "id": "re011-en",
+        "text": "That stretch of Calle Loreto your map has no photos of, between the Compañía church and Santa Catalina, has a deep stone gutter running down the middle and loose paving. My aunt's walker kept catching in it.",
+        "spot": "no-photos-150-170"
+      },
+      {
+        "id": "re010-es",
+        "text": "En la ruta no hay ni una foto del tramo de la calle Loreto que va de la Compañía a Santa Catalina. ¿Saben cómo es ese pedazo para alguien en silla de ruedas?",
+        "spot": "no-photos-150-170"
+      },
+      {
+        "id": "re011-ko",
+        "text": "지도에 사진이 없는 로레토 거리 구간, 그러니까 라 콤파니아 성당과 산타 카탈리나 사이에는 가운데로 깊은 돌 배수로가 나 있고 바닥 돌도 들떠 있어요. 이모 보행기가 계속 걸렸어요.",
+        "spot": "no-photos-150-170"
+      },
+      {
+        "id": "re011-qu",
+        "text": "Mapaykichikpi mana fotoyuq Calle Loretoq t'aqanpi, Compañía iglesiawan Santa Catalinawan chawpinpi, ñanpa chawpinta ukhu rumi yarqa purin, rumikunapas kuyurishanku. Ipaypa andadornin sapa kutim chaypi hap'ichikurqan.",
+        "spot": "no-photos-150-170"
+      },
+      {
+        "id": "re015-en",
+        "text": "Where Loreto crosses Maruri, past the walls of Santa Catalina, the street suddenly becomes a run of tall stone blocks. I had to take the baby out and carry the stroller over separately.",
+        "spot": "steps-340-350"
+      },
+      {
+        "id": "re013-es",
+        "text": "Las escaleras de piedra donde la calle Loreto se cruza con Maruri no tienen ningún pasamanos. Mi abuelo anda con bastón y tuvo que apoyarse en mi brazo en cada escalón.",
+        "spot": "steps-340-350"
+      },
+      {
+        "id": "re013-ko",
+        "text": "로레토 거리와 마루리 거리가 만나는 곳 돌계단에 난간이 아예 없어요. 할아버지가 지팡이를 쓰시는데 한 칸 한 칸 제 팔에 기대셔야 했어요.",
+        "spot": "steps-340-350"
+      },
+      {
+        "id": "re013-qu",
+        "text": "Calle Loreto Maruriwan tupasqanpi kaq rumi gradakunapiqa mana hap'ikunapaq pasamanos kanchu. Machulayqa tawnawanmi purin, sapa gradapim makiyta tawnakunan karqan.",
+        "spot": "steps-340-350"
+      },
+      {
+        "id": "re016-en",
+        "text": "We made it all the way to Qorikancha only to find steps right in front of the ticket booth. My husband's wheelchair couldn't get up to the window, so I bought the tickets alone.",
+        "spot": "steps-590-594"
+      },
+      {
+        "id": "re017-es",
+        "text": "Al final de todo, junto a Santo Domingo, hay que trepar unos bordes de piedra altos para llegar a la ventanilla. Después de toda la caminata me temblaban las piernas y no había de dónde agarrarse.",
+        "spot": "steps-590-594"
+      },
+      {
+        "id": "re016-ko",
+        "text": "코리칸차까지 다 와 놓고 보니 매표소 바로 앞에 계단이 있더라고요. 남편 휠체어로는 창구까지 올라갈 수가 없어서 표는 저 혼자 샀어요.",
+        "spot": "steps-590-594"
+      },
+      {
+        "id": "re016-qu",
+        "text": "Qorikanchakama chayarqayku, boleteríaq ñawpaqninpitaq gradakuna kasqa. Qusaypa ruedayuq tiyanan mana ventanillakama siqayta atirqanchu, chaymi sapallay boletokunata rantirqani.",
+        "spot": "steps-590-594"
+      },
+      {
+        "id": "re019-en",
+        "text": "The Plaza de Armas was a joy with my wife's wheelchair, the paths through the gardens are smooth and there are benches all around the fountain. We stayed a whole hour just watching people.",
+        "spot": "plaza-de-armas"
+      },
+      {
+        "id": "re019-es",
+        "text": "La Plaza de Armas fue un gusto para mi esposa en silla de ruedas, los caminos entre los jardines son lisos y hay bancas alrededor de la pileta. Nos quedamos una hora entera mirando a la gente.",
+        "spot": "plaza-de-armas"
+      },
+      {
+        "id": "re020-ko",
+        "text": "아르마스 광장 근처에 장애인 화장실이 있나요? 아버지가 보행기를 쓰시는데 출발 전에 꼭 들르셔야 해서요.",
+        "spot": "plaza-de-armas"
+      },
+      {
+        "id": "re020-qu",
+        "text": "Plaza de Armaspi kanchu huk baño, andadorwan puriqkunapas yaykunankupaq hina? Taytayqa andadorwanmi purin, puriyta manaraq qallarishaqtiyku bañoman rinan kan.",
+        "spot": "plaza-de-armas"
+      },
+      {
+        "id": "re022-en",
+        "text": "The window at the Qorikancha ticket booth is set so high that from my wheelchair I couldn't even see the cashier. I had to shout up to buy my ticket.",
+        "spot": "qorikancha-ticket-booth"
+      },
+      {
+        "id": "re022-es",
+        "text": "La ventanilla de la boletería del Qorikancha está tan alta que desde mi silla de ruedas ni siquiera veía a la cajera. Tuve que comprar la entrada hablando a gritos.",
+        "spot": "qorikancha-ticket-booth"
+      },
+      {
+        "id": "re024-ko",
+        "text": "코리칸차 매표소에서 카드 결제가 되나요? 장애인 할인 입장권도 있는지 궁금해요. 광장에서 출발하기 전에 미리 알아 두고 싶어서요.",
+        "spot": "qorikancha-ticket-booth"
+      },
+      {
+        "id": "re023-qu",
+        "text": "Qorikanchaq boleteríanpi llamk'aqkunaqa ancha sumaqtam hatun mamayta chaskirqanku. Tiyanata apamupurqanku, kuraq runakunapaq descuentota willarqanku, manaraq yaykushaqtintaq samachirqanku.",
+        "spot": "qorikancha-ticket-booth"
+      },
+      {
+        "id": "re027-en",
+        "text": "The cathedral took our breath away. The guard saw my dad with his cane and walked him to a bench near the main altar so he could sit and take it all in.",
+        "spot": "catedral-del-cusco"
+      },
+      {
+        "id": "re026-es",
+        "text": "En la catedral la única entrada para mi silla de ruedas era una puerta lateral, y estaba cerrada con llave sin nadie que la abriera. Esperamos veinte minutos y nos fuimos.",
+        "spot": "catedral-del-cusco"
+      },
+      {
+        "id": "re026-ko",
+        "text": "대성당은 휠체어로 들어갈 수 있는 곳이 옆문 하나뿐인데, 그 문이 잠겨 있고 열어 줄 사람도 없었어요. 20분을 기다리다 결국 포기했어요.",
+        "spot": "catedral-del-cusco"
+      },
+      {
+        "id": "re026-qu",
+        "text": "Catedralpiqa ruedayuq tiyanaypaq huk waqta punkulla yaykunapaq karqan, chaytaq wisq'asqa karqan, mana pipas kicharinanpaq karqanchu. Iskay chunka minutota suyarqayku, chaymanta ripurqayku.",
+        "spot": "catedral-del-cusco"
+      },
+      {
+        "id": "re030-en",
+        "text": "Can I take a stroller inside the Compañía church on the square, or do I have to leave it at the door? I'd love to see the altar with my baby.",
+        "spot": "iglesia-de-la-compania-de-jesus"
+      },
+      {
+        "id": "re029-es",
+        "text": "La iglesia de la Compañía tiene el horario de visitas en la puerta, pero cuando volvimos a esa hora con mi abuela estaba cerrada. Caminó hasta allí con su andador para nada.",
+        "spot": "iglesia-de-la-compania-de-jesus"
+      },
+      {
+        "id": "re029-ko",
+        "text": "라 콤파니아 성당 문에 관람 시간이 붙어 있어서 그 시간에 할머니를 모시고 다시 갔는데 문이 닫혀 있었어요. 할머니가 보행기 밀고 거기까지 헛걸음하셨어요.",
+        "spot": "iglesia-de-la-compania-de-jesus"
+      },
+      {
+        "id": "re030-qu",
+        "text": "Plazapi kaq Compañía iglesiaman wawa carritowan yaykuyta atiymanchu, icha punkupichu saqinay kanqa? Wawaywan altarta rikuyta ancha munani.",
+        "spot": "iglesia-de-la-compania-de-jesus"
+      },
+      {
+        "id": "re031-en",
+        "text": "Calle Loreto is so narrow between its Inca walls that whenever a tour group comes through there's no room left for a wheelchair. We were pinned against the stones several times.",
+        "spot": "calle-loreto"
+      },
+      {
+        "id": "re032-es",
+        "text": "¿Por la calle Loreto pasan carros o es solo peatonal? Quiero saber si es segura para mis hijos y para el andador de mi mamá.",
+        "spot": "calle-loreto"
+      },
+      {
+        "id": "re032-ko",
+        "text": "로레토 거리에 차가 다니나요, 아니면 보행자 전용인가요? 아이들이랑 보행기 쓰시는 어머니랑 다니기에 안전한지 알고 싶어요.",
+        "spot": "calle-loreto"
+      },
+      {
+        "id": "re032-qu",
+        "text": "Calle Loretonta carrokuna purinchu, icha chakillawan puriqkunapaqchu? Wawaykunawan, andadorwan puriq mamaywanpas mana manchakuspa chaypi puriyta atisaqkuchu?",
+        "spot": "calle-loreto"
+      },
+      {
+        "id": "re035-en",
+        "text": "Santo Domingo, with the church sitting right on top of the Inca temple walls, was the highlight for my father. The courtyard is flat and shaded, so he could rest with his cane while we looked around.",
+        "spot": "iglesia-de-santo-domingo"
+      },
+      {
+        "id": "re034-es",
+        "text": "¿La iglesia de Santo Domingo abre los domingos por la tarde? ¿Hay alguna forma de entrar en silla de ruedas?",
+        "spot": "iglesia-de-santo-domingo"
+      },
+      {
+        "id": "re036-ko",
+        "text": "산토도밍고 성당 안 오래된 돌바닥이 반들반들해서 엄청 미끄러워요. 할머니가 보행기를 짚고도 넘어지실 뻔했는데, 어디에도 매트나 손잡이가 없어요.",
+        "spot": "iglesia-de-santo-domingo"
+      },
+      {
+        "id": "re036-qu",
+        "text": "Santo Domingo ukhupiqa ñawpa rumi pampaqa ancha llusk'am, sinchi urmanapaq. Hatun mamay andadorninwanpas yaqa urmarqan, maypipas mana alfombrapas, hap'ikunapaq barandapas kanchu.",
+        "spot": "iglesia-de-santo-domingo"
+      },
+      {
+        "id": "re037-en",
+        "text": "The long walls of the Santa Catalina convent along the way were so peaceful, and my mother loved hearing the nuns' bells. The pavement beside it was smooth enough for her walker.",
+        "spot": "monasterio-de-santa-catalina-de-sena"
+      },
+      {
+        "id": "re038-es",
+        "text": "¿Se puede visitar el museo del monasterio de Santa Catalina en silla de ruedas? Leí que tiene varios pisos y no sé si hay ascensor.",
+        "spot": "monasterio-de-santa-catalina-de-sena"
+      },
+      {
+        "id": "re039-ko",
+        "text": "산타 카탈리나 앞 인도에 노점상들이 천을 쭉 깔아 놔서 남편이 휠체어를 타고 차도로 나가야 했어요. 꼭 기록해 주세요.",
+        "spot": "monasterio-de-santa-catalina-de-sena"
+      },
+      {
+        "id": "re039-qu",
+        "text": "Santa Catalinaq ñawpaqninpi qhatuqkunaqa llapan veredapi mantankuta mast'arinku, chaymi qusayqa ruedayuq tiyananwan pistaman lluqsinan karqan. Ama hina kaspa, qillqaykuychik.",
+        "spot": "monasterio-de-santa-catalina-de-sena"
+      },
+      {
+        "id": "re042-en",
+        "text": "Is the covered walkway at the Portal de Carrizos level all the way along, or are there drops between the shops? I'm pushing my son in a stroller.",
+        "spot": "portal-de-carrizos"
+      },
+      {
+        "id": "re041-es",
+        "text": "El Portal de Carrizos nos salvó en una tarde de sol fuerte: piso de piedra parejo, techado, sombra todo el tramo y un cafecito donde por fin pude sentarme con las piernas molidas.",
+        "spot": "portal-de-carrizos"
+      },
+      {
+        "id": "re040-ko",
+        "text": "포르탈 데 카리소스 회랑 아래는 식당 호객꾼들이랑 메뉴판이 통로를 거의 다 막고 있어서, 휠체어가 테이블과 기둥 사이에 자꾸 끼었어요.",
+        "spot": "portal-de-carrizos"
+      },
+      {
+        "id": "re042-qu",
+        "text": "Portal de Carrizospa qatasqa ñanninqa qallariyninmanta tukukuyninkama pampachu, icha tiendakunaq chawpinpi hanaq uray kanchu? Qhari wawayta wawa carritopi tanqaspam purini.",
+        "spot": "portal-de-carrizos"
+      }
+    ],
+    "decisions": {
+      "r000-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "qorikancha-ticket-booth"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r001-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ]
+      },
+      "r001-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r001-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r001-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus"
+        ],
+        "reason": "remembered"
+      },
+      "r002-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "portal-de-carrizos",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r002-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "portal-de-carrizos",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r002-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "kerb-80-100",
+          "steps-0-10",
+          "portal-de-carrizos"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r003-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ]
+      },
+      "r003-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r003-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-place"
+      },
+      "r003-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "calle-loreto",
+          "steps-130-140"
+        ],
+        "reason": "remembered"
+      },
+      "r004-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "r004-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-590-594",
+          "qorikancha-ticket-booth",
+          "steps-340-350"
+        ],
+        "reason": "unclear-place"
+      },
+      "r004-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "steps-590-594",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r005-en": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "steps-340-350"
+        ]
+      },
+      "r005-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "steps-340-350"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r005-ko": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "calle-loreto",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r006-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "steps-0-10",
+          "portal-de-carrizos",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-place"
+      },
+      "r006-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "kerb-80-100"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r006-ko": {
+        "status": "ready",
+        "kind": "problem",
+        "category": "path-blocked",
+        "candidates": [
+          "kerb-80-100",
+          "steps-0-10",
+          "plaza-de-armas"
+        ]
+      },
+      "r007-en": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r007-es": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "iglesia-de-santo-domingo",
+          "steps-340-350"
+        ]
+      },
+      "r007-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "monasterio-de-santa-catalina-de-sena",
+          "no-photos-150-170"
+        ]
+      },
+      "r007-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "kerb-80-100",
+          "steps-130-140"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r008-en": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r008-es": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r008-ko": {
+        "status": "ready",
+        "kind": "question",
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "no-photos-150-170",
+          "steps-340-350"
+        ]
+      },
+      "r009-en": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "catedral-del-cusco"
+        ]
+      },
+      "r009-es": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "steps-340-350",
+          "steps-130-140"
+        ]
+      },
+      "r009-ko": {
+        "status": "ready",
+        "kind": "praise",
+        "category": null,
+        "candidates": [
+          "steps-0-10",
+          "plaza-de-armas",
+          "steps-590-594"
+        ]
+      },
+      "r010-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "steps-or-slope",
+        "candidates": [
+          "steps-0-10",
+          "steps-340-350",
+          "steps-130-140"
+        ],
+        "reason": "unclear-place"
+      },
+      "r010-es": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [],
+        "reason": "unclear-kind"
+      },
+      "r010-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "calle-loreto"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r011-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r011-es": {
+        "status": "unsure",
+        "kind": "praise",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r011-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": "other",
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r011-qu": {
+        "status": "unsure",
+        "kind": null,
+        "category": null,
+        "candidates": [
+          "qorikancha-ticket-booth",
+          "plaza-de-armas",
+          "iglesia-de-la-compania-de-jesus"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r012-en": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "kerb-80-100",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r012-es": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "kerb-80-100",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r012-ko": {
+        "status": "unsure",
+        "kind": "problem",
+        "category": null,
+        "candidates": [
+          "steps-340-350",
+          "steps-130-140",
+          "no-photos-150-170"
+        ],
+        "reason": "unclear-kind"
+      },
+      "r013-en": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r013-es": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      },
+      "r013-ko": {
+        "status": "unsure",
+        "kind": "question",
+        "category": null,
+        "candidates": [],
+        "reason": "no-place"
+      }
+    }
+  }
+}
