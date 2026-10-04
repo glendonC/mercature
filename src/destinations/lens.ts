@@ -96,13 +96,13 @@ export function framing(points: Point[], box: Box, lean: number, tilt: Tilt, wid
 }
 
 const KEY = 'mercature.map.v1';
-/** The tilted map stays behind a switch until it is approved: ?map=tilt or ?map=flat, remembered on this device. */
+/** The map leans by default; ?map=flat keeps it flat on this device and ?map=tilt leans it again. */
 export function tiltChosen(): boolean {
   try {
     const asked = new URLSearchParams(location.search).get('map');
     if (asked === 'tilt' || asked === 'flat') localStorage.setItem(KEY, asked);
-    return (asked ?? localStorage.getItem(KEY)) === 'tilt';
+    return (asked ?? localStorage.getItem(KEY)) !== 'flat';
   } catch {
-    return false;
+    return true;
   }
 }
