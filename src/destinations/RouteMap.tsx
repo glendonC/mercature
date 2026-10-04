@@ -29,6 +29,10 @@ export type Marker = {
   missing?: boolean;
   /** The kind it is, such as 'steps' or 'bench', as kindOf names it: the marker takes the kind's hue. */
   kind?: string;
+  /** It differs between the walk as recorded and the walk with her edits: a ring a step outside the selection ring. Say it in the label too. */
+  changed?: boolean;
+  /** Not on the map in this view, such as a spot she added, before she added it: kept so it lifts away and drops back in. */
+  gone?: boolean;
 };
 const ICONS: Partial<Record<MarkerIcon, Icon>> = {
   steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, dismissed: RemoveIcon,
@@ -601,7 +605,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
   const clearOf = (lift: number): Rect[] => still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }], keepClear = clearOf(flat ? 0 : 11);
   // An OpenStreetMap record stays on its spot, under the others, and never pushes one aside unless it is the one chosen.
-  const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => marker.state !== 'osm' || marker.selected ? [i] : []);
+  const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => !marker.gone && (marker.state !== 'osm' || marker.selected) ? [i] : []);
   const apart = [...spots], stepped = spread(standing.map(i => spots[i]), standing.map(i => markers[i].selected), 46, keepClear);
   standing.forEach((i, j) => { apart[i] = stepped[j]; });
   // The quiet ones lie on the ground and give way to the credit chip.
@@ -626,7 +630,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
   // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
-  const quietly = (marker: Marker) => marker.state === 'osm' && !marker.selected && marker.id !== lifted;
+  const quietly = (marker: Marker) => !!marker.gone || (marker.state === 'osm' && !marker.selected && marker.id !== lifted);
   const own = new Map(placed.filter(p => !quietly(p.marker)).map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
   const taken: Rect[] = [...own.values()], boxes = new Set(taken);
   if (zoomBox) taken.push(zoomBox);
@@ -692,11 +696,13 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
         const inside = <>
           <span className="route-marker-dot" aria-hidden="true">{marker.state === 'osm' && Glyph ? <Glyph size={12} /> : marker.rank ?? ''}</span>
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
+          {marker.changed && <span className="route-marker-changed" aria-hidden="true" />}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-mark': marker.kind, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-mark': marker.kind, 'data-changed': marker.changed || undefined, 'data-gone': marker.gone || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
-          : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
+          : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} aria-hidden={marker.gone || undefined} tabIndex={marker.gone ? -1 : undefined}
+            onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
             onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
             onFocus={event => { if (event.currentTarget.matches(':focus-visible')) raise(marker.id); }} onBlur={() => { if (pointedNow.current === marker.id) raise(null); }}>{inside}</button>;
       })}
