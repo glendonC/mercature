@@ -2,8 +2,7 @@ import {test, expect, type Page} from '@playwright/test';
 
 async function openCanvas(page: Page) {
   await page.goto('/');
-  await page.getByRole('textbox', {name:'Explore a place'}).fill("Noor's farm");
-  await page.locator('#place-results').getByRole('button', {name:/^Noor's farm/}).click();
+  await page.getByRole('button', {name:/^Noor's farm/}).click();
   await page.getByRole('button', {name:'Enter',exact:true}).click();
   await expect(page.getByRole('tab', {name:'Place',exact:true})).toHaveAttribute('aria-selected','true');
 }
@@ -35,7 +34,6 @@ test('a message stays linked while tabs change and every path is compared before
   expect(plans[0].origin.language).toBe('ko');
   expect(plans[0].notes).toBe('Confirm with the operator before moving anything.');
   await page.getByRole('button',{name:'Home',exact:true}).click();
-  await page.getByRole('button',{name:'Search places',exact:true}).click();
   await page.getByRole('button',{name:/Move coffee sacks/}).click();
   await expect(page.getByRole('heading',{name:'Plan saved.'})).toBeVisible();
 });

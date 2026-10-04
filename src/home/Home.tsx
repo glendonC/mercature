@@ -7,7 +7,7 @@ import { DESTINATIONS, PACKAGES, isDestinationId, loadDestination, type Destinat
 import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
-import { CloseIcon, InfoIcon, SceneIcon } from '../icons';
+import { CloseIcon, InfoIcon } from '../icons';
 import { useLanguage } from '../i18n';
 import LanguageSwitch from '../i18n/LanguageSwitch';
 import './Home.css';
@@ -101,7 +101,7 @@ function FarmPlan() {
     {obstacles.map(item => <rect key={item.id} {...box(item.bounds)} rx=".15" className={item.movable ? 'plan-movable' : 'plan-fixed'}/>)}
   </svg>;
 }
-export default function Home({onExample, onFarm, onDestination, saved = [], onOpenSaved}: Props) {
+export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: Props) {
   const { t, rich, lang } = useLanguage();
   const credits = useRef<HTMLDialogElement>(null);
   const words = useRef<HTMLDivElement>(null);
@@ -136,9 +136,6 @@ export default function Home({onExample, onFarm, onDestination, saved = [], onOp
       </button>)}
       <button className="home-place" onClick={onFarm}>
         <FarmPlan/><span className="home-place-text"><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span>
-      </button>
-      <button className="home-place" onClick={onExample}>
-        <span className="result-scene-icon"><SceneIcon/></span><span className="home-place-text"><strong>{t('home.courtyard')}</strong></span><span className="badge">{t('common.example')}</span>
       </button>
       {saved.length > 0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{saved.map(entry => <button key={entry.id} onClick={() => onOpenSaved(entry)}>
         <span>{entry.title}</span><small>{t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small>
