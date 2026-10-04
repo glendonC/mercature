@@ -229,6 +229,11 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (move) fly(target);
   }
   function home() { setPane({ kind: 'inbox' }); setEditing(null); setSaid(''); setLine(''); map.current?.fit(true); }
+  // An editor opened low in the panel scrolls into view, so a phone shows it above the fold.
+  useEffect(() => {
+    if (!editing) return;
+    sheet.current?.querySelector('.edit-panel')?.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
+  }, [editing]);
   // Focus follows the panel: into a pane when it opens, back to the row that opened it on return.
   const lastRow = useRef<string | null>(null);
   useEffect(() => {
@@ -324,7 +329,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
 
   // Map content
   const current = pane.kind === 'message' ? messageOf(pane.id) : null;
-  const ranked = pane.kind === 'message' ? current?.answer?.candidates ?? [] : [];
+  // The map ranks the suggested spots until the message is placed; then only where it went is marked.
+  const ranked = pane.kind === 'message' && !current?.spot ? current?.answer?.candidates ?? [] : [];
   const rankOf = (target: Target) => { const rank = ranked.findIndex(key => same(targetOf(key), target)) + 1; return rank || undefined; };
   const filedOn = current?.spot ? targetOf(current.spot) : null;
   const selected: Target | null = pane.kind === 'spot' ? pane.target : filedOn;
@@ -503,7 +509,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {answer && answer.candidates.length > 0 && <>
         <h2 className="ri-heading">{w.about}</h2>
         <ol className="ri-list ri-about">{answer.candidates.map((key, index) => { const target = targetOf(key); return target && <li key={key}>
-          <button className="ri-row" aria-pressed={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)}><span className="ri-rank">{index + 1}</span><span className="ri-row-main">{nameOf(target)}</span>{message?.spot === key && <span className="ri-filed">{w.filed('')}</span>}</button>
+          <button className="ri-row" aria-pressed={message?.spot === key} onClick={() => message?.spot === key ? openSpot(target) : file(shown.id, target)}><span className="ri-rank">{index + 1}</span><span className="ri-row-main">{nameOf(target)}</span>{message?.spot === key && <span className="ri-filed">{w.placed}</span>}</button>
         </li>; })}</ol>
       </>}
       {message?.spot && !answer?.candidates.includes(message.spot) && <p className="ri-filedline"><button className="ri-text" onClick={() => { const target = targetOf(message.spot!); if (target) openSpot(target); }}>{w.filed(nameOfKey(message.spot))}</button></p>}
