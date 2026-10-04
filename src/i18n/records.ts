@@ -18,6 +18,7 @@ const RECORDS: Readonly<Record<string, PlainKey>> = {
   'Gate': 'record.gate',
   'Mapped as not wheelchair accessible': 'record.mappedNotWheelchair',
   'From the map, no photos': 'record.fromMap',
+  'OpenStreetMap suggests; nobody has checked it': 'record.wayAround',
   'Surface': 'record.surface',
   'Smoothness': 'record.smoothness',
   'Crossing': 'record.crossing',

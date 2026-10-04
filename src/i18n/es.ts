@@ -134,6 +134,7 @@ export const es = {
   'record.gate': 'Portón',
   'record.mappedNotWheelchair': 'Según el mapa, no es accesible en silla de ruedas',
   'record.fromMap': 'Del mapa, sin fotos',
+  'record.wayAround': 'Lo sugiere OpenStreetMap; nadie lo ha revisado',
   'record.surface': 'Superficie',
   'record.smoothness': 'Estado de la superficie',
   'record.tactilePaving': 'Piso podotáctil',

@@ -130,6 +130,7 @@ export const en = {
   'record.gate': 'Gate',
   'record.mappedNotWheelchair': 'Mapped as not wheelchair accessible',
   'record.fromMap': 'From the map, no photos',
+  'record.wayAround': 'OpenStreetMap suggests; nobody has checked it',
   'record.surface': 'Surface',
   'record.smoothness': 'Smoothness',
   'record.tactilePaving': 'Tactile paving',
