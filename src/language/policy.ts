@@ -62,7 +62,8 @@ export type Decision = {
   readonly kind: MessageKind | null;
   readonly category: IssueCategory | null;
   readonly candidates: readonly string[];
-  readonly reason?: 'unclear-kind' | 'unclear-place' | 'no-place';
+  /** 'remembered' comes only from the memory of confirmations (memory.ts), never from decide(). */
+  readonly reason?: 'unclear-kind' | 'unclear-place' | 'no-place' | 'remembered';
 };
 
 type Embed = (text: string) => Promise<ArrayLike<number>>;

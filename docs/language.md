@@ -1,6 +1,6 @@
 # Message understanding
 
-A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise.
+A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise. It also learns from her: a message she links to a spot helps rank that spot for similar messages later, on the phone.
 
 ## What runs on the phone
 
@@ -140,6 +140,66 @@ The heads were trained only on farm messages. To see whether they carry over, 44
 
 **Demo message.** A Korean visitor writes 코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요 ("On the way to Qorikancha, the stone steps in the Inca-walled alley by the church were so steep that my mother struggled to go down"). The model returns: status `unsure`, reason `unclear-kind`, kind `problem`, issue type `null` (its best guess, a blocked path at 0.47, is below 0.55), candidates `steps-340-350`, `steps-130-140`, `qorikancha-ticket-booth`. Both Calle Loreto steps fit the message and come first and second.
 
+## Learning from the operator's confirmations
+
+When the operator links a message to a spot ("Yes, this spot"), the phone keeps that message as an example for the place: the 384 numbers the model computed for it, a sketch of its spelling, the spot and the time, never the text. A new message that is close to a kept example, and not as close to another spot's, gets that spot first. The tool adapts to a place's visitors and to a language the encoder cannot read, such as Quechua, from the operator's own decisions: no retraining, no server, nothing leaves the phone.
+
+- **Only the order changes.** Every message still runs through the model, and kind and issue type are always the model's own. Nothing is answered from storage.
+- **A person decides.** When the memory puts a different spot first than the model, or the message is not in English, Spanish or Korean, the answer is *Not sure* with the reason `remembered`, so the screen can say the first spot is where a similar message was linked before. The memory never turns *Not sure* into a confident answer and never acts on a message the model judged to be about no place.
+- **English, Spanish and Korean** are compared by embedding: the closest kept example needs a cosine of at least 0.935 and a lead of 0.005 over the closest example of any other spot. The bar is high because e5 cosines are compressed: two Korean training and dev messages about different spots reach 0.93.
+- **Other languages** are compared by spelling: the cosine of their character trigram counts, hashed into 65,536 buckets (`sketch` in `src/language/memory.ts`), must reach 0.5. The encoder does not separate Quechua topics (next section), but a Quechua message about the restroom or the steps tends to share words with one the operator already linked there.
+- **Storage.** The model's Cache Storage, one entry per place, keyed by model files and revision, at most 100 examples per place (oldest dropped). `remember(message, place, spotId)` adds one, linking the same message again replaces it, `forgetPlace(placeId)` deletes them (Start over) and `rememberedCount(placeId)` counts them. With no kept example every answer is exactly what it was before.
+
+### Data for the memory
+
+`scripts/language/memory-messages.json` (synthetic, CC0-1.0, written by a large language model for this project):
+
+- **Farm:** a Southern Quechua (Cusco-Collao) machine translation of each of the 105 training and dev families, from their English and Spanish versions, with the family's labels.
+- **Qorikancha walk:** 42 new families, three per spot, each in English, Spanish and Korean as independent paraphrases, with a Southern Quechua machine translation.
+
+Both were written in separate sessions given only the source messages or the spot list, without access to the held-out farm messages or the route messages. No text has been reviewed by a native speaker.
+
+### Calibration, on training and dev messages only
+
+`node scripts/language/memory.mjs calibrate` (`scripts/language/results/memory-calibration.json`). Every training and dev message of the farm, in all four languages, is scored with memories drawn from the same families, its own family left out: k = 1, 2 and 3 examples per spot, Quechua only or all four languages, 10 draws each.
+
+**Embedding first, then spelling.** The first design compared every message by embedding. On these messages it could not help Quechua: the single closest Quechua example named the right spot for 17 of 83 Quechua messages (20 after removing their mean), against 50 of 83 by spelling. So messages that fail the language check are compared by spelling. This was decided on training and dev messages only, before any held-out or route message was scored with a memory.
+
+| Closest example in the same language is about the right spot | Embedding | Embedding, mean removed | Spelling |
+| --- | ---: | ---: | ---: |
+| English | 59/83 | 59/83 | 53/83 |
+| Spanish | 56/83 | 58/83 | 63/83 |
+| Korean | 68/83 | 69/83 | 53/83 |
+| Quechua | 17/83 | 20/83 | 50/83 |
+
+**Bars.** Over a grid (embedding cosine 0.80 to 0.98, lead 0 to 0.05; spelling cosine 0.05 to 0.95, lead 0 to 0.2), each bar maximizes right first spots gained minus three times right first spots lost on its own messages; ties go to the stricter pair. With those bars, right spot first (mean of 10 draws, of 86 messages per language naming one spot):
+
+| Examples per spot | Quechua top-1 | Quechua top-3 | English top-1 | Spanish top-1 | Korean top-1 (all-language memory) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0 | 15 | 27 | 83 | 75 | 76 |
+| 1 | 25.5 | 39.5 | 83 | 75 | 76.6 |
+| 2 | 33.2 | 47.1 | 83 | 75 | 77.4 |
+| 3 | 36.6 | 49.8 | 83 | 75 | 77.8 |
+
+The price: with 3 Quechua examples per spot, about half of the memory's Quechua suggestions (32.7 of 64.8 per draw) put a spot first that the message is not about, and 4.4 Quechua messages per draw lost a right first spot. They are all *Not sure*, and the model's own first spot for Quechua is right for 15 of 86.
+
+### Preregistered evaluation
+
+Frozen before any held-out farm message or route message was scored with a memory: the rule and its bars, the example data, the code that stores and applies the memory, the protocol in `scripts/language/memory.mjs` and the ship rule below. Committed under the title "Freeze the memory of confirmations and its evaluation before scoring held-out messages".
+
+- **Scored:** the 88 held-out farm messages (22 per language; 16 of the machine-translated Quechua test messages name a spot) and the 44 route messages (4 in Quechua, 3 of them naming a spot), each once through the model.
+- **Memory:** k = 0, 1, 2 and 3 kept examples per spot, from the training and dev families (farm) or the new route families, never from a scored family. Two memories: Quechua examples only, and examples in all four languages (4k per spot). 20 seeded draws per k; within a draw a smaller memory is part of a larger one, as an operator's memory grows.
+- **Reported per language:** right spot first and in the top three (mean over draws, worst and best draw), confident answers and confident wrong answers, answers as expected, answers the memory changed, false triggers (the memory put a spot first that the message is not about, including messages about no spot), right first spots gained and lost, and for spelling matches whether the message shares a word, or a spot's name or alias, with its closest kept example.
+- **Ship rule:** (1) with no examples every decision equals the published runs, 88 of 88 and 44 of 44, in Node and in the browser; (2) Quechua: with the Quechua memory at k = 3, the right spot comes first for at least 3 more of the 16 held-out Quechua farm messages naming one (mean over draws), and top-3 does not fall; (3) English, Spanish and Korean: for each language, place, memory and k, the mean over draws of top-1, top-3 and answers as expected is not below k = 0, and confident wrong answers are not above it.
+
+### Limits
+
+- **Tiny samples.** 16 Quechua farm messages naming a spot and 3 on the route. One message more or less moves the Quechua figures by 6 points on the farm and 33 on the route.
+- **Machine-translated Quechua.** Every Quechua text, examples and scored messages alike, is a language model's translation that no native speaker has read. Real Quechua spelling varies (loanwords, vowels, a mix with Spanish), and spelling matches depend on it.
+- **Same kind of author.** Examples and scored messages were written by the same kind of model, so they may share wording more than real visitors would. The gains are an upper bound for what an operator would see.
+- **Only what was confirmed.** The memory helps with messages close to ones already linked; a new way of describing a spot gets no help until the operator links one like it.
+- **Derived from the text.** An embedding and a spelling sketch are not the message, but both are computed from it, and a sketch of a short message says a lot about its words. They stay on the phone; Start over or clearing the site's data deletes them.
+
 ## Speed
 
 On the development Mac (Apple M5 Max, one inference thread):
@@ -162,7 +222,7 @@ No phone has been measured. The last column uses Chromium's CPU throttling (`bro
 
 `prepareModel()` downloads the four files once with real byte progress, checks each against its pinned SHA-256 and stores it in Cache Storage. Afterwards nothing is fetched: the runtime reads the stored files, and a missing file makes loading fail instead of downloading. `understand()` loads a stored model by itself and never downloads; `modelStored()` tells the interface whether a model is on the device, and `modelDownloadBytes()` how many bytes `prepareModel()` would download from this origin (0 once stored). The trimmed files are looked up under the app's base path, so a deploy under a sub-path serves them too.
 
-The embeddings of the label passages and of each place's spots are stored too, keyed by model files, revision, place and a hash of the exact passages, so any change to a spot's names, description or aliases means they are computed again. Message embeddings and answers are never stored: every message runs through the model. With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
+The embeddings of the label passages and of each place's spots are stored too, keyed by model files, revision, place and a hash of the exact passages, so any change to a spot's names, description or aliases means they are computed again. Answers are never stored: every message runs through the model. A message's embedding and spelling sketch are stored only when the operator links that message to a spot (see Learning from the operator's confirmations). With stored vectors the browser gave the same decisions as Node on all 88 held-out and all 44 route messages.
 
 Checked with `scripts/language/browser.mjs` on a production build that uses the app's own service worker: after provisioning, Chromium was closed and reopened on the same profile with networking disabled. The page came from the service worker, the model state started `absent`, and a new message was understood with no network request. On iPhone, Safari deletes a site's stored data after seven days of browsing without a visit unless the site was added to the home screen, so the model would need downloading again.
 
@@ -191,7 +251,7 @@ An earlier trial with the same encoder accepted a feature only when its cosine s
 
 ## Reproduce
 
-Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), and the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`). Each has every decision, ranking and timing.
+Raw outputs are kept in `scripts/language/results/`: the preregistered held-out run (`heldout-preregistered.json`), the same set with the language check (`heldout-with-language-check.json`), the Qorikancha walk (`route.json`), the Chromium runs behind the browser figures (`browser-heldout.json`, `browser-route.json`, `browser-route-cpu6x.json`) and the memory's calibration (`memory-calibration.json`). Each has every decision, ranking and timing.
 
 
 Node 24 or newer, from the repository root:
@@ -207,6 +267,7 @@ node scripts/language/trim.mjs
 node scripts/language/verify-trim.mjs
 npx vite build --config scripts/language/harness/vite.config.ts
 node scripts/language/browser.mjs dev
+node scripts/language/memory.mjs calibrate
 ```
 
 `provision.mjs` downloads the pinned files into `.local/language/model` and checks their hashes. `trim.mjs` writes the trimmed encoder to `public/models/` (not in version control), where the app serves it; it needs [uv](https://docs.astral.sh/uv/) to run the ONNX edit with `onnx` and `numpy`. `evaluate.mjs` takes `--variant latin-hangul` to evaluate it. `browser.mjs` builds nothing; it serves the harness build, provisions the model in Chromium (the trimmed files if `public/models/` has them, otherwise the Hub URLs, redirected to the local files unless `--hub` is given), answers every message in the split, then restarts the browser with networking disabled and answers a new one. Results go to `.local/language/`.

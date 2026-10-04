@@ -11,7 +11,7 @@ import { aliasBaseline } from '../../src/language/index.ts';
 import { RUNTIME_WASM } from '../../src/language/model.ts';
 import { buildIndex, decide, looksSupported, prepareHeads, queryText, score } from '../../src/language/policy.ts';
 import { QORIKANCHA_PLACE } from '../../src/site/route.ts';
-import { FARM_FEATURES, HEADS_PATH, VARIANT, categoryLabels, concernsPlace, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
+import { FARM_FEATURES, HEADS_PATH, VARIANT, asExpected, categoryLabels, concernsPlace, confidentWrong, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
 
 const SPLITS = ['train', 'dev', 'test', 'route'];
 const split = process.argv.slice(2).find(arg => SPLITS.includes(arg)) ?? 'dev';
@@ -51,26 +51,8 @@ const categoryRows = list => list.filter(row => row.message.kind === 'problem' &
 const categoryRight = row => categoryLabels(row.message).includes(heads.category.labels[argmax(row.scores.category)]);
 const placeRight = row => (row.scores.place >= heads.thresholds.place) === concernsPlace(row.message);
 
-/** What a person should see for each case type: a right answer or "Not sure", never a confident wrong one. */
-function expectation(row) {
-  const { message, decision } = row;
-  const kindOk = decision.kind === null || decision.kind === message.kind;
-  switch (message.case) {
-    case 'vague': return decision.status === 'unsure';
-    case 'negation': case 'resolved': return decision.kind !== 'problem';
-    case 'praise-general': case 'question-general': case 'off-topic': return decision.candidates.length === 0 && kindOk;
-    default: return kindOk && !readyWrong(row);
-  }
-}
-/** A confident answer: status ready. It is wrong when any answered field disagrees with the label. */
-function readyWrong(row) {
-  const { message, decision } = row;
-  if (decision.status !== 'ready') return false;
-  if (decision.kind !== message.kind) return true;
-  if (message.kind === 'problem' && categoryLabels(message).length && !categoryLabels(message).includes(decision.category)) return true;
-  if (!hasPlaceLabel(message) || !concernsPlace(message)) return true;
-  return !message.places.includes(decision.candidates[0]);
-}
+const expectation = row => asExpected(row.message, row.decision);
+const readyWrong = row => confidentWrong(row.message, row.decision);
 
 function summarize(list) {
   const places = placeRows(list);

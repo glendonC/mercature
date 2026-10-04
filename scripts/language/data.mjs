@@ -29,6 +29,26 @@ export const hasPlaceLabel = message => message.case !== 'vague';
 export const concernsPlace = message => message.places.length > 0;
 export const categoryLabels = message => message.categories ?? (message.category ? [message.category] : []);
 
+/** A confident answer: status ready. It is wrong when any answered field disagrees with the label. */
+export function confidentWrong(message, decision) {
+  if (decision.status !== 'ready') return false;
+  if (decision.kind !== message.kind) return true;
+  if (message.kind === 'problem' && categoryLabels(message).length && !categoryLabels(message).includes(decision.category)) return true;
+  if (!hasPlaceLabel(message) || !concernsPlace(message)) return true;
+  return !message.places.includes(decision.candidates[0]);
+}
+
+/** What a person should see for each case type: a right answer or "Not sure", never a confident wrong one. */
+export function asExpected(message, decision) {
+  const kindOk = decision.kind === null || decision.kind === message.kind;
+  switch (message.case) {
+    case 'vague': return decision.status === 'unsure';
+    case 'negation': case 'resolved': return decision.kind !== 'problem';
+    case 'praise-general': case 'question-general': case 'off-topic': return decision.candidates.length === 0 && kindOk;
+    default: return kindOk && !confidentWrong(message, decision);
+  }
+}
+
 let encoder;
 /** A size-study variant can be chosen with --variant int8 or --variant uint8. */
 const variantArg = process.argv.indexOf('--variant');

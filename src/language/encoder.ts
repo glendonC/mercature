@@ -140,7 +140,8 @@ const vectorUrl = (key: string) => new URL(`/language-vectors/${encodeURICompone
 
 /**
  * Embeddings of fixed passages (label descriptions, a place's spots) kept on the device so later
- * sessions skip recomputing them. Message embeddings and answers are never stored.
+ * sessions skip recomputing them. Answers are never stored, and a message's embedding and spelling
+ * sketch only when the operator links that message to a spot (the examples below).
  */
 export async function readVectors(key: string, count: number): Promise<Float64Array[] | null> {
   const response = await (await openCache()).match(vectorUrl(key));
@@ -156,6 +157,51 @@ export async function writeVectors(key: string, vectors: readonly ArrayLike<numb
   const data = new Float64Array(vectors.length * size);
   vectors.forEach((vector, i) => data.set(vector, i * size));
   await (await openCache()).put(vectorUrl(key), new Response(data, { headers: { 'content-type': 'application/octet-stream' } }));
+}
+
+/** A message the operator linked to a spot: its embedding, its spelling sketch, the spot and the time, never its text. */
+export type StoredExample = {
+  readonly id: string;
+  readonly spot: string;
+  readonly at: string;
+  readonly vector: readonly number[];
+  readonly grams: readonly (readonly [number, number])[];
+};
+
+const isExample = (value: unknown): value is StoredExample => {
+  const item = value as StoredExample;
+  return !!item && typeof item.id === 'string' && typeof item.spot === 'string' && typeof item.at === 'string' &&
+    Array.isArray(item.vector) && item.vector.length === ENCODER.dimensions && item.vector.every(Number.isFinite) &&
+    Array.isArray(item.grams) && item.grams.every(pair => Array.isArray(pair) && pair.length === 2 && pair.every(Number.isInteger));
+};
+
+/** A place's kept examples; an entry that does not parse counts as none. */
+export async function readExamples(key: string): Promise<StoredExample[]> {
+  const response = await (await openCache()).match(vectorUrl(key));
+  if (!response) return [];
+  const data = await response.json().catch(() => null) as { examples?: unknown } | null;
+  return Array.isArray(data?.examples) && data.examples.every(isExample) ? data.examples : [];
+}
+
+export async function writeExamples(key: string, examples: readonly StoredExample[]): Promise<void> {
+  await (await openCache()).put(vectorUrl(key), new Response(JSON.stringify({ examples }), { headers: { 'content-type': 'application/json' } }));
+}
+
+/** Deletes the examples kept for a place under every model set and revision. */
+export async function deleteExamples(placeId: string): Promise<void> {
+  if (typeof caches === 'undefined' || !(await caches.has(MODEL_CACHE))) return;
+  const cache = await openCache();
+  const suffix = `:memory:${placeId}`;
+  for (const request of await cache.keys()) {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith('/language-vectors/') && decodeURIComponent(path.slice('/language-vectors/'.length)).endsWith(suffix)) await cache.delete(request);
+  }
+}
+
+/** Name of the model set stored on this device, without loading it; null when none is complete. */
+export async function storedSetName(): Promise<ModelSet['name'] | null> {
+  if (typeof caches === 'undefined' || !(await caches.has(MODEL_CACHE))) return null;
+  return (await storedSet(await openCache()))?.name ?? null;
 }
 
 export type Encoder = { readonly embed: (text: string) => Promise<number[]>; readonly set: Pick<ModelSet, 'name' | 'modelBytes'> };

@@ -1,7 +1,7 @@
 import { prepareOffline } from '../../../src/offline';
 import { FARM_FEATURES } from '../../../src/site/inventory';
 import { QORIKANCHA_PLACE } from '../../../src/site/route';
-import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand } from '../../../src/language/understand';
+import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, rememberedCount, understand } from '../../../src/language/understand';
 
 /** Exposes the language module to the measurement script; the page has no other behavior. */
 const places = { farm: { id: 'noor-farm', features: FARM_FEATURES }, route: QORIKANCHA_PLACE };
@@ -20,6 +20,9 @@ Object.assign(window, {
       return { result, ticks, ms: Math.round(performance.now() - started) };
     },
     understand: (message: string, place: PlaceName = 'farm') => understand(message, places[place]),
+    remember: (message: string, place: PlaceName, spot: string) => remember(message, places[place], spot),
+    rememberedCount: (place: PlaceName) => rememberedCount(places[place].id),
+    forgetPlace: (place: PlaceName) => forgetPlace(places[place].id),
   },
 });
 void prepareOffline();

@@ -1,0 +1,5382 @@
+{
+  "mode": "calibrate",
+  "protocol": {
+    "examplesPerSpot": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "memories": {
+      "qu": [
+        "qu"
+      ],
+      "all": [
+        "en",
+        "es",
+        "ko",
+        "qu"
+      ]
+    },
+    "draws": {
+      "calibrate": 10,
+      "test": 20,
+      "route": 20
+    },
+    "seed": {
+      "calibrate": "calibrate",
+      "test": "heldout",
+      "route": "route"
+    },
+    "calibration": {
+      "queries": "every farm training and dev message (English, Spanish, Korean and Quechua), with examples from its own family left out",
+      "objective": "right first spots gained minus 3 times right first spots lost, over both memories, k = 1 to 3 and all draws",
+      "groups": "messages that pass the language check (English, Spanish, Korean), compared by embedding cosine, and those that do not, compared by spelling-sketch cosine; each pair chosen on its own messages",
+      "grid": {
+        "supported": {
+          "similarity": [
+            0.8,
+            0.805,
+            0.81,
+            0.815,
+            0.82,
+            0.825,
+            0.83,
+            0.835,
+            0.84,
+            0.845,
+            0.85,
+            0.855,
+            0.86,
+            0.865,
+            0.87,
+            0.875,
+            0.88,
+            0.885,
+            0.89,
+            0.895,
+            0.9,
+            0.905,
+            0.91,
+            0.915,
+            0.92,
+            0.925,
+            0.93,
+            0.935,
+            0.94,
+            0.945,
+            0.95,
+            0.955,
+            0.96,
+            0.965,
+            0.97,
+            0.975,
+            0.98
+          ],
+          "lead": [
+            0,
+            0.005,
+            0.01,
+            0.015,
+            0.02,
+            0.03,
+            0.04,
+            0.05
+          ]
+        },
+        "unsupported": {
+          "similarity": [
+            0.05,
+            0.075,
+            0.1,
+            0.125,
+            0.15,
+            0.175,
+            0.2,
+            0.225,
+            0.25,
+            0.275,
+            0.3,
+            0.325,
+            0.35,
+            0.375,
+            0.4,
+            0.425,
+            0.45,
+            0.475,
+            0.5,
+            0.525,
+            0.55,
+            0.575,
+            0.6,
+            0.625,
+            0.65,
+            0.675,
+            0.7,
+            0.725,
+            0.75,
+            0.775,
+            0.8,
+            0.825,
+            0.85,
+            0.875,
+            0.9,
+            0.925,
+            0.95
+          ],
+          "lead": [
+            0,
+            0.01,
+            0.02,
+            0.03,
+            0.05,
+            0.075,
+            0.1,
+            0.15,
+            0.2
+          ]
+        }
+      },
+      "ties": "the higher similarity, then the higher lead"
+    },
+    "ship": [
+      "With no examples, every decision equals the published run (88 of 88 held-out, 44 of 44 route).",
+      "Quechua: on the held-out farm messages with a Quechua memory, the right spot comes first for at least 3 more of the 16 messages naming one at k = 3 (mean over draws), and top-3 does not fall.",
+      "English, Spanish and Korean: for each language, place, memory and k, the mean over draws of top-1, top-3 and as-expected answers is not below k = 0, and confident wrong answers are not above it."
+    ]
+  },
+  "shipped": {
+    "supported": {
+      "similarity": 0.935,
+      "lead": 0.005
+    },
+    "unsupported": {
+      "similarity": 0.5,
+      "lead": 0
+    }
+  },
+  "chosen": {
+    "supported": {
+      "similarity": 0.935,
+      "lead": 0.005
+    },
+    "unsupported": {
+      "similarity": 0.5,
+      "lead": 0
+    }
+  },
+  "matchesShipped": true,
+  "nearestExample": {
+    "en": {
+      "embedding": "59/83",
+      "embeddingCentered": "59/83",
+      "spelling": "53/83"
+    },
+    "es": {
+      "embedding": "56/83",
+      "embeddingCentered": "58/83",
+      "spelling": "63/83"
+    },
+    "ko": {
+      "embedding": "68/83",
+      "embeddingCentered": "69/83",
+      "spelling": "53/83"
+    },
+    "qu": {
+      "embedding": "17/83",
+      "embeddingCentered": "20/83",
+      "spelling": "50/83"
+    }
+  },
+  "grid": {
+    "supported": [
+      {
+        "similarity": 0.8,
+        "lead": 0,
+        "gained": 291,
+        "lost": 8222,
+        "objective": -24375
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.005,
+        "gained": 214,
+        "lost": 4451,
+        "objective": -13139
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.01,
+        "gained": 153,
+        "lost": 2248,
+        "objective": -6591
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.015,
+        "gained": 122,
+        "lost": 1094,
+        "objective": -3160
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 526,
+        "objective": -1488
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 144,
+        "objective": -395
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0,
+        "gained": 291,
+        "lost": 7888,
+        "objective": -23373
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.005,
+        "gained": 214,
+        "lost": 4332,
+        "objective": -12782
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.01,
+        "gained": 153,
+        "lost": 2212,
+        "objective": -6483
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.015,
+        "gained": 122,
+        "lost": 1088,
+        "objective": -3142
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 526,
+        "objective": -1488
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 144,
+        "objective": -395
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.805,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0,
+        "gained": 279,
+        "lost": 7379,
+        "objective": -21858
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.005,
+        "gained": 212,
+        "lost": 4088,
+        "objective": -12052
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.01,
+        "gained": 153,
+        "lost": 2130,
+        "objective": -6237
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.015,
+        "gained": 122,
+        "lost": 1065,
+        "objective": -3073
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 526,
+        "objective": -1488
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 144,
+        "objective": -395
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.81,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0,
+        "gained": 271,
+        "lost": 6823,
+        "objective": -20198
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.005,
+        "gained": 205,
+        "lost": 3865,
+        "objective": -11390
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.01,
+        "gained": 152,
+        "lost": 2069,
+        "objective": -6055
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.015,
+        "gained": 122,
+        "lost": 1045,
+        "objective": -3013
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 524,
+        "objective": -1482
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 144,
+        "objective": -395
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.815,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0,
+        "gained": 251,
+        "lost": 6346,
+        "objective": -18787
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.005,
+        "gained": 202,
+        "lost": 3691,
+        "objective": -10871
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.01,
+        "gained": 150,
+        "lost": 1999,
+        "objective": -5847
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.015,
+        "gained": 120,
+        "lost": 1032,
+        "objective": -2976
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 522,
+        "objective": -1476
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 144,
+        "objective": -395
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.82,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0,
+        "gained": 251,
+        "lost": 5704,
+        "objective": -16861
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.005,
+        "gained": 202,
+        "lost": 3350,
+        "objective": -9848
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.01,
+        "gained": 150,
+        "lost": 1836,
+        "objective": -5358
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.015,
+        "gained": 120,
+        "lost": 969,
+        "objective": -2787
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 500,
+        "objective": -1410
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 139,
+        "objective": -380
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0,
+        "gained": 239,
+        "lost": 5113,
+        "objective": -15100
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.005,
+        "gained": 191,
+        "lost": 3057,
+        "objective": -8980
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.01,
+        "gained": 144,
+        "lost": 1745,
+        "objective": -5091
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.015,
+        "gained": 120,
+        "lost": 937,
+        "objective": -2691
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 487,
+        "objective": -1371
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 138,
+        "objective": -377
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.83,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0,
+        "gained": 228,
+        "lost": 4546,
+        "objective": -13410
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.005,
+        "gained": 185,
+        "lost": 2748,
+        "objective": -8059
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.01,
+        "gained": 143,
+        "lost": 1646,
+        "objective": -4795
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.015,
+        "gained": 120,
+        "lost": 904,
+        "objective": -2592
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.02,
+        "gained": 90,
+        "lost": 484,
+        "objective": -1362
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 138,
+        "objective": -377
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.835,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0,
+        "gained": 216,
+        "lost": 4070,
+        "objective": -11994
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.005,
+        "gained": 175,
+        "lost": 2502,
+        "objective": -7331
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.01,
+        "gained": 136,
+        "lost": 1542,
+        "objective": -4490
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.015,
+        "gained": 115,
+        "lost": 867,
+        "objective": -2486
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.02,
+        "gained": 85,
+        "lost": 472,
+        "objective": -1331
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 138,
+        "objective": -377
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.84,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0,
+        "gained": 210,
+        "lost": 3664,
+        "objective": -10782
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.005,
+        "gained": 170,
+        "lost": 2320,
+        "objective": -6790
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.01,
+        "gained": 135,
+        "lost": 1460,
+        "objective": -4245
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.015,
+        "gained": 114,
+        "lost": 848,
+        "objective": -2430
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.02,
+        "gained": 84,
+        "lost": 472,
+        "objective": -1332
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 138,
+        "objective": -377
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.845,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0,
+        "gained": 210,
+        "lost": 3280,
+        "objective": -9630
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.005,
+        "gained": 170,
+        "lost": 2106,
+        "objective": -6148
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.01,
+        "gained": 135,
+        "lost": 1304,
+        "objective": -3777
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.015,
+        "gained": 114,
+        "lost": 739,
+        "objective": -2103
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.02,
+        "gained": 84,
+        "lost": 432,
+        "objective": -1212
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 131,
+        "objective": -356
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0,
+        "gained": 210,
+        "lost": 3024,
+        "objective": -8862
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.005,
+        "gained": 170,
+        "lost": 1936,
+        "objective": -5638
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.01,
+        "gained": 135,
+        "lost": 1199,
+        "objective": -3462
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.015,
+        "gained": 114,
+        "lost": 684,
+        "objective": -1938
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.02,
+        "gained": 84,
+        "lost": 410,
+        "objective": -1146
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 131,
+        "objective": -356
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 34,
+        "objective": -98
+      },
+      {
+        "similarity": 0.855,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0,
+        "gained": 209,
+        "lost": 2781,
+        "objective": -8134
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.005,
+        "gained": 169,
+        "lost": 1757,
+        "objective": -5102
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.01,
+        "gained": 135,
+        "lost": 1089,
+        "objective": -3132
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.015,
+        "gained": 114,
+        "lost": 623,
+        "objective": -1755
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.02,
+        "gained": 84,
+        "lost": 369,
+        "objective": -1023
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 120,
+        "objective": -323
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 33,
+        "objective": -95
+      },
+      {
+        "similarity": 0.86,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0,
+        "gained": 209,
+        "lost": 2589,
+        "objective": -7558
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.005,
+        "gained": 169,
+        "lost": 1649,
+        "objective": -4778
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.01,
+        "gained": 135,
+        "lost": 1023,
+        "objective": -2934
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.015,
+        "gained": 114,
+        "lost": 592,
+        "objective": -1662
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.02,
+        "gained": 84,
+        "lost": 349,
+        "objective": -963
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.03,
+        "gained": 37,
+        "lost": 119,
+        "objective": -320
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 33,
+        "objective": -95
+      },
+      {
+        "similarity": 0.865,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0,
+        "gained": 200,
+        "lost": 2450,
+        "objective": -7150
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.005,
+        "gained": 161,
+        "lost": 1576,
+        "objective": -4567
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.01,
+        "gained": 127,
+        "lost": 976,
+        "objective": -2801
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.015,
+        "gained": 106,
+        "lost": 572,
+        "objective": -1610
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.02,
+        "gained": 76,
+        "lost": 336,
+        "objective": -932
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 118,
+        "objective": -325
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 33,
+        "objective": -95
+      },
+      {
+        "similarity": 0.87,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0,
+        "gained": 200,
+        "lost": 2183,
+        "objective": -6349
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.005,
+        "gained": 161,
+        "lost": 1438,
+        "objective": -4153
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.01,
+        "gained": 127,
+        "lost": 924,
+        "objective": -2645
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.015,
+        "gained": 106,
+        "lost": 546,
+        "objective": -1532
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.02,
+        "gained": 76,
+        "lost": 319,
+        "objective": -881
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 114,
+        "objective": -313
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 33,
+        "objective": -95
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0,
+        "gained": 198,
+        "lost": 1940,
+        "objective": -5622
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.005,
+        "gained": 159,
+        "lost": 1298,
+        "objective": -3735
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.01,
+        "gained": 125,
+        "lost": 844,
+        "objective": -2407
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.015,
+        "gained": 105,
+        "lost": 501,
+        "objective": -1398
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.02,
+        "gained": 76,
+        "lost": 303,
+        "objective": -833
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 112,
+        "objective": -307
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 33,
+        "objective": -95
+      },
+      {
+        "similarity": 0.88,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0,
+        "gained": 176,
+        "lost": 1722,
+        "objective": -4990
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.005,
+        "gained": 143,
+        "lost": 1166,
+        "objective": -3355
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.01,
+        "gained": 120,
+        "lost": 781,
+        "objective": -2223
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.015,
+        "gained": 100,
+        "lost": 471,
+        "objective": -1313
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.02,
+        "gained": 75,
+        "lost": 298,
+        "objective": -819
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 110,
+        "objective": -301
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 32,
+        "objective": -92
+      },
+      {
+        "similarity": 0.885,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 10,
+        "objective": -30
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0,
+        "gained": 176,
+        "lost": 1448,
+        "objective": -4168
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.005,
+        "gained": 143,
+        "lost": 982,
+        "objective": -2803
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.01,
+        "gained": 120,
+        "lost": 647,
+        "objective": -1821
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.015,
+        "gained": 100,
+        "lost": 387,
+        "objective": -1061
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.02,
+        "gained": 75,
+        "lost": 237,
+        "objective": -636
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 80,
+        "objective": -211
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 27,
+        "objective": -77
+      },
+      {
+        "similarity": 0.89,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 9,
+        "objective": -27
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0,
+        "gained": 173,
+        "lost": 1125,
+        "objective": -3202
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.005,
+        "gained": 141,
+        "lost": 800,
+        "objective": -2259
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.01,
+        "gained": 118,
+        "lost": 540,
+        "objective": -1502
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.015,
+        "gained": 99,
+        "lost": 338,
+        "objective": -915
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.02,
+        "gained": 75,
+        "lost": 210,
+        "objective": -555
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.03,
+        "gained": 29,
+        "lost": 78,
+        "objective": -205
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 27,
+        "objective": -77
+      },
+      {
+        "similarity": 0.895,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 9,
+        "objective": -27
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0,
+        "gained": 146,
+        "lost": 895,
+        "objective": -2539
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.005,
+        "gained": 125,
+        "lost": 667,
+        "objective": -1876
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.01,
+        "gained": 109,
+        "lost": 467,
+        "objective": -1292
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.015,
+        "gained": 96,
+        "lost": 297,
+        "objective": -795
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.02,
+        "gained": 73,
+        "lost": 187,
+        "objective": -488
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.03,
+        "gained": 28,
+        "lost": 71,
+        "objective": -185
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 24,
+        "objective": -68
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 6,
+        "objective": -18
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0,
+        "gained": 136,
+        "lost": 636,
+        "objective": -1772
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.005,
+        "gained": 119,
+        "lost": 488,
+        "objective": -1345
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.01,
+        "gained": 109,
+        "lost": 333,
+        "objective": -890
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.015,
+        "gained": 96,
+        "lost": 205,
+        "objective": -519
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.02,
+        "gained": 73,
+        "lost": 127,
+        "objective": -308
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.03,
+        "gained": 28,
+        "lost": 52,
+        "objective": -128
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.04,
+        "gained": 4,
+        "lost": 19,
+        "objective": -53
+      },
+      {
+        "similarity": 0.905,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 5,
+        "objective": -15
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0,
+        "gained": 108,
+        "lost": 377,
+        "objective": -1023
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.005,
+        "gained": 104,
+        "lost": 313,
+        "objective": -835
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.01,
+        "gained": 94,
+        "lost": 217,
+        "objective": -557
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.015,
+        "gained": 81,
+        "lost": 130,
+        "objective": -309
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.02,
+        "gained": 60,
+        "lost": 89,
+        "objective": -207
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.03,
+        "gained": 24,
+        "lost": 28,
+        "objective": -60
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 9,
+        "objective": -24
+      },
+      {
+        "similarity": 0.91,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0,
+        "gained": 105,
+        "lost": 187,
+        "objective": -456
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.005,
+        "gained": 101,
+        "lost": 152,
+        "objective": -355
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.01,
+        "gained": 92,
+        "lost": 108,
+        "objective": -232
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.015,
+        "gained": 80,
+        "lost": 64,
+        "objective": -112
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.02,
+        "gained": 59,
+        "lost": 51,
+        "objective": -94
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.03,
+        "gained": 24,
+        "lost": 22,
+        "objective": -42
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 8,
+        "objective": -21
+      },
+      {
+        "similarity": 0.915,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0,
+        "gained": 91,
+        "lost": 40,
+        "objective": -29
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.005,
+        "gained": 87,
+        "lost": 37,
+        "objective": -24
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.01,
+        "gained": 81,
+        "lost": 28,
+        "objective": -3
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.015,
+        "gained": 73,
+        "lost": 18,
+        "objective": 19
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.02,
+        "gained": 56,
+        "lost": 18,
+        "objective": 2
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.03,
+        "gained": 24,
+        "lost": 13,
+        "objective": -15
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 8,
+        "objective": -21
+      },
+      {
+        "similarity": 0.92,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0,
+        "gained": 74,
+        "lost": 32,
+        "objective": -22
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.005,
+        "gained": 70,
+        "lost": 29,
+        "objective": -17
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.01,
+        "gained": 65,
+        "lost": 23,
+        "objective": -4
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.015,
+        "gained": 57,
+        "lost": 16,
+        "objective": 9
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.02,
+        "gained": 48,
+        "lost": 16,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.03,
+        "gained": 21,
+        "lost": 13,
+        "objective": -18
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 8,
+        "objective": -21
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0,
+        "gained": 56,
+        "lost": 19,
+        "objective": -1
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.005,
+        "gained": 52,
+        "lost": 16,
+        "objective": 4
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.01,
+        "gained": 47,
+        "lost": 16,
+        "objective": -1
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.015,
+        "gained": 47,
+        "lost": 15,
+        "objective": 2
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.02,
+        "gained": 44,
+        "lost": 15,
+        "objective": -1
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.03,
+        "gained": 21,
+        "lost": 13,
+        "objective": -18
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 8,
+        "objective": -21
+      },
+      {
+        "similarity": 0.93,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0,
+        "gained": 46,
+        "lost": 7,
+        "objective": 25
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.005,
+        "gained": 42,
+        "lost": 4,
+        "objective": 30
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.01,
+        "gained": 37,
+        "lost": 4,
+        "objective": 25
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.015,
+        "gained": 37,
+        "lost": 3,
+        "objective": 28
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.02,
+        "gained": 37,
+        "lost": 3,
+        "objective": 28
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.03,
+        "gained": 17,
+        "lost": 1,
+        "objective": 14
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.04,
+        "gained": 3,
+        "lost": 0,
+        "objective": 3
+      },
+      {
+        "similarity": 0.935,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0,
+        "gained": 37,
+        "lost": 7,
+        "objective": 16
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.005,
+        "gained": 33,
+        "lost": 4,
+        "objective": 21
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.01,
+        "gained": 28,
+        "lost": 4,
+        "objective": 16
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.015,
+        "gained": 28,
+        "lost": 3,
+        "objective": 19
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.02,
+        "gained": 28,
+        "lost": 3,
+        "objective": 19
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.03,
+        "gained": 16,
+        "lost": 1,
+        "objective": 13
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.04,
+        "gained": 2,
+        "lost": 0,
+        "objective": 2
+      },
+      {
+        "similarity": 0.94,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.945,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.955,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.96,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.965,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.97,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.975,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.005,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.015,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.04,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.98,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      }
+    ],
+    "unsupported": [
+      {
+        "similarity": 0.05,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.05,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.075,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.1,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.125,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.15,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.175,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.2,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.225,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.25,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.275,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 478,
+        "objective": 306
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 376,
+        "objective": 360
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.3,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 476,
+        "objective": 312
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 374,
+        "objective": 366
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.325,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0,
+        "gained": 1740,
+        "lost": 470,
+        "objective": 330
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.01,
+        "gained": 1488,
+        "lost": 370,
+        "objective": 378
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.02,
+        "gained": 1322,
+        "lost": 306,
+        "objective": 404
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.03,
+        "gained": 1198,
+        "lost": 252,
+        "objective": 442
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.05,
+        "gained": 852,
+        "lost": 152,
+        "objective": 396
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.35,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0,
+        "gained": 1714,
+        "lost": 462,
+        "objective": 328
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.01,
+        "gained": 1476,
+        "lost": 362,
+        "objective": 390
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.02,
+        "gained": 1310,
+        "lost": 302,
+        "objective": 404
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.03,
+        "gained": 1190,
+        "lost": 250,
+        "objective": 440
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.05,
+        "gained": 850,
+        "lost": 152,
+        "objective": 394
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.375,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0,
+        "gained": 1668,
+        "lost": 426,
+        "objective": 390
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.01,
+        "gained": 1448,
+        "lost": 330,
+        "objective": 458
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.02,
+        "gained": 1290,
+        "lost": 278,
+        "objective": 456
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.03,
+        "gained": 1176,
+        "lost": 234,
+        "objective": 474
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.05,
+        "gained": 850,
+        "lost": 152,
+        "objective": 394
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.4,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0,
+        "gained": 1542,
+        "lost": 360,
+        "objective": 462
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.01,
+        "gained": 1348,
+        "lost": 282,
+        "objective": 502
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.02,
+        "gained": 1226,
+        "lost": 252,
+        "objective": 470
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.03,
+        "gained": 1132,
+        "lost": 216,
+        "objective": 484
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.05,
+        "gained": 828,
+        "lost": 144,
+        "objective": 396
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.425,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0,
+        "gained": 1500,
+        "lost": 322,
+        "objective": 534
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.01,
+        "gained": 1324,
+        "lost": 264,
+        "objective": 532
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.02,
+        "gained": 1206,
+        "lost": 242,
+        "objective": 480
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.03,
+        "gained": 1120,
+        "lost": 208,
+        "objective": 496
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.05,
+        "gained": 822,
+        "lost": 142,
+        "objective": 396
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.075,
+        "gained": 466,
+        "lost": 82,
+        "objective": 220
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.45,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0,
+        "gained": 1344,
+        "lost": 270,
+        "objective": 534
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.01,
+        "gained": 1210,
+        "lost": 240,
+        "objective": 490
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.02,
+        "gained": 1106,
+        "lost": 222,
+        "objective": 440
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.03,
+        "gained": 1036,
+        "lost": 200,
+        "objective": 436
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.05,
+        "gained": 790,
+        "lost": 138,
+        "objective": 376
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.075,
+        "gained": 464,
+        "lost": 80,
+        "objective": 224
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.475,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0,
+        "gained": 1228,
+        "lost": 222,
+        "objective": 562
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.01,
+        "gained": 1110,
+        "lost": 198,
+        "objective": 516
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.02,
+        "gained": 1016,
+        "lost": 182,
+        "objective": 470
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.03,
+        "gained": 952,
+        "lost": 178,
+        "objective": 418
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.05,
+        "gained": 748,
+        "lost": 128,
+        "objective": 364
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.075,
+        "gained": 456,
+        "lost": 80,
+        "objective": 216
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.1,
+        "gained": 246,
+        "lost": 68,
+        "objective": 42
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.15,
+        "gained": 98,
+        "lost": 26,
+        "objective": 20
+      },
+      {
+        "similarity": 0.5,
+        "lead": 0.2,
+        "gained": 14,
+        "lost": 0,
+        "objective": 14
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0,
+        "gained": 848,
+        "lost": 168,
+        "objective": 344
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.01,
+        "gained": 790,
+        "lost": 162,
+        "objective": 304
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.02,
+        "gained": 766,
+        "lost": 156,
+        "objective": 298
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.03,
+        "gained": 738,
+        "lost": 156,
+        "objective": 270
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.05,
+        "gained": 602,
+        "lost": 116,
+        "objective": 254
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.075,
+        "gained": 358,
+        "lost": 76,
+        "objective": 130
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.1,
+        "gained": 204,
+        "lost": 66,
+        "objective": 6
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.15,
+        "gained": 76,
+        "lost": 26,
+        "objective": -2
+      },
+      {
+        "similarity": 0.525,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0,
+        "gained": 606,
+        "lost": 128,
+        "objective": 222
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.01,
+        "gained": 588,
+        "lost": 122,
+        "objective": 222
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.02,
+        "gained": 564,
+        "lost": 122,
+        "objective": 198
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.03,
+        "gained": 552,
+        "lost": 122,
+        "objective": 186
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.05,
+        "gained": 476,
+        "lost": 92,
+        "objective": 200
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.075,
+        "gained": 304,
+        "lost": 72,
+        "objective": 88
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.1,
+        "gained": 192,
+        "lost": 62,
+        "objective": 6
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.15,
+        "gained": 74,
+        "lost": 26,
+        "objective": -4
+      },
+      {
+        "similarity": 0.55,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0,
+        "gained": 284,
+        "lost": 86,
+        "objective": 26
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.01,
+        "gained": 284,
+        "lost": 80,
+        "objective": 44
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.02,
+        "gained": 284,
+        "lost": 80,
+        "objective": 44
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.03,
+        "gained": 280,
+        "lost": 80,
+        "objective": 40
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.05,
+        "gained": 258,
+        "lost": 64,
+        "objective": 66
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.075,
+        "gained": 176,
+        "lost": 52,
+        "objective": 20
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.1,
+        "gained": 132,
+        "lost": 42,
+        "objective": 6
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.15,
+        "gained": 68,
+        "lost": 24,
+        "objective": -4
+      },
+      {
+        "similarity": 0.575,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0,
+        "gained": 130,
+        "lost": 86,
+        "objective": -128
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.01,
+        "gained": 130,
+        "lost": 80,
+        "objective": -110
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.02,
+        "gained": 130,
+        "lost": 80,
+        "objective": -110
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.03,
+        "gained": 130,
+        "lost": 80,
+        "objective": -110
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.05,
+        "gained": 130,
+        "lost": 64,
+        "objective": -62
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.075,
+        "gained": 124,
+        "lost": 52,
+        "objective": -32
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.1,
+        "gained": 80,
+        "lost": 42,
+        "objective": -46
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.15,
+        "gained": 54,
+        "lost": 24,
+        "objective": -18
+      },
+      {
+        "similarity": 0.6,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.01,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.02,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.03,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.05,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.075,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.1,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.15,
+        "gained": 54,
+        "lost": 0,
+        "objective": 54
+      },
+      {
+        "similarity": 0.625,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.01,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.02,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.03,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.05,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.075,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.1,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.15,
+        "gained": 54,
+        "lost": 0,
+        "objective": 54
+      },
+      {
+        "similarity": 0.65,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.01,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.02,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.03,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.05,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.075,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.1,
+        "gained": 74,
+        "lost": 0,
+        "objective": 74
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.15,
+        "gained": 54,
+        "lost": 0,
+        "objective": 54
+      },
+      {
+        "similarity": 0.675,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.01,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.02,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.03,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.05,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.075,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.1,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.15,
+        "gained": 28,
+        "lost": 0,
+        "objective": 28
+      },
+      {
+        "similarity": 0.7,
+        "lead": 0.2,
+        "gained": 10,
+        "lost": 0,
+        "objective": 10
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.725,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.75,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.775,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.8,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.825,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.85,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.875,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.9,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.925,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.01,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.02,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.03,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.05,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.075,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.1,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.15,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      },
+      {
+        "similarity": 0.95,
+        "lead": 0.2,
+        "gained": 0,
+        "lost": 0,
+        "objective": 0
+      }
+    ]
+  },
+  "results": {
+    "qu": {
+      "0": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 76,
+          "top3": 82,
+          "ready": 45,
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 15,
+          "top3": 27,
+          "ready": 1,
+          "readyWrong": 1,
+          "expected": 92,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 76,
+          "top3": 82,
+          "ready": 45,
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 25.5,
+            "min": 20,
+            "max": 31
+          },
+          "top3": {
+            "mean": 39.5,
+            "min": 35,
+            "max": 42
+          },
+          "ready": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 40.3,
+            "min": 35,
+            "max": 45
+          },
+          "changed": {
+            "mean": 40.3,
+            "min": 35,
+            "max": 45
+          },
+          "falseTriggers": {
+            "mean": 24.5,
+            "min": 19,
+            "max": 29
+          },
+          "gained": {
+            "mean": 13.2,
+            "min": 9,
+            "max": 16
+          },
+          "lost": {
+            "mean": 2.7,
+            "min": 0,
+            "max": 4
+          }
+        }
+      },
+      "2": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 76,
+          "top3": 82,
+          "ready": 45,
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 33.2,
+            "min": 29,
+            "max": 38
+          },
+          "top3": {
+            "mean": 47.1,
+            "min": 45,
+            "max": 50
+          },
+          "ready": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 56.6,
+            "min": 54,
+            "max": 61
+          },
+          "changed": {
+            "mean": 56.6,
+            "min": 54,
+            "max": 61
+          },
+          "falseTriggers": {
+            "mean": 30.1,
+            "min": 25,
+            "max": 36
+          },
+          "gained": {
+            "mean": 22.2,
+            "min": 19,
+            "max": 27
+          },
+          "lost": {
+            "mean": 4,
+            "min": 2,
+            "max": 7
+          }
+        }
+      },
+      "3": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 76,
+          "top3": 82,
+          "ready": 45,
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 36.6,
+            "min": 34,
+            "max": 40
+          },
+          "top3": {
+            "mean": 49.8,
+            "min": 48,
+            "max": 53
+          },
+          "ready": {
+            "mean": 0.8,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.8,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 64.8,
+            "min": 60,
+            "max": 68
+          },
+          "changed": {
+            "mean": 64.8,
+            "min": 60,
+            "max": 68
+          },
+          "falseTriggers": {
+            "mean": 32.7,
+            "min": 30,
+            "max": 37
+          },
+          "gained": {
+            "mean": 26,
+            "min": 23,
+            "max": 29
+          },
+          "lost": {
+            "mean": 4.4,
+            "min": 3,
+            "max": 6
+          }
+        }
+      }
+    },
+    "all": {
+      "0": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 76,
+          "top3": 82,
+          "ready": 45,
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 15,
+          "top3": 27,
+          "ready": 1,
+          "readyWrong": 1,
+          "expected": 92,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "1": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 76.6,
+            "min": 76,
+            "max": 78
+          },
+          "top3": {
+            "mean": 82.4,
+            "min": 82,
+            "max": 83
+          },
+          "ready": {
+            "mean": 44.2,
+            "min": 44,
+            "max": 45
+          },
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": {
+            "mean": 1.8,
+            "min": 0,
+            "max": 4
+          },
+          "changed": {
+            "mean": 1.8,
+            "min": 0,
+            "max": 4
+          },
+          "falseTriggers": {
+            "mean": 0.4,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 2
+          },
+          "lost": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          }
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 25.5,
+            "min": 20,
+            "max": 31
+          },
+          "top3": {
+            "mean": 39.5,
+            "min": 35,
+            "max": 42
+          },
+          "ready": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.9,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 40.3,
+            "min": 35,
+            "max": 45
+          },
+          "changed": {
+            "mean": 40.3,
+            "min": 35,
+            "max": 45
+          },
+          "falseTriggers": {
+            "mean": 24.5,
+            "min": 19,
+            "max": 29
+          },
+          "gained": {
+            "mean": 13.2,
+            "min": 9,
+            "max": 16
+          },
+          "lost": {
+            "mean": 2.7,
+            "min": 0,
+            "max": 4
+          }
+        }
+      },
+      "2": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 77.4,
+            "min": 76,
+            "max": 79
+          },
+          "top3": {
+            "mean": 83,
+            "min": 82,
+            "max": 84
+          },
+          "ready": {
+            "mean": 43.9,
+            "min": 43,
+            "max": 45
+          },
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": {
+            "mean": 3.2,
+            "min": 1,
+            "max": 6
+          },
+          "changed": {
+            "mean": 3.2,
+            "min": 1,
+            "max": 6
+          },
+          "falseTriggers": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 1.5,
+            "min": 0,
+            "max": 3
+          },
+          "lost": {
+            "mean": 0.1,
+            "min": 0,
+            "max": 1
+          }
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 33.2,
+            "min": 29,
+            "max": 38
+          },
+          "top3": {
+            "mean": 47.1,
+            "min": 45,
+            "max": 50
+          },
+          "ready": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.7,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 56.6,
+            "min": 54,
+            "max": 61
+          },
+          "changed": {
+            "mean": 56.6,
+            "min": 54,
+            "max": 61
+          },
+          "falseTriggers": {
+            "mean": 30.1,
+            "min": 25,
+            "max": 36
+          },
+          "gained": {
+            "mean": 22.2,
+            "min": 19,
+            "max": 27
+          },
+          "lost": {
+            "mean": 4,
+            "min": 2,
+            "max": 7
+          }
+        }
+      },
+      "3": {
+        "en": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 83,
+          "top3": 86,
+          "ready": 56,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "es": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": 75,
+          "top3": 85,
+          "ready": 44,
+          "readyWrong": 6,
+          "expected": 98,
+          "remembered": 0,
+          "changed": 0,
+          "falseTriggers": 0,
+          "gained": 0,
+          "lost": 0
+        },
+        "ko": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 77.8,
+            "min": 76,
+            "max": 79
+          },
+          "top3": {
+            "mean": 83.2,
+            "min": 82,
+            "max": 84
+          },
+          "ready": {
+            "mean": 43.4,
+            "min": 43,
+            "max": 45
+          },
+          "readyWrong": 3,
+          "expected": 100,
+          "remembered": {
+            "mean": 4,
+            "min": 3,
+            "max": 6
+          },
+          "changed": {
+            "mean": 4,
+            "min": 3,
+            "max": 6
+          },
+          "falseTriggers": {
+            "mean": 0.6,
+            "min": 0,
+            "max": 2
+          },
+          "gained": {
+            "mean": 2,
+            "min": 1,
+            "max": 3
+          },
+          "lost": {
+            "mean": 0.2,
+            "min": 0,
+            "max": 1
+          }
+        },
+        "qu": {
+          "messages": 105,
+          "withPlace": 86,
+          "top1": {
+            "mean": 36.6,
+            "min": 34,
+            "max": 40
+          },
+          "top3": {
+            "mean": 49.8,
+            "min": 48,
+            "max": 53
+          },
+          "ready": {
+            "mean": 0.8,
+            "min": 0,
+            "max": 1
+          },
+          "readyWrong": {
+            "mean": 0.8,
+            "min": 0,
+            "max": 1
+          },
+          "expected": 92,
+          "remembered": {
+            "mean": 64.8,
+            "min": 60,
+            "max": 68
+          },
+          "changed": {
+            "mean": 64.8,
+            "min": 60,
+            "max": 68
+          },
+          "falseTriggers": {
+            "mean": 32.7,
+            "min": 30,
+            "max": 37
+          },
+          "gained": {
+            "mean": 26,
+            "min": 23,
+            "max": 29
+          },
+          "lost": {
+            "mean": 4.4,
+            "min": 3,
+            "max": 6
+          }
+        }
+      }
+    }
+  }
+}

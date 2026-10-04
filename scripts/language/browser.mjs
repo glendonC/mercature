@@ -4,7 +4,10 @@
  *   node scripts/language/browser.mjs [split] [--hub]
  * 1. Online: provision the model (from Hugging Face with --hub, otherwise from the local model files
  *    through a redirect that mirrors the Hub's CDN redirect), then understand every message in the split.
- * 2. Cold restart of the same browser profile with networking disabled: understand a new message.
+ * 2. With the memory example set written by memory.mjs for the split (if present): remember those
+ *    examples, understand every message again and compare with Node.
+ * 3. Cold restart of the same browser profile with networking disabled: understand a new message,
+ *    check the kept examples survived, forget them and check every answer is back to the first run.
  * Requires a build first: npx vite build --config scripts/language/harness/vite.config.ts
  */
 import { chromium } from '@playwright/test';
@@ -62,6 +65,9 @@ async function open(offline) {
 }
 
 const placeName = split === 'route' ? 'route' : 'farm';
+/** Every decision field, the reason included; timing and model identity are not decisions. */
+const sameDecision = (a, b) => !!a && !!b && a.status === b.status && a.kind === b.kind && a.category === b.category &&
+  JSON.stringify(a.candidates) === JSON.stringify(b.candidates) && (a.reason ?? null) === (b.reason ?? null);
 const { messages } = split === 'route'
   ? JSON.parse(await readFile(new URL('./route-messages.json', import.meta.url), 'utf8'))
   : await loadMessages();
@@ -99,6 +105,22 @@ try {
     answers.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });
   }
   result.answers = answers;
+  const memory = JSON.parse(await readFile(resolve(`.local/language/memory-${split}.json`), 'utf8').catch(() => 'null'))?.browserCheck;
+  if (memory) {
+    const kept = [];
+    for (const example of memory.examples) kept.push(await page.evaluate(([text, place, spot]) => window.languageCheck.remember(text, place, spot), [example.text, placeName, example.spot]));
+    const withMemory = [];
+    for (const message of chosen) {
+      withMemory.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });
+    }
+    result.memory = {
+      examples: memory.examples.length,
+      kept: kept.filter(Boolean).length,
+      count: await page.evaluate(place => window.languageCheck.rememberedCount(place), placeName),
+      remembered: withMemory.filter(answer => answer.reason === 'remembered').length,
+      matchesNode: `${withMemory.filter(answer => sameDecision(memory.decisions[answer.id], answer)).length}/${withMemory.length}`,
+    };
+  }
   const elapsed = answers.map(answer => answer.elapsedMs).sort((a, b) => a - b);
   result.firstUnderstandMs = answers[0]?.elapsedMs;
   result.laterUnderstandMedianMs = elapsed[Math.floor(elapsed.length / 2)];
@@ -118,6 +140,15 @@ try {
     answer: await page.evaluate(([message, place]) => window.languageCheck.understand(message, place), [text, placeName]),
     stateAfter: await page.evaluate(() => window.languageCheck.modelState()),
   };
+  if (memory) {
+    result.offline.rememberedAfterRestart = await page.evaluate(place => window.languageCheck.rememberedCount(place), placeName);
+    await page.evaluate(place => window.languageCheck.forgetPlace(place), placeName);
+    result.offline.rememberedAfterForget = await page.evaluate(place => window.languageCheck.rememberedCount(place), placeName);
+    const again = [];
+    for (const message of chosen) again.push({ id: message.id, ...(await page.evaluate(([text, place]) => window.languageCheck.understand(text, place), [message.text, placeName])) });
+    const first = new Map(result.answers.map(answer => [answer.id, answer]));
+    result.offline.afterForgetMatchesFirstRun = `${again.filter(answer => sameDecision(first.get(answer.id), answer)).length}/${again.length}`;
+  }
 } finally {
   await context?.close();
   await rm(profile, { recursive: true, force: true });
@@ -131,11 +162,7 @@ result.requests = {
 const nodeResults = JSON.parse(await readFile(resolve(`.local/language/results-${split}.json`), 'utf8').catch(() => 'null'));
 if (nodeResults) {
   const byId = new Map(nodeResults.rows.map(row => [row.id, row.decision]));
-  const same = result.answers.filter(answer => {
-    const node = byId.get(answer.id);
-    return node && node.status === answer.status && node.kind === answer.kind && node.category === answer.category && JSON.stringify(node.candidates) === JSON.stringify(answer.candidates);
-  }).length;
-  result.matchesNode = `${same}/${result.answers.length}`;
+  result.matchesNode = `${result.answers.filter(answer => sameDecision(byId.get(answer.id), answer)).length}/${result.answers.length}`;
 }
 await writeFile(resolve(`.local/language/browser-${split}${throttle > 1 ? `-throttle${throttle}` : ''}.json`), JSON.stringify(result, null, 2));
 const { answers, ...summary } = result;

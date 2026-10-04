@@ -3,6 +3,8 @@ import type { IssueCategory, MessageKind, Site } from '../site/contracts';
 /** Understanding needs only a place's id and named features; a full Site also fits. */
 export type Place = Pick<Site, 'id' | 'features'>;
 import { LANGUAGE_LIMITS, normalizeLanguageText } from './index';
+import type { StoredExample } from './encoder';
+import { recall, remembered, sketch } from './memory';
 import { ENCODER } from './model';
 import { buildIndex, decide, looksSupported, passageTexts, prepareHeads, queryText, score, type FeatureIndex, type Heads, type PreparedHeads } from './policy';
 
@@ -16,7 +18,7 @@ export type ModelState =
   | { readonly status: 'failed'; readonly error: string };
 
 /** Why a person has to decide. */
-export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place';
+export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place' | 'remembered';
 
 /**
  * ready: the model answered from its fixed lists.
@@ -25,6 +27,9 @@ export type UnsureReason = 'unclear-kind' | 'unclear-place' | 'no-place';
  *     or the message does not look like English, Spanish or Korean.
  *   no-place: the message is not about a part of the site (price, booking, taste); no candidates.
  *   unclear-place: the top features are too close to call; candidates are offered in order.
+ *   remembered: the first candidate comes from messages the operator linked to a spot before
+ *     (remember()), either because the message does not look like English, Spanish or Korean,
+ *     or because that spot differs from the model's own first one. Kind and issue type are the model's.
  * unavailable: no usable model on this device; the manual workflow continues.
  * invalid: the message cannot be processed.
  */
@@ -50,6 +55,11 @@ type Loaded = {
   /** Model set and revision, the prefix of every stored passage embedding. */
   readonly scope: string;
   readonly store: Store;
+  /** The examples kept for one place; writing throws when the device cannot store them. */
+  readonly examples: {
+    readonly read: (placeId: string) => Promise<StoredExample[]>;
+    readonly write: (placeId: string, examples: readonly StoredExample[]) => Promise<void>;
+  };
   readonly heads: PreparedHeads;
   readonly model: ModelInfo;
 };
@@ -113,6 +123,10 @@ function load(): Promise<Loaded> {
       read: (key, count) => encoder.readVectors(`${scope}:${key}`, count).catch(() => null),
       write: (key, vectors) => encoder.writeVectors(`${scope}:${key}`, vectors).catch(() => undefined),
     };
+    const examples = {
+      read: (placeId: string) => encoder.readExamples(memoryKey(scope, placeId)).catch(() => []),
+      write: (placeId: string, list: readonly StoredExample[]) => encoder.writeExamples(memoryKey(scope, placeId), list),
+    };
     const labelTexts = [...weights.kind.prototypes, ...weights.category.prototypes].flat();
     const labelKey = `labels:${hash(JSON.stringify(labelTexts))}`;
     const stored = await store.read(labelKey, labelTexts.length);
@@ -121,7 +135,7 @@ function load(): Promise<Loaded> {
     const vocabulary = set.name === 'latin-hangul' ? '+latin-hangul' : '';
     const model: ModelInfo = { id: ENCODER.id, revision: `${ENCODER.revision}${vocabulary}+heads.${weights.version}`, bytes: set.modelBytes };
     publish({ status: 'ready', model });
-    return { embed, scope, store, heads: prepared, model };
+    return { embed, scope, store, examples, heads: prepared, model };
   })().catch(error => {
     loading = null;
     throw error;
@@ -231,9 +245,13 @@ export async function prepareSite(site: Place, onProgress?: (done: number, total
   }
 }
 
-export async function understand(message: string, site: Place): Promise<Understanding> {
+const validMessage = (message: string) => {
   const length = typeof message === 'string' ? Array.from(message).length : 0;
-  if (!length || length > LANGUAGE_LIMITS.messageCodePoints || !normalizeLanguageText(message) || !site?.features?.length) {
+  return length > 0 && length <= LANGUAGE_LIMITS.messageCodePoints && !!normalizeLanguageText(message);
+};
+
+export async function understand(message: string, site: Place): Promise<Understanding> {
+  if (!validMessage(message) || !site?.features?.length) {
     return { status: 'invalid', kind: null, category: null, candidates: [], reason: 'invalid-input' };
   }
   const started = performance.now();
@@ -244,7 +262,14 @@ export async function understand(message: string, site: Place): Promise<Understa
     const loaded = await load();
     const index = await siteIndex(site, loaded).promise;
     const query = await loaded.embed(queryText(message));
-    const decision = decide(score(query, index, loaded.heads), loaded.heads, looksSupported(message));
+    const scores = score(query, index, loaded.heads);
+    const supported = looksSupported(message);
+    let decision = decide(scores, loaded.heads, supported);
+    const examples = await examplesOf(loaded, site.id);
+    if (examples.length) {
+      const recalled = recall({ vector: query, grams: sketch(message) }, examples, new Set(index.map(feature => feature.id)), supported);
+      decision = remembered(decision, scores, recalled, supported);
+    }
     return { ...decision, model: loaded.model, elapsedMs: Math.round(performance.now() - started) };
   } catch (error) {
     if (state.status !== 'ready') publish({ status: 'failed', error: errorText(error) });
@@ -252,3 +277,76 @@ export async function understand(message: string, site: Place): Promise<Understa
   }
 }
 
+/** At most this many examples are kept per place; the oldest go first. */
+const MEMORY_LIMIT = 100;
+const memoryKey = (scope: string, placeId: string) => `${scope}:memory:${placeId}`;
+/** Examples read once per model and place, then kept up to date in memory. */
+const memories = new Map<string, Promise<StoredExample[]>>();
+/** Changes to the memory run one at a time, in call order. */
+let memoryQueue: Promise<unknown> = Promise.resolve();
+const queued = <T>(change: () => Promise<T>): Promise<T> => {
+  const result = memoryQueue.then(change);
+  memoryQueue = result.catch(() => undefined);
+  return result;
+};
+
+function examplesOf(loaded: Loaded, placeId: string): Promise<StoredExample[]> {
+  const key = memoryKey(loaded.scope, placeId);
+  let entry = memories.get(key);
+  if (!entry) {
+    entry = loaded.examples.read(placeId);
+    memories.set(key, entry);
+  }
+  return entry;
+}
+
+/**
+ * Keeps a message the operator linked to a spot ("Yes, this spot") so that close new messages
+ * about this place rank that spot first. Stores the message's embedding, a sketch of its spelling,
+ * the spot and the time, never the text; linking the same message again replaces its example.
+ * Loads a stored model when needed and never downloads. False when nothing was kept.
+ */
+export async function remember(message: string, place: Place, spotId: string): Promise<boolean> {
+  if (!validMessage(message) || !place?.features?.some(feature => feature.id === spotId)) return false;
+  try {
+    if (state.status !== 'ready' && !(await modelStored())) return false;
+    const id = hash(normalizeLanguageText(message));
+    // Queued as a whole, so a later forgetPlace() cannot run before this example is kept.
+    return await queued(async () => {
+      const loaded = await load();
+      const vector = await loaded.embed(queryText(message));
+      const kept = await examplesOf(loaded, place.id);
+      const next = [...kept.filter(example => example.id !== id), { id, spot: spotId, at: new Date().toISOString(), vector, grams: sketch(message) }].slice(-MEMORY_LIMIT);
+      await loaded.examples.write(place.id, next);
+      memories.set(memoryKey(loaded.scope, place.id), Promise.resolve(next));
+      return true;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/** Deletes every example kept for a place, for example when the operator starts over. */
+export async function forgetPlace(placeId: string): Promise<void> {
+  await queued(async () => {
+    try {
+      await (await import('./encoder')).deleteExamples(placeId);
+    } finally {
+      // After the stored copy is gone, so no read in between can bring it back.
+      for (const key of memories.keys()) if (key.endsWith(`:memory:${placeId}`)) memories.delete(key);
+    }
+  }).catch(() => undefined);
+}
+
+/** How many examples are kept for a place with the model stored on this device. */
+export async function rememberedCount(placeId: string): Promise<number> {
+  try {
+    await memoryQueue;
+    if (loading && state.status === 'ready') return (await examplesOf(await loading, placeId)).length;
+    const encoder = await import('./encoder');
+    const set = await encoder.storedSetName();
+    return set ? (await encoder.readExamples(memoryKey(`${set}:${ENCODER.revision}`, placeId))).length : 0;
+  } catch {
+    return 0;
+  }
+}
