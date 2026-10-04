@@ -16,13 +16,19 @@ import { walkMarks, type Mark } from './marks';
 import RevealFx from '../fx/RevealFx';
 import { marksShown, photosShown, type Beats } from '../fx/build';
 import { TextButton, markOf } from '../ui';
+import { SCRIPT, type WalkSlots } from '../guide/script';
+import { ROUTE_PLACES } from '../site/registry';
 import { SkipIcon } from '../ui/icons';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
-const BUILD_FROM = 300, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
+const BUILD_FROM = 900, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
 /** A long walk's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
 const COUNT_MAX = 1100;
+/** The guide's greeting holds this long, while the place's name and its map come in and the first photos land. */
+const HELLO_FOR = 1500;
+/** The guide's line for each step: a colleague's words, with no counts; the counts sit in the figures under the place's name. */
+const LINE_OF = { photos: 'photos', areas: 'photos', walk: 'walk', stretches: 'walk', reading: 'reading', marks: 'reading', barriers: 'marks' } as const;
 /** The photo reading: a few photos with model outlines, each opening from its dot and folding back into it, one every READ_GAP, each READ_FOR long; its marks land on the map READ_LANDS in, as reveal.css draws them. */
 const READ_GAP = 560, READ_FOR = 1050, READ_LANDS = 980, MAX_CARDS = 5;
 /** The last step holds this long before the hand-off; retained 3D areas, read only on this device, may hold it back a little more. */
@@ -78,6 +84,14 @@ function fitView(data: Destination, width: number, height: number, top: number):
 }
 
 const year = (iso: string | null) => iso?.slice(0, 4) ?? '';
+/** The walk's end as the guide says it, with its article where the place names it in the reader's language: "the Qorikancha ticket booth", "la boletería del Qorikancha". */
+function endOf(data: Destination, lang: keyof typeof SCRIPT): string {
+  const named = ROUTE_PLACES[data.id]?.features.find(feature => !feature.stretches.length && feature.landmark === data.target.name)?.name[lang];
+  if (!named) return data.target.name;
+  if (lang !== 'es') return `the ${named}`;
+  const first = named.split(' ')[0];
+  return `${/(a|ía|ión|dad|tud)$/i.test(first) ? 'la' : 'el'} ${first.toLocaleLowerCase()}${named.slice(first.length)}`;
+}
 /** The kind an outline was read as, in one or two words, such as Steps or Kerb; the finding's own label where the scan names no kind. */
 const kindOf = (data: Destination, finding: Finding, lang: Parameters<typeof fromRecord>[1]) => fromRecord(data.scan?.kinds.find(kind => kind.concept === finding.concept)?.label ?? finding.label, lang);
 
@@ -103,7 +117,7 @@ function chooseCards(data: Destination): Card[] {
 
 /** Replays how a recorded place was built, step by step, then opens its inspection on the same map. */
 export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void; onPlace?: (place: MenuPlace) => void }) {
-  const { t, rich, lang, locale } = useLanguage();
+  const { t, lang, locale } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
   const [failed, setFailed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -310,18 +324,22 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : id === 'tbilisi-narikala' ? t('reveal.route.narikala') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
-  const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : 0;
+  const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : data ? data.stretches.filter(stretch => stretch.status === 'barrier').length : 0;
   const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk');
-  // While the photos are read the line counts the marks they leave; until the first lands it keeps the stretches.
-  const lineId: Exclude<StepId, 'reading'> | null = !step ? null : step.id === 'reading' ? (readCount ? 'marks' : 'stretches') : step.id;
-  const say = !data || !lineId ? null : {
-    photos: rich(Math.max(1, shown) === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: <strong>{Math.max(1, shown).toLocaleString(locale)}</strong> }),
-    areas: rich('reveal.areas', { shown: <strong>{layer?.areas ?? 0}</strong>, total: data.pieces.length }),
-    walk: rich('reveal.build.walk', { length: <strong>{t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) })}</strong>, route }),
-    stretches: rich('reveal.build.stretches', { count: <strong>{data.stretches.length}</strong>, length: t('common.metres', { m: Math.round((data.stretches[0]?.to ?? 0) - (data.stretches[0]?.from ?? 0)) }) }),
-    marks: rich(placedCount === 1 ? 'reveal.build.mark' : 'reveal.build.marks', { count: <strong>{placedCount}</strong> }),
-    barriers: barriers === 1 ? rich('reveal.build.barrier', { count: <strong>1</strong> }) : spots > 1 ? rich('reveal.build.barriersAt', { count: <strong>{barriers}</strong>, spots: <strong>{spots}</strong> }) : rich('reveal.build.barriers', { count: <strong>{barriers}</strong> }),
-  }[lineId];
+  // What the guide says: a greeting while the place comes in, then one line per stage; the counts stay out of its speech.
+  const beat = !data ? null : quiet || phase !== 'play' ? 'marks' : !step || (step.id === 'photos' && elapsed < HELLO_FOR) ? 'hello' : LINE_OF[step.id];
+  const slots: WalkSlots | null = data && { place: name, start: data.start?.name ?? '', target: endOf(data, lang), metres: data.lengthMetres, photos: data.photos.length, marks: marks.length, barriers, spots, messages: 0, osm: 0 };
+  const line = slots && beat ? SCRIPT[lang].reveal[beat](slots) : null;
+  // The counts, each as it is placed, in small figures under the place's name: photos landed, the walk's length, marks placed, the possible barriers.
+  const at = (id: StepId) => { const index = steps.findIndex(item => item.id === id); return index >= 0 && !!step && steps.indexOf(step) >= index; };
+  const metresText = data ? t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) }) : '';
+  type Figure = { id: keyof typeof GLYPHS; value: string; label: string };
+  const figures: Figure[] = !data ? [] : ([
+    at('photos') && { id: 'photos', value: shown.toLocaleString(locale), label: t(shown === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: shown.toLocaleString(locale) }) },
+    at('walk') && { id: 'walk', value: metresText, label: t('reveal.build.walk', { length: metresText, route }) },
+    (at('reading') || at('marks')) && placedCount > 0 && { id: 'marks', value: placedCount.toLocaleString(locale), label: t(placedCount === 1 ? 'reveal.build.mark' : 'reveal.build.marks', { count: placedCount.toLocaleString(locale) }) },
+    at('barriers') && { id: 'barriers', value: barriers.toLocaleString(locale), label: barriers === 1 ? t('reveal.build.barrier', { count: 1 }) : spots > 1 ? t('reveal.build.barriersAt', { count: barriers, spots }) : t('reveal.build.barriers', { count: barriers }) },
+  ] as (Figure | false)[]).filter((figure): figure is Figure => !!figure);
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data} onPlace={onPlace}/>}
     {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${leaned ? ' is-leaned' : ''}`} data-phase={phase} data-step={step?.id ?? 'none'} role="region" aria-label={name} style={{ ...(walkStep && { '--walk-at': `${walkStep.at}ms`, '--walk-for': `${walkStep.until - walkStep.at}ms` }), '--free-left': `${insets.left}px`, '--free-right': `${insets.right}px` } as CSSProperties}>
@@ -344,6 +362,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{fromRecord(DESTINATIONS[id].place, lang)}</p>
+          {figures.length > 0 && <p className="reveal-figures">{figures.map(figure => <span key={figure.id} className="reveal-figure" role="img" aria-label={figure.label}>{GLYPHS[figure.id]}<span aria-hidden="true">{figure.value}</span></span>)}</p>}
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : spot.w)} y2={spot.top + (spot.top > spot.y ? 0 : spot.h)}/>; })}</svg>
         {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} data-tone="dark" className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top, '--fold-x': `${spot.x - spot.left}px`, '--fold-y': `${spot.y - spot.top}px` } as CSSProperties}>
@@ -353,7 +372,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           </div>
           <figcaption><strong className="reveal-chip" data-barrier={card.findings.some(f => f.barrier) || undefined}>{kindOf(data, card.findings.find(f => f.barrier) ?? card.findings[0], lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
-        {phase === 'play' && lineId && <p className="reveal-say" key={lineId}>{GLYPHS[lineId]}<span>{say}</span></p>}
+        {phase === 'play' && line && <p className="reveal-say" key={beat}><span>{line}</span></p>}
         <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
@@ -361,12 +380,10 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   </div>;
 }
 
-/** One small sign per line, drawn like the thing it names on the map. */
-const GLYPHS: Record<Exclude<StepId, 'reading'>, ReactNode> = {
+/** One small sign per count, drawn like the thing it counts on the map. */
+const GLYPHS: Record<'photos' | 'walk' | 'marks' | 'barriers', ReactNode> = {
   photos: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="5" cy="13" r="2.1" className="glyph-photo"/><circle cx="11" cy="8" r="2.1" className="glyph-photo"/><circle cx="17" cy="12" r="2.1" className="glyph-photo"/></svg>,
-  areas: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 15h.01M8 12h.01M11 15h.01M11 9h.01M14 12h.01M17 15h.01M14 6h.01M8 6h.01" className="glyph-areas"/></svg>,
   walk: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M3 16C8 5 13 17 19 6" className="glyph-walk"/></svg>,
-  stretches: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M2 11H20M4 7V15M9 7V15M14 7V15M19 7V15" className="glyph-ticks"/></svg>,
   marks: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="4" className="glyph-mark"/></svg>,
   barriers: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" className="glyph-barrier"/></svg>,
 };

@@ -29,12 +29,16 @@ test('the Qorikancha reveal replays how the walk was built and opens the inspect
   await expect(reveal).toHaveAttribute('data-step', 'reading', {timeout: 10000});
   await expect(reveal.getByRole('figure').first()).toBeVisible();
   await expect(reveal).toHaveAttribute('data-step', 'barriers', {timeout: 10000});
+  // The counts sit in small figures under the place's name, each as it is placed.
+  await expect(reveal.getByRole('img', {name: /^\d+ street photos of this walk$/})).toBeVisible();
+  // Every mark the package records, not only those whose photos are published.
+  await expect(reveal.getByRole('img', {name: '52 marks along the walk'})).toBeVisible();
+  await expect(reveal.getByRole('img', {name: '8 might be barriers, at 5 spots'})).toBeVisible();
+  // The guide speaks in plain words: it never counts photos or marks, and never says how the walk was built.
   const lines = await said();
-  expect(lines.some(line => /^\d+ street photos of this walk$/.test(line))).toBe(true);
-  // Marks are counted as they are placed, up to every mark the package records, not only those whose photos are published.
-  expect(lines).toContain('52 marks along the walk');
-  expect(lines).toContain('8 might be barriers, at 5 spots');
-  await expect(reveal).not.toContainText(/recorded|unverified/i);
+  expect(lines.length).toBeGreaterThan(2);
+  expect(lines.some(line => /\d+ (street photos|marks)/.test(line))).toBe(false);
+  await expect(reveal).not.toContainText(/recorded|unverified|outlined|GPU/i);
   await page.getByRole('button', {name:'Skip', exact:true}).click();
   // The replay lands on the canvas map before it gives way, rather than cutting to it.
   await expect(reveal).toHaveAttribute('data-phase', 'handoff');
@@ -51,7 +55,7 @@ test('a photo-only place replays its photo and still opens its map', async ({pag
   await page.goto('/');
   await page.getByRole('button', {name:'Explore Swayambhu · Kathmandu'}).click();
   const reveal = page.getByRole('region', {name:'Swayambhu', exact:true});
-  await expect(reveal).toContainText('1 street photo of this walk', {timeout: 8000});
+  await expect(reveal.getByRole('img', {name: '1 street photo of this walk'})).toBeVisible({timeout: 8000});
   await page.keyboard.press('Escape');
   await expect(reveal).toBeHidden();
   await page.getByRole('button', {name:'3D', exact:true}).click();

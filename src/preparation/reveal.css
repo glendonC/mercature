@@ -34,6 +34,10 @@
 .reveal-banner::before { content: ''; width: 100%; height: 1px; margin-bottom: 8px; background: linear-gradient(90deg, transparent, rgb(29 33 37 / .35), transparent); animation: reveal-rule .9s var(--ease) .75s both; }
 .reveal-banner h1 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; line-height: 1.1; }
 .reveal-banner p { margin: 0; font-size: var(--text-label); color: var(--muted); }
+/* The counts, each as it is placed: a small sign and a number, outside the guide's speech. */
+.reveal-banner .reveal-figures { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 2px; font-size: var(--font-xs); color: var(--ink); font-variant-numeric: tabular-nums; }
+.reveal-figure { display: inline-flex; align-items: center; gap: 4px; animation: reveal-fade 240ms var(--ease-out) both; }
+.reveal-figure svg { width: 14px; height: 14px; overflow: visible; }
 
 .reveal-hints { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: calc(44px + var(--safe-bottom)); padding: 0 calc(var(--space-2) + var(--safe-right)) var(--safe-bottom) calc(24px + var(--safe-left)); border-top: 1px solid var(--line); font-size: var(--font-xs); color: var(--muted); animation: reveal-fade .6s ease 1s both; }
 .reveal-hints .ui-text-button:disabled { opacity: 0; }
