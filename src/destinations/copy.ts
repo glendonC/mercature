@@ -15,7 +15,8 @@ export const COPY = {
     kinds: { problem: 'Problem', praise: 'Praise', question: 'Question' } as Record<MessageKind, string>,
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
-      messages: 'Messages', add: 'Add a message', example: 'Example', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages',
+      messages: 'Messages', add: 'Add a message', example: 'Example', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
+      guide: "Tap a marker to see its photo, or open a visitor's message.",
       found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Visitors raise', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
       paste: 'Paste what a visitor sent you by WhatsApp, SMS or a review, in any language.', read: 'Read message', cancel: 'Cancel',
@@ -38,7 +39,8 @@ export const COPY = {
     kinds: { problem: 'Problema', praise: 'Elogio', question: 'Pregunta' } as Record<MessageKind, string>,
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
-      messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes',
+      messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
+      guide: 'Toca un marcador para ver su foto, o abre el mensaje de un visitante.',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',
       paste: 'Pega lo que te envió un visitante por WhatsApp, SMS o una reseña, en cualquier idioma.', read: 'Leer mensaje', cancel: 'Cancelar',

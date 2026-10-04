@@ -32,6 +32,7 @@
 .ri-heading { margin: 16px 0 4px; font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--muted); }
 .ri-title { margin: 6px 0 2px; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
 .ri-lead { margin: 6px 0 10px; font-size: 14px; }
+.ri-guide { margin: 2px 0 12px; font-size: 13px; color: var(--muted); }
 .ri-summary { padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
 .ri-summary > .ri-meta { margin: 0 0 6px; }
 .ri-counts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
@@ -120,6 +121,7 @@ button.ri-photo-frame[aria-pressed=true] { cursor: zoom-in; }
   .ri-panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 58svh; padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: 18px 18px 0 0; border-bottom: 0; }
   .ri-panel::before { content: ''; display: block; width: 36px; height: 4px; margin: 0 auto 6px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 16%, transparent); }
   .route-inbox[data-pane=spot] .ri-panel, .route-inbox[data-pane=message] .ri-panel { max-height: 66svh; }
+  .ri-guide { font-size: 14px; margin-bottom: 10px; }
   .ri-meta, .ri-row-meta, .ri-legend, .ri-photo figcaption, .ri-credit, .ri-langs button, .ri-pager, .ri-place p, .ri-lang, .ri-filed { font-size: var(--text-phone-min); }
   .ri-text, .ri-back, .ri-primary, .ri-select { font-size: 14px; min-height: var(--tap); }
   .route-inbox .destination-map-controls { top: 112px; left: auto; right: 8px; bottom: auto; }

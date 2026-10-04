@@ -173,6 +173,8 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
 
   // Panels and camera
   const [pane, setPane] = useState<Pane>({ kind: 'inbox' });
+  const paneNow = useRef(pane);
+  paneNow.current = pane;
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<Editing>(null);
   const [line, setLine] = useState('');
@@ -214,15 +216,22 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   // Messages: examples first read here, then kept like any message she adds.
   const examples = EXAMPLES[data.id] ?? [];
   const [pending, setPending] = useState<{ id: string; text: string; language: string } | null>(null);
+  /** The message the model answered while this screen was open; any other answer shown is a stored one. */
+  const [readNow, setReadNow] = useState<string | null>(null);
+  const reading = useRef<string | null>(null);
   const messageOf = (id: string) => review.messages.find(message => message.id === id) ?? null;
-  async function read(id: string, text: string, language: string) {
+  function read(id: string, text: string, language: string) {
     if (pane.kind === 'inbox') lastRow.current = id;
-    setPane({ kind: 'message', id }); setReplyLang(null); setSaid('');
+    setPane({ kind: 'message', id }); setReplyLang(null); setSaid(''); setReadNow(null);
     const known = messageOf(id);
     if (known) { show(known); return; }
     setPending({ id, text, language }); setLine('');
-    if (ai) await run(id, text, language);
   }
+  // A new message is read once the model is ready or found stored on this device, while its pane is open.
+  useEffect(() => {
+    if (!ai || !pending || pane.kind !== 'message' || pane.id !== pending.id || reading.current === pending.id) return;
+    void run(pending.id, pending.text, pending.language);
+  }, [ai, pending, pane]); // eslint-disable-line react-hooks/exhaustive-deps
   function show(message: LoggedMessage) {
     setPending(null);
     const answer = message.answer;
@@ -240,10 +249,12 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   async function run(id: string, text: string, language: string) {
     if (!place) return;
     const mine = ++ticket.current;
+    reading.current = id;
     setBusy('reading'); setLine(w.line.reading);
     let result;
     try { result = await understand(text, place); } catch { result = { status: 'unavailable' as const, kind: null, category: null, candidates: [], reason: 'model-failed' as const }; }
     if (mine !== ticket.current) return;
+    reading.current = null;
     setBusy(null);
     if (result.status === 'invalid') { setLine(w.line.manual); return; }
     const candidates = result.candidates.filter(key => targetOf(key)).slice(0, 3);
@@ -251,8 +262,10 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     // A sure answer files itself on the first spot; she can move it with one tap.
     const spot = answer.status === 'ready' && candidates[0] ? candidates[0] : null;
     commit(review => logMessage(review, { text, language, answer, spot }, id));
-    setPending(null);
+    setPending(null); setReadNow(id);
     setLine(lineFor(answer, !!spot));
+    // The camera follows the answer only while its message is still open.
+    if (paneNow.current.kind !== 'message' || paneNow.current.id !== id) return;
     if (spot) fly(targetOf(spot)); else frameAll(candidates);
   }
   function withoutAi(id: string, text: string, language: string) {
@@ -264,7 +277,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     setBusy('download');
     const next = await prepareModel(setModel);
     setModel(next); setBusy(null);
-    if (next.status === 'ready') { setStored(true); await prepareSite(place); if (pending) await run(pending.id, pending.text, pending.language); }
+    if (next.status === 'ready') { setStored(true); void prepareSite(place); }
   }
   /** Her tap files the message on a spot; the model learns from it when the spot is one it can suggest. */
   function file(id: string, target: Target) {
@@ -395,6 +408,7 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
   const note = noteText(noteLang);
 
   const inbox = <>
+    <p className="ri-guide">{w.guide}</p>
     <section className="ri-summary" aria-label={w.found}>
       <p className="ri-meta">{w.found}</p>
       <ul className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <li key={kind}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></li>)}</ul>
@@ -441,10 +455,10 @@ export default function RouteInbox({ data, asset, onHome }: { data: Destination;
     if (!shown) return null;
     const answer = message?.answer ?? null, language = shown.language;
     const replyIn = replyLang ?? replyLanguage(language);
-    const isExample = shown.id.startsWith('example-');
+    const isExample = shown.id.startsWith('example-'), earlier = !!answer && readNow !== shown.id;
     return <>
       <Back onClick={home} label={w.back} />
-      <p className="ri-row-meta">{isExample && <em>{w.example}</em>}<span className="ri-lang">{language.toUpperCase()}</span>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : `${t.kinds[answer.kind]}?`}</>}</p>
+      <p className="ri-row-meta">{isExample && <em>{w.example}</em>}<span className="ri-lang">{language.toUpperCase()}</span>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : `${t.kinds[answer.kind]}?`}</>}{earlier && <> · {w.readEarlier}</>}</p>
       <blockquote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</blockquote>
       {!message && !ai && <div className="ri-actions">
         {(downloadBytes || model.status === 'downloading') ? <button className="ri-primary" disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</button> : null}

@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs';
 import {test, expect, type Page} from '@playwright/test';
 
 async function openRoute(page: Page) {
@@ -56,4 +57,28 @@ test('the panel comes before the map, so the keyboard reaches the messages first
   await page.keyboard.press('Escape');
   await expect(page.getByRole('heading', {name:'Messages', exact:true})).toBeVisible();
   await expect(page.locator('.ri-row').first()).toBeFocused();
+});
+
+test('a message tapped before the stored model is found is read once it is, and its answer shows as read earlier on reopening', async ({page}) => {
+  test.skip(!existsSync('public/models/multilingual-e5-small-latin-hangul'), 'The trimmed model is not in public/models.');
+  test.setTimeout(90000);
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await openRoute(page);
+  await page.locator('.ri-row', {hasText:'Quick question'}).click();
+  await page.getByRole('button', {name:/^Download \d+ MB/}).click();
+  await expect(page.locator('.ri-reply')).toBeVisible({timeout:60000});
+  // A cold start where the stored model is found only after she taps a message.
+  await page.addInitScript(() => {
+    const has = CacheStorage.prototype.has;
+    CacheStorage.prototype.has = function (...args) { return new Promise(resolve => setTimeout(resolve, 1500)).then(() => has.apply(this, args)); };
+  });
+  await page.reload();
+  await openRoute(page);
+  await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
+  await expect(page.locator('.ri-reply')).toBeVisible({timeout:30000});
+  await expect(page.locator('.ri-panel .ri-row-meta').first()).not.toContainText('Read earlier');
+  await page.getByRole('button', {name:'All messages'}).click();
+  await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
+  await expect(page.locator('.ri-panel .ri-row-meta').first()).toContainText('Read earlier');
 });
