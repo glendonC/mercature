@@ -270,6 +270,15 @@ try {
   await page.screenshot({ path: resolve(out, 'answer-offline-390.png') });
   check(inMemory ? 'Korean demo message answered again from the stored model' : 'Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && unread && offered === 0 && !!fresh?.answer?.model && matches(again),
     `${describe(again)}; read afresh by ${fresh?.answer?.model ?? 'nothing'}`);
+  // Narikala is kept on first use, not at install: it opened online above, so it opens again now.
+  await page.goto(app);
+  await page.getByRole('button', { name: 'Explore Narikala · Tbilisi', exact: true }).click();
+  const skipAgain = page.getByRole('button', { name: 'Skip', exact: true });
+  await skipAgain.waitFor();
+  if (await skipAgain.isVisible()) await skipAgain.click();
+  const narikalaAgain = await page.locator(inbox ? '.route-inbox' : '.guide-screen .ui-dialogue').waitFor({ timeout: 15_000 }).then(() => page.getByRole('button', { name: /^Data Gulua Rise, 920 to 990 m/ }).first().waitFor({ timeout: 10_000 })).then(() => true, () => false);
+  await page.screenshot({ path: resolve(out, 'narikala-again-390.png') });
+  check(inMemory ? 'Narikala opens again' : 'Narikala opens offline after one online visit', narikalaAgain, narikalaAgain ? 'Data Gulua Rise marker shown' : 'not shown');
   check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
   check('proof ran to the end', false, error instanceof Error ? error.message.split('\n')[0] : String(error));
