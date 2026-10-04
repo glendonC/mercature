@@ -17,7 +17,7 @@ export const COPY = {
     kinds: { problem: 'Problem', praise: 'Praise', question: 'Question' } as Record<MessageKind, string>, maybe: (kind: string) => `${kind}?`,
     copyFailed: 'Copy the text above. The clipboard is not available.', notSaved: 'This device did not keep the last change.',
     inbox: {
-      messages: 'Messages', add: 'Add a message', example: 'Example', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
+      messages: 'Messages', add: 'Add a message', example: 'Example', translated: 'Machine-translated', unread: 'Not read yet', notFiled: 'Not filed', back: 'All messages', readEarlier: 'Read earlier',
       guide: 'Tap a marker for its photo, or open a message.', start: 'Start',
       found: 'Found along the walk', kinds: { steps: 'Steps', kerb: 'Kerb', path: 'On the path', noPhotos: 'No photos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Visitors raise', scanned: 'Model marks near the walk', flaggedSpots: 'Flagged spots', note: 'Route note for visitors', copy: 'Copy', copied: 'Copied',
@@ -41,7 +41,7 @@ export const COPY = {
     kinds: { problem: 'Problema', praise: 'Elogio', question: 'Pregunta' } as Record<MessageKind, string>, maybe: (kind: string) => `¿${kind}?`,
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
-      messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
+      messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', translated: 'Traducción automática', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
       guide: 'Toca un marcador para ver su foto o abre un mensaje.', start: 'Salida',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', scanned: 'Marcas del modelo cerca del recorrido', flaggedSpots: 'Puntos señalados', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',

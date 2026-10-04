@@ -618,7 +618,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const isExample = shown.id.startsWith('example-'), earlier = !!answer && readNow !== shown.id && pending?.id !== shown.id;
     return <>
       <Back onClick={home} label={w.back} />
-      <p className="ri-row-meta">{isExample && <Tag tone="example">{w.example}</Tag>}<Tag tone="solid">{language.toUpperCase()}</Tag>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : t.maybe(t.kinds[answer.kind])}</>}{earlier && <> · {w.readEarlier}</>}</p>
+      <p className="ri-row-meta">{isExample && <Tag tone="example">{w.example}</Tag>}{examples.find(example => example.id === shown.id)?.translated && <Tag tone="example">{w.translated}</Tag>}<Tag tone="solid">{language.toUpperCase()}</Tag>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : t.maybe(t.kinds[answer.kind])}</>}{earlier && <> · {w.readEarlier}</>}</p>
       <Quote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</Quote>
       {!message && !ai && (downloadBytes === null || model.status === 'failed') && <p className="ri-meta ri-no-model">{t.noModel}</p>}
       {!message && !ai && <div className="ri-actions">
