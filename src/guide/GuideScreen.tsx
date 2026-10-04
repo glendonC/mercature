@@ -113,6 +113,8 @@ function answerLine(question: string, answer: string, access: AccessKind, at: Wh
   return undefined;
 }
 
+/** Whether a name is written in Latin letters, so a reader of English or Spanish can read it. */
+const latin = (name: string) => !/[^\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]/u.test(name);
 /** Whether the model can read a message at all: it knows Latin and Hangul letters only. */
 const readable = (text: string) => /[\p{Script=Latin}\p{Script=Hangul}]/u.test(text);
 const replyLanguage = (language: string): VisitorLang => language === 'es' || language === 'ko' ? language : language === 'qu' ? 'es' : 'en';
@@ -204,9 +206,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const next = change(latest.current); latest.current = next; setReview(next);
     if (!saveReview(next)) setProblem(s.notSaved);
   }
+  /** A landmark as the place's own spots name it, so a street OpenStreetMap names in Georgian reads as "Jemal Ajiashvili Street". */
+  const landmarkSpot = (name: string) => authored?.features.find(item => !item.stretches.length && (item.landmark === name || item.name.en === name)) ?? null;
   const locate: Locate = stretch => {
     const line = data.stretches[stretch], at = midpoint(line.line.map(walk.project));
-    const near = [...walk.landmarks].sort((a, b) => Math.hypot(a.at[0] - at[0], a.at[1] - at[1]) - Math.hypot(b.at[0] - at[0], b.at[1] - at[1]))[0];
+    // The nearest landmark a reader can read: its own name in Latin letters, or the name the place's spots give it; never a script the reader may not know.
+    const near = walk.landmarks.map(one => ({ one, name: latin(one.name) ? one.name : landmarkSpot(one.name)?.name.en ?? '' })).filter(item => item.name)
+      .sort((a, b) => Math.hypot(a.one.at[0] - at[0], a.one.at[1] - at[1]) - Math.hypot(b.one.at[0] - at[0], b.one.at[1] - at[1]))[0];
     return { from: line.from, to: line.to, landmark: near?.name ?? '' };
   };
   const place = useMemo(() => authored ? withEdits(authored, edits, locate) : null, [authored, edits]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -326,8 +332,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return one ? `${s.words.kinds[one.kind]} · ${along(data.stretches[one.stretch].from)}` : nameOf(target);
   }
   function nearOf(stretch: number): Where {
-    const near = locate(stretch).landmark;
-    return near ? { en: `near ${enPlace(near)}`, es: `cerca ${esDe(esPlace(near))}`, ko: near } : where(null, names);
+    const near = locate(stretch).landmark, spot = near ? landmarkSpot(near) : null;
+    return near ? { en: `near ${enPlace(spot?.name.en ?? near)}`, es: `cerca ${esDe(esPlace(spot?.name.es ?? near))}`, ko: spot?.aliases.ko?.[0] ?? near } : where(null, names);
   }
   function whereWords(target: Target): string {
     const spot = target.kind === 'spot' ? spotById(target.id) : null;
