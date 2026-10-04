@@ -45,6 +45,11 @@
 .ri-note-line { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .ri-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-size: var(--font-xs); color: var(--ui-muted); }
 .ri-row-meta .ui-tag { color: var(--ui-ink); }
+/* Each message row leads with its visitor's avatar; its language and Example tags sit at the end */
+.route-inbox .ui-row-icon:has(> .ui-visitor) { min-width: 28px; height: 28px; }
+.route-inbox .ui-list[data-inset]:has(.ui-row-icon > .ui-visitor) { --list-inset: 40px; }
+.route-inbox .ui-row-meta:has(> .ui-tag) { display: inline-flex; align-items: center; gap: 6px; }
+.route-inbox .ui-row-meta > .ui-tag { color: var(--ui-ink); }
 .ri-rank { display: grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ui-ink); color: var(--ui-on-primary); font-size: var(--font-xs); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
 .ri-filed { color: var(--ui-muted); }
 .ri-kind { color: var(--ui-muted); }

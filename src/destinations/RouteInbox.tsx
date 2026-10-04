@@ -20,7 +20,7 @@ import { iconFor } from '../ui/icons';
 import AddSpot from './edit/AddSpot';
 import MarkFixed from './edit/MarkFixed';
 import OwnNoteEditor from './edit/OwnNote';
-import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, markOf, MARK_ORDER, type LegendItem } from '../ui';
+import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, VisitorAvatar, markOf, MARK_ORDER, type LegendItem } from '../ui';
 import { BackIcon, ChevronIcon, CloseIcon, CopyIcon, DownloadIcon, FixedIcon, KerbIcon, MessageIcon, MoreIcon, NoPhotosIcon, NoteIcon, PathIcon, PinIcon, PlusIcon, PointerIcon, PraiseIcon, ProblemIcon, QuestionIcon, RemoveIcon, RotateIcon, StepsIcon, UndoIcon, AddedIcon } from '../ui/icons';
 import Swap from '../fx/Swap';
 import './route-inbox.css';
@@ -509,7 +509,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <p className="ri-row-meta">{kind}{target.kind === 'added' && <Tag><AddedIcon />{editWords.addedBy}</Tag>}{fix && <Tag tone="route"><FixedIcon />{editWords.fixedOn(recordDate(fix.at, lang))}</Tag>}{gone && <Tag tone="unknown">{w.removed}</Tag>}</p>
       {view && <PhotoWithMarks still view={view} photo={photos.get(view.photoId)} asset={asset} lang={lang} marks={marksOn(view.id)} lead={lead} t={t} />}
       <Section heading="h2" title={w.visitors(filed.length)}>
-        {latest && <List inset><Row static icon={<Tag tone="solid" lang={said}>{latest.language.toUpperCase()}</Tag>} label={<span lang={said}>{latest.text}</span>} /></List>}
+        {latest && <List inset><Row static icon={<VisitorAvatar id={latest.id} still />} label={<span lang={said}>{latest.text}</span>} meta={<Tag tone="solid" lang={said}>{latest.language.toUpperCase()}</Tag>} /></List>}
       </Section>
     </>;
   }
@@ -630,8 +630,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <List inset>{rows.map(row => {
         const message = messageOf(row.id), answer = message?.answer, said = row.language === 'other' ? undefined : row.language;
         return <Row key={row.id} className="ri-row" data-row={row.id} onClick={() => void read(row.id, row.text, row.language)} {...pointAt(message?.spot ? targetOf(message.spot) : null)}
-          icon={<Tag tone="solid" lang={said}>{row.language.toUpperCase()}</Tag>} label={<span lang={said}>{row.text}</span>}
-          detail={message ? message.spot ? nameOfKey(message.spot) : w.notFiled : w.unread} meta={row.example ? <Tag tone="example">{w.example}</Tag> : null}
+          icon={<VisitorAvatar id={row.id} still />} label={<span lang={said}>{row.text}</span>}
+          detail={message ? message.spot ? nameOfKey(message.spot) : w.notFiled : w.unread} meta={<><Tag tone="solid" lang={said}>{row.language.toUpperCase()}</Tag>{row.example && <Tag tone="example">{w.example}</Tag>}</>}
           trailing={answer?.kind && answer.status === 'ready' ? <KindIcon kind={answer.kind} /> : message ? <KindIcon kind={null} /> : null} />;
       })}</List>
     </Section>
@@ -711,7 +711,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {view && outlines.length > 0 && <div className="ri-legend"><Legend items={legendOf(outlines, lang)} /><span className="ri-meta">{w.suggestion}</span></div>}
       <Section heading="h2" title={w.visitors(filed.length)}>
         {filed.length > 0 && <List inset>{filed.map(message => { const said = message.language === 'other' ? undefined : message.language; return <Row key={message.id} className="ri-row" onClick={() => void read(message.id, message.text, message.language)}
-          icon={<Tag tone="solid" lang={said}>{message.language.toUpperCase()}</Tag>} label={<span lang={said}>{message.text}</span>} />; })}</List>}
+          icon={<VisitorAvatar id={message.id} still />} label={<span lang={said}>{message.text}</span>} meta={<Tag tone="solid" lang={said}>{message.language.toUpperCase()}</Tag>} />; })}</List>}
       </Section>
       {own?.text && editing !== 'note' && <p className="ri-own"><span className="ri-meta">{editWords.yourNote}</span> {own.text}</p>}
       {editing === 'add' && clear ? <AddSpot words={editWords} where={locate(target.index).landmark} range={{ from: Math.round(data.stretches[target.index].from), to: Math.round(data.stretches[target.index].to) }} guess={noteLanguage}

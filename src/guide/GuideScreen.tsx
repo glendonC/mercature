@@ -21,7 +21,7 @@ import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { BackIcon, ChevronIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
-import { ChangeRow, Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, kindOf, markOf, type MarkKind } from '../ui';
+import { ChangeRow, Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
@@ -880,7 +880,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       }
       quiet = { id: 'skip', label: s.messages.chips.skip, onClick: () => go(nextMessage(step.at)) };
       above = <section className="gs-card gs-quote" data-tone="dark" aria-label={language}>
-        <p className="gs-card-meta"><Tag tone="solid" lang={row.language === 'other' ? undefined : row.language}>{row.language.toUpperCase()}</Tag>{row.example && <Tag tone="example">{s.messages.example}</Tag>}{row.translated && <Tag tone="example">{s.messages.translated}</Tag>}<span>{t.pageOf(step.at + 1, rows.length)}</span></p>
+        <p className="gs-card-meta"><VisitorAvatar id={row.id} size={40} /><Tag tone="solid" lang={row.language === 'other' ? undefined : row.language}>{row.language.toUpperCase()}</Tag>{row.example && <Tag tone="example">{s.messages.example}</Tag>}{row.translated && <Tag tone="example">{s.messages.translated}</Tag>}<span>{t.pageOf(step.at + 1, rows.length)}</span></p>
         <blockquote lang={row.language === 'other' ? undefined : row.language}>{row.text}</blockquote>
       </section>;
     } else {

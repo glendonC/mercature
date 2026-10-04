@@ -48,6 +48,8 @@
 .gs-turn-photo:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -4px; }
 .gs-swipe { display: contents; }
 .gs-empty { margin: 4px 0; font-size: var(--font-s); color: var(--ui-muted); }
+.gs-quote .gs-card-meta { margin-block: -2px 6px; }
+.gs-quote .gs-card-meta .ui-visitor { margin-inline-start: -4px; }
 .gs-quote blockquote { margin: 0; font-size: var(--font-m); line-height: var(--leading-read); overflow-wrap: anywhere; }
 .gs-insights { display: grid; gap: 2px; padding: 4px 12px; list-style: none; }
 .gs-insights li { display: flex; align-items: center; gap: 8px; min-height: var(--tap); font-size: var(--font-m); }
