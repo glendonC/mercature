@@ -4,7 +4,7 @@ import PlaceCanvas, {type PlaceView} from "../components/PlaceCanvas";
 import ScenePins from "../components/ScenePins";
 import {NOOR_FARM} from "../site/farm";
 import type {Site} from "../site/contracts";
-import {understand, prepareModel, modelState, modelDownloadBytes, type Understanding, type ModelState} from "../language/understand";
+import {understand, prepareModel, modelState, modelStored, modelDownloadBytes, type Understanding, type ModelState} from "../language/understand";
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
@@ -89,6 +89,14 @@ export default function Workspace({
     void modelDownloadBytes().then(bytes => { if (alive) setDownloadBytes(bytes); });
     return () => { alive = false; };
   }, [model.status]);
+  /** A model kept on this device answers without a connection, so the farm offers to find the spot. */
+  const [stored, setStored] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void modelStored().then(value => { if (alive) setStored(value); });
+    return () => { alive = false; };
+  }, []);
+  const ai = model.status === 'ready' || stored;
   const request = useRef(0);
   useEffect(() => () => {request.current++;}, []);
   const [step, setStep] = useState<Step>(initialPlan ? "done" : "start");
@@ -335,7 +343,7 @@ export default function Workspace({
   const pins = useMemo(() => section === 'messages' ? candidateSpots : confirmation ? confirmation.targets.map(item => ({id: item.id, label: site.features.find(spot => spot.id === item.id)?.name[lang] ?? item.id})) : [], [section, candidateSpots, confirmation, site, lang]);
   const cue = t(thinking ? "ws.cue.reading"
     : section === 'place' ? selected ? "ws.cue.linkable" : "ws.cue.select"
-    : section === 'messages' ? step === 'confirm' ? understanding?.status === 'unavailable' ? "ws.cue.yourself" : "ws.cue.checkSuggested" : "ws.cue.ownWords"
+    : section === 'messages' ? step === 'confirm' ? !understanding || understanding.status === 'unavailable' ? "ws.cue.yourself" : "ws.cue.checkSuggested" : "ws.cue.ownWords"
     : placing ? "ws.cue.tap"
     : plan ? "ws.cue.saved"
     : reviewed ? newProblems.length ? "ws.cue.newBlocked" : improved.length ? "ws.cue.improved" : "ws.cue.unchanged"
@@ -354,9 +362,21 @@ export default function Workspace({
     } catch { if (ticket === request.current) {setConfirmation(null); setOrigin(null); setScenario(createScenario(scene, profile)); materialDirty(); setUnderstanding({status:'unavailable',kind:null,category:null,candidates:[],reason:'model-failed'}); setStep('confirm'); setMode('concern');} }
     finally { if (ticket === request.current) setThinking(false); }
   }
+  /** Without the model the person picks the spot; the message is kept exactly as written. */
+  function readWithoutAi() {
+    request.current++;
+    setThinking(false); setError(''); setUnderstanding(null); setSelected(null);
+    setMode('concern'); setConfirmation(null); setOrigin(null);
+    setScenario(createScenario(scene, profile)); setComparison('proposed'); materialDirty();
+    setStep('confirm');
+  }
   async function loadModel() {
     setPreparingModel(true); setError('');
-    try {setModel(await prepareModel(setModel));} catch {setError(t('ws.error.aiPrepare'));}
+    try {
+      const next = await prepareModel(setModel);
+      setModel(next);
+      if (next.status === 'ready') setStored(true); else setError(t('ws.error.aiPrepare'));
+    } catch {setError(t('ws.error.aiPrepare'));}
     finally {setPreparingModel(false);}
   }
   function switchSection(next: PlaceView) {setSection(next); setPlacing(false); setError('');}
@@ -379,9 +399,12 @@ export default function Workspace({
     }} />
     <label className="canvas-label" htmlFor="message-language">{t('ws.messageLanguage')}</label>
     <select id="message-language" value={language} onChange={event => setLanguage(event.target.value)}><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="qu">Runasimi</option><option value="other">{t('common.otherLanguage')}</option></select>
-    <div className="canvas-actions"><button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{t(thinking ? 'ws.readingMessage' : 'ws.find')}</button></div>
+    <div className="canvas-actions">
+      {ai ? <button className="primary" disabled={!message.trim() || thinking} onClick={() => void readMessage()}>{t(thinking ? 'ws.readingMessage' : 'ws.find')}</button>
+        : <button className="primary" disabled={!message.trim()} onClick={readWithoutAi}>{t('farm.useWithoutAi')}</button>}
+      {!ai && (preparingModel || !!downloadBytes) && <button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? t('ws.progress', { loaded: Math.round(model.loadedBytes / 1_000_000), total: Math.round(model.totalBytes / 1_000_000) }) : t('ws.preparingAi') : t('ws.downloadAi', { mb: Math.max(1, Math.round((downloadBytes ?? 0) / 1e6)) })}</button>}
+    </div>
     <p className="canvas-note">{t('ws.kept')}</p>
-    {model.status !== 'ready' && (preparingModel || !!downloadBytes) && <details className="feature-facts"><summary>{t('ws.useAi')}</summary><p>{t('ws.prepareOnce')}</p><div className="canvas-actions"><button disabled={preparingModel} onClick={() => void loadModel()}>{preparingModel ? model.status === 'downloading' ? t('ws.progress', { loaded: Math.round(model.loadedBytes / 1_000_000), total: Math.round(model.totalBytes / 1_000_000) }) : t('ws.preparingAi') : t('ws.downloadAi', { mb: Math.max(1, Math.round((downloadBytes ?? 0) / 1e6)) })}</button></div></details>}
   </>;
   const placeOverview = <>
     <span className="place-kicker">{t('ws.kicker.look')}</span><h1>{site.name[lang]}</h1>

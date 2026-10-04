@@ -67,7 +67,7 @@ test("a cold offline restart links a fresh Korean message by hand and reopens it
     await page.getByRole("tab", { name: "Messages", exact: true }).click();
     const text = `커피 자루 때문에 시음 테이블로 가기 어려웠어요. ${crypto.randomUUID()}`;
     await page.getByLabel("Original visitor message").fill(text);
-    await page.getByRole("button", { name: "Find the spot", exact: true }).click();
+    await page.getByRole("button", { name: "Use without AI", exact: true }).click();
     // No model is stored in a fresh offline profile, so the spot is chosen by hand.
     await expect(page.getByRole("button", { name: "Yes, this spot" })).toBeVisible();
     await page.getByLabel("Choose a spot", { exact: true }).selectOption("coffee-sacks");

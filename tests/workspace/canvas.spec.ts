@@ -9,8 +9,9 @@ async function openCanvas(page: Page) {
 async function linkMessage(page: Page) {
   await page.getByRole('tab', {name:'Messages',exact:true}).click();
   await page.getByLabel('Original visitor message').fill('커피 자루 때문에 시음 테이블로 가기 어려웠어요.');
-  await page.getByRole('button', {name:'Find the spot',exact:true}).click();
-  await expect(page.getByRole('button', {name:'Yes, this spot'})).toBeVisible();
+  // A fresh browser has no stored model, so the farm offers to go on without AI, as the route does.
+  await page.getByRole('button', {name:'Use without AI',exact:true}).click();
+  await expect(page.getByRole('button', {name:'Yes, this spot'})).toBeInViewport();
   await expect(page.getByLabel('Choose a spot',{exact:true})).toHaveValue('');
   await page.getByLabel('Choose a spot',{exact:true}).selectOption('coffee-sacks');
   await page.getByRole('button', {name:'Yes, this spot'}).click();
