@@ -37,7 +37,7 @@ const SCREEN = inbox ? `.ri-row[data-row="example-ko-steps"]` : '.guide-screen .
 const ROW = 'example-ko-steps';
 const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.';
 // The measured answer: a problem, but not sure; spots steps-340-350, steps-130-140 and qorikancha-ticket-booth, as the inbox names them.
-const EXPECTED = { kind: 'Problem?', spots: ['Calle Loreto, 340 to 350 m', 'Calle Loreto, 130 to 140 m', 'Qorikancha ticket booth'] };
+const EXPECTED = { kind: 'Problem?', spots: ['Calle Loreto, 340 to 350 m', 'Calle Loreto, 130 to 140 m', 'Qorikancha ticket booth'], ids: ['steps-340-350', 'steps-130-140', 'qorikancha-ticket-booth'] };
 const REVIEW = 'mercature.route-review.v1.cusco-qorikancha';
 
 const report = { url: base.href, browser: browserName, started: new Date().toISOString(), checks: [], downloads: [], offsite: [], answers: {}, transfer: {}, errors: [] };
@@ -77,6 +77,8 @@ async function launch(offline) {
   const options = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow', ...(offline ? { proxy } : {}) };
   if (inMemory) browser = await engine.launch({ headless: true });
   context = inMemory ? await browser.newContext(options) : await engine.launchPersistentContext(profile, { headless: true, ...options });
+  // Library calls wait forever by default; a changed screen should fail the proof instead.
+  context.setDefaultTimeout(60_000);
   await context.setOffline(offline);
   context.on('weberror', error => report.errors.push({ phase, kind: 'page error', text: String(error.error()).slice(0, 300) }));
   context.on('console', message => { if (message.type() === 'error') report.errors.push({ phase, kind: 'console', text: message.text().slice(0, 300) }); });
@@ -119,16 +121,18 @@ async function openRoute(page, name) {
 /** The open message once its answer shows: the kind from the meta line, the ranked spots under About. */
 async function answerOf(page, started) {
   if (!inbox) {
-    // The guide names the kind in words; the stored answer has it, and the choices rank the spots as 1., 2., 3.
-    await page.waitForFunction(([key, id]) => !!JSON.parse(localStorage.getItem(key) ?? 'null')?.messages?.find(message => message.id === id)?.answer, [REVIEW, ROW], { timeout: 15 * 60_000 });
-    await page.locator('.ui-choice').first().waitFor();
+    // The guide words its choices for the screen; the stored answer keeps the kind and the ranked spot ids.
+    // Polled from here: waitForFunction never resolves in Playwright's WebKit while the map animates.
+    for (const until = Date.now() + 5 * 60_000; !(await logged(page))?.answer; await page.waitForTimeout(500)) if (Date.now() > until) throw new Error('No answer within 5 minutes.');
+    // Numbered choices are her answers; the Edit pill sits among them without a number.
+    await page.locator('.ui-choice[aria-keyshortcuts]').first().waitFor();
     const message = await logged(page);
-    const labels = await page.locator('.ui-choice').evaluateAll(choices => choices.map(choice => { const copy = choice.cloneNode(true); copy.querySelectorAll('[aria-hidden="true"]').forEach(node => node.remove()); return copy.textContent.trim(); }));
+    const labels = await page.locator('.ui-choice[aria-keyshortcuts]').evaluateAll(choices => choices.map(choice => { const copy = choice.cloneNode(true); copy.querySelectorAll('[aria-hidden="true"]').forEach(node => node.remove()); return copy.textContent.trim(); }));
     const kind = message.answer.kind ? `${message.answer.kind[0].toUpperCase()}${message.answer.kind.slice(1)}${message.answer.status === 'unsure' ? '?' : ''}` : null;
-    const spots = labels.flatMap(label => { const [, rank, name] = label.match(/^(\d)\. (.+)$/) ?? []; return rank ? [{ rank, label: name, pressed: false }] : []; });
+    const spots = (message.answer.candidates ?? []).map((id, i) => ({ rank: String(i + 1), label: id, choice: labels[i] ?? null, pressed: false }));
     return { quote: message.text, kind, spots, filed: message.spot, seconds: (Date.now() - started) / 1000 };
   }
-  await page.locator('.ri-about').waitFor({ timeout: 15 * 60_000 });
+  await page.locator('.ri-about').waitFor({ timeout: 5 * 60_000 });
   const answer = await page.evaluate(() => ({
     quote: document.querySelector('.ri-quote')?.textContent ?? null,
     kind: (document.querySelector('p.ri-row-meta')?.textContent ?? '').split(' · ')[1] ?? null,
@@ -139,8 +143,8 @@ async function answerOf(page, started) {
   return { ...answer, seconds: (Date.now() - started) / 1000 };
 }
 const logged = page => page.evaluate(([key, id]) => JSON.parse(localStorage.getItem(key) ?? 'null')?.messages?.find(message => message.id === id) ?? null, [REVIEW, ROW]);
-const describe = answer => `${answer.kind}; ${answer.spots.map(spot => `${spot.rank} ${spot.label}${spot.pressed ? ' (filed)' : ''}`).join(', ')}; ${answer.seconds} s`;
-const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(EXPECTED.spots) && answer.spots.every(spot => !spot.pressed) && !answer.filed;
+const describe = answer => `${answer.kind}; ${answer.spots.map(spot => `${spot.rank} ${spot.label}${spot.choice ? ` (${spot.choice})` : ''}${spot.pressed ? ' (filed)' : ''}`).join(', ')}; ${answer.seconds} s`;
+const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(inbox ? EXPECTED.spots : EXPECTED.ids) && answer.spots.every(spot => !spot.pressed) && !answer.filed;
 /** The inbox opens the Korean Example by its row; the guide reads the messages in order, the Korean one first. */
 const openMessage = page => inbox ? page.locator(`.ri-row[data-row="${ROW}"]`).click() : page.getByRole('button', { name: 'Read messages', exact: true }).click();
 
@@ -207,7 +211,7 @@ try {
   check('Korean demo message answered online', matches(online), `download and answer: ${describe(online)}`);
   if (!inbox) {
     // Filing the first spot gives her the reply in Korean, with Copy inside it.
-    await page.getByRole('button', { name: `1. ${EXPECTED.spots[0]}`, exact: true }).click();
+    await page.locator('.ui-choice[aria-keyshortcuts="1"]').click();
     const box = page.locator('.gs-copybox');
     await box.waitFor();
     const reply = { text: (await box.textContent())?.trim() ?? '', copy: await box.getByRole('button', { name: /copy/i }).count(), spot: (await logged(page))?.spot ?? null };
@@ -281,7 +285,8 @@ try {
   check(inMemory ? 'Narikala opens again' : 'Narikala opens offline after one online visit', narikalaAgain, narikalaAgain ? 'Data Gulua Rise marker shown' : 'not shown');
   check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
-  check('proof ran to the end', false, error instanceof Error ? error.message.split('\n')[0] : String(error));
+  const screen = await context?.pages()[0]?.evaluate(() => [document.querySelector('.ui-dialogue')?.textContent, ...[...document.querySelectorAll('.ui-choice')].map(choice => choice.textContent)].join(' | ').slice(0, 300)).catch(() => '');
+  check('proof ran to the end', false, `${error instanceof Error ? error.message.split('\n')[0] : String(error)}${screen ? `; screen: ${screen}` : ''}`);
   await context?.pages()[0]?.screenshot({ path: resolve(out, 'failure.png') }).catch(() => undefined);
 } finally {
   await context?.close();
