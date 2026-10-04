@@ -1,4 +1,4 @@
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react';
 import type { Destination } from './data';
 import GeographicMap, { routeFrame, type MapWords } from './GeographicMap';
 import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens, type Tilt, type View } from './lens';
@@ -9,11 +9,26 @@ import type { Point, Walk } from './walk';
 export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
 export type MarkerState = 'open' | 'barrier' | 'not-barrier' | 'check' | 'no-photos' | 'landmark' | 'clear' | 'fixed';
+export type MarkerIcon = 'steps' | 'kerb' | 'path' | 'no-photos' | 'fixed' | 'added' | 'check' | 'dismissed';
 export type Marker = {
-  id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number; tag?: string;
-  /** Visitor messages filed at this spot, shown as a small count when above zero. Say it in the label too. */
+  id: string; at: Point; label: string; state: MarkerState; selected: boolean; rank?: number;
+  /** A short caption beside the marker, such as "Steps · 340 m". Where it would collide it shortens to the part before " · ", or hides. */
+  tag?: string;
+  /** A small icon before the caption. */
+  icon?: MarkerIcon;
+  /** Visitor messages filed at this spot, shown with the caption, or as a small count when the caption is hidden. Say it in the label too. */
   count?: number;
 };
+/** Thin stroke icons on a 12 by 12 grid. */
+const ICONS: Record<MarkerIcon, string> = {
+  steps: 'M1.5 10.5h3v-3h3v-3h3', kerb: 'M1 9.5h4.5v-4H11', path: 'M3.6 10.5 5.2 1.5M8.4 10.5 6.8 1.5',
+  'no-photos': 'M2 4.5h1.8l1-1.5h2.4l1 1.5H10v5H2zM1.5 1.5l9 9', fixed: 'M2.5 6.2 4.8 8.5 9.5 3.5', added: 'M6 2.5v7M2.5 6h7',
+  check: 'M5 1.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0-6.4M7.4 7.4l3 3', dismissed: 'M3 3l6 6M9 3l-6 6',
+};
+const BUBBLE = 'M2 2.5h8V8H6.2L3.8 10V8H2z';
+const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 12 12" aria-hidden="true"><path d={d} /></svg>;
+type Rect = { x: number; y: number; w: number; h: number };
+const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 export type MapHandle = {
   fit: (animate?: boolean) => void;
   /** Moves the camera so a map point lands on a screen point, optionally closer in. */
@@ -50,6 +65,10 @@ type Props = {
   settled?: boolean;
   /** Called with the map's projection whenever it changes, to draw in step with the map. It runs on every frame of a move. */
   onLens?: (lens: Lens) => void;
+  /** A fine pointer entering a marker, or keyboard focus reaching it, with its id; null when it leaves. Touch never hovers. */
+  onHover?: (markerId: string | null) => void;
+  /** A marker the page points at, such as a hovered message row: drawn raised, without moving the camera. */
+  hovered?: string | null;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,6 +94,16 @@ const Overlay = memo(function Overlay({ walk, highlight, photo, lens }: { walk: 
   </g>;
 });
 
+/** The walk shaded by what was found: a soft clay glow where a barrier may be, a grey hatch where no photo was taken. */
+const Zones = memo(function Zones({ walk, glowing, lens }: { walk: Walk; glowing: string; lens: Lens | null }) {
+  const hatch = useId(), to = lens ? (p: Point) => lens.at(p) : undefined, ids = new Set(glowing.split(' '));
+  return <g className="route-zones">
+    <defs><pattern id={hatch} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V5" /></pattern></defs>
+    {walk.runs.filter(run => run.kind === 'no-photos').map((run, i) => <polyline key={`u${i}`} points={line(run.path, to)} className="is-unseen" stroke={`url(#${hatch})`} />)}
+    {walk.spots.filter(spot => ids.has(spot.id)).map(spot => <g key={spot.id}><polyline points={line(spot.path, to)} className="is-glow-wide" /><polyline points={line(spot.path, to)} className="is-glow" /></g>)}
+  </g>;
+});
+
 /** Moves apart markers whose targets would overlap on screen, so each keeps a whole one; a selected marker stays where it is. */
 function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
   const out = points.map((p): Point => [p[0], p[1]]);
@@ -93,7 +122,7 @@ function spread(points: Point[], pinned: boolean[], gap: number): Point[] {
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, onLens }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, onLens, onHover, hovered = null }, ref) {
   const leaning = useMemo(tiltChosen, []);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -351,17 +380,37 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // The flat map frames itself through the view box, which the reveal lands on; a leaning map is drawn in screen pixels.
   const flat = !view || view.view.lean < 0.001;
   const vb = camera && size.width ? `${camera.x - size.width / 2 / camera.k} ${camera.y - size.height / 2 / camera.k} ${size.width / camera.k} ${size.height / camera.k}` : '0 0 1 1';
+  /** Spots that may hold a barrier glow along the walk until someone decides otherwise. */
+  const glowing = markers.filter(marker => marker.state === 'open' || marker.state === 'barrier' || marker.state === 'check').map(marker => marker.id).join(' ');
   /** Markers that the lean pushes up under the place title lose their tags; every marker fades with the haze it stands in. */
   const far = (at: Point) => !flat && at[1] < insets.top - 8 ? '' : undefined;
   const faded = (marker: Marker, at: Point) => flat || marker.selected ? undefined : +(1 - 0.6 * hazeAt(at[1], size.height, view!.view.lean)).toFixed(2);
-  // Labels never cover a marker or each other; earlier labels win.
-  const taken: { x: number; y: number; w: number; h: number }[] = placed.map(p => ({ x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }));
+  // Captions and map words never cover a marker or each other; the selected and hovered markers' captions go first.
+  const own = new Map(placed.map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
+  const taken: Rect[] = [...own.values()];
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
   if (controls && bounds && controls.width) taken.push({ x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 });
+  const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
+  for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === hovered) - Number(a.marker.selected || a.marker.id === hovered))) {
+    if (!marker.tag || !camera) continue;
+    const y = at[1] - (flat ? 0 : 11), raised = marker.selected || marker.id === hovered, forms = [...new Set([marker.tag, marker.tag.split(' · ')[0]])];
+    for (const text of forms) {
+      const w = Math.round(text.length * (size.width > 640 ? 6.4 : 7) + 18 + (marker.icon ? 15 : 0) + (marker.count ? 26 : 0)), h = size.width > 640 ? 22 : 24;
+      const side = (['right', 'left'] as const).find(side => {
+        const rect = { x: side === 'right' ? at[0] + 14 : at[0] - 14 - w, y: y - h / 2, w, h };
+        // A caption stays in the part of the map the page keeps free, so a panel over the map never hides one.
+        if (rect.x < Math.max(8, insets.left - 24) || rect.x + w > size.width - Math.max(8, insets.right - 24) || rect.y + h > size.height - clearBottom || (!raised && rect.y < insets.top - 4) || rect.y < 4) return false;
+        if (taken.some(other => other !== own.get(marker.id) && overlaps(other, rect))) return false;
+        taken.push(rect);
+        return true;
+      });
+      if (side) { captions.set(marker.id, { side, text }); break; }
+    }
+  }
   const visibleLabels = camera ? labels.map(label => { const at = toScreen(label.at); return { label, at: [at[0], at[1] + (label.dy ?? 0)] as Point }; }).filter(({ label, at }) => {
     const w = Math.min(180, label.name.length * 6.6) + 8, h = label.name.length * 6.6 > 180 ? 34 : 18, box = { x: at[0] - w / 2, y: at[1] - h / 2, w, h };
     if (at[0] < 8 || at[0] > size.width - 8 || at[1] < insets.top || at[1] > size.height - clearBottom) return false;
-    if (taken.some(t => box.x < t.x + t.w && t.x < box.x + box.w && box.y < t.y + t.h && t.y < box.y + box.h)) return false;
+    if (taken.some(other => overlaps(other, box))) return false;
     taken.push(box);
     return true;
   }) : [];
@@ -377,7 +426,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const squash = { '--squash': Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3) } as CSSProperties;
   return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} style={flat ? undefined : squash} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still}
-      lens={flat ? undefined : view} rise={rise} underlay={<Cameras walk={walk} open={openDots} lens={flat ? null : view} />}>
+      lens={flat ? undefined : view} rise={rise} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
     <div className="route-labels" aria-hidden="true">
@@ -385,15 +434,20 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     </div>
     <div className="route-markers">
       <svg className="route-nudges" aria-hidden="true">{placed.filter(p => p.nudged).map(({ marker, spot, at }) => <g key={marker.id}><line x1={spot[0]} y1={spot[1]} x2={at[0]} y2={at[1]} /><circle cx={spot[0]} cy={spot[1]} r="2.5" /></g>)}</svg>
-      {placed.map(({ marker, at }) => still ? <span key={marker.id} className="route-marker" data-state={marker.state} data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1], opacity: faded(marker, at) }} aria-hidden="true">
-        <span className="route-marker-dot">{marker.rank ?? ''}</span>
-        {!!marker.count && <span className="route-marker-count">{marker.count > 99 ? '99+' : marker.count}</span>}
-      </span> : <button key={marker.id} type="button" className="route-marker" data-state={marker.state} aria-pressed={marker.selected}
-        data-rank={marker.rank} data-far={far(at)} style={{ left: at[0], top: at[1], opacity: faded(marker, at) }} aria-label={marker.label} onClick={() => onMarker(marker.id)}>
-        <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
-        {!!marker.count && <span className="route-marker-count" aria-hidden="true">{marker.count > 99 ? '99+' : marker.count}</span>}
-        {marker.tag && <span className="route-marker-tag" aria-hidden="true">{marker.tag}</span>}
-      </button>)}
+      {placed.map(({ marker, at }) => {
+        const caption = captions.get(marker.id), count = marker.count ? marker.count > 99 ? '99+' : String(marker.count) : '';
+        const inside = <>
+          <span className="route-marker-ping" aria-hidden="true" />
+          <span className="route-marker-dot" aria-hidden="true">{marker.rank ?? ''}</span>
+          {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
+          {caption && <span className="route-marker-tag" aria-hidden="true">{marker.icon && <Icon d={ICONS[marker.icon]} />}{caption.text}{count && <span className="route-marker-said"><Icon d={BUBBLE} />{count}</span>}</span>}
+        </>;
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === hovered || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
+        return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
+          : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => onMarker(marker.id)}
+            onPointerEnter={event => { if (event.pointerType !== 'touch') onHover?.(marker.id); }} onPointerLeave={event => { if (event.pointerType !== 'touch') onHover?.(null); }}
+            onFocus={event => { if (event.currentTarget.matches(':focus-visible')) onHover?.(marker.id); }} onBlur={() => onHover?.(null)}>{inside}</button>;
+      })}
     </div>
     {leader && <span className="route-leader" style={leader} aria-hidden="true" />}
     {card && <div className="route-card-slot" ref={cardBox} style={cardStyle ?? { left: -9999, top: 0 }}>{card}</div>}
