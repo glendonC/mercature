@@ -121,12 +121,27 @@ async function openRoute(page, name) {
 }
 
 /** The open message once its answer shows: the kind from the meta line, the ranked spots under About. */
+/** Taps through the guide's pages, as she does, until her choices show; the guide never turns a page by itself. */
+async function readThrough(page) {
+  if (inbox) return;
+  for (let i = 0; i < 24 && !(await page.locator('.guide-screen[data-ready]').count()); i++) {
+    await page.locator('.guide-screen .ui-dialogue-line').click({ timeout: 5_000 }).catch(() => undefined);
+    await page.waitForTimeout(250);
+  }
+}
+/** A choice of the guide's, once she has read up to it. */
+async function choose(page, name) {
+  await readThrough(page);
+  await page.getByRole('button', { name, exact: true }).click();
+}
+
 async function answerOf(page, started) {
   if (!inbox) {
     // The guide words its choices for the screen; the stored answer keeps the kind and the ranked spot ids.
     // Polled from here: waitForFunction never resolves in Playwright's WebKit while the map animates.
     for (const until = Date.now() + 5 * 60_000; !(await logged(page))?.answer; await page.waitForTimeout(500)) if (Date.now() > until) throw new Error('No answer within 5 minutes.');
     // Numbered choices are her answers; the Edit pill sits among them without a number.
+    await readThrough(page);
     await page.locator('.ui-choice[aria-keyshortcuts]').first().waitFor();
     const message = await logged(page);
     const labels = await page.locator('.ui-choice[aria-keyshortcuts]').evaluateAll(choices => choices.map(choice => { const copy = choice.cloneNode(true); copy.querySelectorAll('[aria-hidden="true"]').forEach(node => node.remove()); return copy.textContent.trim(); }));
@@ -148,7 +163,11 @@ const logged = page => page.evaluate(([key, id]) => JSON.parse(localStorage.getI
 const describe = answer => `${answer.kind}; ${answer.spots.map(spot => `${spot.rank} ${spot.label}${spot.choice ? ` (${spot.choice})` : ''}${spot.pressed ? ' (filed)' : ''}`).join(', ')}; ${answer.seconds} s`;
 const matches = answer => answer.quote === MESSAGE && answer.kind === EXPECTED.kind && JSON.stringify(answer.spots.map(spot => spot.label)) === JSON.stringify(inbox ? EXPECTED.spots : EXPECTED.ids) && answer.spots.every(spot => !spot.pressed) && !answer.filed;
 /** The inbox opens the Korean Example by its row; the guide reads the messages in order, the Korean one first. */
-const openMessage = page => inbox ? page.locator(`.ri-row[data-row="${ROW}"]`).click() : page.getByRole('button', { name: 'Read messages', exact: true }).click();
+const openMessage = async page => {
+  if (inbox) return page.locator(`.ri-row[data-row="${ROW}"]`).click();
+  await choose(page, 'Read messages');
+  await readThrough(page);
+};
 
 /** Narikala from Home: the places it fetched, and whether its last marker shows. */
 async function openNarikala(page) {
@@ -250,6 +269,7 @@ try {
   if (!inbox) {
     // Filing the first spot gives her the reply in Korean, with Copy inside it.
     await page.locator('.ui-choice[aria-keyshortcuts="1"]').click();
+    await readThrough(page);
     const box = page.locator('.gs-copybox');
     await box.waitFor();
     const reply = { text: (await box.textContent())?.trim() ?? '', copy: await box.getByRole('button', { name: /copy/i }).count(), spot: (await logged(page))?.spot ?? null };
@@ -289,9 +309,9 @@ try {
     // In the guide, Start over sits under the route note.
     await page.goto(app);
     await openRoute(page);
-    await page.getByRole('button', { name: 'See the route note', exact: true }).click();
-    await page.getByRole('button', { name: 'Start over', exact: true }).click();
-    await page.getByRole('button', { name: 'Clear it', exact: true }).click();
+    await choose(page, 'See the route note');
+    await choose(page, 'Start over');
+    await choose(page, 'Clear it');
   }
   report.clearedBeforeOffline = (await logged(page)) === null;
 
