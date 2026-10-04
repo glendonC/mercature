@@ -15,7 +15,7 @@ import { fromRecord, possibleFromRecord } from '../i18n/records';
 import { walkMarks, type Mark } from './marks';
 import RevealFx from '../fx/RevealFx';
 import { photosShown, type Beats } from '../fx/build';
-import { TextButton } from '../ui';
+import { TextButton, markOf } from '../ui';
 import { SkipIcon } from '../ui/icons';
 import './reveal.css';
 
@@ -337,7 +337,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
         {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} data-tone="dark" className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top }}>
           <div className="reveal-photo" style={{ aspectRatio: `${card.view.width} / ${card.view.height}` }}>
             <img src={assetUrl(data, card.view.file)} alt=""/>
-            <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{card.findings.map(f => <polygon key={f.id} points={f.outline.map(p => p.join(',')).join(' ')} pathLength={1}/>)}</svg>
+            <svg viewBox={`0 0 ${card.view.width} ${card.view.height}`} preserveAspectRatio="xMidYMid slice">{[...card.findings].sort((a, b) => Number(a.barrier) - Number(b.barrier)).map(f => { const points = f.outline.map(p => p.join(',')).join(' '), barrier = f.barrier || undefined; return <g key={f.id}><polygon className="ui-mark-halo" data-barrier={barrier} points={points} pathLength={1}/><polygon className="ui-mark" data-mark={markOf(f.concept) ?? undefined} data-barrier={barrier} points={points} pathLength={1}/></g>; })}</svg>
           </div>
           <figcaption><strong>{possibleFromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
