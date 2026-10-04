@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {decodeCloud,localAsset,metres,parseDestination,type Piece} from '../../src/destinations/data';
+import {parseReview} from '../../src/decisions/store';
 
 /** Invented contract records for parser tests only; never shipped as a destination. */
 function contract() {return {
@@ -56,4 +57,12 @@ test('photo findings stay bound to their source photograph and image dimensions'
  }
  // Bounds still apply to a source view whose image is not retained.
  expect(()=>parseDestination({...valid,views:[{...source.views[0],file:null}],findings:[{...finding,outline:[[101,20]]}]},'cusco-qorikancha')).toThrow();
+});
+
+test('a stored answer keeps a first spot remembered from past links, and older answers still read', () => {
+  const record = (answer: unknown) => JSON.stringify({schema:'mercature-route-review/1',place:'cusco-qorikancha',decisions:{},messages:[{id:'m1',text:'Parser fixture message',language:'other',at:'2026-10-04T01:00:00.000Z',answer,spot:null}]});
+  const older = {status:'unsure',kind:null,category:null,candidates:['steps-340-350'],model:null};
+  expect(parseReview(record(older),'cusco-qorikancha').messages[0].answer).toEqual(older);
+  expect(parseReview(record({...older,remembered:true}),'cusco-qorikancha').messages[0].answer).toEqual({...older,remembered:true});
+  expect(() => parseReview(record({...older,remembered:'yes'}),'cusco-qorikancha')).toThrow('remembered');
 });

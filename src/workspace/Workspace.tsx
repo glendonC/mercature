@@ -4,7 +4,7 @@ import PlaceCanvas, {type PlaceView} from "../components/PlaceCanvas";
 import ScenePins from "../components/ScenePins";
 import {NOOR_FARM} from "../site/farm";
 import type {Site} from "../site/contracts";
-import {understand, prepareModel, modelState, modelStored, modelDownloadBytes, type Understanding, type ModelState} from "../language/understand";
+import {understand, prepareModel, modelState, modelStored, modelDownloadBytes, remember, type Understanding, type ModelState} from "../language/understand";
 import AIResultCard, { type AIResult } from "../components/AIResultCard";
 import ContextualGuide from "../components/ContextualGuide";
 import {
@@ -231,6 +231,8 @@ export default function Workspace({
       });
       setOrigin(next);
       setConfirmation(checked);
+      // The person's own link teaches the model this place; a plan without a visitor message teaches nothing.
+      if (mode === "concern") void remember(message, site, selectedFeature.id);
       setScenario(createScenario(scene, profile));
       setTitle(t("ws.title.review", { feature: nameOf(selectedFeature.id).toLocaleLowerCase() }));
       setStep("edit");
@@ -425,6 +427,7 @@ export default function Workspace({
   </> : section === 'messages' ? (step === 'confirm' || thinking) && <>
     <span className="place-kicker">{t(thinking ? 'ws.kicker.reading' : 'ws.kicker.check')}</span><h2>{t(thinking ? 'ws.finding' : 'ws.which')}</h2>
     {resultCard && !thinking && <AIResultCard numbered result={resultCard} selectedId={selected} onSpot={selectSpot} onNotSure={() => setSelected(null)} />}
+    {!thinking && understanding?.reason === 'remembered' && <p className="canvas-note">{t('ws.remembered')}</p>}
     {!thinking && <>{understanding?.status === 'unavailable' && <p className="place-copy">{t('ws.aiUnavailable')}</p>}{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>{t('ws.yesThis')}</button></div>{selectedDetails}</>}
   </> : confirmation || step === 'confirm' ? <>
     <span className="place-kicker">{t(plan ? 'ws.kicker.saved' : reviewed ? 'ws.kicker.review' : 'ws.kicker.try')}</span>

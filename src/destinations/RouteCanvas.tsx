@@ -3,7 +3,7 @@ import { BotAvatar } from 'bot-avatars';
 import AIResultCard, { type AIResult } from '../components/AIResultCard';
 import { guideColor } from '../components/Companion';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
-import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand, type ModelState, type Understanding } from '../language/understand';
+import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState, type Understanding } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
 import { COPY, NOTE, REPLY, guessLanguage, where, type Copy, type Subject, type UiLang, type VisitorLang, type Where } from './copy';
 import { DESTINATIONS, type Destination, type Finding, type Photo, type View } from './data';
@@ -209,7 +209,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     setThinking(false);
     if (result.status === 'invalid') { setSaid(t.guide.write); return; }
     const candidates = result.candidates.filter(id => targetOf(id)).slice(0, 3);
-    startMessage(text, { status: result.status, kind: result.kind, category: result.category, candidates, model: result.model ? `${result.model.id}@${result.model.revision}` : null });
+    startMessage(text, { status: result.status, kind: result.kind, category: result.category, candidates, model: result.model ? `${result.model.id}@${result.model.revision}` : null, ...(result.reason === 'remembered' ? { remembered: true as const } : {}) });
     if (result.status === 'ready' && candidates[0]) open(targetOf(candidates[0]));
     else showAll(candidates);
   }
@@ -234,8 +234,11 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
   }
   function link(target: Selection) {
     if (!current) return;
-    commit(review => updateMessage(review, current.id, { spot: keyOf(target) }));
+    const key = keyOf(target);
+    commit(review => updateMessage(review, current.id, { spot: key }));
     setSaid(t.guide.linked);
+    // The model learns only spots it can suggest; a plain stretch stays a link on the message.
+    if (place?.features.some(feature => feature.id === key)) void remember(current.text, place, key);
   }
   function freshMessage() { ticket.current++; setThinking(false); setCurrentId(null); setSelection(null); setSaid(''); }
 
@@ -348,9 +351,10 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     </> : <>
       <blockquote className="route-quote" lang={current.language === 'other' ? undefined : current.language}>{current.text}</blockquote>
       {current.spot ? <p className="route-linked">{t.linkedTo(nameOfKey(current.spot))}</p>
-        : answer && answer.status !== 'unavailable' ? <AIResultCard numbered hideEmpty labels={{ region: t.views.messages, message: t.kind, issue: t.issue, notSure: answer.candidates.length ? t.notSureSpots : t.notSureNone, suggested: t.suggested, none: t.none }}
+        : answer && answer.status !== 'unavailable' ? <><AIResultCard numbered hideEmpty labels={{ region: t.views.messages, message: t.kind, issue: t.issue, notSure: answer.candidates.length ? t.notSureSpots : t.notSureNone, suggested: t.suggested, none: t.none }}
           result={{ messageType: answer.kind ? t.kinds[answer.kind] : t.notSure, issueType: '', state: answer.kind ? 'matched' : 'not-sure', spots: answer.candidates.map(id => ({ id, label: nameOfKey(id) })) } satisfies AIResult}
           selectedId={answer.candidates.find(id => same(targetOf(id), selection)) ?? null} onSpot={id => open(targetOf(id))} onNotSure={() => { open(null); setSaid(t.guide.manual); }} />
+          {answer.remembered && <p className="route-quiet">{t.remembered}</p>}</>
         : <p className="route-quiet">{t.noModel}</p>}
       <div className="route-actions"><button className="route-secondary" onClick={freshMessage}>{t.newMessage}</button></div>
     </>}
@@ -378,7 +382,7 @@ export default function RouteCanvas({ data, asset, onHome }: { data: Destination
     </>}
     {(decided.length > 0 || review.messages.length > 0) && <div className="route-start-over">
       {clearing ? <><p className="route-quiet">{t.startOverAsk}</p><div className="route-actions">
-        <button className="route-secondary" onClick={() => { commit(startOver); setClearing(false); setCurrentId(null); setReplyFor(null); setSelection(null); setSaid(t.cleared); }}>{t.clear}</button>
+        <button className="route-secondary" onClick={() => { commit(startOver); if (place) void forgetPlace(place.id); setClearing(false); setCurrentId(null); setReplyFor(null); setSelection(null); setSaid(t.cleared); }}>{t.clear}</button>
         <button className="route-text-button" onClick={() => setClearing(false)}>{t.keep}</button>
       </div></> : <button className="route-text-button" onClick={() => setClearing(true)}>{t.startOver}</button>}
     </div>}

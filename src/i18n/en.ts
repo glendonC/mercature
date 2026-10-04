@@ -315,6 +315,7 @@ export const en = {
   'ws.finding': 'Finding the right spot…',
   'ws.which': 'Which spot is it about?',
   'ws.aiUnavailable': 'AI isn’t available. Choose a spot to continue.',
+  'ws.remembered': 'The first spot is where you linked a similar message before.',
   'ws.yesThis': 'Yes, this spot',
   'ws.kicker.saved': 'Saved plan',
   'ws.kicker.review': 'Review the fix',

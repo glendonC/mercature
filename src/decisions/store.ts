@@ -15,6 +15,8 @@ export type ModelAnswer = {
   /** Spot ids as the model ranked them, best first. */
   readonly candidates: readonly string[];
   readonly model: string | null;
+  /** The first candidate came from messages the person linked on this device before. */
+  readonly remembered?: true;
 };
 export type LoggedMessage = {
   readonly id: string;
@@ -49,7 +51,8 @@ function parseAnswer(value: unknown): ModelAnswer | null {
   if (value.category !== null && !ISSUE_CATEGORIES.includes(value.category as IssueCategory)) throw new Error('category');
   if (!Array.isArray(value.candidates) || value.candidates.length > 3 || !value.candidates.every(id => isText(id, 80))) throw new Error('candidates');
   if (value.model !== null && !isText(value.model, 200)) throw new Error('model');
-  return { status: value.status as ModelAnswer['status'], kind: value.kind as MessageKind | null, category: value.category as IssueCategory | null, candidates: value.candidates as string[], model: value.model as string | null };
+  if (value.remembered !== undefined && value.remembered !== true) throw new Error('remembered');
+  return { status: value.status as ModelAnswer['status'], kind: value.kind as MessageKind | null, category: value.category as IssueCategory | null, candidates: value.candidates as string[], model: value.model as string | null, ...(value.remembered ? { remembered: true as const } : {}) };
 }
 
 export function parseReview(raw: string, place: string): Review {
