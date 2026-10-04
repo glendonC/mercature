@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useLayoutEffect, type CSSProperties } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, useLayoutEffect, type CSSProperties } from 'react';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
 import { addSpot, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteOf, saveEdits, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
@@ -277,6 +277,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [said, setSaid] = useState('');
   const [clearing, setClearing] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [marksOpen, setMarksOpen] = useState(false), marksId = useId();
   const [sheetHeight, setSheetHeight] = useState(0);
   // What the map shows for the open pane: the whole walk, or the spots an answer points to. On a phone it waits until the sheet has
   // settled, since a new pane or an answer easing in changes its height, then frames them in the map the sheet leaves free, and
@@ -598,7 +599,13 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
       <span className="ri-meta">{w.flaggedSpots}</span>
       <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
-      {scanned.length > 0 && <div className="ri-scan"><span className="ri-meta">{w.scanned}</span><Legend items={scanned} /></div>}
+      {/* What the model marked near the walk is there to look into, not to read first: one line until it is opened. */}
+      {scanned.length > 0 && <div className="ri-scan">
+        <button type="button" className="ri-scan-toggle" aria-expanded={marksOpen} aria-controls={marksId} onClick={() => setMarksOpen(open => !open)}>
+          <span>{w.scanned} · {w.scannedKinds(scanned.length)}</span><ChevronIcon size={14} />
+        </button>
+        <div id={marksId} hidden={!marksOpen}><Legend items={scanned} /></div>
+      </div>}
       {raised.length > 0 && <p className="ri-raised"><span className="ri-meta">{w.raised}</span> {raised.map(([key, n]) => `${nameOfKey(key)} (${n})`).join(' · ')}</p>}
       {note && <div className="ri-note">
         <span>{w.note}</span>
@@ -626,10 +633,10 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         : <TextButton muted icon={<RotateIcon />} onClick={() => setClearing(true)}>{w.startOver}</TextButton>)}
     </div>
   </>;
-  // On a phone the messages come first, since the sheet shows little; the summary of the walk follows them.
+  // The messages come first, since they are her work, and the summary of the walk follows them, in one order on every screen.
   const inbox = <>
     <p className="ri-guide">{w.guide}</p>
-    {narrow ? <>{messageList}{summary}</> : <>{summary}{messageList}</>}
+    {messageList}{summary}
   </>;
 
   const pastePane = <>
