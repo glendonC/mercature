@@ -21,6 +21,7 @@ const SPOT: Readonly<Record<EditKind, { en: string; es: string; sentence: string
 };
 
 const round = (value: number) => Math.round(value);
+const cap = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
 /**
  * Her words join the matching passage only when the model's own check recognises the language.
  * A note in a language it does not know, Quechua for example, would pull unrelated messages to
@@ -40,9 +41,10 @@ export function addedFeature(spot: AddedSpot, locate: Locate): RouteSpot {
     id: spot.id,
     stretches: [spot.stretch],
     landmark: near,
+    // Named like every spot on the walk, by where it is and its metres; her kind shows in its marker and the legend.
     name: {
-      en: near ? `${words.en} near ${near} (${a} to ${b} m)` : `${words.en} on the walk (${a} to ${b} m)`,
-      es: near ? `${words.es} cerca de ${near} (${a} a ${b} m)` : `${words.es} en el recorrido (${a} a ${b} m)`,
+      en: near ? `${cap(near)}, ${a} to ${b} m` : `${a} to ${b} m`,
+      es: near ? `${cap(near)}, ${a} a ${b} m` : `${a} a ${b} m`,
     },
     description: `${words.sentence} between ${a} and ${b} m of the walk${near ? `, near ${near}` : ''}, recorded by the tour operator.${quoted ? ` The operator wrote: “${quoted}”.` : ''}`,
     aliases,

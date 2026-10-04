@@ -56,8 +56,10 @@ test('an added spot reads like an authored one, with the landmark in every word 
   const spot = addedFeature(edits.added[0], locate);
   expect(spot.id).toBe('added-1');
   expect(spot.stretches).toEqual([21]);
-  expect(spot.name.en).toBe('Steps near Loreto (210 to 220 m)');
-  expect(spot.name.es).toBe('Escalones cerca de Loreto (210 a 220 m)');
+  // Named by where it is, like every spot on the walk; the kind stays in the passage and the word lists.
+  expect(spot.name.en).toBe('Loreto, 210 to 220 m');
+  expect(spot.name.es).toBe('Loreto, 210 a 220 m');
+  expect(addedFeature(addSpot(empty, 3, 'kerb', NO_NOTE, at).added[0], () => ({ from: 30, to: 40, landmark: '' })).name.en).toBe('30 to 40 m');
   expect(spot.description).toBe('Steps between 210 and 220 m of the walk, near Loreto, recorded by the tour operator.');
   expect(spot.description).not.toMatch(/wide|slope|passable|wheelchair/i);
   for (const language of ['en', 'es', 'ko']) expect(spot.aliases[language], language).toContain('Loreto');
