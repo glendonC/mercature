@@ -3,16 +3,18 @@ import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
 import { hasRouteCanvas } from '../destinations/RouteCanvas';
-import { mapInsets } from '../destinations/RouteInbox';
+import { PEEK, mapInsets } from '../destinations/RouteInbox';
 import RouteMap from '../destinations/RouteMap';
 import type { MapWords } from '../destinations/GeographicMap';
 import type { MenuPlace } from '../home/Menu';
 import type { Lens } from '../destinations/lens';
-import { buildWalk, type Point, type Walk } from '../destinations/walk';
+import { buildWalk, type Walk } from '../destinations/walk';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import { useLanguage } from '../i18n';
 import { fromRecord, possibleFromRecord } from '../i18n/records';
 import { loadMarks, type Mark } from './marks';
+import RevealFx from '../fx/RevealFx';
+import { photosShown, type Beats } from '../fx/build';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
@@ -96,6 +98,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const [data, setData] = useState<Destination | null>(null);
   const [failed, setFailed] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  /** When the replay began, on the performance.now() clock the build layer animates by. */
+  const [began, setBegan] = useState(0);
   const [phase, setPhase] = useState<'play' | 'handoff' | 'done'>('play');
   const [loaded, setLoaded] = useState<ReadonlySet<string>>(new Set());
   const [placed, setPlaced] = useState<Placed[]>([]);
@@ -125,7 +129,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   // A place with a route canvas replays on that canvas's own leaned map, so the hand-off is only a fade.
   const leaned = !!data && hasRouteCanvas(data);
   const walk = useMemo(() => data && leaned ? buildWalk(data) : null, [data, leaned]);
-  const insets = useMemo(() => mapInsets(narrow), [narrow]);
+  // The route screen opens behind the replay with its phone sheet at this peek, so both frame the walk alike.
+  const insets = useMemo(() => mapInsets(narrow, PEEK), [narrow]);
   const mapWords = useMemo<MapWords>(() => ({ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }), [t]);
   const cards = useMemo(() => data ? chooseCards(data) : [], [data]);
 
@@ -140,12 +145,18 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   useEffect(() => {
     if (!data || phase !== 'play') return;
     const begin = performance.now();
+    setBegan(begin);
     const timer = window.setInterval(() => setElapsed(performance.now() - begin), 80);
     return () => clearInterval(timer);
   }, [data, phase]);
 
   const steps = useMemo(() => data ? schedule(data, marks) : [], [data, marks]);
   const stepOf = (id: StepId) => steps.find(item => item.id === id);
+  /** The build layer's beats, on its clock. */
+  const beats = useMemo<Beats>(() => {
+    const window = (id: StepId) => { const step = steps.find(item => item.id === id); return step && [began + step.at, step.until - step.at] as const; };
+    return { photos: window('photos'), walk: window('walk'), stretches: window('stretches'), marks: window('marks'), flags: window('barriers') };
+  }, [steps, began]);
   const startPoints = !!data && (quiet || phase !== 'play' || elapsed >= (stepOf('areas')?.at ?? 0));
   useEffect(() => {
     if (!data || !startPoints) return;
@@ -178,7 +189,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   }, [data, startPoints, id]);
 
   const total = ordered.length, photos = stepOf('photos');
-  const shown = phase !== 'play' || quiet || !photos ? total : Math.max(0, Math.min(total, Math.round((elapsed - photos.at) / (photos.until - photos.at) * total)));
+  const shown = phase !== 'play' || quiet || !photos ? total : leaned && beats.photos ? photosShown(total, beats.photos, began + elapsed) : Math.max(0, Math.min(total, Math.round((elapsed - photos.at) / (photos.until - photos.at) * total)));
   const step = steps.filter(item => quiet || phase !== 'play' || elapsed >= item.at).at(-1);
   const cardsFrom = steps.at(-1)?.until ?? BUILD_FROM;
   const handoffAt = cardsFrom + (cards.length ? (cards.length - 1) * CARD_GAP + CARD_SETTLE : 400);
@@ -308,9 +319,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
       {data && <>
         {leaned && walk ? <div className="reveal-map is-leaned" ref={mapBox}>
           <LeanedMap data={data} walk={walk} insets={insets} words={mapWords} name={name} onLens={setLens}/>
+          {lens && (began > 0 || quiet) && <RevealFx data={data} walk={walk} marks={marks} beats={beats} done={quiet || phase !== 'play'} lens={lens}/>}
           {lens && <svg className="reveal-overlay" aria-hidden="true">
-            <PhotoLayer walk={walk} photos={ordered} step={stepOf('photos')} at={lens.at}/>
-            <BuildLayer data={data} marks={marks} steps={steps} unit={1} to={lens.at}/>
             {phase === 'play' && surfaced.map(card => { const [x, y] = lens.at(walk.project(card.position)); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </svg>}
         </div> : <div className="reveal-map" ref={mapBox}>
@@ -351,9 +361,9 @@ const GLYPHS: Record<StepId, ReactNode> = {
   barriers: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" className="glyph-barrier"/></svg>,
 };
 
-/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk: in map units on the flat map, through the lens on a leaned one. */
-const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit, to }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number; to?: (p: Point) => Point }) {
-  const frame = routeFrame(data), project = (c: Coordinate) => to ? to(frame.project(c)) : frame.project(c);
+/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk, in map units on the flat map. */
+const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number }) {
+  const { project } = routeFrame(data);
   const ticks = data.stretches.flatMap((stretch, i) => {
     const ends = i === data.stretches.length - 1 ? [0, stretch.line.length - 1] : [0];
     return ends.map(end => {
@@ -372,12 +382,6 @@ const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit, to }: { 
     <g className="reveal-marks">{placed.map((item, i) => item.barrier ? null : mark(item, i))}</g>
     <g className="reveal-barriers">{placed.map((item, i) => item.barrier ? mark(item, i) : null)}</g>
   </g>;
-});
-
-/** The street photos landing in the order they were taken, through the lens of a leaned map. */
-const PhotoLayer = memo(function PhotoLayer({ walk, photos, step, at }: { walk: Walk; photos: readonly Photo[]; step: Step | undefined; at: (p: Point) => Point }) {
-  const from = step?.at ?? 0, span = step ? step.until - step.at : 0;
-  return <g className="reveal-photos">{photos.map((photo, i) => { const [x, y] = at(walk.project(photo.position)); return <circle key={photo.id} cx={x} cy={y} r="1.8" className="reveal-photo-dot" style={{ animationDelay: `${from + i / Math.max(1, photos.length) * span}ms` }}/>; })}</g>;
 });
 
 /** The canvas's own map, still and settled, so the replay shares its framing; it holds still while the replay's clock ticks. */
