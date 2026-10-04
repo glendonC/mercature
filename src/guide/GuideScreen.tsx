@@ -21,6 +21,7 @@ import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../d
 import { iconFor } from '../ui/icons';
 import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf } from '../photo';
+import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
 import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
 import { Bot, Options, type Chip } from './Say';
@@ -581,6 +582,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!at || markers.some(marker => marker.id === id)) continue;
     markers.push({ id, at, state: target.kind === 'landmark' ? 'landmark' : 'clear', selected: same(selected, target), rank: rankOf(target), label: nameOf(target) });
   }
+  const tapMarker = (id: string) => { const target = markerTarget(id); if (target) select(target); };
   function markerTarget(id: string): Target | null {
     if (id.startsWith('landmark:')) return { kind: 'landmark', id: id.slice(9) };
     if (id.startsWith('stretch:')) return { kind: 'stretch', index: Number(id.slice(8)) };
@@ -669,7 +671,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips.push({ id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } });
     }
     words = hear;
-    above = <CheckCard key={item.key} item={item} at={step.at} affects={s.words.affects[item.access]} />;
+    above = <CheckCard key={item.key} data={data} progress={s.check.progress({ n: step.at + 1, total: items.length })} title={'spot' in item ? spotName(item.spot) : ''} affects={s.words.affects[item.access]}
+      empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} narrow={narrow} lang={lang} pageOf={t.pageOf} />;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -781,24 +785,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (text) above = <TextBox text={text} lang={noteLang} onLang={setNoteLang} copyLabel={s.note.copy} copiedLabel={s.note.copied} />;
   }
 
-  /** The photo for one item of the check: every outline named on the photo itself, where it is, and who it affects. A tap on an outline moves the conversation to it. */
-  function CheckCard({ item, at, affects }: { item: Item; at: number; affects: string }) {
-    const [page, setPage] = useState(0);
-    const evidence = 'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : [];
-    const lead = evidence[Math.min(page, Math.max(0, evidence.length - 1))] ?? null;
-    const shown = photoOf(data, 'spot' in item ? lead?.viewId : item.viewId);
-    const pick = (id: string) => {
-      const spot = walk.spots.find(one => one.findings.some(f => f.id === id));
-      const there = spot ? items.findIndex(one => 'spot' in one && one.spot.id === spot.id) : -1;
-      if (there >= 0 && there !== at) go({ id: 'check', at: there });
-    };
-    return <section className="gs-card gs-photo" data-tone="dark" aria-label={s.check.progress({ n: at + 1, total: items.length })}>
-      <p className="gs-card-meta"><span>{s.check.progress({ n: at + 1, total: items.length })}</span>{'spot' in item && <span>{spotName(item.spot)}</span>}{evidence.length > 1 && <span className="gs-pages">
-        {evidence.map((f, i) => <button key={f.id} type="button" className="gs-page" aria-pressed={i === Math.min(page, evidence.length - 1)} aria-label={t.pageOf(i + 1, evidence.length)} onClick={() => setPage(i)} />)}</span>}</p>
-      {shown ? <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={pick} lang={lang} height={narrow ? 220 : undefined} fit={narrow ? 'cover' : 'contain'} />
-        : <p className="gs-empty">{data.views.length ? t.noPhotos : s.check.noStreetPhotos}</p>}
-      <p className="gs-affects">{affects}</p>
-    </section>;
+  /** A tap on an outline in the photo moves the check to the spot it belongs to. */
+  function pickFinding(at: number, id: string) {
+    const spot = walk.spots.find(one => one.findings.some(f => f.id === id));
+    const there = spot ? items.findIndex(one => 'spot' in one && one.spot.id === spot.id) : -1;
+    if (there >= 0 && there !== at) go({ id: 'check', at: there });
   }
 
   const working = busy === 'reading' || busy === 'download';
@@ -849,7 +840,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     </header>
     <div className="gs-map">
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
-        onMarker={id => { const target = markerTarget(id); if (target) select(target); }} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
+        onMarker={tapMarker} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         picking={step.id === 'street' && !step.found ? 'free' : (step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || undefined}
         paths={[...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
@@ -871,6 +862,30 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       {problem && <p className="gs-problem" role="alert">{problem}</p>}
     </Dialogue>
   </main>;
+}
+
+/**
+ * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the walk
+ * has 3D, she can turn to it and tap spots there as on the map. It lives outside the screen so a new line never rebuilds the photo.
+ */
+function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, narrow, lang, pageOf }: {
+  data: Destination; progress: string; title: string; affects: string; empty: string;
+  /** The findings a photo shows, one page each; none for another kind near the walk, which shows viewId instead. */
+  evidence: readonly { id: string; viewId?: string | null }[]; viewId: string | null;
+  stretches: readonly number[]; markers: Marker[]; onMarker: (id: string) => void; onPick: (findingId: string) => void;
+  narrow: boolean; lang: 'en' | 'es'; pageOf: (n: number, total: number) => string }) {
+  const [page, setPage] = useState(0);
+  const lead = evidence[Math.min(page, Math.max(0, evidence.length - 1))] ?? null;
+  const shown = photoOf(data, evidence.length ? lead?.viewId : viewId);
+  return <section className="gs-card gs-photo" data-tone="dark" aria-label={progress}>
+    <p className="gs-card-meta"><span>{progress}</span>{title && <span>{title}</span>}{evidence.length > 1 && <span className="gs-pages">
+      {evidence.map((f, i) => <button key={f.id} type="button" className="gs-page" aria-pressed={i === Math.min(page, evidence.length - 1)} aria-label={pageOf(i + 1, evidence.length)} onClick={() => setPage(i)} />)}</span>}</p>
+    {shown ? <PhotoOr3D data={data} stretches={stretches} markers={markers} onMarker={onMarker} height={narrow ? 220 : undefined}>
+      <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={onPick} lang={lang} height={narrow ? 220 : undefined} fit={narrow ? 'cover' : 'contain'} />
+    </PhotoOr3D>
+      : <p className="gs-empty">{empty}</p>}
+    <p className="gs-affects">{affects}</p>
+  </section>;
 }
 
 /** Text she copies for someone else, the whole of it, with its language and Copy inside the box. */
