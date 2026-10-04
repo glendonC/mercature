@@ -1,15 +1,33 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin, type Rolldown } from "vite";
 import { localDestinations } from "./local-destinations.ts";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-/** Everything in public/ except the model, which keeps its own cache: the manifest, icons and published places. */
+/** Everything in public/ except the model, which keeps its own cache, and the install-size icons, which are read once, online, when the app is installed. */
 function publicFiles(): string[] {
   const root = new URL("./public/", import.meta.url);
   if (!existsSync(root)) return [];
   return readdirSync(root, { recursive: true, encoding: "utf8" })
     .map((name) => name.split("\\").join("/"))
-    .filter((name) => !name.startsWith("models/") && !name.endsWith(".DS_Store") && statSync(new URL(name, root)).isFile())
+    .filter((name) => !name.startsWith("models/") && !/^icons\/.*-512\.png$/.test(name) && !name.endsWith(".DS_Store") && statSync(new URL(name, root)).isFile())
     .sort();
+}
+/** Places with a published package; only their covers can show outside a local install. */
+function publishedPlaces(): Set<string> {
+  const root = new URL("./public/places/", import.meta.url);
+  return new Set(existsSync(root) ? readdirSync(root).filter((name) => statSync(new URL(name, root)).isDirectory()) : []);
+}
+/** Build output no deployed screen shows: the covers of places only a local install opens, and the design review at ?ui=kit. */
+function unshown(bundle: Rolldown.OutputBundle): Set<string> {
+  const published = publishedPlaces(), skip = new Set<string>();
+  for (const [name, item] of Object.entries(bundle)) {
+    if (item.type === "chunk" && item.facadeModuleId?.split("\\").join("/").endsWith("/src/ui/Kit.tsx")) {
+      skip.add(name);
+      for (const css of item.viteMetadata?.importedCss ?? []) skip.add(css);
+    }
+    const cover = item.type === "asset" && item.originalFileNames.map((file) => file.split("\\").join("/").match(/(?:^|\/)src\/covers\/([^/]+)\.webp$/)?.[1]).find(Boolean);
+    if (cover && !published.has(cover)) skip.add(name);
+  }
+  return skip;
 }
 function offlineShell(): Plugin {
   return {
@@ -17,12 +35,13 @@ function offlineShell(): Plugin {
     apply: "build",
     generateBundle(_options, bundle) {
       // Paths relative to the service worker, so the same build works at a domain root or under a sub-path.
+      const skip = unshown(bundle);
       const assets = [
         "",
         "index.html",
         ...Object.keys(bundle)
           // The 11 MB inference runtime is stored with the model on request, not precached for every visitor.
-          .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm")),
+          .filter((k) => !k.endsWith(".map") && !k.endsWith(".wasm") && !skip.has(k)),
         ...publicFiles(),
       ];
       const digest = createHash("sha256");
