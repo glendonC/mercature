@@ -9,9 +9,8 @@ import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
 import { isFixed, loadEdits } from '../edits/store';
-import { CloseIcon, InfoIcon } from '../icons';
 import { useLanguage } from '../i18n';
-import LanguageSwitch from '../i18n/LanguageSwitch';
+import Menu from './Menu';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -99,7 +98,6 @@ function FarmPlan() {
 }
 export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: Props) {
   const { t, rich, lang } = useLanguage();
-  const credits = useRef<HTMLDialogElement>(null);
   const words = useRef<HTMLDivElement>(null);
   const places = useRef<HTMLElement>(null);
   const openable = useOpenable();
@@ -112,7 +110,7 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
     {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
-    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><div className="welcome-tools"><LanguageSwitch/><button className="welcome-tool" onClick={() => credits.current?.showModal()} aria-label={t('home.credits')}><InfoIcon/></button></div></header>
+    <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={place => place === 'noor-farm' ? onFarm() : onDestination(place)}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
     <section className="home-places" ref={places} aria-label={t('home.onPhone')}>
       <button className="home-place is-hero" aria-label={t('home.explore', { name: covers[0].name, area: covers[0].area })} onClick={() => onDestination(HERO)}>
@@ -134,6 +132,5 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
         <span>{entry.title}</span><small>{t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small>
       </button>)}</div>}
     </section>
-    <dialog ref={credits} className="welcome-dialog" aria-labelledby="credits-title"><header><h2 id="credits-title">{t('home.credits')}</h2><button onClick={() => credits.current?.close()} aria-label={t('home.closeCredits')}><CloseIcon/></button></header><p>{t('home.creditsNote')}</p><ul>{covers.map(cover => <li key={cover.name}><a href={cover.source}>{cover.name}</a><br/>{cover.author}, {cover.year} · <a href={cover.licenseUrl}>{cover.license}</a></li>)}</ul></dialog>
   </main>;
 }
