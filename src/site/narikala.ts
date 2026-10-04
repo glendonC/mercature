@@ -1,7 +1,7 @@
 import type { RoutePlace } from './route.ts';
 
 /**
- * The words visitors use for the recorded walk from the Narikala cable car top station to the Narikala fortress gate,
+ * The words visitors use for the recorded tour route from the Narikala cable car top station to the Narikala fortress gate,
  * authored from the local record tbilisi-narikala (mercature-route/1). Its OpenStreetMap names are Georgian, so each
  * landmark keeps that name as its key and gets English and Spanish names here. Photo findings are model suggestions
  * that nobody has verified, a stretch without findings only means no barrier was seen in photos, and nothing here

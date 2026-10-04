@@ -4,7 +4,7 @@ import { easeOut } from './paint';
 import { locate, track } from './space';
 
 /**
- * How the blocks rise while the map first leans back: those beside the walk first, then outward, a little later toward its end.
+ * How the blocks rise while the map first leans back: those beside the tour route first, then outward, a little later toward its end.
  * Gives each block a share of its height, 0 to 1, at a time since the lean began; every block is whole by the end.
  * Presentation only: the heights themselves stay the map's.
  */

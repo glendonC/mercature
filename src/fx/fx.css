@@ -1,4 +1,4 @@
-/* Motion over the route map. Every effect draws from the recorded walk; none of it is a result. */
+/* Motion over the tour route map. Every effect draws from the recorded route; none of it is a result. */
 .fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 /* While a replay covers the map its spots wait; once it lifts they arrive one after another in walking order.

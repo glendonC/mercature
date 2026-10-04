@@ -9,7 +9,7 @@ import type { RoutePlace, RouteSpot } from '../site/route';
 import type { AddedSpot, EditKind, Edits, OwnNote } from './store';
 import { UPDATE, recordDate, type VisitorLang, type Where } from './words';
 
-/** Where a stretch of the walk is, from the record the canvas holds. */
+/** Where a stretch of the tour route is, from the record the canvas holds. */
 export type Locate = (stretch: number) => { from: number; to: number; landmark: string };
 
 /** How each kind is named and what visitors call it. The word lists give Korean a list to match. */
@@ -45,7 +45,7 @@ export function addedFeature(spot: AddedSpot, locate: Locate): RouteSpot {
     id: spot.id,
     stretches: [spot.stretch],
     landmark: near,
-    // Named like every spot on the walk, by where it is and its metres; her kind shows in its marker and the legend.
+    // Named like every spot on the route, by where it is and its metres; her kind shows in its marker and the legend.
     name: {
       en: near ? `${cap(near)}, ${a} to ${b} m` : `${a} to ${b} m`,
       es: near ? `${cap(near)}, ${a} a ${b} m` : `${a} a ${b} m`,

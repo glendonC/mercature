@@ -4,9 +4,9 @@ import { BARRIER_KINDS, MARK_ORDER, markOf } from '../ui/kinds';
 /** One outline the model drew on a photo, in view pixels. Nobody has checked it.
  * id: the finding id when the mark is one of the place's findings, else the scan mark id.
  * barrier: its kind can be a barrier (steps, kerb, broken pavement), drawn in the clay family.
- * flagged: one of the walk's possible barriers, drawn heavier and labelled first.
+ * flagged: one of the tour route's possible barriers, drawn heavier and labelled first.
  * label: the record's words for this mark (a finding's own words when it is one); kindLabel: the words for its kind ('Steps', 'Handrail'), for a chip.
- * stretches: the stretches of the walk it lies on, so a screen can give it the answer she gave for its spot. */
+ * stretches: the stretches of the route it lies on, so a screen can give it the answer she gave for its spot. */
 export type PhotoMark = { id: string; concept: string; label: string; kindLabel?: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; finding: string | null; stretches?: number[] };
 /** Her answer for a mark's spot: gone or fixed, not a barrier, or still there. No answer leaves the mark as the model drew it. */
 export type MarkAnswer = 'fixed' | 'not-barrier' | 'still-there';
@@ -50,7 +50,7 @@ export function viewOf(data: Destination, findingId: string): string | null {
 const area = (outline: readonly Coordinate[]) => Math.abs(outline.reduce((sum, p, i) => { const q = outline[(i + 1) % outline.length]; return sum + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
 const kindAt = (m: PhotoMark) => { const kind = markOf(m.concept); const at = kind ? MARK_ORDER.indexOf(kind) : -1; return at < 0 ? MARK_ORDER.length : at; };
 
-/** Drawing layer: the ground first and quiet, other kinds above it, kinds that can be barriers above those, the walk's possible barriers on top. */
+/** Drawing layer: the ground first and quiet, other kinds above it, kinds that can be barriers above those, the route's possible barriers on top. */
 export const layerOf = (m: PhotoMark) => m.flagged ? 3 : m.barrier ? 2 : SURFACES.has(markOf(m.concept) ?? '') ? 0 : 1;
 
 /** Marks in drawing order; a larger outline goes under a smaller one of the same layer. */

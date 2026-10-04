@@ -1,5 +1,5 @@
 /**
- * What the operator herself records about a walk: spots she knows about that no photo showed,
+ * What the operator herself records about a tour route: spots she knows about that no photo showed,
  * barriers she has since fixed, things that help visitors, and her own words about any spot.
  * Kept on this device only, beside the review and never mixed with it. Nothing here states a
  * width, a slope or whether a person can pass; these are her records, not measurements.
@@ -17,7 +17,7 @@ export type NoteLang = (typeof NOTE_LANGS)[number];
 export const noteLangOf = (guess: string): NoteLang => (NOTE_LANGS as readonly string[]).includes(guess) ? guess as NoteLang : 'other';
 /** Her own words, with the language they were taken as. */
 export type OwnNote = { readonly text: string; readonly language: NoteLang };
-/** A spot she added, on one 10 m stretch of the walk. */
+/** A spot she added, on one 10 m stretch of the route. */
 export type AddedSpot = {
   readonly id: string;
   readonly stretch: number;
@@ -28,7 +28,7 @@ export type AddedSpot = {
 };
 /** Her record that a barrier is fixed, kept by stretch as decisions are. */
 export type FixRecord = { readonly stretches: readonly number[]; readonly at: string; readonly note: OwnNote };
-/** Her answer to the guide's question about one thing on the walk, and the stretch she tapped when the answer names a place, such as a step-free way nearby. */
+/** Her answer to the guide's question about one thing on the route, and the stretch she tapped when the answer names a place, such as a step-free way nearby. */
 export type AnswerRecord = { readonly question: string; readonly answer: string; readonly at: string; readonly stretch?: number };
 export type Edits = {
   readonly schema: 'mercature-route-edits/1';

@@ -13,20 +13,20 @@ import './space3d.css';
 
 export type Space3DProps = {
   data: Destination;
-  /** The same markers the route map draws; their `at` is in the route frame. */
+  /** The same markers the tour route map draws; their `at` is in the route frame. */
   markers?: Marker[];
-  /** Draw the scan's marks that lie near the walk, in their kinds' hues. */
+  /** Draw the scan's marks that lie near the route, in their kinds' hues. */
   marks?: boolean;
   onMarker?: (id: string) => void;
   onMark?: (mark: ScanMark) => void;
   /** A tap, or Enter on a marker, picks a place: the point she tapped, or the ground under it, as a place on the map, and the spot whose
    * marker is within reach. A small ring shows where. */
   onPick?: (pick: { lonLat: Coordinate; spotId?: string }) => void;
-  /** Frame these stretches of the walk instead of the whole walk. */
+  /** Frame these stretches of the route instead of the whole route. */
   focus?: number[] | null;
   /** Show only these 3D areas (capture area ids such as s01), framed together. */
   areas?: string[] | null;
-  /** Assemble: the areas rise into place along the walk, the line draws, the marks land. */
+  /** Assemble: the areas rise into place along the route, the line draws, the marks land. */
   intro?: boolean;
   /** End the assembly looking straight down, framed as the map. */
   settle?: boolean;
@@ -81,7 +81,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
   const target: Vec3 = [(minX + maxX) / 2, (minY + maxY) / 2, zs.reduce((a, b) => a + b, 0) / zs.length];
   const first = walk.points[0] ?? [0, 0], last = walk.points.at(-1) ?? [1, 0], vx = last[0] - first[0], vy = last[1] - first[1];
-  // Landscape: the walk runs left to right; portrait: it runs up the screen, away from the viewer.
+  // Landscape: the route runs left to right; portrait: it runs up the screen, away from the viewer.
   const yaw = aspect >= 1 ? Math.atan2(vy, vx) : Math.atan2(-vx, vy);
   const radius = Math.max(12, Math.hypot(maxX - minX, maxY - minY) / 2);
   const half = Math.atan(Math.tan(20 * Math.PI / 180) * Math.min(1, aspect));
@@ -127,7 +127,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
       const all = await loadSpace(data, controller.signal, from);
       const s = areas?.length ? { ...all, pieces: all.pieces.filter(p => areas.includes(p.id)) } : all;
       setSpace(s);
-      // Areas rise in the order the walk passes them.
+      // Areas rise in the order the route passes them.
       const order = [...s.pieces].sort((a, b) => nearest(walk, ...metres(a.center, [data.origin[0], data.origin[1]])).along - nearest(walk, ...metres(b.center, [data.origin[0], data.origin[1]])).along);
       const queue = order.map((piece, i) => ({ piece, start: RISE_FROM + RISE_SPREAD * i / Math.max(1, order.length - 1) }));
       let count = 0;
@@ -145,7 +145,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   const lineHeight = 0.3, pinHeight = 1.4;
   const ground = (east: number, north: number) => space ? groundAt(space, nearest(walk, east, north).along) : 0;
 
-  // The walk's line on the ground.
+  // The route's line on the ground.
   useEffect(() => {
     const r = renderer.current;
     if (!r || !space) return;
@@ -190,13 +190,13 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [space, markers, marks, data]);
 
-  // Where the camera looks: the whole walk, or the focused stretches.
+  // Where the camera looks: the whole route, or the focused stretches.
   const focusKey = focus?.join(',') ?? '';
   useEffect(() => {
     if (!space || !host.current) return;
     const { width, height } = host.current.getBoundingClientRect(), aspect = width / Math.max(1, height);
     const origin: Coordinate = [data.origin[0], data.origin[1]];
-    // The focused stretches, or else the areas there are; the intro starts there too and settles over the whole walk.
+    // The focused stretches, or else the areas there are; the intro starts there too and settles over the whole route.
     const chosen = focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : space.pieces.map(p => p.center);
     const points = (chosen.length ? chosen : data.line).map(p => { const [x, y] = metres(p, origin); return [x, y, ground(x, y)] as Vec3; });
     const to = framing(points, aspect, intro ? OBLIQUE : 0.95, walk);
@@ -229,7 +229,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     const origin: Coordinate = [data.origin[0], data.origin[1]];
     const tour = [...space.pieces].map(p => { const [x, y] = metres(p.center, origin), along = nearest(walk, x, y).along; return { at: [x, y, groundAt(space, along) + 2] as Vec3, along }; }).sort((a, b) => a.along - b.along).map(p => p.at);
     const tourYaw = camera.current?.yaw ?? 0;
-    // Where the intro settles: straight down on the whole walk, north up, as the map frames it.
+    // Where the intro settles: straight down on the whole route, north up, as the map frames it.
     const overview = () => {
       const box = host.current?.getBoundingClientRect(), origin: Coordinate = [data.origin[0], data.origin[1]];
       const whole = framing(data.line.map(p => { const [x, y] = metres(p, origin); return [x, y, groundAt(space, nearest(walk, x, y).along)] as Vec3; }), (box?.width ?? 1) / Math.max(1, box?.height ?? 1), MAX_PITCH + 0.06, walk);
@@ -341,7 +341,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (best?.pin.scan) callbacks.current.onMark?.(best.pin.scan);
     if (spot) callbacks.current.onMarker?.(spot.id);
     if (!callbacks.current.onPick) return;
-    // The point she tapped; else the ground under the tap, near the walk; else the ground under the marker she tapped.
+    // The point she tapped; else the ground under the tap, near the route; else the ground under the marker she tapped.
     const point = pickPoint(shown.current, m, box.width, box.height, x, y, 24);
     const floor = point ? null : pickGround(m, box.width, box.height, x, y, ground);
     const at = point ?? (floor && nearest(walk, floor[0], floor[1]).off <= 40 ? floor : null) ?? (spot ? [spot.at[0], spot.at[1], spot.at[2] - pinHeight] as Vec3 : null);

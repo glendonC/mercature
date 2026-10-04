@@ -1,5 +1,5 @@
 // A page for looking at the 3D view on its own in the dev server: /src/space3d/demo.html?intro=1&settle=1&focus=34&still&place=tbilisi-narikala
-// The walk's spots show as the map's markers; State turns every marker to the next state, so the 3D's easing can be seen.
+// The tour route's spots show as the map's markers; State turns every marker to the next state, so the 3D's easing can be seen.
 import { StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../style.css';
@@ -21,7 +21,7 @@ function Demo() {
   useEffect(() => { const place = query.get('place') ?? ''; loadDestination(isDestinationId(place) ? place : 'cusco-qorikancha').then(setData, error => setSaid(String(error))); }, []);
   const focus = query.get('focus')?.split(',').map(Number) ?? null, areas = query.get('areas')?.split(',') ?? null;
   const walk = useMemo(() => data ? buildWalk(data) : null, [data]);
-  // Before shows the walk as recorded; Now adds a spot of her own beside the steps at 340 m and rings the steps as changed.
+  // Before shows the route as recorded; Now adds a spot of her own beside the steps at 340 m and rings the steps as changed.
   const markers = useMemo<Marker[]>(() => {
     if (!walk) return [];
     const list: Marker[] = spotMarkers(walk, null).map(m => ({ ...m, kind: m.state === 'open' ? 'steps' : undefined, state: turn ? STATES[(Math.max(0, STATES.indexOf(m.state)) + turn) % STATES.length] : m.state, selected: m.id === selected, changed: !before && m.id === 'stretch-34' }));

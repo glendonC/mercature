@@ -1,11 +1,11 @@
-/** A small WebGL2 renderer for the 3D areas: round points with the photos' colours, the walk as a lit line, and marks as rings. */
+/** A small WebGL2 renderer for the 3D areas: round points with the photos' colours, the tour route as a lit line, and marks as rings. */
 import type { Area } from './space';
 import type { Look } from './pins';
 
 export type Vec3 = [number, number, number];
 export type Camera = { target: Vec3; yaw: number; pitch: number; distance: number };
-/** Something drawn at a place on the walk, as the route map draws it: a marker in its state's look, a scan mark (a small dot that
- * leaves far away), or the ring where she picked. */
+/** Something drawn at a place on the route, as the route map draws it: a marker in its state's look, a scan mark (a small dot that
+ * is left out when far away), or the ring where she picked. */
 export type Pin = { id: string; at: Vec3; look: Look; kind: 'marker' | 'mark' | 'pick' };
 
 const FOV = 40 * Math.PI / 180;
@@ -84,7 +84,7 @@ void main() {
   float a = v_col.a * smoothstep(1.0, 0.55, r);
   o = vec4(v_col.rgb * (1.0 - 0.18 * r) * a, a);
 }`;
-/** The walk as a screen-space ribbon: each vertex carries its point, the neighbour it faces, a side and the distance along. */
+/** The route as a screen-space ribbon: each vertex carries its point, the neighbour it faces, a side and the distance along. */
 const LINE_VS = `#version 300 es
 in vec3 a_pos; in vec3 a_next; in float a_side; in float a_along;
 uniform mat4 u_matrix; uniform vec2 u_viewport; uniform float u_width; uniform float u_time; uniform float u_length;
@@ -300,7 +300,7 @@ export class Renderer {
       gl.drawArrays(gl.POINTS, 0, Math.min(area.n, Math.ceil(area.n * frame.limit)));
     }
     gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-    // The walk: lit where it can be seen, and faintly through what stands in front of it.
+    // The route: lit where it can be seen, and faintly through what stands in front of it.
     if (this.lineVao && frame.reveal > 0) {
       gl.useProgram(this.line.p);
       gl.uniformMatrix4fv(this.line.u('u_matrix'), false, matrix);

@@ -13,11 +13,11 @@ export type Beats = { photos?: Window; walk?: Window; stretches?: Window; marks?
 const FALL = 600, DROP = 170;
 /** Milliseconds a mark takes to pop, and a stretch's tick to grow as the light reaches it. */
 const POP = 380, TICK = 240;
-/** Metres of the light that runs along the walk as its stretches are counted. */
+/** Metres of the light that runs along the tour route as its stretches are counted. */
 const RUN = 16;
-/** The drawn walk gives way to the map's own line this long after its beat. */
+/** The drawn route gives way to the map's own line this long after its beat. */
 const HOLD = 250, YIELD = 250;
-/** Milliseconds the flow along the walk takes to come up once the walk is drawn. */
+/** Milliseconds the flow along the route takes to come up once the route is drawn. */
 const FLOW_IN = 400;
 
 const ends = (beats: Beats) => Math.max(...Object.values(beats).map(w => w ? w[0] + w[1] : -Infinity));
@@ -89,18 +89,18 @@ function stretches(f: FxFrame, scene: FxScene, beats: Beats, now: number, finish
   const window = beats.stretches;
   if (!window || (!finished && now < window[0])) return;
   const { ctx, project } = f, colours = palette(), u = finished ? 1 : within(now, window[0], window[1]), length = scene.route.length || 1;
-  // A short light runs along the walk from its start to its end; each stretch it reaches takes its tick.
+  // A short light runs along the route from its start to its end; each stretch it reaches takes its tick.
   const head = length * easeInOut(u);
   const reached = scene.stretches.flatMap(stretch => finished || stretch.from <= head
     ? [{ stretch, lit: finished ? 1 : within(now, window[0] + window[1] * inverse(easeInOut, stretch.from / length), TICK) }] : []);
   for (const { stretch } of reached) {
     if (stretch.status !== 'no-photos') continue;
-    // No photos here: the walk turns to grey dashes, as the canvas draws it.
+    // No photos here: the route turns to grey dashes, as the canvas draws it.
     const path = slice(scene.route, stretch.from, stretch.to).map(p => project(p));
     line(ctx, path, rgba(colours.surface, 1), 7, 'butt');
     ctx.setLineDash([3, 5]); line(ctx, path, rgba(colours.unknown, 1), 4, 'butt'); ctx.setLineDash([]);
   }
-  // A hairline tick where each 10 m stretch begins, and one at the end of the walk.
+  // A hairline tick where each 10 m stretch begins, and one at the end of the route.
   ctx.beginPath();
   for (const { stretch, lit } of reached) {
     const ticks = stretch.index === scene.stretches.length - 1 ? [stretch.from, stretch.to] : [stretch.from];
@@ -112,7 +112,7 @@ function stretches(f: FxFrame, scene: FxScene, beats: Beats, now: number, finish
   }
   ctx.strokeStyle = rgba(colours.ink, 0.32); ctx.lineWidth = 1; ctx.lineCap = 'butt'; ctx.stroke();
   if (finished || u <= 0 || u >= 1) return;
-  // The light itself, inside the walk's line: brightest at its head, fading behind it.
+  // The light itself, inside the route's line: brightest at its head, fading behind it.
   const from = Math.max(0, head - RUN * scene.unit);
   for (let i = 0; i < 8; i++) {
     const a = from + (head - from) * i / 8, b = from + (head - from) * (i + 1) / 8, j = (i + 1) / 8;
@@ -145,9 +145,9 @@ function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: 
 }
 
 /**
- * The build replay: photos land where they were taken, in capture order, the walk is drawn through them, a light along it ticks each stretch, the marks pop
+ * The build replay: photos land where they were taken, in capture order, the route is drawn through them, a light along it ticks each stretch, the marks pop
  * in walking order and the possible barriers turn clay together. Done draws the end state at once, leaving the photos and the
- * walk to the map, which shows its own. Once the walk is drawn its flow comes up and runs on, through the hand-off, in step with
+ * route to the map, which shows its own. Once the route is drawn its flow comes up and runs on, through the hand-off, in step with
  * the route screen's.
  */
 export function build(scene: FxScene, beats: Beats, done: boolean): Effect {

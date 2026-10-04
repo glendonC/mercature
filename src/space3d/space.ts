@@ -1,9 +1,9 @@
-/** The published 3D areas of a walk: what scripts/pieces/thin.mjs writes to public/places/<folder>/pieces. */
+/** The published 3D areas of a tour route: what scripts/pieces/thin.mjs writes to public/places/<folder>/pieces. */
 import { PACKAGES, metres, type Coordinate, type Destination } from '../destinations/data';
 
 export type SpacePiece = { id: string; file: string; points: number; bytes: number; center: Coordinate; stretches: number[]; photos: string[]; residual: number };
 export type Space = { base: string; pieces: SpacePiece[]; ground: [number, number][]; model: { name: string; by: string; link: string | null }; licence: string };
-/** One area's points in the walk's frame: east, north, up metres from the record's origin, and colours from the photos. */
+/** One area's points in the route's frame: east, north, up metres from the record's origin, and colours from the photos. */
 export type Area = { id: string; n: number; positions: Float32Array; colours: Uint8Array; low: number; high: number };
 
 const fail = (text: string): never => { throw new Error(text); };
@@ -62,7 +62,7 @@ async function fetchArea(url: string, piece: SpacePiece): Promise<Area> {
   return decodeArea(piece.id, buffer, piece.points);
 }
 
-/** The walk in the frame of the 3D, with the distance along it at each vertex. */
+/** The route in the frame of the 3D, with the distance along it at each vertex. */
 export type Track = { points: [number, number][]; along: number[]; length: number };
 export function track(data: Destination): Track {
   const origin: Coordinate = [data.origin[0], data.origin[1]];
@@ -71,7 +71,7 @@ export function track(data: Destination): Track {
   return { points, along, length: along.at(-1) ?? 0 };
 }
 
-/** The distance along the walk of the nearest point on it, and how far away that point is. */
+/** The distance along the route of the nearest point on it, and how far away that point is. */
 export function nearest(walk: Track, east: number, north: number): { along: number; off: number } {
   let best = { along: 0, off: Infinity };
   for (let i = 1; i < walk.points.length; i++) {
@@ -83,7 +83,7 @@ export function nearest(walk: Track, east: number, north: number): { along: numb
   return best;
 }
 
-/** The point at a distance along the walk. */
+/** The point at a distance along the route. */
 export function pointAt(walk: Track, distance: number): [number, number] {
   const d = Math.max(0, Math.min(walk.length, distance));
   for (let i = 1; i < walk.points.length; i++) {
@@ -95,7 +95,7 @@ export function pointAt(walk: Track, distance: number): [number, number] {
   return walk.points.at(-1) ?? [0, 0];
 }
 
-/** The ground height the build measured along the walk, at a distance along it. Display only. */
+/** The ground height the build measured along the route, at a distance along it. Display only. */
 export function groundAt(space: Space, distance: number): number {
   const g = space.ground;
   if (!g.length) return 0;

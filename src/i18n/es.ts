@@ -5,7 +5,7 @@ import type { Key } from './en';
  * Glossary: place lugar, spot punto, message mensaje, fix arreglo, plan plan, path check revisión de caminos,
  * model modelo (only the AI), Connected Conectado, Blocked Bloqueado, Unknown Desconocido,
  * Not sure Sin certeza, Example Ejemplo, flagged señalado (a mark on a photo is marca),
- * start of a walk Salida (Inicio is Home), OpenStreetMap says Según OpenStreetMap, photos are analizadas (never leídas).
+ * start of a tour route Salida (Inicio is Home), OpenStreetMap says Según OpenStreetMap, photos are analizadas (never leídas).
  */
 export const es = {
   // Language switch
@@ -171,7 +171,7 @@ export const es = {
   'record.tbilisiCity': 'Tiflis',
   'record.kathmanduCity': 'Katmandú',
 
-  // What OpenStreetMap says along a walk, as the place records write it
+  // What OpenStreetMap says along a route, as the place records write it
   'osm.says': 'Según OpenStreetMap: {label}',
   'osm.steps': 'escalones',
   'osm.handrail': 'pasamanos',
@@ -264,7 +264,7 @@ export const es = {
   'dest.linked': 'Foto seleccionada enlazada',
   'dest.outside': 'Foto fuera de esta área de captura',
 
-  // Editing the walk
+  // Editing the route
   'edit.addTitle': 'Agrega un punto que conoces',
   'edit.addWhere': '{where}, {from} a {to} m',
   'edit.kindLabel': 'Qué hay',

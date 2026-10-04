@@ -15,7 +15,7 @@ export function meaning(state: string): keyof Palette {
 const FLOW = { bead: 7, gap: 29, speed: 11, every: 50 };
 
 /**
- * One quiet flow along the walk, always on: short beads of light inside its line, moving the way a visitor walks it, grey
+ * One quiet flow along the tour route, always on: short beads of light inside its line, moving the way a visitor walks it, grey
  * where no photo was taken. The beads keep about one size on screen, stepping to a new spacing only when the zoom doubles or
  * halves, and take their phase from the page clock, so a replay and the route screen behind it show the same beads in the
  * same places. Still under reduced motion; otherwise it redraws a few times a second, which is all its speed needs.
@@ -60,7 +60,7 @@ export function ping(scene: FxScene, at: Point, saw: ReadonlySet<string>, starte
   };
 }
 
-/** The photos that saw a run of stretches: the views the place keeps for them, and every photo taken on the walk beside them. */
+/** The photos that saw a run of stretches: the views the place keeps for them, and every photo taken on the route beside them. */
 export function sawStretches(scene: FxScene, data: Destination, stretches: readonly number[]): Set<string> {
   const ids = new Set<string>(), photoOf = new Map(data.views.map(view => [view.id, view.photoId] as const));
   for (const index of stretches) for (const view of data.stretches[index]?.views ?? []) { const photo = photoOf.get(view); if (photo) ids.add(photo); }
@@ -83,7 +83,7 @@ export function pulse(at: Point, colour: keyof Palette, started: number, { sprea
   };
 }
 
-/** The clay glow along a spot's stretch of the walk fading out, as an edit takes the possible barrier off it: the map's own glow goes at once. */
+/** The clay glow along a spot's stretch of the route fading out, as an edit takes the possible barrier off it: the map's own glow goes at once. */
 export function unglow(path: readonly Point[], started: number, { fade = 400 } = {}): Effect {
   return ({ ctx, project, now }) => {
     const u = (now - started) / fade;

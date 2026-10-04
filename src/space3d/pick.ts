@@ -50,7 +50,7 @@ function invert(m: Float32Array): Float32Array | null {
   return inv;
 }
 
-/** Where the tap's ray meets the ground, with the ground's height where it lands (a few rounds, as it varies along the walk). */
+/** Where the tap's ray meets the ground, with the ground's height where it lands (a few rounds, as it varies along the tour route). */
 export function pickGround(m: Float32Array, width: number, height: number, x: number, y: number, groundAt: (east: number, north: number) => number): Vec3 | null {
   const inv = invert(m);
   if (!inv) return null;
@@ -68,7 +68,7 @@ export function pickGround(m: Float32Array, width: number, height: number, x: nu
   return hit;
 }
 
-/** A place in the walk's frame (east and north metres from the record's origin) on the map, inverting data.ts's metres(). */
+/** A place in the route's frame (east and north metres from the record's origin) on the map, inverting data.ts's metres(). */
 export function lonLatOf(east: number, north: number, origin: Coordinate): Coordinate {
   const r = 6371008.8 * Math.PI / 180;
   return [origin[0] + east / (Math.cos(origin[1] * Math.PI / 180) * r), origin[1] + north / r];

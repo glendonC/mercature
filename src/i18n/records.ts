@@ -50,7 +50,7 @@ function stepsFromRecord(text: string, lang: Lang): string | null {
   return key ? translate(lang, key, { steps }) : steps;
 }
 
-/** What OpenStreetMap says along a walk, as its findings write it: "OpenStreetMap says: no handrail". */
+/** What OpenStreetMap says along a tour route, as its findings write it: "OpenStreetMap says: no handrail". */
 const OSM_SAYS = 'OpenStreetMap says: ';
 const OSM: Readonly<Record<string, PlainKey>> = {
   'steps': 'osm.steps',

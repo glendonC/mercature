@@ -3,10 +3,10 @@ import type { Coordinate, Destination } from '../destinations/data';
 import type { Point, Walk } from '../destinations/walk';
 import { locate, pointAt, track, type Track } from './space';
 
-/** A recorded finding as a mark on the walk. */
+/** A recorded finding as a mark on the tour route. */
 export type Mark = { at: Coordinate; barrier: boolean };
 
-/** The recorded walk as effects read it: everything measured along the route, in route-frame units. */
+/** The recorded route as effects read it: everything measured along the route, in route-frame units. */
 export type FxScene = {
   route: Track;
   /** Route-frame units per metre. */

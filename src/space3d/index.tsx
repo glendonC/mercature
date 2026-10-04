@@ -1,4 +1,4 @@
-/** The 3D built from a walk's street photos, for the screens that show it: loaded on first use, with a Photo or 3D switch. */
+/** The 3D built from a tour route's street photos, for the screens that show it: loaded on first use, with a Photo or 3D switch. */
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import type { Destination } from '../destinations/data';
 import type { Marker } from '../destinations/RouteMap';
@@ -45,7 +45,7 @@ export function useSpace(data: Destination | null): Space | null | undefined {
   return space;
 }
 
-/** Whether the 3D shows any of these stretches of the walk. */
+/** Whether the 3D shows any of these stretches of the route. */
 export const covers = (space: Space | null | undefined, stretches: readonly number[]) => !!space && space.pieces.some(piece => piece.stretches.some(index => stretches.includes(index)));
 
 const WORDS = { en: { photo: 'Photo', space: '3D', choose: 'Show the photo or the 3D' }, es: { photo: 'Foto', space: '3D', choose: 'Mostrar la foto o el 3D' } } as const;

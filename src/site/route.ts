@@ -1,16 +1,16 @@
 import type { Site, SiteFeature } from './contracts';
 
 /**
- * A spot on the recorded walk from the Plaza de Armas to the Qorikancha ticket booth.
+ * A spot on the recorded tour route from the Plaza de Armas to the Qorikancha ticket booth.
  * stretches indexes the record's 10 m "stretches" and is empty for a landmark that is not a flagged stretch;
- * landmark is the OpenStreetMap name the spot is near or is, or the record's own name for either end of the walk.
+ * landmark is the OpenStreetMap name the spot is near or is, or the record's own name for either end of the route.
  */
 export type RouteSpot = SiteFeature & { readonly stretches: readonly number[]; readonly landmark: string };
 /** Usable wherever Pick<Site, 'id' | 'features'> is expected. folder names its published package under public/places. */
 export type RoutePlace = Pick<Site, 'id'> & { readonly folder: string; readonly features: readonly RouteSpot[] };
 
 /**
- * The words visitors use for this walk, authored from the local record cusco-qorikancha (mercature-route/1).
+ * The words visitors use for this route, authored from the local record cusco-qorikancha (mercature-route/1).
  * Photo findings are model suggestions that nobody has verified, a stretch without findings only means
  * no barrier was seen in photos, and nothing here states a width, height, slope or whether anyone can pass.
  */

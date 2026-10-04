@@ -167,7 +167,7 @@ export const en = {
   'record.tbilisiCity': 'Tbilisi',
   'record.kathmanduCity': 'Kathmandu',
 
-  // What OpenStreetMap says along a walk, as the place records write it
+  // What OpenStreetMap says along a tour route, as the place records write it
   'osm.says': 'OpenStreetMap says: {label}',
   'osm.steps': 'steps',
   'osm.handrail': 'handrail',
@@ -260,7 +260,7 @@ export const en = {
   'dest.linked': 'Selected photo linked',
   'dest.outside': 'Photo outside this capture area',
 
-  // Editing the walk
+  // Editing the route
   'edit.addTitle': 'Add a spot you know about',
   'edit.addWhere': '{where}, {from} to {to} m',
   'edit.kindLabel': 'What is there',

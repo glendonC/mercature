@@ -3,7 +3,7 @@ import { NARIKALA_PLACE } from './narikala.ts';
 import { QORIKANCHA_PLACE, type RoutePlace } from './route.ts';
 
 /**
- * Every recorded walk with spots, keyed by its record id in .local/routes.
+ * Every recorded tour route with spots, keyed by its record id in .local/routes.
  * The package generator reads it, and a test checks each place's published package against its spots.
  */
 export const ROUTE_PLACES: Readonly<Record<string, RoutePlace>> = {

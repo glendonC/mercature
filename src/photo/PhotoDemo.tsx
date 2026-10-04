@@ -12,7 +12,7 @@ const HERO: DestinationId = 'cusco-qorikancha';
 const placeOf = (): DestinationId => { const wanted = new URLSearchParams(location.search).get('place') ?? ''; return isDestinationId(wanted) ? wanted : HERO; };
 const StepIcon = ({ kind }: { kind: string }) => { const Icon = iconFor(kind) ?? PhotoIcon; return <Icon />; };
 
-/** ?ui=photo: the labelled photo at the sizes the guide gives it, over a walk's shipped views (the hero, or ?place=). ?view= opens one view, ?select=none clears the selection. */
+/** ?ui=photo: the labelled photo at the sizes the guide gives it, over a tour route's shipped views (the hero, or ?place=). ?view= opens one view, ?select=none clears the selection. */
 export default function PhotoDemo() {
   const { lang, setLang } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
