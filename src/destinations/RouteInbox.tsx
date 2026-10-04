@@ -21,6 +21,7 @@ import MarkFixed from './edit/MarkFixed';
 import OwnNoteEditor from './edit/OwnNote';
 import { Callout, IconButton, Legend, List, Panel, PrimaryAction, Quote, Row, Section, Segmented, Select, Tag, TextArea, TextButton, markOf, MARK_ORDER, type LegendItem } from '../ui';
 import { BackIcon, ChevronIcon, CloseIcon, CopyIcon, DownloadIcon, FixedIcon, KerbIcon, MessageIcon, MoreIcon, NoPhotosIcon, NoteIcon, PathIcon, PinIcon, PlusIcon, PointerIcon, PraiseIcon, ProblemIcon, QuestionIcon, RemoveIcon, RotateIcon, StepsIcon, UndoIcon, AddedIcon } from '../ui/icons';
+import Swap from '../fx/Swap';
 import './route-inbox.css';
 
 /** A place on the walk the panel can show: a spot of the walk, a plain stretch, a named landmark, or a spot she added. */
@@ -539,7 +540,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         <span>{w.note}</span>
         <Segmented label={w.note} value={noteLang} onChange={setNoteLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.id.toUpperCase(), lang: item.id }))} />
         {/* Two lines to read before copying; a tap shows the whole note. */}
-        <button type="button" className="ui-callout ri-note-text" lang={noteLang} aria-expanded={noteOpen} onClick={() => setNoteOpen(open => !open)}><span>{note}</span></button>
+        <button type="button" className="ui-callout ri-note-text" lang={noteLang} aria-expanded={noteOpen} onClick={() => setNoteOpen(open => !open)}><Swap value={note} lang={noteLang} className="ri-note-lines" /></button>
         <TextButton icon={<CopyIcon />} onClick={() => copy(note)}>{w.copy}</TextButton>
       </div>}
     </Section>
@@ -593,7 +594,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {message?.spot && !answer?.candidates.includes(message.spot) && <p className="ri-filedline"><TextButton icon={<PinIcon />} onClick={() => { const target = targetOf(message.spot!); if (target) openSpot(target); }}>{w.filed(nameOfKey(message.spot))}</TextButton></p>}
       {message && <Section heading="h2" title={w.reply}>
         <Segmented label={w.reply} value={replyIn} onChange={setReplyLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.label, lang: item.id }))} />
-        <Callout className="ri-reply" lang={replyIn}>{replyText(message, replyIn)}</Callout>
+        <Callout className="ri-reply" lang={replyIn}><Swap value={replyText(message, replyIn)} lang={replyIn} /></Callout>
         <div className="ri-actions ri-copy"><PrimaryAction icon={<CopyIcon />} shortcut="mod+enter" onClick={() => copy(replyText(message, replyIn))}>{w.copyReply}</PrimaryAction>{said && <span className="ri-said" role="status">{said}</span>}</div>
       </Section>}
     </>;
