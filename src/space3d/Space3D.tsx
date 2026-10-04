@@ -30,6 +30,8 @@ export type Space3DProps = {
   onUnavailable?: (reason: string) => void;
   /** Hide the zoom and fit controls, for a still replay. */
   still?: boolean;
+  /** Read the areas from another folder than the place's package, for review. */
+  from?: string;
   className?: string;
 };
 
@@ -72,7 +74,7 @@ function framing(points: Vec3[], aspect: number, pitch: number, walk: Track): Ca
   return { target, yaw, pitch, distance: radius / Math.sin(half) * 1.02 };
 }
 
-export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, onIntroEnd, onUnavailable, still = false, className }: Space3DProps) {
+export default function Space3D({ data, markers = [], marks = true, onMarker, onMark, focus = null, areas = null, intro = false, settle = false, onIntroEnd, onUnavailable, still = false, from, className }: Space3DProps) {
   const { lang } = useLanguage();
   const words = WORDS[lang === 'es' ? 'es' : 'en'];
   const host = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
@@ -102,7 +104,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     canvas.current.addEventListener('webglcontextlost', lost);
     const controller = new AbortController();
     (async () => {
-      const all = await loadSpace(data, controller.signal);
+      const all = await loadSpace(data, controller.signal, from);
       const s = areas?.length ? { ...all, pieces: all.pieces.filter(p => areas.includes(p.id)) } : all;
       setSpace(s);
       // Areas rise in the order the walk passes them.
@@ -166,9 +168,10 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!space || !host.current) return;
     const { width, height } = host.current.getBoundingClientRect(), aspect = width / Math.max(1, height);
     const origin: Coordinate = [data.origin[0], data.origin[1]];
-    const chosen = areas?.length ? space.pieces.map(p => p.center) : focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : data.line;
+    // The intro shows the whole walk; otherwise the focused stretches, or the areas there are.
+    const chosen = focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : intro ? data.line : space.pieces.map(p => p.center);
     const points = (chosen.length ? chosen : data.line).map(p => { const [x, y] = metres(p, origin); return [x, y, ground(x, y)] as Vec3; });
-    const close = !!(areas?.length || focus?.length);
+    const close = !intro || !!focus?.length;
     const to = framing(points, aspect, close ? 0.95 : OBLIQUE, walk);
     if (close) to.distance = Math.max(to.distance + 30, 70);
     if (!camera.current || reduced()) camera.current = to;
@@ -297,7 +300,8 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
   const fit = () => {
     if (!host.current || !camera.current || !space) return;
     const { width, height } = host.current.getBoundingClientRect(), origin: Coordinate = [data.origin[0], data.origin[1]];
-    const to = framing(data.line.map(p => { const [x, y] = metres(p, origin); return [x, y, ground(x, y)] as Vec3; }), width / Math.max(1, height), OBLIQUE, walk);
+    const to = framing(space.pieces.map(p => { const [x, y] = metres(p.center, origin); return [x, y, ground(x, y)] as Vec3; }), width / Math.max(1, height), 0.95, walk);
+    to.distance = Math.max(to.distance + 30, 70);
     if (reduced()) move(to); else goal.current = { from: { ...camera.current }, to, at: performance.now(), for: 600 };
     dirty.current = true;
   };

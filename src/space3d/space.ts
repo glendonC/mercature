@@ -15,8 +15,8 @@ export function spaceBase(data: Destination): string | null {
   return folder ? `${BASE}places/${folder}/pieces/` : null;
 }
 
-export async function loadSpace(data: Destination, signal?: AbortSignal): Promise<Space> {
-  const base = spaceBase(data) ?? fail('This place has no 3D.');
+export async function loadSpace(data: Destination, signal?: AbortSignal, from?: string): Promise<Space> {
+  const base = from ?? spaceBase(data) ?? fail('This place has no 3D.');
   const response = await fetch(`${base}space.json`, { signal, redirect: 'error', credentials: 'same-origin' });
   if (!response.ok || !/json/i.test(response.headers.get('content-type') ?? '')) fail('This place has no 3D.');
   const root = await response.json() as Record<string, unknown>;

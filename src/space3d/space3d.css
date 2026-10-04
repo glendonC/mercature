@@ -80,3 +80,7 @@
 @media (prefers-reduced-motion: reduce) {
   .space3d-canvas { transition: none; }
 }
+/* In a spot's panel: the switch above, the 3D in the photo's place. */
+.space3d-switch { display: grid; gap: var(--space-2); }
+.space3d-switch > .ui-segmented { justify-self: start; }
+.space3d-pane { aspect-ratio: 4 / 3; min-height: 220px; max-height: 52vh; border-radius: var(--radius-m); }

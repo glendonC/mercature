@@ -14,10 +14,14 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const TARGET = 18000, NOISE_M = 0.25, MIN_POINTS = 3, CROP = [0.01, 0.99], SKY_M = 2;
-/** Areas left out after looking at them thinned, with the plain reason. */
+const TARGET = Number(process.env.THIN_TARGET ?? 40000), NOISE_M = 0.25, MIN_POINTS = Number(process.env.THIN_MIN_POINTS ?? 3), CROP = [0.01, 0.99], SKY_M = 2;
+/** Areas placed on the map with more error than this are left out. */
+const MAX_RESIDUAL_M = 0.5;
+/** Areas left out after looking at them at full size and thinned, with the plain reason. */
+const SQUARE = 'Its shape cannot be read: the open square comes out as streaks from where the photos were taken, at full size too.';
+const SCATTER = 'Its shape cannot be read: scattered points with no clear wall or ground.';
 const LEFT_OUT = {
-  'cusco-qorikancha': {},
+  'cusco-qorikancha': { s01: 'Its shape cannot be read: a few photos give fans of streaks.', s02: SQUARE, s03: SQUARE, s04: SQUARE, s05: SQUARE, s07: SQUARE, s08: SQUARE, s09: SQUARE, s10: SQUARE, s11: SCATTER, s17: SCATTER },
   'tbilisi-narikala': {},
 };
 const FOLDERS = { 'cusco-qorikancha': 'qorikancha', 'tbilisi-narikala': 'narikala' };
@@ -29,7 +33,7 @@ if (!id || !Object.hasOwn(FOLDERS, id) && !process.argv[3]) {
 }
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const source = join(root, '.local/routes', id);
-const target = join(root, 'public/places', process.argv[3] ?? FOLDERS[id], 'pieces');
+const target = process.env.THIN_OUT ? resolve(process.env.THIN_OUT) : join(root, 'public/places', process.argv[3] ?? FOLDERS[id], 'pieces');
 if (!existsSync(join(source, 'route.json'))) throw new Error(`Missing ${join(source, 'route.json')}; link .local/routes first.`);
 const record = JSON.parse(readFileSync(join(source, 'route.json'), 'utf8'));
 if (record.schema !== 'mercature-route/1' || record.id !== id || record.synthetic !== false) throw new Error('Unexpected route record.');
@@ -159,15 +163,17 @@ function groundProfile(clouds) {
   }).filter((_, i, all) => i % 2 === 0 || i === all.length - 1);
 }
 
-const leftOut = LEFT_OUT[id] ?? {};
+const leftOut = { ...LEFT_OUT[id] };
+for (const spot of record.spots) if (spot.state === 'joined' && spot.piece.residual_rms_m > MAX_RESIDUAL_M && !leftOut[spot.id]) leftOut[spot.id] = `It sits about ${spot.piece.residual_rms_m.toFixed(1)} m off on the map, more than ${MAX_RESIDUAL_M} m.`;
 const joined = record.spots.filter(spot => spot.state === 'joined');
 rmSync(target, { recursive: true, force: true });
 mkdirSync(target, { recursive: true });
 const clouds = [], pieces = [];
 for (const spot of joined) {
   const cloud = readPiece(spot);
+  // The ground along the walk comes from every area placed closely enough, shown or not.
+  if (spot.piece.residual_rms_m <= MAX_RESIDUAL_M) clouds.push(cloud);
   if (leftOut[spot.id]) continue;
-  clouds.push(cloud);
   const { points, voxel, dense: kept } = thin(cloud);
   const bytes = encode(points, `${id}/${spot.id}`);
   writeFileSync(join(target, `${spot.id}.bin`), bytes);
@@ -181,7 +187,7 @@ const space = {
   model: { name: 'VGGT-1B-Commercial', by: 'Meta AI', revision: joined[0]?.piece.model_revision ?? null, link: 'https://github.com/facebookresearch/vggt' },
   licence: 'CC BY-SA 4.0',
   credit: '3D built by VGGT from Mapillary street photos (CC BY-SA 4.0), credited by contributor',
-  thinning: { target: TARGET, noise_m: NOISE_M, min_points: MIN_POINTS, crop: CROP, sky_m: SKY_M },
+  thinning: { target: TARGET, noise_m: NOISE_M, min_points: MIN_POINTS, crop: CROP, sky_m: SKY_M, max_residual_m: MAX_RESIDUAL_M },
   ground: groundProfile(clouds),
   pieces,
   left_out: [
