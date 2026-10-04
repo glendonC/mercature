@@ -57,7 +57,7 @@ test('an added spot reads like an authored one, with the landmark in every word 
   const spot = addedFeature(edits.added[0], locate);
   expect(spot.id).toBe('added-1');
   expect(spot.stretches).toEqual([21]);
-  // Named by where it is, like every spot on the walk; the kind stays in the passage and the word lists.
+  // Named by where it is, like every spot on the tour route; the kind stays in the passage and the word lists.
   expect(spot.name.en).toBe('Loreto, 210 to 220 m');
   expect(spot.name.es).toBe('Loreto, 210 a 220 m');
   expect(addedFeature(addSpot(empty, 3, 'kerb', NO_NOTE, at).added[0], () => ({ from: 30, to: 40, landmark: '' })).name.en).toBe('30 to 40 m');
@@ -97,7 +97,7 @@ test('a fixed spot says she recorded it, never that the way is clear', () => {
   // "registrar" can read as "to search a place", so the record uses "anotar".
   for (const kind of EDIT_KINDS) expect(fixedLine(kind, where, 215, at, 'es'), kind).not.toContain('registramos');
   expect(fixedLine('steps', where, 215, at, 'ko')).toBe('업데이트 (2026년 10월 4일): 출발점에서 약 215m, 로레토 근처 계단을 수리 완료로 기록했습니다.');
-  // Inside the first 10 m the line names the start of the walk, as the route note does, never "about 0 m".
+  // Inside the first 10 m the line names the start of the route, as the route note does, never "about 0 m".
   expect(fixedLine('steps', where, 4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, at the start of the route, as fixed.');
   expect(fixedLine('steps', where, 4, at, 'es')).toBe('Actualización, 4 de octubre de 2026: anotamos como arreglados los escalones cerca de Loreto, al inicio del recorrido.');
   expect(fixedLine('steps', where, 4, at, 'ko')).toBe('업데이트 (2026년 10월 4일): 출발점, 로레토 근처 계단을 수리 완료로 기록했습니다.');

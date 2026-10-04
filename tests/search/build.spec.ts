@@ -5,7 +5,7 @@ import { decodePolyline6, distance, type LonLat } from '../../src/search/geo';
 import { matchPrepared } from '../../src/search/prepared';
 import type { Walked } from '../../src/search/services';
 
-/** A straight walk of 95 m due east, so a point's distance along it is plain arithmetic. */
+/** A straight tour route of 95 m due east, so a point's distance along it is plain arithmetic. */
 const origin: LonLat = [-77.03, -12.05];
 const M = 6371008.8 * Math.PI / 180;
 const east = (metres: number, north = 0): LonLat => [origin[0] + metres / (M * Math.cos(origin[1] * Math.PI / 180)), origin[1] + north / M];
@@ -14,7 +14,7 @@ const walked: Walked = { line, lengthMetres: 95, streets: [{ name: 'Jirón Prueb
 const geometry = (points: LonLat[]) => points.map(([lon, lat]) => ({ lat, lon }));
 const elements: OsmElement[] = [
   { type: 'way', id: 1, tags: { highway: 'residential', name: 'Jirón Prueba' }, geometry: geometry([east(-20), east(120)]) },
-  // A short flight on the walk at 42 to 46 m, and one the walk only crosses at 20 m.
+  // A short flight on the route at 42 to 46 m, and one the route only crosses at 20 m.
   { type: 'way', id: 2, tags: { highway: 'steps', step_count: '4', handrail: 'no' }, geometry: geometry([east(42), east(46)]) },
   { type: 'way', id: 3, tags: { highway: 'steps' }, geometry: geometry([east(20, -6), east(20, 6)]) },
   { type: 'node', id: 4, tags: { kerb: 'raised' }, lat: east(73)[1], lon: east(73)[0] },
@@ -43,9 +43,9 @@ test('a map-only walk flags OpenStreetMap barriers on their stretches and says n
   expect(place.views).toEqual([]);
   expect(place.stretches.filter(s => s.status === 'barrier').map(s => s.index)).toEqual([4, 7]);
   expect(place.stretches.filter(s => s.status !== 'barrier').every(s => s.status === 'no_photos')).toBe(true);
-  // The flight the walk only crosses is not on it.
+  // The flight the route only crosses is not on it.
   expect(place.stretches[2].findings).toEqual([]);
-  // Every finding is an unverified tag with no photo, and the bench beside the walk is kept but flags nothing.
+  // Every finding is an unverified tag with no photo, and the bench beside the route is kept but flags nothing.
   expect(place.findings.every(f => f.view_id === null && f.verified === false && f.osm.tags)).toBe(true);
   expect(place.findings.find(f => f.concept === 'amenity=bench')?.barrier).toBe(false);
   expect(place.attribution.map).toContain('OpenStreetMap');
@@ -76,7 +76,7 @@ test('the route screen reads a built package as a place with no photos', () => {
   expect(data.buildings.map(b => b.name)).toEqual(['Casa de Prueba']);
   expect(data.ways.find(w => w.name === 'Jirón Prueba')?.kind).toBe('residential');
   expect(data.target.name).toBe('Museo de Prueba');
-  // Every kind OpenStreetMap lists reaches the guide's check, the bench beside the walk included, with its own flags.
+  // Every kind OpenStreetMap lists reaches the guide's check, the bench beside the route included, with its own flags.
   expect(data.access?.map(tag => tag.concept).sort()).toEqual(['amenity=bench', 'handrail=no', 'highway=steps', 'kerb=raised']);
   expect(data.access?.find(tag => tag.concept === 'kerb=raised')?.barrier).toBe(false);
 });

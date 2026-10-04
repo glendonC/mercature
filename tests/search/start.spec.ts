@@ -60,7 +60,7 @@ test('a start is judged by its walk on foot: one over 900 m gives way to the nex
   const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
   globalThis.fetch = (async (url: string, init?: RequestInit) => {
     if (url.includes('overpass')) return json({ elements: [node(1, far, { place: 'square', name: 'Far Square' }), node(2, near, { highway: 'bus_stop', name: 'Near Stop' })] });
-    // The stop's walk detours 1.6 km; the square's is direct.
+    // The stop's tour route detours 1.6 km; the square's is direct.
     const from = JSON.parse(String(init?.body)).locations[0];
     const detour = Math.abs(from.lat - near[1]) < 1e-6;
     const line: LonLat[] = detour ? [near, away(800, -450), away(800, 0), target] : [far, target];

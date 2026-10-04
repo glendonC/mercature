@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { guessLanguage } from '../../src/destinations/copy';
 import { EXAMPLES } from '../../src/destinations/examples';
 
-/** The walk's Spanish place names never make a message Spanish; other languages never pass as Spanish. */
+/** The tour route's Spanish place names never make a message Spanish; other languages never pass as Spanish. */
 const CASES: [string, string][] = [
   ['The stone steps on Calle Loreto were too steep for my father, there was no handrail.', 'en'],
   ['Merci, la visite était très belle.', 'other'],

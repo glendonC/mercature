@@ -6,7 +6,7 @@ import type { RoutePlace } from '../../src/site/route';
 /** The same Node encoder the language evaluation uses, so these are real model answers. */
 const modelProvisioned = existsSync('.local/language/model/onnx/model_quantized.onnx');
 const heads = JSON.parse(readFileSync(new URL('../../src/language/heads.json', import.meta.url), 'utf8')) as Heads;
-/** The spots the device built for a real walk, Plaza San Martín to the Museo de Arte de Lima, from OpenStreetMap on 2026-10-04. */
+/** The spots the device built for a real tour route, Plaza San Martín to the Museo de Arte de Lima, from OpenStreetMap. */
 const lima = JSON.parse(readFileSync(new URL('./lima-spots.json', import.meta.url), 'utf8')) as RoutePlace;
 
 test('the model answers messages about a walk built on the device, with no retraining', async () => {

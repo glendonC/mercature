@@ -32,7 +32,7 @@ test('search filters prepared places as she types, and one clear answer builds a
   });
   await page.route('https://overpass-api.de/**', route => {
     const query = decodeURIComponent(route.request().postData() ?? '');
-    // The start: a square about 450 m away. Along the walk: one flight of steps.
+    // The start: a square about 450 m away. Along the tour route: one flight of steps.
     if (query.includes('place=square')) return route.fulfill({ json: { elements: [{ type: 'node', id: 1, lat: square[1], lon: square[0], tags: { place: 'square', name: 'Plaza Prueba' } }] } });
     return route.fulfill({ json: { elements: [{ type: 'way', id: 2, tags: { highway: 'steps' }, geometry: [{ lat: -12.0580, lon: -77.0360 }, { lat: -12.05804, lon: -77.03602 }] }] } });
   });
@@ -49,10 +49,10 @@ test('search filters prepared places as she types, and one clear answer builds a
   await expect(page.locator('.gs-place')).toContainText('Plaza Prueba, 507 m on foot');
   await expect(page.locator('.guide-screen .ui-dialogue')).toContainText(/about 500 m/i, { timeout: 8000 });
   expect(asked).toHaveLength(1);
-  // Back on Home the walk is no card: it waits under Recent while the empty field has focus, and can be removed.
+  // Back on Home the route is no card: it waits under Recent while the empty field has focus, and can be removed.
   await page.goBack();
   await expect(page.locator('.home-saved')).toHaveCount(0);
-  // Home first offers this walk another start; Escape leaves that, and the empty field shows Recent.
+  // Home first offers this route another start; Escape leaves that, and the empty field shows Recent.
   await expect(page.getByRole('textbox', {name:'Where does the route start?'})).toBeVisible();
   await field.focus();
   await page.keyboard.press('Escape');

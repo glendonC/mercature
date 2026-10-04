@@ -9,7 +9,7 @@ import { withEdits, type Locate } from '../../src/edits/place';
 const modelProvisioned = existsSync('.local/language/model/onnx/model_quantized.onnx');
 const heads = JSON.parse(readFileSync(new URL('../../src/language/heads.json', import.meta.url), 'utf8')) as Heads;
 const at = '2026-10-04T12:00:00.000Z';
-/** Metres and landmarks as the real record has them: 10 m stretches along the walk. */
+/** Metres and landmarks as the real record has them: 10 m stretches along the tour route. */
 const WHERE: Record<number, string> = { 25: 'Monasterio de Santa Catalina', 34: 'Loreto', 45: 'Calle Pampa del Castillo' };
 const locate: Locate = stretch => ({ from: stretch * 10, to: stretch * 10 + 10, landmark: WHERE[stretch] ?? '' });
 

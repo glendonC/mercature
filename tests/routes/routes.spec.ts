@@ -7,7 +7,7 @@ import { addStreet, buildStreet, emptyLines, mapPaths, parseLines, removeStreet,
 import { AROUND_LABEL, STREET_LABEL } from '../../src/routes/shape';
 import { RouteTrouble, type Ask } from '../../src/routes/valhalla';
 
-// A made-up walk 100 m east near Cusco, with one mapped flight of steps between 40 and 46 m.
+// A made-up tour route 100 m east near Cusco, with one mapped flight of steps between 40 and 46 m.
 const A: LonLat = [-71.98, -13.52];
 const metre = 1 / (6371008.8 * Math.PI / 180);
 const at = (east: number, north = 0): LonLat => [A[0] + east * metre / Math.cos(A[1] * Math.PI / 180), A[1] + north * metre];

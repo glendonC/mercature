@@ -24,7 +24,7 @@ test('Qorikancha spot ids are stable', () => {
   ]);
 });
 
-// Every registered place gets the same checks. Recorded walks are local-only, so the checks against a record skip where it is absent, as in CI.
+// Every registered place gets the same checks. Recorded tour routes are local-only, so the checks against a record skip where it is absent, as in CI.
 for (const place of Object.values(ROUTE_PLACES)) {
   const spots = place.features;
   const file = resolve('.local/routes', place.id, 'route.json');
