@@ -76,6 +76,88 @@
   --fast: 160ms;
   --slow: 400ms;
   --tap: 44px;
+
+  /* The system the primitives in src/ui use. Nothing reads below 13 px on any screen. */
+  --font-xs: 13px; /* meta, credits, tags, key hints, a map label's second line */
+  --font-s: 14px; /* rows, buttons, a map label's title */
+  --font-m: 15px; /* reading: a visitor's words, a reply, a panel's title */
+  --font-l: 17px; /* a card's title */
+  --font-xl: 22px; /* a screen's title */
+  --leading-tight: 1.2;
+  --leading: 1.4;
+  --leading-read: 1.5;
+  --tracking-tight: -0.01em;
+  --tracking-title: -0.02em;
+  --tracking-caps: 0.08em;
+  --space-0: 2px;
+  --radius-xs: 6px;
+  --radius-panel: 14px;
+  --radius-sheet: 16px;
+  /* Hairlines: one device pixel where the screen has two */
+  --hair-width: 1px;
+  --hairline: rgb(29 33 37 / 0.1);
+  --hairline-strong: rgb(29 33 37 / 0.18);
+  /* The map's ground, and a halo in it that lifts words off the map */
+  --ground: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  --halo: 0 0 2px var(--ground), 0 0 6px var(--ground), 0 0 12px var(--ground);
+  --halo-label: 0 0 1px var(--ground), 0 0 2px var(--ground), 0 0 3px var(--ground), 0 0 6px var(--ground), 0 0 10px var(--ground);
+  /* Glass: light for panels over the map; charcoal for small dark surfaces */
+  --glass-filter: blur(24px) saturate(160%);
+  --glass-light: rgb(250 251 251 / 0.76);
+  --glass-light-edge: inset 0 0.5px 0 rgb(255 255 255 / 0.9), 0 0 0 0.5px rgb(20 22 24 / 0.12);
+  --glass-charcoal: rgb(27 30 33 / 0.82);
+  --glass-charcoal-edge: inset 0 0.5px 0 rgb(255 255 255 / 0.12), inset 0 0 0 0.5px rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(0 0 0 / 0.45);
+  --shadow-float: 0 1px 2px rgb(20 22 24 / 0.06), 0 4px 12px -2px rgb(20 22 24 / 0.1);
+  --shadow-panel: 0 2px 6px -2px rgb(20 22 24 / 0.08), 0 16px 40px -10px rgb(20 22 24 / 0.22);
+  /* The selection: an ink outline with a white halo */
+  --select-ring: 0 0 0 1.5px var(--ink), 0 0 0 4px var(--surface);
+  /* Motion */
+  --motion-hover: 120ms;
+  --motion-fast: var(--fast);
+  --motion-panel: 240ms;
+  --motion-slow: var(--slow);
+  --ease-out: var(--ease);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.2, 1);
+
+  /* What sits on a surface; a charcoal surface flips these */
+  --ui-ink: var(--ink);
+  --ui-muted: var(--muted);
+  --ui-hair: var(--hairline);
+  --ui-hair-strong: var(--hairline-strong);
+  --ui-hover: rgb(29 33 37 / 0.05);
+  --ui-press: rgb(29 33 37 / 0.09);
+  --ui-fill: rgb(255 255 255 / 0.62);
+  --ui-thumb: rgb(255 255 255 / 0.95);
+  --ui-thumb-edge: 0 0 0 0.5px rgb(20 22 24 / 0.12), 0 1px 3px rgb(20 22 24 / 0.1);
+  --ui-primary: var(--ink);
+  --ui-primary-hover: #30353a;
+  --ui-on-primary: var(--on-primary);
+  --ui-focus: var(--ink);
+}
+@media (min-resolution: 2dppx) {
+  :root {
+    --hair-width: 0.5px;
+  }
+}
+/* A charcoal surface: the colour meanings stay, in tints that hold contrast on it */
+[data-tone="dark"] {
+  --ui-ink: #f2f3f4;
+  --ui-muted: rgb(242 243 244 / 0.62);
+  --ui-hair: rgb(255 255 255 / 0.1);
+  --ui-hair-strong: rgb(255 255 255 / 0.18);
+  --ui-hover: rgb(255 255 255 / 0.07);
+  --ui-press: rgb(255 255 255 / 0.12);
+  --ui-fill: rgb(255 255 255 / 0.06);
+  --ui-thumb: rgb(255 255 255 / 0.16);
+  --ui-thumb-edge: inset 0 0.5px 0 rgb(255 255 255 / 0.14);
+  --ui-primary: #f2f3f4;
+  --ui-primary-hover: #ffffff;
+  --ui-on-primary: var(--ink);
+  --ui-focus: #ffffff;
+  --reachable: #7aaee8;
+  --blocked: #e0905f;
+  --unknown: #a9aeb3;
+  color: var(--ui-ink);
 }
 * {
   box-sizing: border-box;

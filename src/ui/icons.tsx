@@ -1,0 +1,72 @@
+import type { ReactNode, SVGProps } from 'react';
+
+/** Thin line icons on a 24 px grid. The stroke stays near 1.4 px on screen at any size, so a 14 px marker glyph reads as well as a 20 px row icon. */
+export type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'> & { size?: number; title?: string };
+export type Icon = ((props: IconProps) => ReactNode) & { displayName?: string };
+
+const strokeFor = (size: number) => Math.min(2.25, Math.max(1.5, (1.4 * 24) / size));
+
+function make(name: string, body: ReactNode): Icon {
+  const icon: Icon = ({ size = 18, title, className, strokeWidth, ...rest }: IconProps) => (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth ?? strokeFor(size)}
+      strokeLinecap="round" strokeLinejoin="round" className={className ? `ui-icon ${className}` : 'ui-icon'}
+      aria-hidden={title ? undefined : true} role={title ? 'img' : undefined} focusable="false" {...rest}>
+      {title && <title>{title}</title>}
+      {body}
+    </svg>
+  );
+  icon.displayName = name;
+  return icon;
+}
+
+const camera = <path d="M4.5 8h2.6l1.5-2.2h6.8L16.9 8h2.6a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />;
+
+/* What is on the walk */
+export const StepsIcon = make('StepsIcon', <path d="M3 19.5h4.5V15H12v-4.5h4.5V6H21" />);
+export const KerbIcon = make('KerbIcon', <path d="M3 8.5h8a1 1 0 0 1 1 1v5a1 1 0 0 0 1 1h8M14.5 19.5h2M19 19.5h2" />);
+export const CrossingIcon = make('CrossingIcon', <><path d="M3 5.5h18M3 18.5h18" /><rect x="4" y="9" width="2.5" height="6" rx="0.6" /><rect x="8.5" y="9" width="2.5" height="6" rx="0.6" /><rect x="13" y="9" width="2.5" height="6" rx="0.6" /><rect x="17.5" y="9" width="2.5" height="6" rx="0.6" /></>);
+export const CobblestonesIcon = make('CobblestonesIcon', <><rect x="3.5" y="5" width="8" height="6" rx="2.2" /><rect x="12.5" y="5" width="8" height="6" rx="2.2" /><rect x="8" y="13" width="8" height="6" rx="2.2" /><path d="M3.5 13.5a.5.5 0 0 1 .5-.5h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a.5.5 0 0 1-.5-.5ZM20.5 13.5a.5.5 0 0 0-.5-.5h-1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1a.5.5 0 0 0 .5-.5Z" /></>);
+export const FootwayIcon = make('FootwayIcon', <><circle cx="13.5" cy="4.3" r="1.8" /><path d="M12.8 7.6 11.2 13l2.3 3.5.9 4M11.2 13l-1.5 3.8-2.2 3.7M12.5 8.8 15 11l2 .5M12.5 8.8 10 10.8 8.6 13" /></>);
+export const BollardIcon = make('BollardIcon', <path d="M9 20.5V8a3 3 0 0 1 6 0v12.5M9 11.5h6M6.5 20.5h11" />);
+export const BrokenPavementIcon = make('BrokenPavementIcon', <><rect x="3.5" y="6" width="17" height="12" rx="1.5" /><path d="m10.5 6 2 4-2.5 2.5 2.5 5.5" /></>);
+export const RoadIcon = make('RoadIcon', <path d="M6.5 20.5 10 3.5M17.5 20.5 14 3.5M12 6v1.5M12 11v2M12 16.5v2.5" />);
+export const LandmarkIcon = make('LandmarkIcon', <path d="M12 3.5 4 8h16ZM5.5 10.5v7M10 10.5v7M14 10.5v7M18.5 10.5v7M3.5 20.5h17" />);
+
+/* What happened to a spot */
+export const FixedIcon = make('FixedIcon', <path d="m5 12.5 4.5 4.5L19 7" />);
+export const AddedIcon = make('AddedIcon', <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11ZM12 7v6M9 10h6" />);
+export const PhotoIcon = make('PhotoIcon', <>{camera}<circle cx="12" cy="13" r="3.2" /></>);
+export const NoPhotosIcon = make('NoPhotosIcon', <>{camera}<circle cx="12" cy="13" r="3.2" /><path d="m3.5 3.5 17 17" /></>);
+export const MessageIcon = make('MessageIcon', <path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V16h-.5A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5Z" />);
+export const NoteIcon = make('NoteIcon', <path d="M4.5 19.5 5.5 15 15.8 4.7a2 2 0 0 1 2.9 2.9L8.4 17.9ZM13.8 6.7l3.5 3.5" />);
+export const RemoveIcon = make('RemoveIcon', <><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></>);
+
+/* What a visitor wrote */
+export const ProblemIcon = make('ProblemIcon', <path d="M12 4 21 19.5H3ZM12 10v4M12 16.8v.2" />);
+export const PraiseIcon = make('PraiseIcon', <path d="m12 4 2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.3 6.9 19l1.2-5.6L4 9.6l5.6-.6Z" />);
+export const QuestionIcon = make('QuestionIcon', <><circle cx="12" cy="12" r="8.5" /><path d="M9.6 9.6a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.2 1-1.2 1.8v.4M12 16.8v.2" /></>);
+
+/* Controls */
+export const CloseIcon = make('CloseIcon', <path d="M6 6l12 12M18 6 6 18" />);
+export const BackIcon = make('BackIcon', <path d="m15 5-7 7 7 7" />);
+export const ChevronIcon = make('ChevronIcon', <path d="m9 5 7 7-7 7" />);
+export const PlusIcon = make('PlusIcon', <path d="M12 5v14M5 12h14" />);
+export const MinusIcon = make('MinusIcon', <path d="M5 12h14" />);
+export const FitIcon = make('FitIcon', <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />);
+export const CopyIcon = make('CopyIcon', <><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" /><path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3" /></>);
+export const HomeIcon = make('HomeIcon', <path d="M4 10 12 3.5l8 6.5v10a.5.5 0 0 1-.5.5H15v-6.5H9V20.5H4.5A.5.5 0 0 1 4 20Z" />);
+export const MoreIcon = make('MoreIcon', <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" strokeWidth={3} />);
+
+/** The icon for a finding's concept, as the place package names it ('steps', 'highway=steps', 'kerb', ...). */
+export function iconFor(concept: string): Icon | null {
+  const c = concept.toLowerCase();
+  if (/steps|stair/.test(c)) return StepsIcon;
+  if (/kerb|curb/.test(c)) return KerbIcon;
+  if (/crossing|zebra/.test(c)) return CrossingIcon;
+  if (/cobble|sett/.test(c)) return CobblestonesIcon;
+  if (/broken|crack|pothole/.test(c)) return BrokenPavementIcon;
+  if (/bollard|post/.test(c)) return BollardIcon;
+  if (/footway|sidewalk|pavement|pedestrian/.test(c)) return FootwayIcon;
+  if (/road|street|carriageway/.test(c)) return RoadIcon;
+  return null;
+}

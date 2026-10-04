@@ -1,0 +1,51 @@
+import type { ReactNode } from 'react';
+import { cx } from './cx';
+
+/** A short label: a language, an 'Example', a state. Dashed means made up. */
+export function Tag({ tone = 'neutral', children, className, lang, title }: { tone?: 'neutral' | 'solid' | 'example' | 'route' | 'barrier' | 'unknown'; children: ReactNode; className?: string; lang?: string; title?: string }) {
+  return <span className={cx('ui-tag', className)} data-tone={tone} lang={lang} title={title}>{children}</span>;
+}
+
+/** A key that does the same thing, hidden on touch screens. */
+export function Kbd({ children }: { children: ReactNode }) {
+  return <kbd className="ui-kbd">{children}</kbd>;
+}
+
+/**
+ * The legend's marks, drawn as the map and the photo draw them:
+ * route, the walk in blue; possible, a possible barrier in clay; added, a spot she added; fixed, recorded as open;
+ * removed, dismissed in grey; no-photos, a stretch without photos; landmark; outline, a model outline on a photo;
+ * mark, any other mark on a photo; selected, the ink outline with a white halo.
+ */
+export type SwatchKind = 'route' | 'possible' | 'added' | 'fixed' | 'removed' | 'no-photos' | 'landmark' | 'outline' | 'mark' | 'selected';
+export function Swatch({ kind, className }: { kind: SwatchKind; className?: string }) {
+  return <span className={cx('ui-swatch', className)} data-kind={kind} aria-hidden="true" />;
+}
+
+/** A row of swatches with their words. */
+export function Legend({ items, label, className }: { items: { kind: SwatchKind; label: ReactNode; icon?: ReactNode }[]; label?: string; className?: string }) {
+  return <ul className={cx('ui-legend', className)} aria-label={label}>
+    {items.map((item, index) => <li key={index}><Swatch kind={item.kind} />{item.icon}<span>{item.label}</span></li>)}
+  </ul>;
+}
+
+export type MarkTone = 'barrier' | 'route' | 'unknown' | 'ink';
+
+/** A spot's glyph on the map: its kind as an icon in its meaning's colour. A white ring keeps it off the map; selected adds the ink outline and white halo. */
+export function MarkerBadge({ icon, tone = 'barrier', selected, quiet, count, className }: { icon: ReactNode; tone?: MarkTone; selected?: boolean; quiet?: boolean; count?: number; className?: string }) {
+  return <span className={cx('ui-marker', className)} data-tone={tone} data-selected={selected || undefined} data-quiet={quiet || undefined} aria-hidden="true">
+    {icon}
+    {count ? <span className="ui-marker-count">{count}</span> : null}
+  </span>;
+}
+
+/** Words on the map, beside a marker: a short title and a smaller meta line, lifted off the map by a halo. */
+export function MapLabel({ title, meta, icon, tone, selected, className }: { title: ReactNode; meta?: ReactNode; icon?: ReactNode; tone?: MarkTone; selected?: boolean; className?: string }) {
+  return <span className={cx('ui-map-label', className)} data-selected={selected || undefined}>
+    {icon && <MarkerBadge icon={icon} tone={tone} selected={selected} />}
+    <span className="ui-map-text">
+      <span className="ui-map-title">{title}</span>
+      {meta && <span className="ui-map-meta">{meta}</span>}
+    </span>
+  </span>;
+}
