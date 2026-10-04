@@ -38,11 +38,12 @@
 .gs-card-meta .ui-tag { color: var(--ui-ink); }
 .gs-photo { max-width: min(460px, calc((100svh - 400px) * 4 / 3 + 24px)); }
 .gs-affects { margin: 6px 0 0; font-size: var(--font-xs); color: var(--ui-ink); }
-.gs-pages { display: inline-flex; gap: 2px; margin-inline-start: auto; }
-.gs-page { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
-.gs-page::before { content: ''; display: block; width: 6px; height: 6px; margin: auto; border-radius: 50%; background: rgb(255 255 255 / 0.4); }
-.gs-page[aria-pressed=true]::before { background: #fff; }
-.gs-page:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -2px; }
+.gs-pager { display: inline-flex; align-items: center; margin: -10px -8px -10px auto; color: var(--ui-ink); font-variant-numeric: tabular-nums; }
+.gs-turn-photo { display: inline-grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: var(--radius-s); background: none; color: var(--ui-ink); cursor: pointer; }
+.gs-turn-photo:hover:not(:disabled) { background: var(--ui-hover); }
+.gs-turn-photo:disabled { color: var(--ui-muted); opacity: 0.45; cursor: default; }
+.gs-turn-photo:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -4px; }
+.gs-swipe { display: contents; }
 .gs-empty { margin: 4px 0; font-size: var(--font-s); color: var(--ui-muted); }
 .gs-quote blockquote { margin: 0; font-size: var(--font-m); line-height: var(--leading-read); overflow-wrap: anywhere; }
 .gs-insights { display: grid; gap: 2px; padding: 4px 12px; list-style: none; }

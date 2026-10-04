@@ -123,6 +123,8 @@ export type Script = {
   select: { overview: (s: WalkSlots) => string; spot: (s: ItemSlots) => string; outline: (s: ItemSlots) => string; street: (s: { street: string }) => string; next: string };
   check: {
     progress: (s: { n: number; total: number }) => string;
+    /** Which photo of a spot shows, when more than one does. */
+    photo: (s: { n: number; total: number }) => string;
     /** A flagged spot: what a model outlined there when the walk was recorded. */
     saw: (s: ItemSlots) => string;
     sawWhen: (s: ItemSlots) => string;
@@ -331,6 +333,7 @@ const en: Script = {
   },
   check: {
     progress: s => `${s.n} of ${s.total}`,
+    photo: s => `Photo ${s.n} of ${s.total}`,
     saw: s => `There might be ${s.what} here, ${s.where}.`,
     sawWhen: s => isOld(s.when) ? `There might be ${s.what} ${s.where}, but the photo’s from ${yearOf(s.when)}.` : `There might be ${s.what} here, ${s.where}.`,
     noPhotos: s => `There are no photos of this part, ${s.where}.`,
@@ -565,6 +568,7 @@ const es: Script = {
   },
   check: {
     progress: s => `${s.n} de ${s.total}`,
+    photo: s => `Foto ${s.n} de ${s.total}`,
     saw: s => `Puede que haya ${s.what} aquí, ${s.where}.`,
     sawWhen: s => isOld(s.when) ? `Puede que haya ${s.what} ${s.where}, pero la foto es de ${yearOf(s.when)}.` : `Puede que haya ${s.what} aquí, ${s.where}.`,
     noPhotos: s => `No hay fotos de esta parte, ${s.where}.`,

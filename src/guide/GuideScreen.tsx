@@ -18,7 +18,7 @@ import { addStreet, buildStreet, loadLines, mapPaths, saveLines, setCheck, wayAr
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { iconFor } from '../ui/icons';
+import { ChevronIcon, iconFor } from '../ui/icons';
 import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf } from '../photo';
 import { PhotoOr3D } from '../space3d';
@@ -678,7 +678,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
     above = <CheckCard key={item.key} data={data} progress={s.check.progress({ n: step.at + 1, total: items.length })} title={'spot' in item ? spotName(item.spot) : ''} affects={s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
-      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} narrow={narrow} lang={lang} pageOf={t.pageOf} />;
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} narrow={narrow} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} />;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -873,20 +873,30 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
  * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the walk
  * has 3D, she can turn to it and tap spots there as on the map. It lives outside the screen so a new line never rebuilds the photo.
  */
-function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, narrow, lang, pageOf }: {
+function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, narrow, lang, words }: {
   data: Destination; progress: string; title: string; affects: string; empty: string;
   /** The findings a photo shows, one page each; none for another kind near the walk, which shows viewId instead. */
   evidence: readonly { id: string; viewId?: string | null }[]; viewId: string | null;
   stretches: readonly number[]; markers: Marker[]; onMarker: (id: string) => void; onPick: (findingId: string) => void;
-  narrow: boolean; lang: 'en' | 'es'; pageOf: (n: number, total: number) => string }) {
+  narrow: boolean; lang: 'en' | 'es'; words: { photo: (s: { n: number; total: number }) => string; previous: string; next: string } }) {
   const [page, setPage] = useState(0);
-  const lead = evidence[Math.min(page, Math.max(0, evidence.length - 1))] ?? null;
+  const at = Math.min(page, Math.max(0, evidence.length - 1)), lead = evidence[at] ?? null;
+  const turn = (by: number) => setPage(Math.max(0, Math.min(evidence.length - 1, at + by)));
+  // A sideways swipe on the photo turns it on a phone; the tap that ends a swipe never picks an outline.
+  const swipe = useRef<{ x: number; y: number } | null>(null), swiped = useRef(false);
   const shown = photoOf(data, evidence.length ? lead?.viewId : viewId);
   return <section className="gs-card gs-photo" data-tone="dark" aria-label={progress}>
-    <p className="gs-card-meta"><span>{progress}</span>{title && <span>{title}</span>}{evidence.length > 1 && <span className="gs-pages">
-      {evidence.map((f, i) => <button key={f.id} type="button" className="gs-page" aria-pressed={i === Math.min(page, evidence.length - 1)} aria-label={pageOf(i + 1, evidence.length)} onClick={() => setPage(i)} />)}</span>}</p>
+    <p className="gs-card-meta"><span>{progress}</span>{title && <span>{title}</span>}{evidence.length > 1 && <span className="gs-pager">
+      <button type="button" className="gs-turn-photo" aria-label={words.previous} disabled={at === 0} onClick={() => turn(-1)}><ChevronIcon size={18} style={{ transform: 'scaleX(-1)' }} /></button>
+      <span aria-live="polite">{words.photo({ n: at + 1, total: evidence.length })}</span>
+      <button type="button" className="gs-turn-photo" aria-label={words.next} disabled={at === evidence.length - 1} onClick={() => turn(1)}><ChevronIcon size={18} /></button></span>}</p>
     {shown ? <PhotoOr3D data={data} stretches={stretches} markers={markers} onMarker={onMarker} height={narrow ? 220 : undefined}>
-      <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={onPick} lang={lang} height={narrow ? 220 : undefined} fit={narrow ? 'cover' : 'contain'} />
+      <div className="gs-swipe" onPointerDown={event => { swipe.current = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY }; }}
+        onPointerUp={event => { const from = swipe.current; swipe.current = null; if (!from || evidence.length < 2) return; const dx = event.clientX - from.x;
+          if (Math.abs(dx) > 48 && Math.abs(dx) > 2 * Math.abs(event.clientY - from.y)) { swiped.current = true; turn(dx < 0 ? 1 : -1); } }}
+        onClickCapture={event => { if (swiped.current) { swiped.current = false; event.stopPropagation(); event.preventDefault(); } }}>
+        <LabelledPhoto {...shown} selected={lead?.id ?? null} onSelect={onPick} lang={lang} height={narrow ? 220 : undefined} fit={narrow ? 'cover' : 'contain'} />
+      </div>
     </PhotoOr3D>
       : <p className="gs-empty">{empty}</p>}
     <p className="gs-affects">{affects}</p>
