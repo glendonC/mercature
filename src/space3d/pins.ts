@@ -69,11 +69,15 @@ export class Tweens {
       const was = this.now(id, now);
       const turns = !!was && Math.round(was.gone) !== look.gone;
       if (!instant && was && JSON.stringify(was) !== JSON.stringify(look)) this.from.set(id, { look: was, at: now, length: turns ? 400 : 160, both: turns });
+      // A spot new since the view opened, such as one she just added, drops in as a spot coming back into the view does.
+      else if (!instant && !was && this.opened && !look.gone) this.from.set(id, { look: { ...look, gone: 1 }, at: now, length: 400, both: true });
       else this.from.delete(id);
       this.shown.set(id, look);
     }
     for (const id of [...this.shown.keys()]) if (!looks.has(id)) { this.shown.delete(id); this.from.delete(id); }
+    this.opened = true;
   }
+  private opened = false;
   /** The look a pin shows at this moment. */
   now(id: string, now: number): Look | undefined {
     const to = this.shown.get(id), from = this.from.get(id);
