@@ -124,6 +124,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [stored, setStored] = useState(false);
   const [busy, setBusy] = useState<'download' | 'warm' | 'reading' | null>(null);
   const [downloadBytes, setDownloadBytes] = useState<number | null | undefined>(undefined);
+  /** Why a download she started gave no model: every byte arrived but this device did not keep them (private browsing, low storage), or it stopped. */
+  const [unkept, setUnkept] = useState<'not-kept' | 'stopped' | null>(null);
   const ticket = useRef(0);
   useEffect(() => {
     if (!place) return;
@@ -412,10 +414,13 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   }
   async function download() {
     if (!place || busy) return;
-    setBusy('download');
-    const next = await prepareModel(setModel);
+    setBusy('download'); setUnkept(null);
+    let arrived = false;
+    const next = await prepareModel(state => { if (state.status === 'downloading' && state.loadedBytes >= state.totalBytes) arrived = true; setModel(state); });
     setModel(next); setBusy(null);
     if (next.status === 'ready') { setStored(true); void prepareSite(place); }
+    // Offering the same download again would only repeat it: say why there is no model, and leave Try again as a choice.
+    else setUnkept(arrived ? 'not-kept' : 'stopped');
   }
   /** Her tap files the message on a spot; the model learns from it when the spot is one it can suggest. */
   function file(id: string, target: Target) {
@@ -648,9 +653,9 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       <Back onClick={home} label={w.back} />
       <p className="ri-row-meta">{isExample && <Tag tone="example">{w.example}</Tag>}{examples.find(example => example.id === shown.id)?.translated && <Tag tone="example">{w.translated}</Tag>}<Tag tone="solid">{language.toUpperCase()}</Tag>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : t.maybe(t.kinds[answer.kind])}</>}{earlier && <> · {w.readEarlier}</>}</p>
       <Quote className="ri-quote" lang={language === 'other' ? undefined : language}>{shown.text}</Quote>
-      {!message && !ai && (downloadBytes === null || model.status === 'failed') && <p className="ri-meta ri-no-model">{t.noModel}</p>}
+      {!message && !ai && (unkept || downloadBytes === null || model.status === 'failed') && <p className="ri-meta ri-no-model">{unkept === 'not-kept' ? t.notKept : unkept === 'stopped' ? t.stopped : t.noModel}</p>}
       {!message && !ai && <div className="ri-actions">
-        {(downloadBytes || model.status === 'downloading') ? <PrimaryAction icon={<DownloadIcon />} disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</PrimaryAction> : null}
+        {unkept ? <TextButton icon={<RotateIcon />} disabled={!!busy} onClick={() => void download()}>{t.tryAgain}</TextButton> : (downloadBytes || model.status === 'downloading') ? <PrimaryAction icon={<DownloadIcon />} disabled={!!busy} onClick={() => void download()}>{model.status === 'downloading' ? t.downloadProgress(Math.round(model.loadedBytes / 1e6), Math.round(model.totalBytes / 1e6)) : t.download(Math.max(1, Math.round(downloadBytes! / 1e6)))}</PrimaryAction> : null}
         <TextButton icon={<PointerIcon />} onClick={() => withoutAi(shown.id, shown.text, language)}>{t.withoutAi}</TextButton>
       </div>}
       {line && <Assistant working={busy === 'reading' || busy === 'download'} text={busy === 'download' ? t.downloading : line} />}
