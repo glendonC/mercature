@@ -133,7 +133,22 @@ export async function provision(onProgress: (loadedBytes: number, totalBytes: nu
     await store(cache, item, data);
     completed += item.file.bytes;
   }
-  await navigator.storage?.persist?.().catch(() => false);
+  keepStored();
+}
+
+/**
+ * Asks once, right after a download the operator started, that the browser keep the stored files
+ * under storage pressure, so a phone on a paid data bundle does not download them again. Not
+ * awaited, because Firefox asks the person first.
+ */
+function keepStored(): void {
+  try {
+    const storage = navigator.storage;
+    if (!storage?.persist || !storage.persisted) return;
+    storage.persisted().then(persisted => persisted || storage.persist()).catch(() => false);
+  } catch {
+    // Keeping the files is a request the browser may refuse; the model works either way.
+  }
 }
 
 const vectorUrl = (key: string) => new URL(`/language-vectors/${encodeURIComponent(key)}`, location.origin).href;
