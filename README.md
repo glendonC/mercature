@@ -35,7 +35,7 @@ routes they cannot easily check. Peru had 4,157,469 international visitors in 20
 workers are in units of 1 to 10 people.
 
 Mercature puts a tour operator's route on a phone, built from public street photos and
-OpenStreetMap. An on-screen guide goes to each spot that might give visitors trouble and shows the
+OpenStreetMap, the open map anyone can edit. An on-screen guide goes to each spot that might give visitors trouble and shows the
 street photo where a model outlined steps or a kerb, what OpenStreetMap records there and who it
 affects. The operator answers what is there now, keeps a way around if it works, adds what the photos
 missed and compares Before and Now.
@@ -46,7 +46,7 @@ fixed templates and the operator's answers, never generated. The model is multil
 three small trained classifiers; it runs in the browser and works offline after one download.
 
 Two real routes, in Cusco and Tbilisi, are built from 403 and 359 public street photos, with partial
-3D made from them, and search builds a route to any other place from OpenStreetMap alone. Every test
+3D point clouds made from them, and search builds a route to any other place from OpenStreetMap alone. Every test
 message is synthetic and none has been reviewed by a native speaker. Nothing has been measured on
 site, and Mercature claims no widths, slopes or reachability.
 
