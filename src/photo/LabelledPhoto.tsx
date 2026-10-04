@@ -5,7 +5,7 @@ import { fromRecord } from '../i18n/records';
 import { FitIcon } from '../ui/icons';
 import { markOf } from '../ui/kinds';
 import '../ui/ui.css';
-import { PHOTO_WORDS } from './copy';
+import { PHOTO_WORDS, reviewLine, type Review } from './copy';
 import { GROUND, KindIcon, kindOf } from './kinds';
 import { autoBudget, boundsOf, placeLabels, type Box, type Point } from './layout';
 import { drawOrder, labelOrder, type PhotoMark } from './marks';
@@ -36,6 +36,8 @@ export type LabelledPhotoProps = {
   /** How many labels show before the rest wait behind a '+N' chip. */
   labels?: 'auto' | number;
   credit?: 'below' | 'overlay';
+  /** Her own check of this spot, said under the photo: not checked yet (the default), checked on a date, or taken off her map. */
+  review?: Review;
   lang?: Lang;
   className?: string;
 };
@@ -94,7 +96,7 @@ const zoomAround = (z: Zoom, k: number, at: Point): Zoom => ({ k, x: at[0] - (at
 const licenceName = (licence: string) => /^CC-BY-SA-4\.0$/i.test(licence) ? 'CC BY-SA 4.0' : licence.replace(/-/g, ' ');
 
 /** A recorded photo with every model outline drawn on it and a label chip beside each, in its kind's hue. */
-export function LabelledPhoto({ view, photo, src, marks, selected = null, onSelect, mode = 'static', onTraced, pace = 220, duration, delay = 0, zoomable = true, frameSelected = true, fit = 'contain', height, labels = 'auto', credit = 'below', lang: chosen, className }: LabelledPhotoProps) {
+export function LabelledPhoto({ view, photo, src, marks, selected = null, onSelect, mode = 'static', onTraced, pace = 220, duration, delay = 0, zoomable = true, frameSelected = true, fit = 'contain', height, labels = 'auto', credit = 'below', review, lang: chosen, className }: LabelledPhotoProps) {
   const { lang: appLang } = useLanguage();
   const lang = chosen ?? appLang, words = PHOTO_WORDS[lang] ?? PHOTO_WORDS.en;
   const frame = useRef<HTMLDivElement>(null);
@@ -321,7 +323,7 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
     </div>
     <figcaption ref={creditRef} className="lp-credit">
       <span>{photo.creator}{date ? `, ${date}` : ''} · {/BY-SA-4\.0/i.test(photo.licence) ? <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{licenceName(photo.licence)}</a> : licenceName(photo.licence)} · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</span>
-      <span className="lp-note">{words.note}</span>
+      <span className="lp-note" data-review={review?.state ?? 'unchecked'}>{reviewLine(review, lang)}</span>
     </figcaption>
   </figure>;
 }
