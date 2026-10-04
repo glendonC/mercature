@@ -41,7 +41,7 @@ export const es = {
 
   // Home
   'home.label': 'Inicio de Mercature',
-  'home.onPhone': 'Lugares en este teléfono',
+  'home.onPhone': 'Lugares en este dispositivo',
   'home.flaggedSpots': '{n} puntos señalados',
   'home.oneFlaggedSpot': '1 punto señalado',
   'home.noFlaggedSpots': 'Ningún punto señalado',
