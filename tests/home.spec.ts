@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test('home offers the prepared walk itself, with no search box and nothing to upload', async ({page}) => {
+test('home offers the prepared walk itself, and nothing to upload', async ({page}) => {
   await page.goto('/');
   await expect(page.getByRole('heading', {name:'An editable spatial accessibility model'})).toBeVisible();
-  await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(page.getByRole('button', {name:/upload/i})).toHaveCount(0);
   // Only places with a prepared model are offered; the farm example is not one of them.
   await expect(page.getByRole('button', {name:/Noor/})).toHaveCount(0);
@@ -12,6 +11,38 @@ test('home offers the prepared walk itself, with no search box and nothing to up
   await expect(walk).toContainText('5 flagged spots');
   await walk.click();
   await expect(page.getByRole('region', {name:'Qorikancha', exact:true})).toBeVisible();
+});
+
+test('search filters prepared places as she types and asks OpenStreetMap once, only when asked', async ({page}) => {
+  const asked: string[] = [];
+  await page.route('https://nominatim.openstreetmap.org/**', route => {
+    asked.push(route.request().url());
+    return route.fulfill({ json: [{ osm_type: 'way', osm_id: 40301549, lat: '-12.0604622', lon: '-77.0370039', type: 'museum', name: 'Museo de Arte de Lima',
+      display_name: 'Museo de Arte de Lima, Avenida 9 de Diciembre, Lima, Peru', namedetails: { name: 'Museo de Arte de Lima' }, address: { city: 'Lima', country: 'Peru' } }] });
+  });
+  await page.goto('/');
+  await expect(page.getByText('Search asks OpenStreetMap online.')).toBeVisible();
+  const field = page.getByRole('textbox', {name:'Search a place'});
+  await field.fill('coricancha');
+  await expect(page.locator('.home-search-panel').getByRole('button', {name:/Qorikancha/})).toContainText('Street photos read');
+  expect(asked).toHaveLength(0);
+  await field.fill('Museo de Arte de Lima');
+  await field.press('Enter');
+  await expect(page.locator('.home-search-panel').getByRole('button', {name:/Museo de Arte de Lima/})).toContainText('Map only · Lima, Peru');
+  await field.press('Enter');
+  expect(asked).toHaveLength(1);
+  await page.locator('.home-search-panel').getByRole('button', {name:/Museo de Arte de Lima/}).click();
+  await expect(page.locator('.home-search-panel')).toContainText('Map only. No street photos read yet.');
+  await expect(page.getByRole('textbox', {name:'Where does the walk start?'})).toBeFocused();
+});
+
+test('search offline says so in one plain line', async ({page, context}) => {
+  await page.goto('/');
+  await context.setOffline(true);
+  const field = page.getByRole('textbox', {name:'Search a place'});
+  await field.fill('Chinchero');
+  await field.press('Enter');
+  await expect(page.locator('.home-search-panel [role=alert]')).toHaveText('You are offline. Places on this device still open.');
 });
 
 for (const size of [{width:1280,height:720},{width:390,height:844}]) {
