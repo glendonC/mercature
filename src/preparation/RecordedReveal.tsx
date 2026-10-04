@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Suspense, memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
@@ -19,10 +19,14 @@ import { TextButton, markOf } from '../ui';
 import { SCRIPT, type WalkSlots } from '../guide/script';
 import { ROUTE_PLACES } from '../site/registry';
 import { SkipIcon } from '../ui/icons';
+import { Space3D, useSpace } from '../space3d';
+import type { Space } from '../space3d/space';
 import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
 const BUILD_FROM = 900, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
+/** The 3D areas built from the photos rise along the walk and settle onto the map, where the place publishes them; SPACE_PACE scales the 3D view's own 3.9 s. */
+const SPACE_PACE = 0.85, SPACE_FOR = 3900 * SPACE_PACE + 150;
 /** A long walk's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
 const COUNT_MAX = 1100;
 /** The guide's greeting holds this long, while the place's name and its map come in and the first photos land. */
@@ -46,9 +50,10 @@ type StepId = 'photos' | 'areas' | 'walk' | 'stretches' | 'reading' | 'marks' | 
 type Step = { id: StepId; at: number; until: number };
 
 /** The build in order: photos, retained 3D areas where this device has them, the walk, its stretches, a few photos read, the findings, then the possible barriers. A step with nothing to show is left out. */
-function schedule(data: Destination, marks: readonly Mark[], reads: number): Step[] {
+function schedule(data: Destination, marks: readonly Mark[], reads: number, space: Space | null | undefined): Step[] {
   const order: [StepId, number][] = [['photos', PHOTOS_FOR]];
-  if (data.pieces.length) order.push(['areas', data.pieces.length * POINT_GAP + 300]);
+  if (space) order.push(['areas', SPACE_FOR]);
+  else if (data.pieces.length) order.push(['areas', data.pieces.length * POINT_GAP + 300]);
   order.push(['walk', WALK_FOR]);
   if (data.stretches.length) order.push(['stretches', Math.min(COUNT_MAX, (data.stretches.length + 1) * TICK_GAP + 200)]);
   if (reads) order.push(['reading', (reads - 1) * READ_GAP + READ_FOR]);
@@ -134,6 +139,8 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
 
+  // The published 3D, known before the replay starts so its schedule never shifts.
+  const space = useSpace(data);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
@@ -162,14 +169,14 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   }, [cards, id]);
 
   useEffect(() => {
-    if (!data || phase !== 'play') return;
+    if (!data || space === undefined || phase !== 'play') return;
     const begin = performance.now();
     setBegan(begin);
     const timer = window.setInterval(() => setElapsed(performance.now() - begin), 80);
     return () => clearInterval(timer);
-  }, [data, phase]);
+  }, [data, space, phase]);
 
-  const steps = useMemo(() => data ? schedule(data, marks, cards.length) : [], [data, marks, cards.length]);
+  const steps = useMemo(() => data ? schedule(data, marks, cards.length, space) : [], [data, marks, cards.length, space]);
   const stepOf = (id: StepId) => steps.find(item => item.id === id);
   /** The build layer's beats, on its clock. */
   const beats = useMemo<Beats>(() => {
@@ -178,7 +185,9 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   }, [steps, began]);
   const startPoints = !!data && (quiet || phase !== 'play' || elapsed >= (stepOf('areas')?.at ?? 0));
   useEffect(() => {
-    if (!data || !startPoints) return;
+    if (!data || !startPoints || space === undefined) return;
+    // The published 3D plays as a stage over the map and says when it has settled; a quiet replay leaves it out.
+    if (space) { if (quiet) setPointsDone(true); return; }
     if (!data.pieces.length) return setPointsDone(true);
     const controller = new AbortController(), urls: string[] = [];
     const canvas = document.createElement('canvas');
@@ -205,7 +214,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
       setPointsDone(true);
     })().catch(() => { if (!controller.signal.aborted) setPointsDone(true); });
     return () => { controller.abort(); setTimeout(() => urls.forEach(url => URL.revokeObjectURL(url)), 2000); };
-  }, [data, startPoints, id]);
+  }, [data, startPoints, id, space, quiet]);
 
   const total = ordered.length, photos = stepOf('photos');
   const shown = phase !== 'play' || quiet || !photos ? total : leaned && beats.photos ? photosShown(total, beats.photos, began + elapsed) : Math.max(0, Math.min(total, Math.round((elapsed - photos.at) / (photos.until - photos.at) * total)));
@@ -325,7 +334,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
   const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : id === 'tbilisi-narikala' ? t('reveal.route.narikala') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
   const spots = walk ? walk.spots.filter(spot => spot.kind === 'flagged').length : data ? data.stretches.filter(stretch => stretch.status === 'barrier').length : 0;
-  const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk');
+  const barriers = marks.filter(mark => mark.barrier).length, walkStep = stepOf('walk'), areasStep = stepOf('areas');
   // What the guide says: a greeting while the place comes in, then one line per stage; the counts stay out of its speech.
   const beat = !data ? null : quiet || phase !== 'play' ? 'marks' : !step || (step.id === 'photos' && elapsed < HELLO_FOR) ? 'hello' : LINE_OF[step.id];
   const slots: WalkSlots | null = data && { place: name, start: data.start?.name ?? '', target: endOf(data, lang), metres: data.lengthMetres, photos: data.photos.length, marks: marks.length, barriers, spots, messages: 0, osm: 0 };
@@ -359,6 +368,9 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
         </div>}
+        {space && !quiet && phase === 'play' && areasStep && <div className="reveal-space" data-on={(elapsed >= areasStep.at - 120 && elapsed < areasStep.until - 260) || undefined} aria-hidden="true">
+          <Suspense fallback={null}><Space3D data={data} intro settle still tone="light" pace={SPACE_PACE} play={elapsed >= areasStep.at} className="space3d-stage" onIntroEnd={() => setPointsDone(true)} onUnavailable={() => setPointsDone(true)}/></Suspense>
+        </div>}
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{fromRecord(DESTINATIONS[id].place, lang)}</p>
@@ -373,7 +385,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
           <figcaption><strong className="reveal-chip" data-barrier={card.findings.some(f => f.barrier) || undefined}>{kindOf(data, card.findings.find(f => f.barrier) ?? card.findings[0], lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
         {phase === 'play' && line && <p className="reveal-say" key={beat}><span>{line}</span></p>}
-        <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
+        <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}{space && ' · 3D: VGGT'}</span><span className="reveal-credit-short">{t('reveal.creditShort')}{space && ' · 3D: VGGT'}</span><TextButton icon={<SkipIcon/>} onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</TextButton></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
     </div>}

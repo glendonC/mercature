@@ -155,3 +155,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .recorded-preview-card { animation: none; } }
 @keyframes reveal-show { from { opacity: 0; } to { opacity: 1; } }
+
+/* The 3D areas rise over the map and settle onto it, then fade, leaving the map. */
+.reveal-space { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 320ms var(--ease-out); background: color-mix(in srgb, var(--paper) 80%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.reveal-space[data-on] { opacity: 1; }
