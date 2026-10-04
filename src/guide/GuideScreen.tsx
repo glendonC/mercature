@@ -9,7 +9,7 @@ import type { RoutePlace } from '../site/route';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import Menu, { type MenuPlace } from '../home/Menu';
-import { COPY, NOTE, REPLY, SUBJECTS, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
+import { ANSWER_NOTE, AROUND_NOTE, COPY, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
 import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
@@ -65,6 +65,15 @@ const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', 
 const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind]);
 /** What a model's issue type suggests she would call it; she can change it before it goes on her map. */
 const kindOfCategory = (category: string | null): EditKind => category === 'steps-or-slope' ? 'steps' : category === 'path-blocked' ? 'narrow' : 'other';
+/** The route-note line for her answer about one thing: a line, null when nothing goes in the note, undefined when the table has none. */
+function answerLine(question: string, answer: string, access: AccessKind, at: Where, m: number, language: VisitorLang): string | null | undefined {
+  const table = (ANSWER_NOTE as Record<string, Record<string, Record<VisitorLang, (w: Where, m: number) => string> | null> | undefined>)[question];
+  if (table && answer in table) { const line = table[answer]; return line ? line[language](at, m) : null; }
+  if (question === 'through' && THING[access] && (answer === 'yes' || answer === 'no' || answer === 'unknown')) return THROUGH_NOTE[answer][language](access, at, m);
+  if ((question === 'temporary' || question === 'helpful') && THING[access]) return answer === 'still' ? STILL_NOTE[language](access, at, m) : answer === 'gone' ? null : undefined;
+  return undefined;
+}
+
 /** Whether the model can read a message at all: it knows Latin and Hangul letters only. */
 const readable = (text: string) => /[\p{Script=Latin}\p{Script=Hangul}]/u.test(text);
 const replyLanguage = (language: string): VisitorLang => language === 'es' || language === 'ko' ? language : language === 'qu' ? 'es' : 'en';
@@ -466,7 +475,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (answer?.status === 'ready' && answer.kind === 'praise') return REPLY.praise[language]();
     if (answer?.status === 'ready' && answer.kind === 'question') return REPLY.question[language]();
     const target = message.spot ? targetOf(message.spot) : null;
-    if (!target || target.kind === 'landmark' || target.kind === 'stretch') return REPLY.open[language]();
+    if (!target) return answer?.kind === 'problem' || !answer ? REPLY_MORE.askWhere[language] : REPLY.open[language]();
+    if (target.kind === 'landmark' || target.kind === 'stretch') return REPLY.open[language]();
     const stretches = stretchesOf(target), fix = isFixed(edits, stretches);
     const spot = target.kind === 'spot' ? spotById(target.id) : null;
     if (spot?.kind === 'no-photos') return REPLY.open[language]();
@@ -474,16 +484,26 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const at = spot ? whereOf(spot) : nearOf(stretches[0]), from = spot ? spot.from : data.stretches[stretches[0]].from;
     if (fix) return `${REPLY.check[language]().split('.')[0]}. ${fixedLine(spot ? kindOfSubject(subject) : added(target.id)!.kind, at, from, fix.at, language)}`;
     if (removed(stretches)) return REPLY[data.photos.length ? 'not-barrier' : 'not-barrier-mapped'][language]();
-    return REPLY.barrier[language]((spot ? SUBJECTS[subject] : KIND_WORDS[added(target.id)?.kind ?? 'other'])[language], at);
+    const text = REPLY.barrier[language]((spot ? SUBJECTS[subject] : KIND_WORDS[added(target.id)?.kind ?? 'other'])[language], at);
+    const clause = spot ? (REPLY_MORE.answer as Record<string, Record<VisitorLang, string>>)[answerOf(edits, spot.id)?.answer ?? ''] : undefined;
+    return clause ? text.replace(NOTE.steps[language], clause[language]) : text;
   }
   function noteText(language: VisitorLang) {
     const lines: string[] = [];
     let steps = false;
-    for (const spot of walk.spots.filter(item => item.kind === 'flagged')) {
-      const fix = isFixed(edits, spot.stretches), subject = subjectOf(spot);
-      if (fix) lines.push(fixedLine(kindOfSubject(subject), whereOf(spot), spot.from, fix.at, language));
-      else if (!removed(spot.stretches)) { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, whereOf(spot), Math.round(spot.from))); steps ||= subject === 'steps'; }
+    for (const spot of walk.spots) {
+      const fix = isFixed(edits, spot.stretches), subject = subjectOf(spot), said = answerOf(edits, spot.id), at = whereOf(spot), m = Math.round(spot.from);
+      // Her answer says what is there now; a spot she has not answered keeps what the photos or OpenStreetMap show.
+      const line = said ? answerLine(said.question, said.answer, accessOfSpot(spot), at, m, language) : undefined;
+      if (fix) lines.push(fixedLine(kindOfSubject(subject), at, spot.from, fix.at, language));
+      else if (removed(spot.stretches) || line === null) { /* off her map, or nothing for the note */ }
+      else if (line) lines.push(line);
+      else if (spot.kind === 'flagged') { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, at, m)); steps ||= subject === 'steps'; }
       const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
+    }
+    if (around?.status === 'found' && ways.check?.works) {
+      const avoided = walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index))));
+      if (avoided) lines.push(AROUND_NOTE[language](whereOf(avoided), Math.max(0, Math.round(((around.lengthMetres ?? around.walkMetres) - around.walkMetres) / 10) * 10)));
     }
     for (const spot of edits.added) {
       const fix = isFixed(edits, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
