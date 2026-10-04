@@ -1,0 +1,16 @@
+.pd { min-height: 100vh; padding: 0 16px 48px; background: var(--ground); color: var(--ink); }
+.pd-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 -16px 16px; padding: 10px 16px; background: color-mix(in srgb, var(--ground) 88%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.pd-brand { font-size: var(--font-m); font-weight: 500; letter-spacing: var(--tracking-title); }
+.pd-pager { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: auto; font-size: var(--font-s); font-variant-numeric: tabular-nums; }
+.pd-grid { display: grid; grid-template-columns: 380px 380px minmax(0, 1fr); grid-template-areas: "guide phone trace" "wide wide wide"; gap: 16px; align-items: start; }
+.pd-grid > .ui-panel { position: relative; display: grid; gap: 10px; padding: 14px; }
+.pd-guide { grid-area: guide; }
+.pd-phone { grid-area: phone; }
+.pd-trace { grid-area: trace; }
+.pd-wide { grid-area: wide; max-width: 1040px; }
+.pd-steps { display: flex; flex-wrap: wrap; gap: 4px; }
+@media (max-width: 1240px) { .pd-grid { grid-template-columns: 380px minmax(0, 1fr); grid-template-areas: "guide phone" "trace trace" "wide wide"; } }
+@media (max-width: 800px) {
+  .pd-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "phone" "guide" "trace" "wide"; }
+  .pd-grid > .pd-phone { margin: 0 -16px; padding: 14px 16px; border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; }
+}
