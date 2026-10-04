@@ -235,6 +235,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   }, []);
   const entering = useRef<string | null>(null);
   function hoverMap(id: string | null) {
+    if (restoring.current) return;
     entering.current = id;
     if (!id || document.activeElement?.matches('.route-marker:focus-visible')) { hoverFrom('map', id); return; }
     // The move that brings the pointer onto a marker is dispatched after the marker hears it enter, so decide on the next frame.
@@ -283,15 +284,19 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (!editing) return;
     sheet.current?.querySelector('section[class*=edit]')?.scrollIntoView({ block: 'nearest', behavior: quiet() ? 'auto' : 'smooth' });
   }, [editing]);
-  // Focus follows the panel: into a pane when it opens, back to the row that opened it on return.
+  // Focus follows the panel: into a pane when it opens, back to the row or the marker that opened it on return.
   const lastRow = useRef<string | null>(null);
+  const opener = useRef<string | null>(null), restoring = useRef(false);
   useEffect(() => {
     const panel = sheet.current; if (!panel) return;
     if (pane.kind !== 'inbox') { panel.querySelector<HTMLElement>('.ri-back')?.focus({ preventScroll: true }); return; }
     const row = lastRow.current && panel.querySelector<HTMLElement>(`[data-row="${CSS.escape(lastRow.current)}"]`);
-    if (row) row.focus({ preventScroll: true });
-    lastRow.current = null;
-  }, [pane.kind]);
+    const label = !row && opener.current ? markers.find(marker => marker.id === opener.current)?.label : null;
+    const marker = label ? root.current?.querySelector<HTMLElement>(`.route-marker[aria-label="${CSS.escape(label)}"]`) : null;
+    // Back on a marker, focus does not preview its spot again: she has just left it.
+    if (row) row.focus({ preventScroll: true }); else if (marker) { restoring.current = true; marker.focus({ preventScroll: true }); restoring.current = false; }
+    lastRow.current = null; opener.current = null;
+  }, [pane.kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Messages: examples first read here, then kept like any message she adds.
   const examples = EXAMPLES[data.id] ?? [];
@@ -679,7 +684,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     </Panel>
     <div className="ri-map">
       <RouteMap ref={map} settled={settled} data={data} photoView={shownView} walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
-        onMarker={id => { clearTimeout(leave.current); setHover(null); still.current = performance.now() + 650; const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap}
+        onMarker={id => { clearTimeout(leave.current); setHover(null); still.current = performance.now() + 650; opener.current = id; const target = markerTarget(id); if (target) tapTarget(target); }} onMap={tapMap}
         onHover={hoverMap} hovered={hover?.id ?? null} onPhoto={pane.kind === 'message' ? undefined : tapPhoto} words={t.map} clearBottom={narrow ? sheetHeight + 12 : 24} ariaLabel={data.title} />
     </div>
   </main>;

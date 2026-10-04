@@ -69,8 +69,8 @@ export type Where = { en: string; es: string; ko: string };
 /** What the photos show at a flagged spot. "No ramp" is what is in view, never a fact about the place. */
 export const SUBJECTS: Record<Subject, Where> = {
   steps: { en: 'steps', es: 'escalones', ko: '계단' },
-  kerb: { en: 'a kerb with no ramp in view', es: 'un bordillo sin rampa a la vista', ko: '경사로가 보이지 않는 연석' },
-  path: { en: 'the path', es: 'el camino', ko: '길' },
+  kerb: { en: 'a kerb with no ramp in view', es: 'un bordillo sin rampa visible', ko: '경사로가 보이지 않는 연석' },
+  path: { en: 'something on the path', es: 'algo en el camino', ko: '길 위의 장애물' },
 };
 export const NOTE = {
   title: { en: (from: string, to: string, m: number) => `${from} to ${to}, about ${m} m on foot.`, es: (from: string, to: string, m: number) => `Desde ${from} hasta ${to}, unos ${m} m a pie.`, ko: (from: string, to: string, m: number) => `${from}에서 ${to}까지 걸어서 약 ${m}m입니다.` },
@@ -98,7 +98,7 @@ export const REPLY = {
   /** thing: what the photos show (SUBJECTS) at a flagged spot, or her own words (KIND_WORDS) at a spot she added. */
   barrier: {
     en: (thing: string, w: Where) => `Thank you. We've added a note about ${thing} ${w.en} so future visitors know before they go. Ask us if steps are hard for you.`,
-    es: (thing: string, w: Where) => `Gracias. Añadimos una nota sobre ${thing} ${w.es} para que los próximos visitantes lo sepan antes de ir. Pregúntenos si los escalones le resultan difíciles.`,
+    es: (thing: string, w: Where) => `Gracias. Agregamos una nota sobre ${thing} ${w.es} para que los próximos visitantes lo sepan antes de ir. Pregúntenos si los escalones le resultan difíciles.`,
     ko: (thing: string, w: Where) => `감사합니다. 다음 방문객이 미리 알 수 있도록 ${w.ko} 근처 ${thing}에 대한 안내를 추가했습니다. 계단이 힘드시면 미리 문의해 주세요.`,
   },
   'not-barrier': {
