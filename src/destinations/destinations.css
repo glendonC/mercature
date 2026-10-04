@@ -17,7 +17,7 @@
 .map-target circle { fill: var(--ink); }
 .map-scale path { fill: none; stroke: var(--muted); stroke-width: 1.5; }
 .map-scale text, .map-north { font-size: 12px; fill: var(--muted); }
-.destination-map-credit { color: var(--muted); background: rgb(236 238 239 / .9); font-size: 11px; }
+.destination-map-credit { color: var(--muted); background: rgb(236 238 239 / .9); font-size: var(--font-xs); }
 /* Shared design language: ink selection with a white halo, clay for possible barriers, one dialog style, 44 px targets. */
 .destination-scene { background: #eceeef; }
 .destination-outline { fill: rgb(166 80 28 / .16); stroke: var(--blocked); stroke-width: 3; }

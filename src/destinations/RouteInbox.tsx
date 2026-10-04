@@ -229,6 +229,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const [noteLang, setNoteLang] = useState<VisitorLang>('en');
   const [said, setSaid] = useState('');
   const [clearing, setClearing] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(0);
   function fly(target: Target | null) {
     const at = target && pointOf(target);
@@ -287,15 +288,17 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   function show(message: LoggedMessage) {
     setPending(null);
     const answer = message.answer;
-    setLine(!answer ? message.spot ? w.line.linked : w.line.manual : lineFor(answer, !!message.spot));
+    setLine(!answer ? message.spot ? w.line.linked : w.line.manual : lineFor(answer, message.spot));
     const target = message.spot ? targetOf(message.spot) : null;
     if (target) fly(target); else if (answer?.candidates.length) frameAll(answer.candidates);
   }
-  function lineFor(answer: ModelAnswer, filed: boolean) {
+  function lineFor(answer: ModelAnswer, spot: string | null) {
+    // Placed by her tap, anywhere but where a sure answer filed itself: the line says it is placed.
+    if (spot && !(answer.status === 'ready' && spot === answer.candidates[0])) return w.line.linked;
     if (answer.remembered) return w.line.remembered;
     if (answer.status === 'unavailable') return w.line.manual;
     if (!answer.candidates.length) return answer.kind ? w.line.noSpot : w.line.none;
-    if (answer.status === 'ready' && filed) return w.line.ready;
+    if (answer.status === 'ready' && spot) return w.line.ready;
     return w.line.unsure;
   }
   async function run(id: string, text: string, language: string) {
@@ -315,7 +318,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const spot = answer.status === 'ready' && candidates[0] ? candidates[0] : null;
     commit(review => review.messages.some(message => message.id === id) ? updateMessage(review, id, { answer, spot }) : logMessage(review, { text, language, answer, spot }, id));
     setPending(null); setReadNow(id);
-    setLine(lineFor(answer, !!spot));
+    setLine(lineFor(answer, spot));
     // The camera follows the answer only while its message is still open.
     if (paneNow.current.kind !== 'message' || paneNow.current.id !== id) return;
     if (spot) fly(targetOf(spot)); else frameAll(candidates);
@@ -502,6 +505,8 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
       {note && <div className="ri-note">
         <span>{w.note}</span>
         <Segmented label={w.note} value={noteLang} onChange={setNoteLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.id.toUpperCase(), lang: item.id }))} />
+        {/* Two lines to read before copying; a tap shows the whole note. */}
+        <button type="button" className="ui-callout ri-note-text" lang={noteLang} aria-expanded={noteOpen} onClick={() => setNoteOpen(open => !open)}><span>{note}</span></button>
         <TextButton icon={<CopyIcon />} onClick={() => copy(note)}>{w.copy}</TextButton>
       </div>}
     </Section>
