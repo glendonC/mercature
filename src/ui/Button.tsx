@@ -34,7 +34,7 @@ export const PrimaryAction = forwardRef<HTMLButtonElement, Action & { shortcut?:
   return <button ref={own} type={type} className={cx('ui-primary', className)} disabled={disabled} aria-keyshortcuts={shortcut === 'mod+enter' ? (mac() ? 'Meta+Enter' : 'Control+Enter') : undefined} {...rest}>
     <span className="ui-button-icon">{icon}</span>
     <span className="ui-button-label">{children}</span>
-    {shortcut && <Kbd>{shortcutLabel(shortcut)}</Kbd>}
+    {shortcut && <Kbd decorative>{shortcutLabel(shortcut)}</Kbd>}
   </button>;
 });
 

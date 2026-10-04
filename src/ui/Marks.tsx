@@ -17,9 +17,9 @@ export function Callout({ children, lang, className }: { children: ReactNode; la
   return <p className={cx('ui-callout', className)} lang={lang}>{children}</p>;
 }
 
-/** A key that does the same thing, hidden on touch screens. */
-export function Kbd({ children }: { children: ReactNode }) {
-  return <kbd className="ui-kbd">{children}</kbd>;
+/** A key that does the same thing, hidden on touch screens. 'decorative' keeps it out of a button's name, where aria-keyshortcuts says it instead. */
+export function Kbd({ children, decorative }: { children: ReactNode; decorative?: boolean }) {
+  return <kbd className="ui-kbd" aria-hidden={decorative || undefined}>{children}</kbd>;
 }
 
 /**
