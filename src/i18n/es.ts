@@ -49,9 +49,9 @@ export const es = {
   'home.closeMenu': 'Cerrar',
   'home.sources': 'Fuentes',
   'home.sourceMap': 'Datos del mapa: colaboradores de OpenStreetMap, ODbL.',
-  'home.sourcePhotos': 'Fotos de calle: colaboradores de Mapillary, CC BY-SA 4.0. Las vistas recortadas son adaptaciones y mantienen esa licencia.',
+  'home.sourcePhotos': 'Fotos de la calle: colaboradores de Mapillary, CC BY-SA 4.0. Las vistas recortadas son adaptaciones y mantienen esa licencia.',
   'home.sourceModel': 'Comprensión de mensajes: multilingual-e5-small de Microsoft, MIT, descargado una sola vez en este dispositivo.',
-  'home.creditsNote': 'Portadas de destinos de Wikimedia Commons. Reducidas a WebP y recortadas para mostrarlas; aparte de la evidencia de origen de cada ejemplo.',
+  'home.creditsNote': 'Portadas de Wikimedia Commons, reducidas a WebP y recortadas para mostrarlas. No son parte de la evidencia de cada lugar.',
   'home.explore': 'Explorar {name} · {area}',
   'home.onDevice': 'En este dispositivo',
   'home.savedPlan': 'Plan de mejora',
@@ -91,8 +91,8 @@ export const es = {
   'reveal.route.narikala': 'de la estación superior del teleférico a la puerta de la fortaleza',
   'reveal.opening': 'Abriendo {name}',
   'reveal.areas': '{shown} de {total} áreas en 3D',
-  'reveal.build.photos': '{count} fotos de calle de este recorrido',
-  'reveal.build.photo': '{count} foto de calle de este recorrido',
+  'reveal.build.photos': '{count} fotos de la calle en este recorrido',
+  'reveal.build.photo': '{count} foto de la calle en este recorrido',
   'reveal.build.walk': '{length}, {route}',
   'reveal.build.stretches': '{count} tramos de {length}',
   'reveal.build.marks': '{count} marcas en el recorrido',
@@ -100,7 +100,7 @@ export const es = {
   'reveal.build.barriers': '{count} podrían ser barreras',
   'reveal.build.barrier': '{count} podría ser una barrera',
   'reveal.build.barriersAt': '{count} podrían ser barreras, en {spots} puntos',
-  'reveal.credit': 'Fotos de calle: colaboradores de Mapillary, CC BY-SA 4.0 · Mapa © OpenStreetMap',
+  'reveal.credit': 'Fotos de la calle: colaboradores de Mapillary, CC BY-SA 4.0 · Mapa © OpenStreetMap',
   'reveal.creditShort': 'Mapillary, CC BY-SA 4.0 · © OpenStreetMap',
 
   // Text in the published place records
@@ -272,7 +272,7 @@ export const es = {
   'edit.yourNote': 'Tu nota',
   'edit.save': 'Guardar',
   'edit.notSaved': 'Este dispositivo no guardó el último cambio.',
-  'edit.unreadable': 'No se pudo leer lo que registraste en este dispositivo. Se apartó.',
+  'edit.unreadable': 'No se pudo leer lo que guardaste en este dispositivo. Quedó guardado aparte.',
 
   // Geographic map
   'map.label': 'Mapa geográfico de origen',
