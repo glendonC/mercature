@@ -6,6 +6,7 @@ import './destinations.css';
 import './map.css';
 import RouteFx from '../fx/RouteFx';
 import { riseWave } from '../fx/rise';
+import { useChanges } from '../fx/changes';
 import type { Point, Walk } from './walk';
 import { AddedIcon, FixedIcon, KerbIcon, LookIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
 
@@ -416,6 +417,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     return () => element.removeEventListener('wheel', wheel);
   }, [clamp, place, still, tiltOf]);
 
+  /** Markers one of her edits has just changed, so the marker and the motion layer can show what the edit did. */
+  const changes = useChanges(markers);
+
   // Card placement beside its marker, flipped or nudged to stay inside the canvas.
   const cardBox = useRef<HTMLDivElement>(null);
   const [cardSize, setCardSize] = useState({ width: 340, height: 420 });
@@ -513,7 +517,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} glowing={glowing} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
       <Overlay walk={walk} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
     </GeographicMap>
-    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} landed={landed} replay={replay} markers={markers} focus={lifted ?? markers.find(marker => marker.rank === 1)?.id ?? null} hover={lifted} photoView={photoView} />}
+    {!still && <RouteFx data={data} walk={walk} lens={view} tilt={tilt} landed={landed} replay={replay} markers={markers} focus={lifted ?? markers.find(marker => marker.rank === 1)?.id ?? null} hover={lifted} photoView={photoView} changes={changes} />}
     <div className="route-labels" aria-hidden="true">
       {visibleLabels.map(({ label, at }) => <span key={label.name} style={{ left: at[0], top: at[1] }}>{label.name}</span>)}
     </div>
@@ -527,7 +531,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], opacity: faded(marker, at) } };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
             onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
