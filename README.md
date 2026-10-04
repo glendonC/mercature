@@ -7,6 +7,14 @@
 
 <h1 align="center">Mercature</h1>
 
+<p align="center"><strong>An editable spatial accessibility model</strong></p>
+
+<p align="center">
+  An entry to the World Bank x Hack-Nation Small AI for Development challenge, tourism track.<br>
+  A static Vite, React and TypeScript web app. The model runs on the device, in the browser.<br>
+  Live app: <a href="https://glendonc.github.io/mercature/"><strong>glendonc.github.io/mercature</strong></a>
+</p>
+
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="docs/product.md">Product</a> ·
@@ -20,68 +28,168 @@
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.12%2B-3c4043" alt="Node.js 22.12 or newer"></a>
 </p>
 
-Peru welcomed over four million international visitors in 2025, and 7 in 10 of its workers are
-in businesses of ten people or fewer. Small tour operators live on what visitors tell them, and much
-of it arrives in languages they cannot read, about places they cannot easily check.
+<p align="center">
+  <img src="docs/assets/hero.gif" width="840" alt="The guide on the Calle Loreto steps in Cusco: a street photo with the steps outlined and OpenStreetMap's record of 5 steps with no handrail and no ramp, her answer, the way around OpenStreetMap suggests, then the route Before and Now">
+  <br>
+  <sub>The guide on the Calle Loreto steps, then Before / Now. Street photo by jaderbavaresco on Mapillary, CC BY-SA 4.0.</sub>
+</p>
 
-Mercature keeps a tour operator's route on her phone, built from public street photos and
-OpenStreetMap, and an on-screen guide takes her through it. At each spot that might give visitors
-trouble, she sees the street photo where a model outlined steps or a kerb and what OpenStreetMap
-records there, and answers what is there now. Where she has no way around, the guide offers the one
-OpenStreetMap's router finds, and she decides whether to keep it. Then her visitors' messages: a
-small multilingual model on the phone says which spot each one means, or Not sure, and the app fills
-a reply in English, Spanish or Korean from fixed templates and her answers. She adds what the photos
-missed, compares Before and Now, and copies a route note for the next group. Every change needs her
-tap, and after one download it works offline.
+## The problem
 
-Built for the World Bank Small AI for Development challenge, tourism track.
+A small tour operator like Noor, the persona in the brief, gets questions and complaints about
+access from visitors who write in languages she cannot read. She has no record of what on her
+route might stop a visitor, such as steps with no handrail, so she cannot answer with confidence or
+warn the next group.
 
-<sub>Figures: 4,157,469 international visitors to Peru in 2025, preliminary (MINCETUR, <a href="https://www.gob.pe/institucion/mincetur/informes-publicaciones/7619520-reportes-de-turismo-reporte-mensual-de-turismo-diciembre-2025">Reporte Mensual de Turismo, diciembre 2025</a>, 14 January 2026); 71.7% of Peru's employed people work in units of 1 to 10 people, 88.6% of them informally (INEI, <a href="https://m.inei.gob.pe/media/MenuRecursivo/boletines/01-informe-tecnico-empleo-nacional.pdf">mercado laboral, enero a diciembre 2025</a>, February 2026).</sub>
+<sub>Peru had 4,157,469 international visitors in 2025, preliminary (MINCETUR, <a href="https://www.gob.pe/institucion/mincetur/informes-publicaciones/7619520-reportes-de-turismo-reporte-mensual-de-turismo-diciembre-2025">Reporte Mensual de Turismo, diciembre 2025</a>), and 71.7% of its employed people work in units of 1 to 10 people, 88.6% of them informally (INEI, <a href="https://m.inei.gob.pe/media/MenuRecursivo/boletines/01-informe-tecnico-empleo-nacional.pdf">mercado laboral, enero a diciembre 2025</a>). More figures, and what they do not cover, are in <a href="docs/evidence.md">evidence</a>.</sub>
 
-## The Qorikancha route
+## What it does
 
-A real tour route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
-stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
-segmentation model scanned 116 views of those photos once, on a GPU when the route was prepared, and made 480
-marks above its threshold. It left out 1 pothole mark, because the photos show a manhole or drain cover there; the package keeps 287 of the other 479 (footway, cobblestones, kerbs, road, steps, crossings, broken pavement), the
-218 near the route and 69 more on the 27 published photos. Separately, the route's build has 52 findings
-of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as
-possible barriers, at 5 spots; none has been checked by a person.
+Mercature keeps a real tour route on her phone, in Cusco from the Plaza de Armas to the Qorikancha
+ticket booth, built from public street photos and OpenStreetMap.
 
-OpenStreetMap adds 44 records along the route, fetched once and never checked: the 5 steps on Calle
-Loreto with no handrail and no ramp, stone setts or cobblestones on 58 of the 60 stretches, lighting
-on 41, 18 benches, 2 crossings, and one toilet tagged with limited wheelchair access. Widths and
-inclines are left out on purpose. OpenStreetMap's router suggests a way around those steps, 679 m
-instead of 594; nobody has checked it.
-A stretch with nothing flagged means only that nothing was flagged in its photos: Mercature claims
-no widths, heights, slopes or reachability.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <strong>1. The guide checks the route with her, spot by spot.</strong><br>
+      At each spot that might stop a visitor, it shows the clearest street photo with the outline a
+      segmentation model drew, what OpenStreetMap records there and who it affects. She answers
+      what is there now. If she has no way around a set of steps, the guide shows the one
+      OpenStreetMap's router suggests, and she decides whether it works.
+    </td>
+    <td width="50%" valign="top">
+      <strong>2. She edits it.</strong><br>
+      Edit adds what the photos missed or changes a spot, and lists her changes with Undo. Before /
+      Now compares the route as prepared with her changes. Some spots also open in 3D, built from
+      the street photos.
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/assets/check.gif" width="260" alt="On a phone: the check card for the Calle Loreto steps, a 2023 street photo with the steps outlined and its Mapillary credit; the guide says OpenStreetMap adds 5 steps, no handrail, no ramp, and asks whether the steps are still there"></td>
+    <td align="center"><img src="docs/assets/edit.gif" width="260" alt="On a phone: the same spot in 3D built from street photos, the route Before and Now, then the Edit menu with her two changes and Undo"></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <strong>3. Visitor messages, read on her phone.</strong><br>
+      A small model reads messages in English, Spanish and Korean on the phone, offline after one
+      download. It places each one on the spot it means, or says it is not sure and offers up to
+      three; when it cannot tell, the guide tells her to ask the visitor. The reply, in the
+      visitor's language, is filled from fixed templates and her answers.
+    </td>
+    <td width="50%" valign="top">
+      <strong>4. A route note for the next visitors.</strong><br>
+      Her answers become a note for visitors in English, Spanish or Korean, which she copies.
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/assets/messages.gif" width="260" alt="On a phone: a Korean Example message about steep stone steps, the one-time 84 MB download, the model not sure between three spots numbered on the map, her choice, a reply in Korean with Copy, then a Spanish message the guide cannot place and a reply asking the visitor where"></td>
+    <td align="center"><img src="docs/assets/note.png" width="260" alt="On a phone: the route note for visitors, with English, Spanish and Korean tabs and a Copy button"></td>
+  </tr>
+</table>
 
-## Other routes
+<sub>Messages shipped with the app are labelled Example. Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on screen with each photo; map data © OpenStreetMap contributors (ODbL).</sub>
 
-Narikala in Tbilisi, from the cable car to the fortress gate, is a second tour route prepared the
-same way: 1,020 m, 359 street photos, 49 possible barriers, at 14 spots. Home search finds any other place on
-OpenStreetMap and builds a route to it on the device from the map alone, with no street photos read;
-such a route is labelled as from the map.
+## Why it is small AI
 
-## The model
+- **Small and on the device.** One model, [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small)
+  (MIT), int8 and trimmed to Latin and Korean script, with three small trained heads (16 KB). It is
+  an 84 MB download (83,783,194 bytes stored, about 52 MB over the network because GitHub Pages
+  compresses it). It runs in the browser with ONNX Runtime Web and needs no connection after that
+  one download.
+- **Per message.** A median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
+  with the CPU slowed six times. No phone has been measured.
+- **Not sure, so she decides.** It answers only from fixed lists: the kind of message and the
+  place's own spots. When it is unsure it says so and offers up to three spots, and she taps the
+  right one. Messages that do not look like English, Spanish or Korean, such as Quechua, always get
+  Not sure.
+- **It learns from her, on the phone.** Each message she places on a spot leaves an example on the
+  device: its numbers and a sketch of its spelling, never the text. A later message that fails the
+  language check and resembles one puts that spot first, still as Not sure.
+- **No generated text.** Replies, the route note and the guide's lines are written in advance and
+  filled from her answers, so the model cannot invent a place or a promise.
+- **Why not keywords.** Exact keyword matching finds the right spot about as often (46 of 48), but
+  it would flag a place for all 15 praise, negation and resolved messages in the test, and on the
+  route it picks exactly the right spots for only 3 of 34 messages.
 
-[multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) (MIT), int8 and
-trimmed to Latin and Korean script, with three small trained heads, runs in the browser with ONNX
-Runtime Web. It downloads once and then works with no connection: 83,783,194 bytes stored on the device, about 52 MB over the network because GitHub Pages compresses it. It answers only
-from fixed lists and says Not sure when unsure. On the 48 held-out English, Spanish and Korean farm
-messages that name a spot, it put the right spot first 46 times; moved to the Qorikancha route with no new
-training, 28 of the 31 that name one. It failed on Quechua, so messages that do not look like English, Spanish or
-Korean now always get Not sure. The phone also learns from her: each message she files on a spot leaves an
-example on the device (its embedding and a sketch of its spelling, never the text), and later similar messages
-that fail the language check rank that spot first, still as Not sure. On
-machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and
-7.3, 8.8 and 9.4 of 16 (means of 20 draws) with one, two and three linked messages per spot. A Korean message lost its right
-spot in a few draws, so after that test the memory was limited to messages that fail the language
-check. A simpler keyword match is not enough: exact aliases find the spot as often (46 of 48) but would flag a place for all 15 praise, negation and resolved messages, and on the route they pick exactly the right spots for only 3 of 34 messages. One message takes a median of 25 to 38 ms in Chromium on the development Mac, and 156 to 221 ms
-with the CPU slowed six times; no phone has been measured.
-All test messages are synthetic, written by a large language model; the farm-tour messages from the
-brief's persona, Noor, trained the model's heads. Details: [model and
-evaluation](docs/language.md). Privacy, consent, bias and oversight: [responsible AI](docs/product.md#responsible-ai).
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph once["Prepared once per place, on a GPU"]
+    photos["Mapillary street photos"] --> sam["SAM 3 outlines"]
+    photos --> vggt["VGGT partial 3D"]
+    osm["OpenStreetMap and a route on foot from Valhalla"] --> stretches["10 m stretches"]
+    sam --> pkg[("Place package, a few MB")]
+    vggt --> pkg
+    stretches --> pkg
+  end
+  subgraph phone["On her phone, offline after one download"]
+    pkg --> guide["Guide: check spot by spot"]
+    msg["Visitor message"] --> model["multilingual-e5-small, 84 MB"]
+    model --> spot["Spot, or Not sure"]
+    guide --> her["Her answers and edits"]
+    spot --> her
+    her --> out["Reply and route note from fixed templates"]
+  end
+```
+
+- **Prepared once.** Large models ran once, on a GPU, when each route was prepared: SAM 3 outlined
+  what the street photos show, such as steps and kerbs, and VGGT built partial 3D from them. With OpenStreetMap's
+  records and a route on foot from Valhalla, they are packed into one package per place: 4.3 MB for
+  Qorikancha and 8.5 MB for Narikala.
+- **On the phone, everything else.** The app, the package and the model are static files. There is
+  no server and no account; messages and her edits stay on the device.
+- **No retraining for a new place.** The model compares a message with each spot's names and the
+  words visitors use for it, so a new spot list is all it needs.
+- **One online feature.** Search, described under [Get started](#get-started).
+
+Details: [architecture](docs/architecture.md) and [model and evaluation](docs/language.md).
+
+## Evidence
+
+| Measure | Result |
+| --- | --- |
+| Right spot first, held-out English, Spanish and Korean messages (preregistered) | 46 of 48 |
+| Right spot first on the Qorikancha route, with no retraining | 28 of 31, all 31 in the top three |
+| Held-out Quechua messages that get Not sure, with the language check added after that run | 22 of 22 |
+| Machine-translated Quechua, right spot first after she links three messages per spot | 9.4 of 16 (mean of 20 draws), from 5 |
+| One message, median, Chromium on the development Mac | 25 to 38 ms; 156 to 221 ms with the CPU slowed six times |
+| Possible barriers flagged on the Qorikancha route, from 403 street photos and OpenStreetMap | 8, at 5 spots; none checked by a person |
+
+After one download, a browser restarted with networking off still reads a new message, with no
+network request. The model's heads were trained on synthetic messages about Noor's farm from the
+brief, and the route results use them with no retraining. Every test message is synthetic, written
+by a large language model, and none has been reviewed by a native speaker. How each test was run,
+and what failed, is in [model and evaluation](docs/language.md); the route's data and the limits of
+every dataset are in [evidence](docs/evidence.md).
+
+## Scale
+
+- **Any place from search.** Home search finds a place on OpenStreetMap and builds a route to it
+  on the device from the map alone, with no street photos read. Such a route is labelled as from
+  the map.
+- **Narikala, Tbilisi.** A second route, from the cable car to the fortress gate, prepared with
+  the same pipeline: 1,020 m, 359 street photos, 49 possible barriers at 14 spots.
+- **Add a place.** Record the route, write its spots with the words visitors use, package it and
+  register it, then check the model with 10 to 20 labelled messages. The steps are in
+  [architecture](docs/architecture.md#add-a-place).
+
+## Responsible AI and limits
+
+- It never claims widths, heights, slopes or reachability, and never says a place is accessible. A
+  stretch with nothing flagged means only that nothing was flagged in its photos.
+- Flags say "might". The photo outlines, the 3D and the OpenStreetMap records were made or fetched
+  once and none has been checked by a person, and a way around is only OpenStreetMap's router's
+  suggestion.
+- The messages shipped with the app are labelled Example, and the Quechua ones also
+  Machine-translated.
+- The Spanish interface, and the Spanish and Korean replies and notes, have not been reviewed by a
+  native speaker.
+- She makes the final call. Nothing on her map changes without her tap, and she copies every reply
+  herself.
+
+Privacy, consent, bias and oversight: [responsible AI](docs/product.md#responsible-ai). Every
+limit: [honesty limits](docs/product.md#honesty-limits).
 
 ## Get started
 
@@ -128,11 +236,12 @@ Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on ever
 repository ships the routes' packages in `public/places/qorikancha` and `public/places/narikala`, with
 27 and 72 credited photo views. Places, paths and the records along each route are from OpenStreetMap
 (ODbL), the routes on foot and the ways around from Valhalla, outlines from SAM 3, and partial 3D from
-VGGT, published in thinned pieces under CC BY-SA 4.0 like the photos they come from. Search uses
-OpenStreetMap's Nominatim, the Valhalla server at openstreetmap.de and the Overpass API. Test
-messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources behind every
-figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses are in
-[attribution](ATTRIBUTION.md).
+VGGT, published in thinned pieces under CC BY-SA 4.0 like the photos they come from. The model is
+multilingual-e5-small (MIT), run with ONNX Runtime Web (MIT). Search uses OpenStreetMap's Nominatim,
+the Valhalla server at openstreetmap.de and the Overpass API. Test messages are synthetic (CC0) and
+none has been reviewed by a native speaker. The font is Outfit (SIL Open Font License 1.1), and the
+guide is drawn with bot-avatars (MIT). The sources behind every figure, and what the data does not
+cover, are in [evidence](docs/evidence.md); licenses are in [attribution](ATTRIBUTION.md).
 
 ## Documentation
 
