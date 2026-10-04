@@ -551,12 +551,15 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   }, [leaning, landed, crowded]);
   // Markers sit on their spots unless their 44 px targets would overlap, or a marker would cover the credit chip; then they step
   // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
-  const lift = flat ? 0 : 11, keepClear: Rect[] = still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }];
+  const clearOf = (lift: number): Rect[] => still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }], keepClear = clearOf(flat ? 0 : 11);
   // An OpenStreetMap record stays on its spot, under the others, and never pushes one aside unless it is the one chosen.
   const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => marker.state !== 'osm' || marker.selected ? [i] : []);
   const apart = [...spots], stepped = spread(standing.map(i => spots[i]), standing.map(i => markers[i].selected), 46, keepClear);
   standing.forEach((i, j) => { apart[i] = stepped[j]; });
-  const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }));
+  // The quiet ones lie on the ground and give way to the credit chip.
+  const chipBox = clearOf(0)[0], under = (p: Point) => !!chipBox && p[0] > chipBox.x && p[0] < chipBox.x + chipBox.w && p[1] > chipBox.y && p[1] < chipBox.y + chipBox.h;
+  const placed = markers.map((marker, i) => ({ marker, spot: spots[i], at: apart[i], nudged: Math.hypot(apart[i][0] - spots[i][0], apart[i][1] - spots[i][1]) > 3 }))
+    .filter(({ marker, spot }) => marker.state !== 'osm' || marker.selected || !under(spot));
   const anchor = cardFor ? placed.find(p => p.marker.id === cardFor) : null;
   let cardStyle: { left: number; top: number } | null = null, leader: { left: number; top: number; width: number } | null = null;
   if (anchor && card && camera) {
