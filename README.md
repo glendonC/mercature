@@ -61,7 +61,7 @@ evaluation](docs/language.md).
 
 ## Get started
 
-Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). Open it once online to download the model, then it works offline. Interface in English and Spanish.
+Try it at [glendonc.github.io/mercature](https://glendonc.github.io/mercature/). Open it once online to download the model, then it works offline. Interface in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
 
 To run it locally, you need Node.js 22.12 or newer.
 
