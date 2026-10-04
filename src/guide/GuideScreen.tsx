@@ -9,7 +9,7 @@ import type { RoutePlace } from '../site/route';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import Menu, { type MenuPlace } from '../home/Menu';
-import { ANSWER_NOTE, AROUND_NOTE, COPY, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
+import { ANSWER_NOTE, AROUND_NOTE, COPY, KIND_NOTE, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
 import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
 import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
@@ -71,8 +71,8 @@ function accessOfSpot(spot: Spot): AccessKind {
   return kind === 'steps' ? 'steps' : kind === 'kerb' ? 'kerb' : kind === 'broken' ? 'broken' : kind === 'bollard' ? 'bollard' : kind === 'cobblestones' ? 'uneven' : 'obstacle';
 }
 const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', kerb: 'kerb', broken: 'broken', crossing: 'crossing', bollard: 'bollard', cobblestones: 'uneven' };
-/** Kinds near the walk the check goes through after the flagged spots, in the order a person would. */
-const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind]);
+/** Kinds near the walk the check goes through after the flagged spots, in the order a person would. Kerbs beside the walk are context, not a question. */
+const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind] && kind !== 'kerb');
 /** What a model's issue type suggests she would call it; she can change it before it goes on her map. */
 const kindOfCategory = (category: string | null): EditKind => category === 'steps-or-slope' ? 'steps' : category === 'path-blocked' ? 'narrow' : 'other';
 /** The route-note line for her answer about one thing: a line, null when nothing goes in the note, undefined when the table has none. */
@@ -317,6 +317,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     });
     return [...spotItems, ...kinds];
   }, [walk, data.marks, views]);
+  /** A spot's question fits its kind; a kind along much of the walk asks whether the note mentions it, but cobblestones ask for a smoother way. */
+  const questionOf = (item: Item): QuestionId => 'spot' in item ? QUESTION_OF[item.access] : item.mark === 'cobblestones' ? 'smoother' : 'mention';
   const itemOfTarget = (target: Target) => target.kind === 'spot' ? items.findIndex(item => 'spot' in item && item.spot.id === target.id) : -1;
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   function slotsOf(item: Item, at: number): ItemSlots {
@@ -453,7 +455,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   /** Natural selection: a spot tapped on the map, or a photo's place, becomes what the conversation is about. */
   function select(target: Target) {
     if (step.id === 'message') { file(step.at, target); return; }
-    if (step.id === 'check' && step.tapping) { const stretch = stretchFor(target); if (stretch !== null) answer(step.at, QUESTION_OF[items[step.at].access], step.tapping, stretch); return; }
+    if (step.id === 'check' && step.tapping) { const stretch = stretchFor(target); if (stretch !== null) answer(step.at, questionOf(items[step.at]), step.tapping, stretch); return; }
     if (step.id === 'propose') { setStep({ id: 'propose', proposal: { ...step.proposal, target } }); return; }
     const at = itemOfTarget(target);
     if (at >= 0) { go({ id: 'check', at }); return; }
@@ -524,6 +526,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       else if (line) lines.push(line);
       else if (spot.kind === 'flagged') { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, at, m)); steps ||= subject === 'steps'; }
       const own = noteOf(edits, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
+    }
+    // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them.
+    for (const one of items) if (!('spot' in one) && KIND_NOTE[one.mark as keyof typeof KIND_NOTE]) {
+      const said = answerOf(edits, one.key)?.answer;
+      if (said === 'yes' || (one.mark === 'cobblestones' && said && said !== 'unknown')) lines.push(KIND_NOTE[one.mark as keyof typeof KIND_NOTE][language]);
     }
     if (around?.status === 'found' && ways.check?.works) {
       const avoided = walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index))));
@@ -661,7 +668,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     chips = helloChips;
     words = hear;
   } else if (step.id === 'check' && item) {
-    const slots = slotsOf(item, step.at), question = QUESTION_OF[item.access], chosen = answerOf(edits, item.key);
+    const slots = slotsOf(item, step.at), question = questionOf(item), chosen = answerOf(edits, item.key);
     if (step.tapping) {
       lines.push(s.check.tapWhere(slots));
       chips = [{ id: 'cancel', label: s.back, onClick: () => setStep({ id: 'check', at: step.at }) }];

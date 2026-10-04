@@ -25,6 +25,8 @@ export const QUESTIONS = {
   temporary: ['still', 'repaired', 'gone', 'unknown'],
   helpful: ['still', 'gone', 'unknown'],
   unseen: ['nothing', 'something', 'unknown'],
+  /** A kind the photos show along much of the walk, such as crossings: whether her route note mentions it. */
+  mention: ['yes', 'no', 'unknown'],
 } as const;
 export type QuestionId = keyof typeof QUESTIONS;
 export type AnswerOf<Q extends QuestionId> = (typeof QUESTIONS)[Q][number];
@@ -349,6 +351,7 @@ const en: Script = {
       temporary: () => 'Is it still there?',
       helpful: () => 'Is it still there?',
       unseen: () => 'Do you know what’s here?',
+      mention: () => 'Mention this in your route note?',
     },
     answers: {
       getPast: { wayAround: 'There’s a way around', handrail: 'There’s a handrail', help: 'We help visitors here', noWay: 'No way around', notThere: 'There are no steps', unknown: 'I’m not sure' },
@@ -358,6 +361,7 @@ const en: Script = {
       temporary: { still: 'Still there', repaired: 'It’s been fixed', gone: 'It’s gone', unknown: 'I’m not sure' },
       helpful: { still: 'Still there', gone: 'It’s gone', unknown: 'I’m not sure' },
       unseen: { nothing: 'Nothing in the way', something: 'There’s something here', unknown: 'I’m not sure' },
+      mention: { yes: 'Yes, mention it', no: 'Leave it out', unknown: 'I’m not sure' },
     },
     said: {
       getPast: {
@@ -395,6 +399,7 @@ const en: Script = {
         gone: () => 'Okay, I’ve taken it out of your note.',
         unknown: () => 'That’s fine. I’ll leave it out for now.',
       },
+      mention: { yes: () => 'Done. Your note mentions it.', no: () => 'Okay, I’ve left it out.', unknown: () => 'That’s fine. I’ll leave it out for now.' },
       unseen: {
         nothing: () => 'Got it. Your note says nothing’s in the way, from what you know.',
         something: () => 'What’s there?',
@@ -584,6 +589,7 @@ const es: Script = {
       temporary: () => '¿Sigue ahí?',
       helpful: () => '¿Sigue ahí?',
       unseen: () => '¿Sabes qué hay aquí?',
+      mention: () => '¿Lo menciono en tu nota de la ruta?',
     },
     answers: {
       getPast: { wayAround: 'Hay otro camino', handrail: 'Hay pasamanos', help: 'Aquí ayudamos a los visitantes', noWay: 'No hay otro camino', notThere: 'No hay escalones ahí', unknown: 'No sé' },
@@ -593,6 +599,7 @@ const es: Script = {
       temporary: { still: 'Sigue ahí', repaired: 'Ya lo arreglaron', gone: 'Ya no está', unknown: 'No sé' },
       helpful: { still: 'Sigue ahí', gone: 'Ya no está', unknown: 'No sé' },
       unseen: { nothing: 'Nada que estorbe', something: 'Aquí hay algo', unknown: 'No sé' },
+      mention: { yes: 'Sí, menciónalo', no: 'Déjalo fuera', unknown: 'No sé' },
     },
     said: {
       getPast: {
@@ -630,6 +637,7 @@ const es: Script = {
         gone: () => 'De acuerdo, ya lo saqué de tu nota.',
         unknown: () => 'No pasa nada. Por ahora lo dejo fuera.',
       },
+      mention: { yes: () => 'Listo. Tu nota lo menciona.', no: () => 'De acuerdo, lo dejé fuera.', unknown: () => 'No pasa nada. Por ahora lo dejo fuera.' },
       unseen: {
         nothing: () => 'Entendido. Tu nota dice que, por lo que sabes, nada estorba.',
         something: () => '¿Qué hay?',
