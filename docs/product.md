@@ -12,7 +12,7 @@ Two real tour routes, prepared once from public street photos and map data:
   - When the route was prepared, a large segmentation model scanned 116 views of those photos on a GPU and made 480 marks above its threshold.
   - It left out 1 pothole mark, because the photos show a manhole or drain cover there. The package keeps 287 of the other 479 (footway, cobblestones, kerbs, road, steps, crossings, broken pavement): the 218 near the route and 69 more on the 27 published photos.
   - Separately, the route's build has 52 findings of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers, at 5 spots; none has been checked by a person.
-- **Narikala, Tbilisi.** From the Narikala cable car top station to the fortress gate: 1,019 m in 102 stretches, built from 359 Mapillary street photos taken between 2016 and 2025. 49 findings are flagged as possible barriers, at 14 spots; none has been checked by a person.
+- **Narikala, Tbilisi.** From the Narikala cable car top station to the fortress gate: 1,020 m in 102 stretches, built from 359 Mapillary street photos taken between 2016 and 2025. 49 findings are flagged as possible barriers, at 14 spots; none has been checked by a person.
 
 Each route also carries what OpenStreetMap records along it: 44 records on Qorikancha and 95 on Narikala. Home search builds a route to any other place on the device, from OpenStreetMap alone, with no street photos read.
 
