@@ -9,6 +9,8 @@
  * With --serve, the build is served like GitHub Pages under the URL's path and the server is
  * stopped before the offline restart. The offline restart also sends every request, the service
  * worker's own included, to a proxy that drops it. Screenshots and report.json go to the out directory.
+ * Playwright's WebKit keeps no Cache Storage in a saved profile and fails worker-served loads while
+ * offline, so WebKit runs one in-memory session and reads the message again online, from the stored model.
  */
 import { chromium, webkit } from '@playwright/test';
 import { spawn } from 'node:child_process';
@@ -36,7 +38,7 @@ const REVIEW = 'mercature.route-review.v1.cusco-qorikancha';
 const report = { url: base.href, browser: browserName, started: new Date().toISOString(), checks: [], downloads: [], offsite: [], answers: {}, transfer: {}, errors: [] };
 const check = (name, pass, detail = '') => {
   report.checks.push({ name, pass, detail });
-  console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
+  console.log(`${pass === null ? 'SKIP' : pass ? 'PASS' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
 };
 await mkdir(out, { recursive: true });
 
@@ -57,32 +59,36 @@ await new Promise(done => sink.listen(0, '127.0.0.1', done));
 // Chromium needs <-loopback> to send 127.0.0.1 through the proxy too.
 const proxy = { server: `http://127.0.0.1:${sink.address().port}`, ...(browserName === 'chromium' ? { bypass: '<-loopback>' } : {}) };
 
+const inMemory = browserName === 'webkit';
+let browser = null;
 let profile = null;
 let context;
+let phase;
 async function launch(offline) {
-  await context?.close();
-  context = await engine.launchPersistentContext(profile, {
-    headless: true, viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow',
-    ...(offline ? { proxy } : {}),
-  });
+  if (!inMemory) await context?.close();
+  phase = offline ? (inMemory ? 'again' : 'offline') : 'online';
+  report.transfer[phase] = { requests: 0, bytes: 0 };
+  if (inMemory && context) return context.pages()[0];
+  const options = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow', ...(offline ? { proxy } : {}) };
+  if (inMemory) browser = await engine.launch({ headless: true });
+  context = inMemory ? await browser.newContext(options) : await engine.launchPersistentContext(profile, { headless: true, ...options });
   await context.setOffline(offline);
-  const phase = offline ? 'offline' : 'online';
-  const transfer = report.transfer[phase] = { requests: 0, bytes: 0 };
   context.on('weberror', error => report.errors.push({ phase, kind: 'page error', text: String(error.error()).slice(0, 300) }));
   context.on('console', message => { if (message.type() === 'error') report.errors.push({ phase, kind: 'console', text: message.text().slice(0, 300) }); });
   context.on('requestfinished', async request => {
+    const at = phase;
     const url = new URL(request.url());
     const response = await request.response();
     // A response the service worker answered can still be reported here, with no body from the network.
     const received = response && !response.fromServiceWorker() ? (await request.sizes().catch(() => null))?.responseBodySize ?? -1 : -1;
     if (received >= 0) {
-      transfer.requests++;
-      transfer.bytes += received;
+      report.transfer[at].requests++;
+      report.transfer[at].bytes += received;
     }
-    if (url.origin !== base.origin && !url.protocol.startsWith('data') && !url.protocol.startsWith('blob')) report.offsite.push({ phase, url: url.href, status: response?.status() ?? null });
+    if (url.origin !== base.origin && !url.protocol.startsWith('data') && !url.protocol.startsWith('blob')) report.offsite.push({ phase: at, url: url.href, status: response?.status() ?? null });
     if (/\/models\/|huggingface|hf\.co|\.wasm$/.test(url.href) && response && !response.fromServiceWorker()) {
       const sizes = await request.sizes().catch(() => null);
-      report.downloads.push({ phase, path: url.pathname, status: response.status(), transferBytes: sizes?.responseBodySize ?? null, encoding: response.headers()['content-encoding'] ?? 'none', length: response.headers()['content-length'] ?? null });
+      report.downloads.push({ phase: at, path: url.pathname, status: response.status(), transferBytes: sizes?.responseBodySize ?? null, encoding: response.headers()['content-encoding'] ?? 'none', length: response.headers()['content-length'] ?? null });
     }
   });
   context.on('requestfailed', request => {
@@ -186,15 +192,18 @@ try {
   await page.getByRole('button', { name: 'Clear', exact: true }).click();
   report.clearedBeforeOffline = (await logged(page)) === null;
 
-  // Cold restart with no network: the server is gone too when this script started it.
-  if (server) { server.kill(); server = null; }
+  // Cold restart with no network: the server is gone too when this script started it. WebKit reloads online.
+  if (server && !inMemory) { server.kill(); server = null; }
   page = await launch(true);
   const offline = await page.goto(base.href);
-  // The server is out of reach: the worker's own update check goes to the proxy and is refused.
-  const refused = dropped;
-  const update = await page.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration?.update()).then(() => 'reached', () => 'refused'));
-  check('offline start is served by the service worker', !!offline?.fromServiceWorker() && update === 'refused' && dropped > refused,
-    `${offline?.status()} from service worker: ${offline?.fromServiceWorker()}; worker update check ${update} by the proxy`);
+  if (inMemory) check('offline start is served by the service worker', null, 'not run in WebKit');
+  else {
+    // The server is out of reach: the worker's own update check goes to the proxy and is refused.
+    const refused = dropped;
+    const update = await page.evaluate(() => navigator.serviceWorker.getRegistration().then(registration => registration?.update()).then(() => 'reached', () => 'refused'));
+    check('offline start is served by the service worker', !!offline?.fromServiceWorker() && update === 'refused' && dropped > refused,
+      `${offline?.status()} from service worker: ${offline?.fromServiceWorker()}; worker update check ${update} by the proxy`);
+  }
   await openRoute(page);
   await page.screenshot({ path: resolve(out, 'route-offline-390.png') });
   const unread = await page.locator(`.ri-row[data-row="${ROW}"]`).textContent();
@@ -206,14 +215,15 @@ try {
   report.answers.offline = again;
   const fresh = await logged(page);
   await page.screenshot({ path: resolve(out, 'answer-offline-390.png') });
-  check('Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && /Not read yet/.test(unread ?? '') && !!fresh?.answer?.model && matches(again),
+  check(inMemory ? 'Korean demo message answered again from the stored model' : 'Korean demo message answered offline after a cold restart', report.clearedBeforeOffline && /Not read yet/.test(unread ?? '') && !!fresh?.answer?.model && matches(again),
     `${describe(again)}; read afresh by ${fresh?.answer?.model ?? 'nothing'}`);
-  check('nothing downloaded offline', !report.downloads.some(item => item.phase === 'offline'), report.downloads.filter(item => item.phase === 'offline').map(item => item.path).join(', '));
+  check(`nothing downloaded ${inMemory ? 'the second time' : 'offline'}`, !report.downloads.some(item => item.phase === phase), report.downloads.filter(item => item.phase === phase).map(item => item.path).join(', '));
 } catch (error) {
   check('proof ran to the end', false, error instanceof Error ? error.message.split('\n')[0] : String(error));
   await context?.pages()[0]?.screenshot({ path: resolve(out, 'failure.png') }).catch(() => undefined);
 } finally {
   await context?.close();
+  await browser?.close();
   server?.kill();
   sink.close();
   if (profile) await rm(profile, { recursive: true, force: true });
@@ -222,7 +232,7 @@ try {
 report.finished = new Date().toISOString();
 await writeFile(resolve(out, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
 for (const item of report.downloads) console.log(`download ${item.phase} ${item.status} ${item.path}: ${item.transferBytes} bytes on the wire, encoding ${item.encoding}`);
-for (const [phase, item] of Object.entries(report.transfer)) console.log(`${phase}: ${item.requests} network responses, ${item.bytes} bytes on the wire`);
+for (const [name, item] of Object.entries(report.transfer)) console.log(`${name}: ${item.requests} network responses, ${item.bytes} bytes on the wire`);
 for (const item of report.errors) console.log(`${item.phase} ${item.kind}: ${item.text}`);
 console.log(`Report and screenshots in ${out}`);
-if (report.checks.some(item => !item.pass)) process.exit(1);
+if (report.checks.some(item => item.pass === false)) process.exit(1);

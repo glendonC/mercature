@@ -40,3 +40,5 @@ node scripts/release/proof.mjs --serve dist
 5. Stops the server, restarts the browser with no network, and answers it again.
 
 Screenshots and `report.json` go to `.local/release/`. To check the live site, pass its URL instead of `--serve dist`.
+
+`--browser webkit` runs the proof in Safari's engine (`npx playwright install webkit`). Playwright's WebKit cannot start the app offline, so there the model answers the second time online, from its stored copy.
