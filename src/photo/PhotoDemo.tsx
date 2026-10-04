@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { loadDestination, type Destination } from '../destinations/data';
+import { isDestinationId, loadDestination, type Destination, type DestinationId } from '../destinations/data';
 import { useLanguage, type Lang } from '../i18n';
 import { fromRecord } from '../i18n/records';
 import { IconButton, Panel, PanelHead, Segmented, TextButton } from '../ui';
@@ -8,15 +8,16 @@ import { LabelledPhoto } from './LabelledPhoto';
 import { photoOf } from './marks';
 import './demo.css';
 
-const HERO = 'cusco-qorikancha';
+const HERO: DestinationId = 'cusco-qorikancha';
+const placeOf = (): DestinationId => { const wanted = new URLSearchParams(location.search).get('place') ?? ''; return isDestinationId(wanted) ? wanted : HERO; };
 const StepIcon = ({ kind }: { kind: string }) => { const Icon = iconFor(kind) ?? PhotoIcon; return <Icon />; };
 
-/** ?ui=photo: the labelled photo at the sizes the guide gives it, over the hero walk's shipped views. ?view= opens one view, ?select=none clears the selection. */
+/** ?ui=photo: the labelled photo at the sizes the guide gives it, over a walk's shipped views (the hero, or ?place=). ?view= opens one view, ?select=none clears the selection. */
 export default function PhotoDemo() {
   const { lang, setLang } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
   const [error, setError] = useState('');
-  useEffect(() => { const controller = new AbortController(); loadDestination(HERO, controller.signal).then(setData, (e: Error) => { if (!controller.signal.aborted) setError(e.message); }); return () => controller.abort(); }, []);
+  useEffect(() => { const controller = new AbortController(); loadDestination(placeOf(), controller.signal).then(setData, (e: Error) => { if (!controller.signal.aborted) setError(e.message); }); return () => controller.abort(); }, []);
   // Views with a possible barrier first, then by how much the model marked on them.
   const views = useMemo(() => {
     if (!data) return [];
