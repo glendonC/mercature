@@ -1,7 +1,7 @@
-import type { IssueCategory, MessageKind } from '../site/contracts';
+import type { IssueCategory, MessageKind, UiLanguage } from '../site/contracts';
 import type { Verdict } from '../decisions/store';
 
-export type UiLang = 'en' | 'es';
+export type UiLang = UiLanguage;
 export type VisitorLang = 'en' | 'es' | 'ko';
 
 /** Core canvas strings. The Spanish is unreviewed by a native speaker. */

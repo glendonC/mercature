@@ -1,9 +1,10 @@
 import { Fragment, createElement, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { en, type Key } from './en';
 import { es } from './es';
+import type { UiLanguage } from '../site/contracts';
 
 export type { Key } from './en';
-export type Lang = 'en' | 'es';
+export type Lang = UiLanguage;
 export const LANGS: readonly Lang[] = ['en', 'es'];
 /** Each language named in itself, for the switch and for screen readers. */
 export const LANG_NAMES: Readonly<Record<Lang, string>> = { en: 'English', es: 'Español' };
