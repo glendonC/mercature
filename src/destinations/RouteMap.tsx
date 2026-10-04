@@ -177,6 +177,18 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     run();
   }, [landed, size, fitCamera, run]);
 
+  // The selected marker stays in the free band between the place title and the guide, or any sheet, as they change.
+  const chosen = markers.find(marker => marker.selected) ?? null;
+  useEffect(() => {
+    const current = tween.current?.to ?? live.current;
+    if (!chosen || !current || !size.height) return;
+    const top = insetsRef.current.top, bottom = size.height - clearBottom, aim = { ...current, lean: goal.current };
+    const [x, y] = lens(aim, tiltOf(size.width), size.width, size.height).at(chosen.at);
+    if (y >= top && y <= bottom - 28) return;
+    go(clamp(place(chosen.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean)));
+  // Only a new selection or a new band moves the camera; a person's own panning is left alone.
+  }, [chosen?.id, clearBottom]);
+
   useImperativeHandle(ref, () => ({
     fit: (animate = true) => go(fitCamera(size.width, size.height), animate),
     focus: (at, screen, zoom) => {
