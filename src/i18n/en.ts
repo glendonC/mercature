@@ -52,6 +52,7 @@ export const en = {
   'home.onDevice': 'On this device',
   'home.savedPlan': 'Improvement plan',
   'home.savedPlace': 'Photos & notes',
+  'home.guide': 'Guide',
   'search.label': 'Search a place',
   'search.go': 'Search',
   'search.clear': 'Clear the search',

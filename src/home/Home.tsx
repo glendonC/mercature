@@ -14,6 +14,8 @@ import { fromRecord } from '../i18n/records';
 import Menu from './Menu';
 import Places from './Places';
 import Search from './Search';
+import { Dialogue } from '../ui';
+import { SCRIPT } from '../guide/script';
 import { toDestination, type Built } from '../search/build';
 import type { Prepared } from '../search/prepared';
 import { listWalks, loadWalk, type SavedWalk } from '../search/store';
@@ -128,13 +130,23 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   const hero = useHero();
   const walks = useWalks();
   const insets = useFree(words, places, search);
+  // The guide's line sits at the bottom, where the route screen has it; the photos and the credit rest above it.
+  const shell = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const root = shell.current, line = root?.querySelector<HTMLElement>('.home-guide');
+    if (!root || !line) return;
+    const fit = () => root.style.setProperty('--guide', `${line.offsetHeight}px`);
+    fit();
+    const observer = new ResizeObserver(fit); observer.observe(line);
+    return () => observer.disconnect();
+  });
   const prepared: Prepared[] = useMemo(() => covers.filter(cover => openable(cover.id)).map(cover => ({ id: cover.id, name: cover.name, area: fromRecord(cover.area, lang), aliases: `${cover.area} ${cover.aliases}` })), [openable, lang]);
   const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
   const status = !hero.data ? null : hero.flagged === 0 ? t('home.noFlaggedSpots') : hero.flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: hero.flagged });
   if (walks.open) return <RouteInbox key={walks.open.built.place.id} data={walks.open.data} asset={file => file} onHome={walks.closeWalk} onPlace={onDestination}
     spots={walks.open.built.spots} caption={walks.open.kept ? t('search.mapOnlyLong') : `${t('search.mapOnlyLong')} ${t('search.notKept')}`}/>;
-  return <main className="welcome-shell site-home" aria-label={t('home.label')}>
+  return <main ref={shell} className="welcome-shell site-home" aria-label={t('home.label')}>
     {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}
     <div className="home-veil" aria-hidden="true"/>
@@ -153,5 +165,6 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
       ]}
       saved={[...walks.kept.map(walk => ({ id: walk.id, title: walk.target, detail: [t('search.mapOnly'), walk.area].filter(Boolean).join(' · '), onOpen: () => walks.openKept(walk.id) })),
         ...saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))]}/>
+    <Dialogue className="home-guide" label={t('home.guide')} lang={lang}>{SCRIPT[lang].home.greet}</Dialogue>
   </main>;
 }
