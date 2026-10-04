@@ -6,7 +6,7 @@
  */
 import { looksSupported } from '../language/policy';
 import type { RoutePlace, RouteSpot } from '../site/route';
-import type { AddedSpot, EditKind, Edits, NoteLang, OwnNote } from './store';
+import type { AddedSpot, EditKind, Edits, OwnNote } from './store';
 import { UPDATE, recordDate, type VisitorLang, type Where } from './words';
 
 /** Where a stretch of the walk is, from the record the canvas holds. */
@@ -73,10 +73,9 @@ export function fixedLine(kind: EditKind, where: Where, along: number, at: strin
 }
 
 /**
- * Her own words for the route note. They appear only in the note for the language they were taken
- * as, so nothing of hers is ever machine-translated and no reader sees a sentence in a language
- * it does not belong to.
+ * Her own words for the route note, verbatim in every language's note: they are her voice, nothing
+ * translates them, and a visitor reading another language loses nothing by seeing them as she wrote them.
  */
-export function ownNoteLines(note: OwnNote, language: VisitorLang): string[] {
-  return note.text && (note.language as NoteLang) === language ? [note.text] : [];
+export function ownNoteLines(note: OwnNote, _language?: VisitorLang): string[] {
+  return note.text ? [note.text] : [];
 }

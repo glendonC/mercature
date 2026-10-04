@@ -112,12 +112,11 @@ test('a fixed spot says she recorded it, never that the way is clear', () => {
   }
 });
 
-test('her words reach only the note written in their own language', () => {
+test('her words reach every language of the note exactly as she wrote them', () => {
   const note = ownNote('Hay una rampa nueva', 'es');
-  expect(ownNoteLines(note, 'es')).toEqual(['Hay una rampa nueva']);
-  expect(ownNoteLines(note, 'en')).toEqual([]);
-  expect(ownNoteLines(note, 'ko')).toEqual([]);
-  expect(ownNoteLines(ownNote('Kimsa patatam', 'other'), 'en')).toEqual([]);
+  for (const language of ['en', 'es', 'ko'] as const) expect(ownNoteLines(note, language)).toEqual(['Hay una rampa nueva']);
+  expect(ownNoteLines(ownNote('Kimsa patatam', 'other'), 'en')).toEqual(['Kimsa patatam']);
+  expect(ownNoteLines(ownNote('', 'en'), 'en')).toEqual([]);
 });
 
 test('a note guessed as a language the visitor notes do not use is taken as another language, never English', () => {
@@ -127,5 +126,6 @@ test('a note guessed as a language the visitor notes do not use is taken as anot
   const quechua = 'Manam kanchu allin ñan, rumikuna hatun kan';
   expect(guessLanguage(quechua)).toBe('qu');
   expect(noteLangOf(guessLanguage(quechua))).toBe('other');
-  expect(ownNoteLines(ownNote(quechua, noteLangOf(guessLanguage(quechua))), 'en')).toEqual([]);
+  // Taken as another language, it still reaches every note verbatim, never translated.
+  expect(ownNoteLines(ownNote(quechua, noteLangOf(guessLanguage(quechua))), 'en')).toEqual([quechua]);
 });

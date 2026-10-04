@@ -55,6 +55,8 @@ type Step =
   /** Another street she adds: she taps its start and end, and it is routed on foot. It is map only: no street photo was read on it. */
   | { id: 'street'; from?: LonLat; to?: LonLat; found?: NewStreet; trouble?: string }
   | { id: 'note'; clearing?: boolean }
+  /** A narrow place she just added: whether a wheelchair or a stroller gets through, from what she knows. then: where the conversation goes after. */
+  | { id: 'through'; spot: string; then: Step }
   /** What she wants to change, from the Edit pill on any step: a spot to add (a tap or her words), a spot to change (a tap), or her own note. */
   | { id: 'edit'; mode?: 'add' | 'change' | 'note' };
 
@@ -422,8 +424,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const item = items[at];
     if (!('spot' in item)) return;
     const target: Target = { kind: 'spot', id: item.spot.id };
-    edit(edits => setAnswer(addSpot(edits, item.spot.stretches[0], kind), item.key, { question: QUESTION_OF[item.access], answer: 'something' }));
-    onward(at, s.missed.added({ kind: s.words.added[kind], where: whereWords(target) }));
+    const next = edit(edits => setAnswer(addSpot(edits, item.spot.stretches[0], kind), item.key, { question: QUESTION_OF[item.access], answer: 'something' }));
+    const line = s.missed.added({ kind: s.words.added[kind], where: whereWords(target) }), id = next.added[next.added.length - 1]?.id;
+    if (kind === 'narrow' && id) { go({ id: 'through', spot: id, then: resume ?? nextCheck(at) }, line); if (resume) setResume(null); return; }
+    onward(at, line);
   }
   /** The chip she tapped for her saved answer about a thing, said back when she opens it again. */
   function saidLabel(key: string): string | null {
@@ -546,8 +550,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const next = edit(edits => addSpot(edits, stretch, kind, ownNote(proposal.text, language)));
     const id = next.added[next.added.length - 1]?.id;
     if (id && proposal.text && authored) void remember(proposal.text, withEdits(authored, next, locate), id);
+    const then: Step = card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from;
     history.current.push(step);
-    setStep(card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from);
+    setStep(kind === 'narrow' && id ? { id: 'through', spot: id, then } : then);
     setAck(s.missed.added({ kind: s.words.added[kind], where: whereWords(proposal.target) }));
   }
 
@@ -652,8 +657,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     for (const spot of mine.added) {
       const fix = isFixed(mine, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
+      // A narrow place she added says what she knows about getting through it.
+      const said = spot.kind === 'narrow' ? answerOf(mine, spot.id)?.answer : undefined, through = said === 'yes' || said === 'no' || said === 'unknown' ? THROUGH_NOTE[said][language]('narrow', here, Math.round(stretch.from)) : null;
       if (fix) lines.push(fixedLine(spot.kind, here, stretch.from, fix.at, language));
-      else { lines.push(NOTE.added[language](spot.kind, here, Math.round(stretch.from))); steps ||= spot.kind === 'steps'; }
+      else { lines.push(through ?? NOTE.added[language](spot.kind, here, Math.round(stretch.from))); steps ||= spot.kind === 'steps'; }
       lines.push(...ownNoteLines(spot.note, language));
     }
     const walkNote = noteOf(mine, WALK_NOTE); if (walkNote) lines.push(...ownNoteLines(walkNote, language));
@@ -945,6 +952,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     if (proposal.text) above = <section className="gs-card gs-quote" data-tone="dark"><blockquote>{proposal.text}</blockquote></section>;
     else if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
+  } else if (step.id === 'through') {
+    const { spot, then } = step, slots: ItemSlots = { n: 0, total: 0, what: s.words.added.narrow, where: '', metres: 0, photos: 0, when: '', osm: '' };
+    lines.push(s.check.follow.narrow);
+    chips = FOLLOWS.through.map(choice => ({ id: choice, label: s.check.answers.through[choice], onClick: () => {
+      edit(edits => setAnswer(edits, spot, { question: 'through', answer: choice })); history.current.push(step); setStep(then); setAck(s.check.said.through[choice](slots));
+    } }));
+    quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { history.current.push(step); setStep(then); setAck(''); } };
   } else if (step.id === 'edit') {
     lines.push(step.mode === 'add' ? s.edit.addSpot : step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask);
     if (!step.mode) chips = [{ id: 'add', label: s.edit.chips.addSpot, onClick: () => go({ id: 'edit', mode: 'add' }) }, { id: 'change', label: s.edit.chips.changeSpot, onClick: () => go({ id: 'edit', mode: 'change' }) },
