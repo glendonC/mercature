@@ -543,6 +543,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const inbox = <>
     <p className="ri-guide">{w.guide}</p>
     <Section heading="h2" title={w.found} label={w.found} className="ri-summary">
+      <span className="ri-meta">{w.flaggedSpots}</span>
       <div className="ri-counts">{(['steps', 'kerb', 'path', 'noPhotos'] as const).filter(kind => counts[kind]).map(kind => <Tag key={kind} tone={kind === 'noPhotos' ? 'unknown' : 'barrier'}><KindMark kind={kind} />{w.kinds[kind]} <b>{counts[kind]}</b></Tag>)}</div>
       {scanned.length > 0 && <div className="ri-scan"><span className="ri-meta">{w.scanned}</span><Legend items={scanned} /></div>}
       {raised.length > 0 && <p className="ri-raised"><span className="ri-meta">{w.raised}</span> {raised.map(([key, n]) => `${nameOfKey(key)} (${n})`).join(' · ')}</p>}
@@ -550,7 +551,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
         <span>{w.note}</span>
         <Segmented label={w.note} value={noteLang} onChange={setNoteLang} options={VISITOR_LANGS.map(item => ({ value: item.id, label: item.id.toUpperCase(), lang: item.id }))} />
         {/* Two lines to read before copying; a tap shows the whole note. */}
-        <button type="button" className="ui-callout ri-note-text" lang={noteLang} aria-expanded={noteOpen} onClick={() => setNoteOpen(open => !open)}><Swap value={note} lang={noteLang} className="ri-note-lines" /></button>
+        <button type="button" className="ui-callout ri-note-text" lang={noteLang} aria-expanded={noteOpen} onClick={() => setNoteOpen(open => !open)}><Swap value={`${noteOpen} ${note}`} lang={noteLang} className="ri-note-lines">{noteOpen ? note : note.split('\n').slice(0, 2).map((text, i) => <span key={i} className="ri-note-line">{text}</span>)}</Swap></button>
         <TextButton icon={<CopyIcon />} onClick={() => copy(note)}>{w.copy}</TextButton>
       </div>}
     </Section>
@@ -752,7 +753,7 @@ function PhotoWithMarks({ view, photo, asset, lang, marks, lead, t, still = fals
   const [failed, setFailed] = useState(false);
   const [whole, setWhole] = useState(false);
   const zoom = zoomOn(view, lead);
-  const date = photo?.capturedAt ? new Date(photo.capturedAt).toLocaleDateString(lang === 'es' ? 'es-PE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const date = photo?.capturedAt ? recordDate(photo.capturedAt, lang) || null : null;
   const drawn = [...marks].filter(mark => mark.outline.length > 2).sort((a, b) => layer(a) - layer(b));
   const image = <div className="ri-photo-image" style={{ transform: zoom && !whole ? zoom : undefined }}>
     {failed ? <span className="ri-photo-missing" /> : <img src={asset(view.file)} alt={lead ? fromRecord(lead.label, lang) : ''} onError={() => setFailed(true)} />}
