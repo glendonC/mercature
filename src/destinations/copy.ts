@@ -152,9 +152,33 @@ export function where(landmark: { name: string; kind: 'start' | 'target' | 'buil
   return { en: `near ${article ? 'the ' : ''}${name}`, es: `cerca de ${article === 'el ' ? 'l ' : article}${name}`.replace('de l ', 'del '), ko: name };
 }
 
-/** A best guess at the language of a pasted message, for the reply default only; the person can change it. */
+/**
+ * A best guess at the language of a pasted message, for the reply default only; the person can change it.
+ * The walk's place names are Spanish, so they are set aside first and never count as Spanish.
+ * Spanish needs two cues, English wins ties, Quechua and other languages say so instead of passing as Spanish.
+ */
 export function guessLanguage(text: string): string {
   if (/[가-힯]/.test(text)) return 'ko';
-  if (/[ñ¿¡áéíóú]/i.test(text) || /\b(el|la|los|las|hay|muy|para|calle|gracias|escaleras|escalones|silla)\b/i.test(text)) return 'es';
+  const PLACE = /(^|[^\p{L}])(?:[Cc]alle|[Pp]laza|[Pp]ortal|[Ii]glesia|[Cc]atedral|[Mm]onasterio|[Cc]onvento|[Tt]emplo|[Cc]apilla|[Pp]ampa|[Aa]venida|Santa|Santo|San)(?:\s+(?:(?:de|del|la|las|los|el|y)\s+){0,2}[A-ZÁÉÍÓÚÑ][\p{L}']*)+/gu;
+  const NAMES = /(?:Qorikancha|Coricancha|Qoricancha|Korikancha|Cusco|Cuzco|Loreto|Maruri|Hauqaypata|Huacaypata|Compañía|Armas)[\p{L}']*/gu;
+  const rest = text.replace(PLACE, '$1 ').replace(NAMES, ' ');
+  const words = rest.toLocaleLowerCase().replace(/[’`´]/g, "'").match(/[\p{L}']+/gu) ?? [];
+  const set = (list: string) => new Set(list.split(' '));
+  const EN = set('the was were my and there is are it its to of an we our us too for with but very not this that these those had have has would could can you your thank thanks steep steps step stairs wheelchair ramp handrail father mother mom dad grandmother grandfather husband wife question quick just buy tickets ticket booth only online day great nice good amazing beautiful lovely loved love hard difficult easy really so all some any here what how when where which who they them he she his her at on in from by or if be been get got went walk walking street');
+  const ES = set('el la los las del de que y en un una unos unas por para con es pero fue era eran hay mi mis nos nuestro nuestra al se lo le les sin más como cuando donde dónde mucho mucha muchos muchas bien bastante todo toda todos ya tan tanto tanta hasta desde sobre entre subir bajar subida bajada gradas silla ruedas rampa verdad problema nada algunas algunos partes piedras guía visita recorrido tiene tenía excelente recomiendo hermoso hermosa bonito bonita lindo linda increíble genial');
+  const ES_STRONG = set('gracias muy también está están estaba estaban había fueron escalones escaleras pasamanos baranda difícil abuela abuelo mamá papá años ningún ninguna pasó señora señor ayuda');
+  const FR = set('le les des une est avec pour nous vous il elle je mais pas du au aux sur dans qui belle beau visite magnifique été avons cette ce ces notre');
+  const FR_STRONG = set("merci très était c'est j'ai bonjour");
+  const QU = set('mana manam kanchu kan rumi ñan wasi allin sumaq chay kay hina ari imaynalla añay sulpayki');
+  const count = (list: Set<string>) => words.filter(word => list.has(word)).length;
+  const french = /[èêëàâçîïôûœ]/.test(rest);
+  const qu = words.filter(word => QU.has(word) || /q(?!u)|kuna|[ptkq]'[aeiou]|ch'[aeiou]/.test(word)).length;
+  const es = count(ES) + 2 * count(ES_STRONG) + (/[¿¡]/.test(rest) ? 2 : 0) + (!french && /[áéíóúñü]/.test(rest) ? 1 : 0);
+  const en = count(EN);
+  const fr = count(FR) + 2 * count(FR_STRONG) + (french ? 2 : 0);
+  if (qu >= 2 && qu >= es && qu > en) return 'qu';
+  if (es >= 2 && es > en && es > fr) return 'es';
+  if (en >= 1 && en >= es && en >= fr) return 'en';
+  if (fr >= 2 || /[^\x00-\x7F¿¡]/.test(rest)) return 'other';
   return 'en';
 }
