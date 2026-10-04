@@ -3,6 +3,7 @@ import { metres, type Coordinate, type Destination, type Photo } from './data';
 import { HAZE, type Lens } from './lens';
 import type { Point } from './walk';
 import { useLanguage } from '../i18n';
+import { ROUTE_PLACES } from '../site/registry';
 import { IconButton } from '../ui';
 import { FitIcon, MinusIcon, PlusIcon } from '../ui/icons';
 import './map.css';
@@ -189,8 +190,11 @@ export type MapWords = { zoomIn: string; zoomOut: string; fit: string; credit: s
 export const MAP_VIEWBOX = [0, 0, 800, 500] as const;
 
 export default function GeographicMap({ data, selected, onSelect, hidden, zoom, setZoom, shown, svgRef, className = '', children, underlay, viewBox = MAP_VIEWBOX.join(' '), words: given, lens, rise = 0, riseOf, still = false, credit = true }: Props) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const fog = useId();
+  /** A building or street the place's spots name in the interface language, else the record's own name. */
+  const authored = useMemo(() => new Map((ROUTE_PLACES[data.id]?.features ?? []).filter(spot => !spot.stretches.length).map(spot => [spot.landmark, spot.name[lang]] as const)), [data.id, lang]);
+  const named = (name: string) => authored.get(name) ?? name;
   const words = given ?? { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const selectedView = data.views.find(v => v.id === selected), selectedPhoto = data.photos.find(p => p.id === selectedView?.photoId);
   const focus = zoom > 1 ? selectedPhoto?.position : undefined;
@@ -202,9 +206,9 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
   const size = (point: Coordinate) => lens ? lens.scale(frame(point)) : 1;
   const line = (points: Coordinate[]) => points.map(p => project(p).join(',')).join(' ');
   const base = useMemo(() => tilted ? null : <g className="map-base">
-    {data.buildings.map(feature => <path key={feature.id} d={[feature.points, ...feature.holes].map(ring => `M${ring.map(p => frame(p).join(',')).join(' ')}Z`).join(' ')} fillRule="evenodd" className="map-building"><title>{feature.name || t('map.building')}</title></path>)}
-    {data.ways.map(feature => <polyline key={feature.id} points={feature.points.map(p => frame(p).join(',')).join(' ')} className={feature.kind === 'steps' ? 'map-way map-steps' : feature.kind === 'residential' ? 'map-way map-street' : 'map-way'}><title>{feature.name || feature.kind}</title></polyline>)}
-  </g>, [tilted, data, frame, t]);
+    {data.buildings.map(feature => <path key={feature.id} d={[feature.points, ...feature.holes].map(ring => `M${ring.map(p => frame(p).join(',')).join(' ')}Z`).join(' ')} fillRule="evenodd" className="map-building"><title>{named(feature.name) || t('map.building')}</title></path>)}
+    {data.ways.map(feature => <polyline key={feature.id} points={feature.points.map(p => frame(p).join(',')).join(' ')} className={feature.kind === 'steps' ? 'map-way map-steps' : feature.kind === 'residential' ? 'map-way map-street' : 'map-way'}><title>{named(feature.name) || feature.kind}</title></polyline>)}
+  </g>, [tilted, data, frame, t, authored]); // eslint-disable-line react-hooks/exhaustive-deps
   const ordered = useMemo(() => captureOrder(data.photos), [data.photos]);
   const firstView = useMemo(() => new Map(data.views.map(view => [view.photoId, view.id] as const).reverse()), [data.views]);
   const visible = shown == null ? ordered : ordered.slice(0, shown);
@@ -215,7 +219,7 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
   const seenWedge = wedge && lens ? nearSide(wedge, lens).map(p => lens.at(p)) : wedge;
   return <section className={`destination-map ${className}`} hidden={hidden} aria-label={t('map.label')}><svg ref={svgRef} viewBox={lens ? `0 0 ${lens.width} ${lens.height}` : viewBox} role="group" aria-label={t('map.svg')}>
     {!lens && <rect width="800" height="500" className="map-ground"/>}
-    {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} riseOf={riseOf} label={name => name || t('map.building')}/> : base}
+    {plan && lens ? <Ground plan={plan} lens={lens} rise={rise} riseOf={riseOf} label={name => named(name) || t('map.building')}/> : base}
     {lens && <>
       <defs><linearGradient id={fog} x1="0" y1="0" x2="0" y2="1"><stop offset={HAZE.solid / HAZE.clear} className="map-fog-far"/><stop offset="1" className="map-fog-clear"/></linearGradient></defs>
       <rect width={lens.width} height={lens.height * HAZE.clear} fill={`url(#${fog})`} opacity={lens.view.lean} pointerEvents="none"/>
