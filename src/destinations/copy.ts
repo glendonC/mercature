@@ -95,7 +95,7 @@ export const NOTE = {
   added: {
     en: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].en)} ${w.en}, at the start of the walk.` : `${cap(KIND_WORDS[kind].en)} ${w.en}, about ${m} m along the walk.`,
     es: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].es)} ${w.es}, al inicio del recorrido.` : `${cap(KIND_WORDS[kind].es)} ${w.es}, a unos ${m} m del inicio.`,
-    ko: (kind: EditKind, w: Where, m: number) => m < 10 ? `출발점, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}이 있습니다.` : `출발점에서 약 ${m}m, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}이 있습니다.`,
+    ko: (kind: EditKind, w: Where, m: number) => m < 10 ? `출발점, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}${ga(KIND_WORDS[kind].ko)} 있습니다.` : `출발점에서 약 ${m}m, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}${ga(KIND_WORDS[kind].ko)} 있습니다.`,
   },
   steps: { en: 'Ask us if steps are hard for you.', es: 'Pregúntenos si los escalones le resultan difíciles.', ko: '계단이 힘드시면 미리 문의해 주세요.' },
   basis: { en: 'From street photos, not measurements.', es: 'Según fotos de la calle, no mediciones.', ko: '측정이 아닌 거리 사진을 바탕으로 합니다.' },
@@ -190,12 +190,14 @@ export const ANSWER_NOTE: Record<string, Record<string, AnswerLines | null>> = {
   lowered: {
     nearby: { en: (w, m) => `A kerb ${w.en}, ${AT.en(m)}, with a lowered kerb or ramp nearby.`, es: (w, m) => `Un bordillo ${w.es}, ${AT.es(m)}, con un bordillo rebajado o una rampa cerca.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 연석이 있으며, 가까이에 낮은 연석이나 경사로가 있습니다.` },
     none: { en: (w, m) => `A kerb ${w.en}, ${AT.en(m)}, with no ramp nearby.`, es: (w, m) => `Un bordillo ${w.es}, ${AT.es(m)}, sin rampa cerca.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 연석이 있으며, 가까이에 경사로가 없습니다.` },
+    unsure: { en: (w, m) => `A kerb ${w.en}, ${AT.en(m)}. We don’t know yet if there’s a ramp nearby; ask us.`, es: (w, m) => `Un bordillo ${w.es}, ${AT.es(m)}. Aún no sabemos si hay una rampa cerca; pregúntenos.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 연석이 있습니다. 근처에 경사로가 있는지 아직 모르니 문의해 주세요.` },
     notThere: null,
     unknown: { en: (w, m) => `There may be a kerb ${w.en}, ${AT.en(m)}. ${ASK_EN}`, es: (w, m) => `Puede haber un bordillo ${w.es}, ${AT.es(m)}. ${ASK_ES}`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처에 연석이 있을 수 있습니다. ${ASK_KO}` },
   },
   smoother: {
     nearby: { en: (w, m) => `Uneven ground ${w.en}, ${AT.en(m)}. There’s a smoother way nearby; ask us.`, es: (w, m) => `Suelo disparejo ${w.es}, ${AT.es(m)}. Hay un camino más parejo cerca; pregúntenos.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처는 바닥이 고르지 않습니다. 가까이에 더 평탄한 길이 있으니 문의해 주세요.` },
     none: { en: (w, m) => `Uneven ground ${w.en}, ${AT.en(m)}, with no smoother way nearby.`, es: (w, m) => `Suelo disparejo ${w.es}, ${AT.es(m)}, sin un camino más parejo cerca.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처는 바닥이 고르지 않으며, 가까이에 더 평탄한 길이 없습니다.` },
+    unsure: { en: (w, m) => `Uneven ground ${w.en}, ${AT.en(m)}. We don’t know yet if there’s a smoother way; ask us.`, es: (w, m) => `Suelo disparejo ${w.es}, ${AT.es(m)}. Aún no sabemos si hay un camino más parejo; pregúntenos.`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처는 바닥이 고르지 않습니다. 더 평탄한 길이 있는지 아직 모르니 문의해 주세요.` },
     unknown: { en: (w, m) => `The ground may be uneven ${w.en}, ${AT.en(m)}. ${ASK_EN}`, es: (w, m) => `Puede que el suelo sea disparejo ${w.es}, ${AT.es(m)}. ${ASK_ES}`, ko: (w, m) => `${AT.ko(m)}, ${w.ko} 근처는 바닥이 고르지 않을 수 있습니다. ${ASK_KO}` },
   },
   unseen: {

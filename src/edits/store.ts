@@ -1,11 +1,15 @@
 /**
  * What the operator herself records about a walk: spots she knows about that no photo showed,
- * barriers she has since fixed, and her own words about any spot.
+ * barriers she has since fixed, things that help visitors, and her own words about any spot.
  * Kept on this device only, beside the review and never mixed with it. Nothing here states a
  * width, a slope or whether a person can pass; these are her records, not measurements.
  */
-export const EDIT_KINDS = ['steps', 'kerb', 'narrow', 'other'] as const;
+/** What she can record at a spot: something in the way, or something that helps visitors, such as a bench. */
+export const BLOCK_KINDS = ['steps', 'kerb', 'narrow', 'other'] as const;
+export const HELP_KINDS = ['bench', 'toilet', 'ramp', 'handrail'] as const;
+export const EDIT_KINDS = [...BLOCK_KINDS, ...HELP_KINDS] as const;
 export type EditKind = (typeof EDIT_KINDS)[number];
+export const helps = (kind: EditKind) => (HELP_KINDS as readonly string[]).includes(kind);
 /** The language her own words were taken as, so the right visitor note carries them. */
 export const NOTE_LANGS = ['en', 'es', 'ko', 'other'] as const;
 export type NoteLang = (typeof NOTE_LANGS)[number];

@@ -16,11 +16,14 @@ export type StepId = (typeof STEPS)[number];
 /** What a thing on the walk is, for the guide's question about it. Photo marks, OpenStreetMap tags and her own spots each map to one. */
 export const ACCESS_KINDS = ['steps', 'kerb', 'uneven', 'steep', 'narrow', 'bollard', 'gate', 'noWheelchair', 'broken', 'works', 'obstacle', 'handrail', 'ramp', 'crossing', 'bench', 'toilets', 'lighting', 'unseen'] as const;
 export type AccessKind = (typeof ACCESS_KINDS)[number];
-/** One question per kind and the answers she can tap. 'unknown' is in every list: she does not know, so the note tells visitors to ask a person. */
+/**
+ * One question per kind and the answers stored under it. 'unknown' is in every list: she does not know, so the note tells visitors
+ * to ask a person. 'unsure' is the follow-up's "I'm not sure" once she has said the thing is still there.
+ */
 export const QUESTIONS = {
   getPast: ['wayAround', 'handrail', 'help', 'noWay', 'notThere', 'unknown'],
-  lowered: ['nearby', 'none', 'notThere', 'unknown'],
-  smoother: ['nearby', 'none', 'unknown'],
+  lowered: ['nearby', 'none', 'unsure', 'notThere', 'unknown'],
+  smoother: ['nearby', 'none', 'unsure', 'unknown'],
   through: ['yes', 'no', 'unknown'],
   temporary: ['still', 'repaired', 'gone', 'unknown'],
   helpful: ['still', 'gone', 'unknown'],
@@ -37,6 +40,40 @@ export const QUESTION_OF: Record<AccessKind, QuestionId> = {
 };
 /** Answers that need her tap on the map: where the step-free way, the lowered kerb or ramp, or the smoother street is. */
 export const TAP_ANSWERS: ReadonlySet<string> = new Set(['wayAround', 'nearby']);
+/**
+ * A spot is asked about in at most two turns of three or four choices: the core question first (is it still there, or still like
+ * this), then a follow-up only when the answer needs one. Every answer is stored under the kind's question in QUESTION_OF.
+ */
+export const GROUPS = ['presence', 'condition', 'temporary', 'helpful', 'unseen'] as const;
+export type Group = (typeof GROUPS)[number];
+export const GROUP_OF: Record<AccessKind, Group> = {
+  steps: 'presence', kerb: 'presence', bollard: 'presence', gate: 'presence',
+  uneven: 'condition', steep: 'condition', narrow: 'condition', noWheelchair: 'condition',
+  broken: 'temporary', works: 'temporary', obstacle: 'temporary',
+  handrail: 'helpful', ramp: 'helpful', crossing: 'helpful', bench: 'helpful', toilets: 'helpful', lighting: 'helpful',
+  unseen: 'unseen',
+};
+/** The core question's answers, three per group. */
+export const CORE = {
+  presence: ['still', 'gone', 'unknown'],
+  condition: ['still', 'gone', 'unknown'],
+  temporary: ['still', 'repaired', 'unknown'],
+  helpful: ['still', 'gone', 'unknown'],
+  unseen: ['nothing', 'something', 'unknown'],
+} as const;
+export type CoreAnswer = (typeof CORE)[Group][number];
+/** The follow-up after "Still there" for the kinds that need one, and its answers; the other kinds end with their core answer. */
+export const FOLLOW_OF = { steps: 'getPast', kerb: 'lowered', uneven: 'smoother', steep: 'smoother', narrow: 'through', bollard: 'through', gate: 'through' } as const satisfies Partial<Record<AccessKind, QuestionId>>;
+export type FollowKind = keyof typeof FOLLOW_OF;
+export const FOLLOWS = {
+  getPast: ['wayAround', 'handrail', 'help', 'noWay'],
+  lowered: ['nearby', 'none', 'unsure'],
+  smoother: ['nearby', 'none', 'unsure'],
+  through: ['yes', 'no', 'unknown'],
+} as const satisfies { [Q in (typeof FOLLOW_OF)[FollowKind]]: readonly AnswerOf<Q>[] };
+/** What she can say something is, in two groups of four: something in the way, or something that helps. */
+export const KIND_GROUPS = { blocks: ['steps', 'kerb', 'narrow', 'other'], helps: ['bench', 'toilet', 'ramp', 'handrail'] } as const satisfies Record<string, readonly EditKind[]>;
+export type KindGroup = keyof typeof KIND_GROUPS;
 /** What a model outlined at a flagged spot, in the words a visitor knows. */
 export type Subject = 'steps' | 'kerb' | 'path';
 
@@ -105,6 +142,8 @@ export type Script = {
     kinds: Record<EditKind, string>;
     /** The same kinds inside a line, such as "a kerb". */
     added: Record<EditKind, string>;
+    /** The two groups of kinds, as chips before the kinds themselves: something in the way, something that helps. */
+    groups: Record<KindGroup, string>;
     /** Message languages by code: en, es, ko, qu, other. */
     languages: Record<string, string>;
   };
@@ -119,6 +158,8 @@ export type Script = {
     /** The same for a walk built from OpenStreetMap alone, before any street photo is read. */
     mapOnly: (s: WalkSlots) => string;
     altitude: (s: { metres: number }) => string;
+    /** The walk once she has answered for some spots: how many are still to check. total is the number of spots. */
+    checked: (s: { metres: number; left: number; total: number }) => string;
     chips: { check: string; messages: string; missed: string; note: string };
   };
   /** Whatever she selects becomes the subject: the walk as a whole, a spot, an outline on a photo, a street. next says what she can do. */
@@ -143,6 +184,14 @@ export type Script = {
     osmToo: (s: ItemSlots) => string;
     /** Where the photo would be, on such a walk. */
     noStreetPhotos: string;
+    /** The core question about a spot, by its kind: is it still there, or still like this. */
+    core: Record<AccessKind, string>;
+    /** The core answers as chips. Spanish agrees with the kind, such as "Siguen ahí" for steps. */
+    coreAnswers: { [G in Group]: (kind: AccessKind) => Record<(typeof CORE)[G][number], string> };
+    /** Said after a core answer that ends the item. */
+    coreSaid: { gone: string; notAnymore: string; repaired: string; stillPresence: string; stillHelpful: string; goneHelpful: string; nothing: string; unknown: string };
+    /** The follow-up after "Still there", by kind; for a part with no photos, after "There's something", what it is. Said lines are said[question]. */
+    follow: Record<FollowKind | 'unseen', string>;
     ask: Record<QuestionId, (s: ItemSlots) => string>;
     /** The answers as chips. */
     answers: { [Q in QuestionId]: Record<AnswerOf<Q>, string> };
@@ -160,7 +209,13 @@ export type Script = {
   around: { offer: (s: { metres: number }) => string; show: string; ask: string; kept: string; dropped: string; unchecked: string; none: string; offline: string;
     /** OpenStreetMap shows no steps on the walk, so there is nothing to go around. */
     same: string;
-    chips: { show: string; works: string; notWorks: string; unknown: string; better: string; notNow: string } };
+    chips: { show: string; works: string; notWorks: string; unknown: string; better: string; notNow: string };
+    /** After "There's a way around" at steps OpenStreetMap has one for, shown on the map: is hers the same? */
+    isThisIt: string; isThisItChips: { yes: string; no: string };
+    /** After "No way around" or "I'm not sure" there: offer, then these. */
+    offerChips: { show: string; notNow: string };
+    /** The map control that shows or hides the way around; not an answer. */
+    mapToggle: string };
   /** Another street she adds: she taps its start and end, and it is routed on foot. */
   street: { offer: string; start: string; end: string; routing: string; found: (s: { metres: number; osm: number }) => string; kept: (s: { street: string }) => string; failed: string; offline: string;
     busy: string; tooFar: string; tooLong: string; removed: (s: { street: string }) => string;
@@ -233,6 +288,8 @@ export type Script = {
     kindAsk: string;
     /** She tapped a spot on the map: what is there? The kind chips follow. */
     here: (s: SpotSlots) => string;
+    /** The model found where her words are about, but they name no kind: what is it? where carries its preposition, such as "near the Santa Catalina monastery". */
+    found: (s: { where: string }) => string;
     notFound: string;
     added: (s: ProposeSlots) => string;
     chips: { yes: string; no: string; done: string };
@@ -281,6 +338,8 @@ const places_es = (n: number) => n === 1 ? 'en un lugar' : n <= 4 ? 'en algunos 
 const de = (x: string) => /^el /.test(x) ? `del ${x.slice(3)}` : `de ${x}`;
 const ASK_EN = 'That’s fine. Your note asks visitors to check with you.';
 const ASK_ES = 'No pasa nada. Tu nota les pide a los visitantes que te consulten.';
+/** Kinds whose Spanish words are plural, so the answers agree: "Siguen ahí" for escalones. */
+const PLURAL_ES: ReadonlySet<AccessKind> = new Set(['steps', 'works', 'toilets', 'lighting']);
 
 const en: Script = {
   words: {
@@ -314,8 +373,9 @@ const en: Script = {
       crossing: n => `crossings ${places_en(n)}`, bollard: n => `posts or bollards ${places_en(n)}`, footway: n => `pavement ${places_en(n)}`,
       cobblestones: n => `cobblestones ${places_en(n)}`, road: n => `the road ${places_en(n)}`,
     },
-    kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow place', other: 'Something else' },
-    added: { steps: 'steps', kerb: 'a kerb', narrow: 'a narrow place', other: 'something in the way' },
+    kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow place', other: 'Something else', bench: 'Bench', toilet: 'Toilet', ramp: 'Ramp', handrail: 'Handrail' },
+    added: { steps: 'steps', kerb: 'a kerb', narrow: 'a narrow place', other: 'something in the way', bench: 'a bench', toilet: 'a toilet', ramp: 'a ramp', handrail: 'a handrail' },
+    groups: { blocks: 'Something in the way', helps: 'Something that helps' },
     languages: { en: 'English', es: 'Spanish', ko: 'Korean', qu: 'Quechua', other: 'another language' },
   },
   home: {
@@ -336,6 +396,7 @@ const en: Script = {
     walk: s => s.spots === 0 ? `It’s about ${about(s.metres)} m, and nothing looks like a problem.` : `It’s about ${about(s.metres)} m, with ${count_en(s.spots, 'spot', 'spots')} that might give visitors trouble.`,
     mapOnly: s => s.osm ? `It’s about ${about(s.metres)} m on foot. OpenStreetMap shows ${count_en(s.osm, 'thing', 'things')} to check.` : `It’s about ${about(s.metres)} m on foot. Tell me what visitors meet on the way.`,
     altitude: s => `It’s about ${s.metres.toLocaleString('en')} m up here, so walking tires visitors faster.`,
+    checked: s => s.left === 0 ? `It’s about ${about(s.metres)} m, and you’ve checked every spot.` : s.left === 1 ? `It’s about ${about(s.metres)} m. One spot still to check.` : `It’s about ${about(s.metres)} m. ${cap(count_en(s.left, 'spot', 'spots'))} still to check.`,
     chips: { check: 'Go through the walk', messages: 'Read messages', missed: 'Add something I know', note: 'See the route note' },
   },
   select: {
@@ -356,6 +417,30 @@ const en: Script = {
     osm: s => `OpenStreetMap shows ${s.what} here, ${s.where}.`,
     osmToo: s => `OpenStreetMap adds: ${s.osm}.`,
     noStreetPhotos: 'From the map',
+    core: {
+      steps: 'Are these steps still there?', kerb: 'Is this kerb still there?', bollard: 'Is the post still there?', gate: 'Is the gate still there?',
+      uneven: 'Is the ground still uneven here?', steep: 'Is it still steep here?', narrow: 'Is it still narrow here?', noWheelchair: 'Is that still right?',
+      broken: 'Is the paving still broken?', works: 'Are the works still there?', obstacle: 'Is it still in the way?',
+      handrail: 'Is the handrail still there?', ramp: 'Is the ramp still there?', crossing: 'Is the crossing still there?', bench: 'Is the bench still there?', toilets: 'Are the toilets still there?', lighting: 'Are the lights still there?',
+      unseen: 'Do you know what’s here?',
+    },
+    coreAnswers: {
+      presence: () => ({ still: 'Still there', gone: 'Not there now', unknown: 'I’m not sure' }),
+      condition: () => ({ still: 'Yes, still', gone: 'Not anymore', unknown: 'I’m not sure' }),
+      temporary: () => ({ still: 'Still there', repaired: 'Fixed now', unknown: 'I’m not sure' }),
+      helpful: () => ({ still: 'Still there', gone: 'Gone', unknown: 'I’m not sure' }),
+      unseen: () => ({ nothing: 'Nothing in the way', something: 'There’s something', unknown: 'I’m not sure' }),
+    },
+    coreSaid: {
+      gone: 'Thanks. I’ve taken it off your map.', notAnymore: 'Good. I’ve taken it off your map.', repaired: 'Good news. I’ve marked it fixed today.',
+      stillPresence: 'Okay, it stays on your map.', stillHelpful: 'Good. It’s in your note.', goneHelpful: 'Okay, I’ve taken it out of your note.',
+      nothing: 'Got it. Your note says nothing’s in the way, from what you know.', unknown: ASK_EN,
+    },
+    follow: {
+      steps: 'How do visitors get past them?', kerb: 'Is there a lowered kerb or a ramp nearby?', uneven: 'Is there a smoother way nearby?', steep: 'Is there an easier way nearby?',
+      narrow: 'Can a wheelchair or a stroller get through?', bollard: 'Can a wheelchair or a stroller get past it?', gate: 'Can a wheelchair or a stroller get through it?',
+      unseen: 'What is it?',
+    },
     ask: {
       getPast: () => 'How do your visitors get past these steps?',
       lowered: () => 'Is there a lowered kerb or a ramp nearby?',
@@ -367,9 +452,9 @@ const en: Script = {
       mention: () => 'Mention this in your route note?',
     },
     answers: {
-      getPast: { wayAround: 'There’s a way around', handrail: 'There’s a handrail', help: 'We help visitors here', noWay: 'No way around', notThere: 'There are no steps', unknown: 'I’m not sure' },
-      lowered: { nearby: 'There’s one nearby', none: 'None nearby', notThere: 'There’s no kerb', unknown: 'I’m not sure' },
-      smoother: { nearby: 'There’s a smoother way', none: 'No smoother way', unknown: 'I’m not sure' },
+      getPast: { wayAround: 'There’s a way around', handrail: 'There’s a handrail', help: 'We help them', noWay: 'No way around', notThere: 'There are no steps', unknown: 'I’m not sure' },
+      lowered: { nearby: 'Yes, nearby', none: 'No', unsure: 'I’m not sure', notThere: 'There’s no kerb', unknown: 'I’m not sure' },
+      smoother: { nearby: 'Yes, nearby', none: 'No', unsure: 'I’m not sure', unknown: 'I’m not sure' },
       through: { yes: 'Yes, it gets through', no: 'No, it can’t', unknown: 'I’m not sure' },
       temporary: { still: 'Still there', repaired: 'It’s been fixed', gone: 'It’s gone', unknown: 'I’m not sure' },
       helpful: { still: 'Still there', gone: 'It’s gone', unknown: 'I’m not sure' },
@@ -388,12 +473,14 @@ const en: Script = {
       lowered: {
         nearby: () => 'Got it. I’ve marked where it is.',
         none: () => 'Okay. Your note says there’s no ramp nearby.',
+        unsure: () => ASK_EN,
         notThere: () => 'Thanks. I’ve taken it off your map.',
         unknown: () => ASK_EN,
       },
       smoother: {
         nearby: () => 'Got it. I’ve marked the smoother way.',
         none: () => 'Okay. Your note says there’s no smoother way.',
+        unsure: () => ASK_EN,
         unknown: () => ASK_EN,
       },
       through: {
@@ -436,6 +523,9 @@ const en: Script = {
     offline: 'I need internet to look for a way around.',
     same: 'OpenStreetMap doesn’t show any steps on this walk, so there’s nothing to go around.',
     chips: { show: 'Show the way around', works: 'It works', notWorks: 'It doesn’t work', unknown: 'I’m not sure', better: 'I know a better way', notNow: 'Not now' },
+    isThisIt: 'Is it this one, the way OpenStreetMap suggests?', isThisItChips: { yes: 'Yes, that one', no: 'No, another way' },
+    offerChips: { show: 'Show me', notNow: 'Not now' },
+    mapToggle: 'Way around',
   },
   street: {
     offer: 'Do visitors use other streets too? You can add one.',
@@ -504,6 +594,7 @@ const en: Script = {
     propose: s => `So, ${s.kind} ${s.where}. Add it?`,
     kindAsk: 'What’s there?',
     here: s => `What’s at ${s.spot}?`,
+    found: s => `Got it, ${s.where}. What is it?`,
     notFound: 'I couldn’t tell where. Can you tap it on the map?',
     added: s => `Added ${s.kind} ${s.where}.`,
     chips: { yes: 'Add it', no: 'Not quite', done: 'That’s all' },
@@ -563,8 +654,9 @@ const es: Script = {
       crossing: n => `cruces peatonales ${places_es(n)}`, bollard: n => `postes o bolardos ${places_es(n)}`, footway: n => `acera ${places_es(n)}`,
       cobblestones: n => `empedrado ${places_es(n)}`, road: n => `calzada ${places_es(n)}`,
     },
-    kinds: { steps: 'Escalones', kerb: 'Bordillo', narrow: 'Paso angosto', other: 'Otra cosa' },
-    added: { steps: 'escalones', kerb: 'un bordillo', narrow: 'un paso angosto', other: 'algo que estorba' },
+    kinds: { steps: 'Escalones', kerb: 'Bordillo', narrow: 'Paso angosto', other: 'Otra cosa', bench: 'Banca', toilet: 'Baño', ramp: 'Rampa', handrail: 'Pasamanos' },
+    added: { steps: 'escalones', kerb: 'un bordillo', narrow: 'un paso angosto', other: 'algo que estorba', bench: 'una banca', toilet: 'un baño', ramp: 'una rampa', handrail: 'un pasamanos' },
+    groups: { blocks: 'Algo que estorba', helps: 'Algo que ayuda' },
     languages: { en: 'inglés', es: 'español', ko: 'coreano', qu: 'quechua', other: 'otro idioma' },
   },
   home: {
@@ -585,6 +677,7 @@ const es: Script = {
     walk: s => s.spots === 0 ? `Son unos ${about(s.metres)} m y nada parece un problema.` : `Son unos ${about(s.metres)} m, con ${count_es(s.spots, 'punto', 'puntos')} que podrían complicar a los visitantes.`,
     mapOnly: s => s.osm ? `Son unos ${about(s.metres)} m a pie. Según OpenStreetMap, hay ${count_es(s.osm, 'cosa', 'cosas', true)} por revisar.` : `Son unos ${about(s.metres)} m a pie. Cuéntame qué encuentran los visitantes en el camino.`,
     altitude: s => `Aquí estamos a unos ${s.metres.toLocaleString('es')} m de altura, así que caminar cansa más.`,
+    checked: s => s.left === 0 ? `Son unos ${about(s.metres)} m y ya revisaste todos los puntos.` : s.left === 1 ? `Son unos ${about(s.metres)} m. Queda un punto por revisar.` : `Son unos ${about(s.metres)} m. Quedan ${count_es(s.left, 'punto', 'puntos')} por revisar.`,
     chips: { check: 'Revisar el recorrido', messages: 'Leer mensajes', missed: 'Agregar algo que sé', note: 'Ver la nota de la ruta' },
   },
   select: {
@@ -605,6 +698,30 @@ const es: Script = {
     osm: s => `Según OpenStreetMap, aquí hay ${s.what}, ${s.where}.`,
     osmToo: s => `Además, según OpenStreetMap: ${s.osm}.`,
     noStreetPhotos: 'Del mapa',
+    core: {
+      steps: '¿Siguen ahí estos escalones?', kerb: '¿Sigue ahí este bordillo?', bollard: '¿Sigue ahí el poste?', gate: '¿Sigue ahí el portón?',
+      uneven: '¿Sigue disparejo el suelo aquí?', steep: '¿Sigue empinado aquí?', narrow: '¿Sigue angosto aquí?', noWheelchair: '¿Sigue siendo así?',
+      broken: '¿Sigue rota la acera?', works: '¿Siguen ahí las obras?', obstacle: '¿Sigue estorbando?',
+      handrail: '¿Sigue ahí el pasamanos?', ramp: '¿Sigue ahí la rampa?', crossing: '¿Sigue ahí el cruce?', bench: '¿Sigue ahí la banca?', toilets: '¿Siguen ahí los baños?', lighting: '¿Siguen ahí las luces?',
+      unseen: '¿Sabes qué hay aquí?',
+    },
+    coreAnswers: {
+      presence: kind => PLURAL_ES.has(kind) ? { still: 'Siguen ahí', gone: 'Ya no están', unknown: 'No sé' } : { still: 'Sigue ahí', gone: 'Ya no está', unknown: 'No sé' },
+      condition: () => ({ still: 'Sí, sigue así', gone: 'Ya no', unknown: 'No sé' }),
+      temporary: kind => PLURAL_ES.has(kind) ? { still: 'Siguen ahí', repaired: 'Ya las arreglaron', unknown: 'No sé' } : { still: 'Sigue ahí', repaired: 'Ya lo arreglaron', unknown: 'No sé' },
+      helpful: kind => PLURAL_ES.has(kind) ? { still: 'Siguen ahí', gone: 'Ya no están', unknown: 'No sé' } : { still: 'Sigue ahí', gone: 'Ya no está', unknown: 'No sé' },
+      unseen: () => ({ nothing: 'Nada que estorbe', something: 'Hay algo', unknown: 'No sé' }),
+    },
+    coreSaid: {
+      gone: 'Gracias. Ya lo quité de tu mapa.', notAnymore: 'Bien. Ya lo quité de tu mapa.', repaired: 'Buena noticia. Lo marqué como arreglado hoy.',
+      stillPresence: 'De acuerdo, sigue en tu mapa.', stillHelpful: 'Bien. Está en tu nota.', goneHelpful: 'De acuerdo, ya lo saqué de tu nota.',
+      nothing: 'Entendido. Tu nota dice que, por lo que sabes, nada estorba.', unknown: ASK_ES,
+    },
+    follow: {
+      steps: '¿Cómo pasan los visitantes?', kerb: '¿Hay un bordillo rebajado o una rampa cerca?', uneven: '¿Hay un camino más parejo cerca?', steep: '¿Hay un camino más fácil cerca?',
+      narrow: '¿Pasa una silla de ruedas o un coche de bebé?', bollard: '¿Pasa una silla de ruedas o un coche de bebé junto al poste?', gate: '¿Pasa una silla de ruedas o un coche de bebé por el portón?',
+      unseen: '¿Qué es?',
+    },
     ask: {
       getPast: () => '¿Cómo pasa por aquí quien no puede subir escalones?',
       lowered: () => '¿Hay un bordillo rebajado o una rampa cerca?',
@@ -616,9 +733,9 @@ const es: Script = {
       mention: () => '¿Lo menciono en tu nota de la ruta?',
     },
     answers: {
-      getPast: { wayAround: 'Hay otro camino', handrail: 'Hay pasamanos', help: 'Aquí ayudamos a los visitantes', noWay: 'No hay otro camino', notThere: 'No hay escalones ahí', unknown: 'No sé' },
-      lowered: { nearby: 'Hay uno cerca', none: 'No hay ninguno cerca', notThere: 'No hay bordillo ahí', unknown: 'No sé' },
-      smoother: { nearby: 'Sí, hay una cerca', none: 'No hay ninguna', unknown: 'No sé' },
+      getPast: { wayAround: 'Hay otro camino', handrail: 'Hay pasamanos', help: 'Los ayudamos', noWay: 'No hay otro camino', notThere: 'No hay escalones ahí', unknown: 'No sé' },
+      lowered: { nearby: 'Sí, cerca', none: 'No', unsure: 'No sé', notThere: 'No hay bordillo ahí', unknown: 'No sé' },
+      smoother: { nearby: 'Sí, cerca', none: 'No', unsure: 'No sé', unknown: 'No sé' },
       through: { yes: 'Sí, pasa', no: 'No, no pasa', unknown: 'No sé' },
       temporary: { still: 'Sigue ahí', repaired: 'Ya lo arreglaron', gone: 'Ya no está', unknown: 'No sé' },
       helpful: { still: 'Sigue ahí', gone: 'Ya no está', unknown: 'No sé' },
@@ -637,12 +754,14 @@ const es: Script = {
       lowered: {
         nearby: () => 'Entendido. Ya marqué dónde está.',
         none: () => 'De acuerdo. Tu nota dice que no hay rampa cerca.',
+        unsure: () => ASK_ES,
         notThere: () => 'Gracias. Ya lo quité de tu mapa.',
         unknown: () => ASK_ES,
       },
       smoother: {
         nearby: () => 'Entendido. Ya marqué dónde está.',
         none: () => 'De acuerdo. Tu nota dice que no hay una más pareja cerca.',
+        unsure: () => ASK_ES,
         unknown: () => ASK_ES,
       },
       through: {
@@ -685,6 +804,9 @@ const es: Script = {
     offline: 'Necesito internet para buscar otro camino.',
     same: 'OpenStreetMap no muestra escalones en este recorrido, así que no hay nada que evitar.',
     chips: { show: 'Ver el otro camino', works: 'Sí sirve', notWorks: 'No sirve', unknown: 'No sé', better: 'Conozco uno mejor', notNow: 'Ahora no' },
+    isThisIt: '¿Es este, el que sugiere OpenStreetMap?', isThisItChips: { yes: 'Sí, ese', no: 'No, otro camino' },
+    offerChips: { show: 'Muéstramelo', notNow: 'Ahora no' },
+    mapToggle: 'Otro camino',
   },
   street: {
     offer: '¿Tus visitantes usan otras calles? Puedes agregar una.',
@@ -753,6 +875,7 @@ const es: Script = {
     propose: s => `Entonces, ${s.kind} ${s.where}. ¿Agrego eso a tu mapa?`,
     kindAsk: '¿Qué hay ahí?',
     here: s => `¿Qué hay en ${s.spot}?`,
+    found: s => `Entendido, ${s.where}. ¿Qué es?`,
     notFound: 'No supe decir dónde es. ¿Lo tocas en el mapa?',
     added: s => `Listo: ${s.kind} ${s.where}.`,
     chips: { yes: 'Agrégalo', no: 'No del todo', done: 'Eso es todo' },

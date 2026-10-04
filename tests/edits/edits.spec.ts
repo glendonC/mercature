@@ -44,7 +44,7 @@ test('a saved record survives a round trip and a damaged one is refused', () => 
   expect(parseEdits(JSON.stringify(edits), 'cusco-qorikancha')).toEqual(edits);
   expect(() => parseEdits(JSON.stringify(edits), 'other-place')).toThrow();
   for (const damaged of [
-    { ...edits, added: [{ ...edits.added[0], kind: 'ramp' }] },
+    { ...edits, added: [{ ...edits.added[0], kind: 'lift' }] },
     { ...edits, added: [{ ...edits.added[0], stretch: -1 }] },
     { ...edits, added: [{ ...edits.added[0], note: { text: 'x', language: 'fr' } }] },
     { ...edits, added: [edits.added[0], edits.added[0]] },

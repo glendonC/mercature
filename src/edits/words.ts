@@ -15,6 +15,10 @@ export const KIND_WORDS: Readonly<Record<EditKind, { en: string; es: string; ko:
   kerb: { en: 'a kerb', es: 'un bordillo', ko: '연석', plural: false },
   narrow: { en: 'a narrow part', es: 'un paso angosto', ko: '좁은 구간', plural: false },
   other: { en: 'something in the way', es: 'algo que estorba', ko: '장애물', plural: false },
+  bench: { en: 'a bench', es: 'una banca', ko: '벤치', plural: false },
+  toilet: { en: 'a toilet', es: 'un baño', ko: '화장실', plural: false },
+  ramp: { en: 'a ramp', es: 'una rampa', ko: '경사로', plural: false },
+  handrail: { en: 'a handrail', es: 'un pasamanos', ko: '난간', plural: false },
 };
 
 /** Interface words for the editing controls. One line per idea, no slogans. */
@@ -22,7 +26,7 @@ export const EDIT_WORDS = {
   addTitle: 'Add a spot you know about',
   addWhere: (where: string, from: number, to: number) => `${where}, ${from} to ${to} m`,
   kindLabel: 'What is there',
-  kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow', other: 'Other' } as Record<EditKind, string>,
+  kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow', other: 'Other', bench: 'Bench', toilet: 'Toilet', ramp: 'Ramp', handrail: 'Handrail' } as Record<EditKind, string>,
   noteLabel: 'Your note',
   notePlaceholder: 'What a visitor should know',
   noteKept: 'Kept on this device. Visitors see it in the route note.',
@@ -64,6 +68,10 @@ const FIXED_SUBJECT: Readonly<Record<EditKind, { en: string; es: string; esDone:
   kerb: { en: 'the kerb', es: 'el bordillo', esDone: 'arreglado', ko: '연석' },
   narrow: { en: 'the narrow part', es: 'el paso angosto', esDone: 'arreglado', ko: '좁은 구간' },
   other: { en: 'what was in the way', es: 'el obstáculo', esDone: 'arreglado', ko: '장애물' },
+  bench: { en: 'the bench', es: 'la banca', esDone: 'arreglada', ko: '벤치' },
+  toilet: { en: 'the toilet', es: 'el baño', esDone: 'arreglado', ko: '화장실' },
+  ramp: { en: 'the ramp', es: 'la rampa', esDone: 'arreglada', ko: '경사로' },
+  handrail: { en: 'the handrail', es: 'el pasamanos', esDone: 'arreglado', ko: '난간' },
 };
 
 /** 을 after a syllable that ends in a consonant, 를 after one that ends in a vowel. */

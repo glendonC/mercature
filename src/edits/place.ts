@@ -18,6 +18,10 @@ const SPOT: Readonly<Record<EditKind, { en: string; es: string; sentence: string
   kerb: { en: 'Kerb', es: 'Bordillo', sentence: 'A kerb to cross', aliases: { en: ['kerb', 'curb', 'high curb', 'no ramp'], es: ['bordillo', 'sardinel', 'vereda alta', 'sin rampa'], ko: ['연석', '턱', '경사로 없음'] } },
   narrow: { en: 'Narrow part', es: 'Paso angosto', sentence: 'A narrow part of the way', aliases: { en: ['narrow', 'too narrow', 'tight passage', 'does not fit'], es: ['angosto', 'estrecho', 'no cabe', 'paso estrecho'], ko: ['좁음', '좁은 길', '통과 불가'] } },
   other: { en: 'Something in the way', es: 'Algo que estorba', sentence: 'Something in the way', aliases: { en: ['obstacle', 'blocked', 'in the way'], es: ['obstáculo', 'bloqueado', 'estorbo'], ko: ['장애물', '막힘'] } },
+  bench: { en: 'Bench', es: 'Banca', sentence: 'A bench to rest on', aliases: { en: ['bench', 'seat', 'somewhere to sit', 'rest'], es: ['banca', 'banco', 'asiento', 'descansar'], ko: ['벤치', '의자', '쉬는 곳'] } },
+  toilet: { en: 'Toilet', es: 'Baño', sentence: 'A toilet', aliases: { en: ['toilet', 'toilets', 'restroom', 'bathroom'], es: ['baño', 'baños', 'servicios higiénicos'], ko: ['화장실'] } },
+  ramp: { en: 'Ramp', es: 'Rampa', sentence: 'A ramp', aliases: { en: ['ramp', 'step-free'], es: ['rampa', 'sin escalones'], ko: ['경사로'] } },
+  handrail: { en: 'Handrail', es: 'Pasamanos', sentence: 'A handrail', aliases: { en: ['handrail', 'railing', 'rail'], es: ['pasamanos', 'baranda', 'barandilla'], ko: ['난간', '손잡이'] } },
 };
 
 const round = (value: number) => Math.round(value);

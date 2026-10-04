@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
-import { EDIT_KINDS, NO_NOTE, addSpot, answerOf, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteLangOf, noteOf, ownNote, removeSpot, saveEdits, setAnswer, setNote, type EditKind, type Edits } from '../edits/store';
+import { NO_NOTE, addSpot, helps, answerOf, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteLangOf, noteOf, ownNote, removeSpot, saveEdits, setAnswer, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
 import { KIND_WORDS } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
@@ -9,22 +9,23 @@ import { ROUTE_PLACES } from '../site/registry';
 import type { RoutePlace } from '../site/route';
 import { useLanguage } from '../i18n';
 import { fromRecord } from '../i18n/records';
+import { esDe } from '../i18n/names';
 import Menu, { type MenuPlace } from '../home/Menu';
 import { ANSWER_NOTE, AROUND_NOTE, COPY, KIND_NOTE, NOTE, REPLY, REPLY_MORE, STILL_NOTE, SUBJECTS, THING, THROUGH_NOTE, enPlace, esPlace, guessLanguage, where, type Subject, type VisitorLang, type Where } from '../destinations/copy';
 import { DESTINATIONS, type Destination } from '../destinations/data';
 import { EXAMPLES } from '../destinations/examples';
-import RouteMap, { type MapHandle, type Marker, type MarkerState } from '../destinations/RouteMap';
+import RouteMap, { type MapHandle, type Marker, type MarkerIcon, type MarkerState } from '../destinations/RouteMap';
 import type { Lens } from '../destinations/lens';
 import { addStreet, buildStreet, loadLines, mapPaths, removeStreet, saveLines, setCheck, wayAroundOf, type NewStreet } from '../routes/lines';
 import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
-import { BackIcon, ChevronIcon, NoteIcon, SkipIcon, iconFor } from '../ui/icons';
+import { BackIcon, ChevronIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
 import { ChangeRow, Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
-import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, about, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
+import { CORE, FOLLOWS, FOLLOW_OF, GROUP_OF, KIND_GROUPS, QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, about, type AccessKind, type Answer, type CoreAnswer, type FollowKind, type ItemSlots, type KindGroup, type QuestionId, type WalkSlots } from './script';
 import { Bot, Options, type Chip } from './Say';
 import './guide.css';
 import './guide-screen.css';
@@ -33,12 +34,15 @@ import './guide-screen.css';
 type Target = { kind: 'spot'; id: string } | { kind: 'stretch'; index: number } | { kind: 'landmark'; id: string } | { kind: 'added'; id: string };
 /** One item of the walk check: a flagged spot, a stretch no photo shows, or another kind a model marked near the walk. */
 type Item = { key: string; access: AccessKind; spot: Spot } | { key: string; access: AccessKind; mark: MarkKind; count: number; points: Point[]; viewId: string | null };
-/** An edit the guide offers from her words or her tap; nothing changes on her map until she confirms it. */
-type Proposal = { mode: 'add' | 'note'; text: string; target: Target; kind: EditKind; from: Step };
+/** An edit the guide offers from her words or her tap; nothing changes on her map until she confirms it. With no kind yet, she picks one, a group first. */
+type Proposal = { mode: 'add' | 'note'; text: string; target: Target; kind?: EditKind; group?: KindGroup; from: Step };
 type Step =
   | { id: 'hello' }
-  /** tapping: an answer that needs her tap on the map; kind: she said something else is there, and picks what. */
-  | { id: 'check'; at: number; tapping?: Answer; kind?: true }
+  /**
+   * follow: the follow-up after her core answer; kind: she said something is where no photo shows, and picks what in this group;
+   * tapping: an answer that needs her tap on the map; around: OpenStreetMap's way around these steps, asked as hers (match) or offered (offer).
+   */
+  | { id: 'check'; at: number; follow?: true; kind?: KindGroup; tapping?: Answer; around?: 'match' | 'offer' }
   | { id: 'checkEnd' }
   | { id: 'message'; at: number; another?: boolean }
   /** ask: nobody could place the message, so the reply asks the visitor where it was. */
@@ -78,8 +82,24 @@ function accessOfSpot(spot: Spot): AccessKind {
 const ACCESS_OF_MARK: Partial<Record<MarkKind, AccessKind>> = { steps: 'steps', kerb: 'kerb', broken: 'broken', crossing: 'crossing', bollard: 'bollard', cobblestones: 'uneven' };
 /** Kinds near the walk the check goes through after the flagged spots, in the order a person would. Kerbs beside the walk are context, not a question. */
 const CHECK_KINDS: readonly MarkKind[] = MARK_ORDER.filter(kind => ACCESS_OF_MARK[kind] && kind !== 'kerb');
-/** What a model's issue type suggests she would call it; she can change it before it goes on her map. */
-const kindOfCategory = (category: string | null): EditKind => category === 'steps-or-slope' ? 'steps' : category === 'path-blocked' ? 'narrow' : 'other';
+/** The map icon of something that helps, which she can add. */
+const HELP_ICON: Partial<Record<EditKind, MarkerIcon>> = { bench: 'bench', toilet: 'toilets', ramp: 'ramp', handrail: 'handrail' };
+/** The words that name a kind in her own text, in English, Spanish and Korean. */
+const KIND_NAMES: Record<EditKind, RegExp> = {
+  steps: /\b(steps?|stairs?|staircase|escal[oó]n(es)?|gradas?|escaleras?)\b|계단/iu,
+  kerb: /\b(kerbs?|curbs?|bordillos?|sardinel(es)?)\b|연석/iu,
+  narrow: /\b(narrow|angost[oa]s?|estrech[oa]s?)\b|좁은/iu,
+  other: /\b(obstacles?|obst[aá]culos?|blocked|bloquead[oa])\b|장애물/iu,
+  bench: /\b(benches|bench|bancas?|bancos?)\b|벤치/iu,
+  toilet: /\b(toilets?|restrooms?|bathrooms?|ba[nñ]os?)\b|화장실/iu,
+  ramp: /\b(ramps?|rampas?)\b|경사로/iu,
+  handrail: /\b(handrails?|railings?|pasamanos|barandas?|barandillas?)\b|난간/iu,
+};
+/** The kind her words name, when they name exactly one, such as a bench in "There is a bench to rest"; otherwise she picks it. */
+function kindIn(text: string): EditKind | undefined {
+  const named = (Object.keys(KIND_NAMES) as EditKind[]).filter(kind => KIND_NAMES[kind].test(text));
+  return named.length === 1 ? named[0] : undefined;
+}
 /** The route-note line for her answer about one thing: a line, null when nothing goes in the note, undefined when the table has none. */
 function answerLine(question: string, answer: string, access: AccessKind, at: Where, m: number, language: VisitorLang): string | null | undefined {
   const table = (ANSWER_NOTE as Record<string, Record<string, Record<VisitorLang, (w: Where, m: number) => string> | null> | undefined>)[question];
@@ -163,6 +183,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const latestEdits = useRef(edits);
   const [ways, setWays] = useState(() => loadLines(data.id).lines);
   const around = wayAroundOf(data, ways);
+  /** How much longer the way around is than the walk, in whole metres. */
+  const aroundMetres = around ? Math.max(0, Math.round((around.lengthMetres ?? around.walkMetres) - around.walkMetres)) : 0;
+  // The way around shows on the map when she asks for it, while the guide asks about it, and once she says it works.
+  const [showAround, setShowAround] = useState(false);
   const [problem, setProblem] = useState('');
   // Before shows the walk as the data has it; Now with every change she made. The switch appears once there is a change.
   const [view, setView] = useState<'before' | 'now'>('now');
@@ -297,11 +321,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
   function nearOf(stretch: number): Where {
     const near = locate(stretch).landmark;
-    return near ? { en: `near ${near}`, es: `cerca de ${near}`, ko: near } : where(null, names);
+    return near ? { en: `near ${enPlace(near)}`, es: `cerca ${esDe(esPlace(near))}`, ko: near } : where(null, names);
   }
   function whereWords(target: Target): string {
     const spot = target.kind === 'spot' ? spotById(target.id) : null;
     if (spot) return whereOf(spot)[lang];
+    if (target.kind === 'landmark') { const name = nameOf(target); return lang === 'es' ? `cerca ${esDe(esPlace(name))}` : `near ${enPlace(name)}`; }
     const index = stretchesOf(target)[0];
     return index === undefined ? nameOf(target) : nearOf(index)[lang];
   }
@@ -342,11 +367,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const mapped = spot.findings.find(f => f.osm && f.label)?.label;
     return { n: at + 1, total: items.length, what: s.words.access[item.access], where: whereOf(spot)[lang], metres: Math.round(spot.from), photos: shown.length, when: monthOf(newest), osm: mapped ? fromRecord(mapped, lang) : '' };
   }
-  /** Her answer about one thing, on her map at once and said back on the way to the next. A place she names is a tap on the map. */
-  function answer(at: number, question: QuestionId, choice: Answer, stretch?: number) {
+  /** Her answer about one thing, on her map at once: taken off, fixed, or kept as she says it is. */
+  function record(at: number, question: QuestionId, choice: string, stretch?: number) {
     const item = items[at];
-    if (TAP_ANSWERS.has(choice) && stretch === undefined) { setStep({ id: 'check', at, tapping: choice }); setAck(''); return; }
-    if (question === 'unseen' && choice === 'something') { setStep({ id: 'check', at, kind: true }); setAck(''); return; }
     if ('spot' in item) {
       const stretches = item.spot.stretches;
       if (choice === 'repaired') edit(edits => markFixed(edits, stretches));
@@ -354,9 +377,45 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       commit(review => decide(review, stretches, choice === 'notThere' || choice === 'gone' ? 'not-barrier' : null));
     }
     edit(edits => setAnswer(edits, item.key, { question, answer: choice, stretch }));
-    const said = (s.check.said[question] as Record<string, (slots: ItemSlots) => string>)[choice];
-    if (resume) { const paused = resume; setResume(null); go(paused, said(slotsOf(item, at))); return; }
-    go(nextCheck(at), said(slotsOf(item, at)));
+  }
+  /** On to the next thing, or back to the step an edit paused, saying her answer back on the way. */
+  function onward(at: number, line: string) {
+    if (resume) { const paused = resume; setResume(null); go(paused, line); return; }
+    go(nextCheck(at), line);
+  }
+  /** Whether OpenStreetMap suggests a way around the steps this item is about. */
+  const aroundAt = (item: Item | undefined): boolean => !!item && 'spot' in item && around?.status === 'found' && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index)));
+  /** Her core answer about a spot, is it still there; "Still there" goes on to the follow-up where the kind has one. */
+  function answerCore(at: number, choice: CoreAnswer) {
+    const item = items[at];
+    if (!('spot' in item)) return;
+    if (choice === 'something') { go({ id: 'check', at, follow: true }); return; }
+    const group = GROUP_OF[item.access], question = QUESTION_OF[item.access], follow = (FOLLOW_OF as Partial<Record<AccessKind, QuestionId>>)[item.access];
+    const earlier = answerOf(latestEdits.current, item.key)?.answer;
+    // Steps or a kerb not there now are what "There are no steps" was: off her map. A follow-up answer she gave before is kept.
+    if (!(choice === 'still' && follow && earlier && (FOLLOWS[follow as keyof typeof FOLLOWS] as readonly string[]).includes(earlier))) record(at, question, choice === 'gone' && group === 'presence' ? 'notThere' : choice);
+    if (choice === 'still' && follow) { go({ id: 'check', at, follow: true }); return; }
+    const c = s.check.coreSaid;
+    const said = choice === 'unknown' ? c.unknown : choice === 'repaired' ? c.repaired : choice === 'nothing' ? c.nothing
+      : group === 'helpful' ? (choice === 'gone' ? c.goneHelpful : c.stillHelpful) : choice === 'gone' ? (group === 'condition' ? c.notAnymore : c.gone) : c.stillPresence;
+    if (choice === 'unknown' && aroundAt(item)) { go({ id: 'check', at, around: 'offer' }, said); return; }
+    onward(at, said);
+  }
+  /** Her follow-up answer, or her one answer about a kind along the walk. A place she names is a tap on the map. */
+  function answer(at: number, question: QuestionId, choice: Answer, stretch?: number) {
+    const item = items[at];
+    if (choice === 'wayAround' && stretch === undefined && aroundAt(item)) { go({ id: 'check', at, around: 'match' }); return; }
+    if (TAP_ANSWERS.has(choice) && stretch === undefined) { go({ id: 'check', at, tapping: choice }); return; }
+    record(at, question, choice, stretch);
+    const said = (s.check.said[question] as Record<string, (slots: ItemSlots) => string>)[choice](slotsOf(item, at));
+    if (choice === 'noWay' && aroundAt(item)) { go({ id: 'check', at, around: 'offer' }, said); return; }
+    onward(at, said);
+  }
+  /** Her word on the way around the steps OpenStreetMap suggests. That it works makes it her way around, so the note never says there is none. */
+  function checkAround(at: number, works: boolean | null, line: string) {
+    const next = setCheck(ways, works); setWays(next); if (!saveLines(next)) setProblem(s.notSaved);
+    if (works) record(at, 'getPast', 'wayAround');
+    onward(at, line);
   }
   /** Something else is on a stretch no photo shows, or where a model outlined something: her own spot, of the kind she picks. */
   function somethingThere(at: number, kind: EditKind) {
@@ -364,7 +423,23 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!('spot' in item)) return;
     const target: Target = { kind: 'spot', id: item.spot.id };
     edit(edits => setAnswer(addSpot(edits, item.spot.stretches[0], kind), item.key, { question: QUESTION_OF[item.access], answer: 'something' }));
-    go(nextCheck(at), s.missed.added({ kind: s.words.added[kind], where: whereWords(target) }));
+    onward(at, s.missed.added({ kind: s.words.added[kind], where: whereWords(target) }));
+  }
+  /** The chip she tapped for her saved answer about a thing, said back when she opens it again. */
+  function saidLabel(key: string): string | null {
+    const item = items.find(one => one.key === key), said = answerOf(edits, key);
+    if (!item || !said) return null;
+    if (!('spot' in item)) return (s.check.answers[said.question as QuestionId] as Record<string, string> | undefined)?.[said.answer] ?? null;
+    const follow = (FOLLOW_OF as Partial<Record<AccessKind, QuestionId>>)[item.access];
+    if (follow && (FOLLOWS[follow as keyof typeof FOLLOWS] as readonly string[]).includes(said.answer)) return (s.check.answers[follow] as Record<string, string>)[said.answer] ?? null;
+    const core = (s.check.coreAnswers[GROUP_OF[item.access]] as (kind: AccessKind) => Record<string, string>)(item.access);
+    return core[coreOf(item, said.answer)] ?? null;
+  }
+  /** Which core answer a saved answer comes under: a follow-up answer is "Still there", and "There are no steps" is "Not there now". */
+  function coreOf(item: Item, answer: string): string {
+    if (answer === 'notThere') return 'gone';
+    const follow = 'spot' in item ? (FOLLOW_OF as Partial<Record<AccessKind, QuestionId>>)[item.access] : undefined;
+    return follow && answer !== 'unknown' && (FOLLOWS[follow as keyof typeof FOLLOWS] as readonly string[]).includes(answer) ? 'still' : answer;
   }
 
   // Messages: hers first, newest first, then the examples, each brought by the guide.
@@ -436,19 +511,18 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const [noteLang, setNoteLang] = useState<VisitorLang>(lang);
   useEffect(() => setNoteLang(lang), [lang]);
 
-  /** Her own words: the model finds the spot and what kind of thing it is, and the guide offers the edit back. */
+  /** Her own words: the model finds the spot, her words name what is there or she picks it, and the guide offers the edit back. */
   const pendingWords = useRef('');
   async function hear(text: string) {
     const from = step;
     const current = step.id === 'check' ? items[step.at] : null;
     const here: Target | null = current && 'spot' in current ? { kind: 'spot', id: current.spot.id } : step.id === 'missed' ? step.here ?? null : null;
-    let found: Target | null = here, kind: EditKind = 'other';
+    let found: Target | null = here;
     if (ai && place) {
       setBusy('reading');
       try {
         const result = await understand(text, place);
         const first = result.candidates.map(targetOf).find((target): target is Target => !!target) ?? null;
-        kind = kindOfCategory(result.category);
         if (first && step.id !== 'check') found = first;
         else if (!found) found = first;
       } catch { /* she can still tap the spot */ }
@@ -456,7 +530,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     if (!found) { pendingWords.current = text; go({ id: 'missed' }, s.missed.notFound); return; }
     const mode = step.id === 'check' && same(found, here) ? 'note' : 'add';
-    go({ id: 'propose', proposal: { mode, text, target: found, kind, from } });
+    go({ id: 'propose', proposal: { mode, text, target: found, kind: kindIn(text), from } });
   }
   function confirm(proposal: Proposal) {
     const language = noteLangOf(guessLanguage(proposal.text));
@@ -467,14 +541,14 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       history.current.push(step); setStep(proposal.from); setAck(s.check.noted({ spot: spotWords(proposal.target) }));
       return;
     }
-    const stretch = stretchFor(proposal.target);
-    if (stretch === null) return;
-    const next = edit(edits => addSpot(edits, stretch, proposal.kind, ownNote(proposal.text, language)));
+    const stretch = stretchFor(proposal.target), kind = proposal.kind;
+    if (stretch === null || !kind) return;
+    const next = edit(edits => addSpot(edits, stretch, kind, ownNote(proposal.text, language)));
     const id = next.added[next.added.length - 1]?.id;
     if (id && proposal.text && authored) void remember(proposal.text, withEdits(authored, next, locate), id);
     history.current.push(step);
     setStep(card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from);
-    setAck(s.missed.added({ kind: s.words.added[proposal.kind], where: whereWords(proposal.target) }));
+    setAck(s.missed.added({ kind: s.words.added[kind], where: whereWords(proposal.target) }));
   }
 
   /** Natural selection: a spot tapped on the map, or a photo's place, becomes what the conversation is about. */
@@ -486,7 +560,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const at = itemOfTarget(target);
     if (at >= 0) { go({ id: 'check', at }); return; }
     const words = pendingWords.current; pendingWords.current = '';
-    if (words) { go({ id: 'propose', proposal: { mode: 'add', text: words, target, kind: 'other', from: { id: 'missed' } } }); return; }
+    if (words) { go({ id: 'propose', proposal: { mode: 'add', text: words, target, kind: kindIn(words), from: { id: 'missed' } } }); return; }
     go({ id: 'missed', here: target });
   }
   const routing = useRef<AbortController | null>(null);
@@ -542,6 +616,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const stretches = stretchesOf(target), fix = isFixed(edits, stretches);
     const spot = target.kind === 'spot' ? spotById(target.id) : null;
     if (spot?.kind === 'no-photos') return REPLY.open[language]();
+    // Something that helps, such as a bench she added, is no barrier to warn about.
+    if (!spot && helps(added(target.id)?.kind ?? 'other')) return REPLY.open[language]();
     const subject = spot ? subjectOf(spot) : subjectOfKind(added(target.id)?.kind ?? 'other');
     const at = spot ? whereOf(spot) : nearOf(stretches[0]), from = spot ? spot.from : data.stretches[stretches[0]].from;
     if (fix) return `${REPLY.check[language]().split('.')[0]}. ${fixedLine(spot ? kindOfSubject(subject) : added(target.id)!.kind, at, from, fix.at, language)}`;
@@ -555,24 +631,24 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const mine = before ? blankEdits : edits, gone = (stretches: readonly number[]) => !before && removed(stretches);
     const lines: string[] = [];
     let steps = false;
+    // The way around she says works goes beside the steps it avoids, in place of her own "There's a way around".
+    const avoided = around?.status === 'found' && !before && ways.check?.works ? walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index)))) : undefined;
+    const aroundLine = avoided && around ? AROUND_NOTE[language](whereOf(avoided), Math.max(0, Math.round(((around.lengthMetres ?? around.walkMetres) - around.walkMetres) / 10) * 10)) : '';
     for (const spot of walk.spots) {
       const fix = isFixed(mine, spot.stretches), subject = subjectOf(spot), said = answerOf(mine, spot.id), at = whereOf(spot), m = Math.round(spot.from);
       // Her answer says what is there now; a spot she has not answered keeps what the photos or OpenStreetMap show.
-      const line = said ? answerLine(said.question, said.answer, accessOfSpot(spot), at, m, language) : undefined;
+      const line = spot === avoided && said?.answer === 'wayAround' ? aroundLine : said ? answerLine(said.question, said.answer, accessOfSpot(spot), at, m, language) : undefined;
       if (fix) lines.push(fixedLine(kindOfSubject(subject), at, spot.from, fix.at, language));
       else if (gone(spot.stretches) || line === null) { /* off her map, or nothing for the note */ }
       else if (line) lines.push(line);
       else if (spot.kind === 'flagged') { lines.push((spot.findings.some(f => f.viewId) ? NOTE.barrier : NOTE.mapped)[language](subject, at, m)); steps ||= subject === 'steps'; }
+      if (spot === avoided && !fix && !gone(spot.stretches) && line !== aroundLine) lines.push(aroundLine);
       const own = noteOf(mine, routeSpotFor(spot.stretches)?.id ?? spot.id); if (own) lines.push(...ownNoteLines(own, language));
     }
     // A kind along much of the walk, in the note when she says so; cobblestones whenever she answered for them.
     for (const one of items) if (!('spot' in one) && KIND_NOTE[one.mark as keyof typeof KIND_NOTE]) {
       const said = answerOf(mine, one.key)?.answer;
       if (said === 'yes' || (one.mark === 'cobblestones' && said && said !== 'unknown')) lines.push(KIND_NOTE[one.mark as keyof typeof KIND_NOTE][language]);
-    }
-    if (around?.status === 'found' && !before && ways.check?.works) {
-      const avoided = walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index))));
-      if (avoided) lines.push(AROUND_NOTE[language](whereOf(avoided), Math.max(0, Math.round(((around.lengthMetres ?? around.walkMetres) - around.walkMetres) / 10) * 10)));
     }
     for (const spot of mine.added) {
       const fix = isFixed(mine, [spot.stretch]), stretch = data.stretches[spot.stretch], here = nearOf(spot.stretch);
@@ -625,8 +701,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // A spot she added lifts away before her changes and drops back in with them.
   for (const spot of edits.added) {
     const target: Target = { kind: 'added', id: spot.id }, at = pointOf(target), fix = isFixed(edits, [spot.stretch]), count = filedCounts.get(spot.id) ?? 0;
-    if (at) markers.push({ id: `added:${spot.id}`, at, state: before ? 'added' : fix ? 'fixed' : 'barrier', selected: !before && same(selected, target), rank: rankOf(target), count,
-      tag: tagOf(target), icon: fix ? 'fixed' : 'added', label: addedName(spot.id), changed: true, gone: before });
+    // Something that helps, such as a bench, shows with its own icon and never as a barrier.
+    const help = HELP_ICON[spot.kind];
+    if (at) markers.push({ id: `added:${spot.id}`, at, state: before ? 'added' : fix ? 'fixed' : help ? 'clear' : 'barrier', selected: !before && same(selected, target), rank: rankOf(target), count,
+      tag: tagOf(target), icon: fix ? 'fixed' : help ?? 'added', label: addedName(spot.id), changed: true, gone: before });
   }
   const extra = [...ranked.map(targetOf), selected].filter((target): target is Target => !!target && (target.kind === 'landmark' || target.kind === 'stretch'));
   for (const target of extra) {
@@ -676,7 +754,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const sides = frame.left > 0 || frame.right > 0;
   const insets = { top, right: Math.max(24 + inset.right, sides ? frame.right + 24 : 0), bottom: under(sides ? frame.below : dockHeight), left: Math.max(24 + inset.left, sides ? frame.left + 24 : 0) };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
-    if (step.id === 'around' && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
+    if ((step.id === 'around' || (step.id === 'check' && step.around === 'match')) && around) return { kind: 'frame', points: around.line.map(point => walk.project(point as [number, number])) };
     if (step.id === 'street' && step.found) return { kind: 'frame', points: step.found.line.map(point => walk.project(point as [number, number])) };
     if (item && !('spot' in item)) return item.points.length ? { kind: 'frame', points: item.points } : { kind: 'fit' };
     if (item) return { kind: 'frame', points: item.spot.path.length ? item.spot.path : [item.spot.at] };
@@ -684,7 +762,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const at = selected && pointOf(selected);
     return at ? { kind: 'frame', points: [at] } : { kind: 'fit' };
   };
-  const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked, step.id === 'street' && !!step.found]);
+  const aimKey = JSON.stringify([step.id, 'at' in step ? step.at : null, selected, ranked, step.id === 'street' && !!step.found, step.id === 'check' && step.around === 'match']);
   const aimTimer = useRef(0), settledDock = [insets.left, insets.right, insets.bottom].map(value => Math.round(value / 24)).join();
   // The dock settling right after a new subject reframes it; later changes of size, such as a Before / Now line, leave the camera where it is.
   const aimed = useRef({ key: '', at: 0 });
@@ -708,7 +786,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
   const lines: string[] = ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null;
-  const kindChips = (pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => EDIT_KINDS.map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
+  // What something is, in two turns of at most four: in the way or a help, then the kind.
+  const groupChips = (pick: (group: KindGroup) => void): Chip[] => (Object.keys(KIND_GROUPS) as KindGroup[]).map(group => ({ id: `group-${group}`, label: s.words.groups[group], onClick: () => pick(group) }));
+  const kindChips = (group: KindGroup, pick: (kind: EditKind) => void, pressed?: EditKind): Chip[] => KIND_GROUPS[group].map(kind => ({ id: `kind-${kind}`, label: s.words.kinds[kind], pressed: pressed === undefined ? undefined : pressed === kind, onClick: () => pick(kind) }));
   const helloChips: Chip[] = [
     ...(items.length ? [{ id: 'check', label: s.hello.chips.check, primary: step.id === 'hello', onClick: () => go({ id: 'check', at: 0 }) }] : []),
     ...(rows.length ? [{ id: 'messages', label: s.hello.chips.messages, primary: step.id === 'checkEnd', onClick: () => go({ id: 'message', at: 0 }) }] : []),
@@ -722,25 +802,40 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
   } else if (step.id === 'check' && item) {
     const slots = slotsOf(item, step.at), question = questionOf(item), chosen = answerOf(edits, item.key);
-    if (step.tapping) {
-      lines.push(s.check.tapWhere(slots));
-      chips = [{ id: 'cancel', label: s.back, onClick: () => setStep({ id: 'check', at: step.at }) }];
-    } else if (step.kind) {
-      lines.push(s.check.said.unseen.something(slots));
-      chips = [...kindChips(kind => somethingThere(step.at, kind)), { id: 'cancel', label: s.back, onClick: () => setStep({ id: 'check', at: step.at }) }];
+    const skip: Chip = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
+    // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
+    const earlier = chosen ? saidLabel(item.key) : null;
+    if (step.tapping) lines.push(s.check.tapWhere(slots));
+    else if (step.kind) { lines.push(s.check.follow.unseen); chips = kindChips(step.kind, kind => somethingThere(step.at, kind)); }
+    else if (step.around === 'match') {
+      lines.push(s.around.isThisIt);
+      chips = [{ id: 'yes', label: s.around.isThisItChips.yes, primary: true, onClick: () => checkAround(step.at, true, s.around.kept) },
+        { id: 'no', label: s.around.isThisItChips.no, onClick: () => go({ id: 'check', at: step.at, tapping: 'wayAround' }) }];
+    } else if (step.around === 'offer') {
+      lines.push(s.around.offer({ metres: aroundMetres }));
+      chips = [{ id: 'show', label: s.around.offerChips.show, primary: true, onClick: () => go({ id: 'around', at: step.at }) }, { id: 'notNow', label: s.around.offerChips.notNow, onClick: () => onward(step.at, '') }];
+    } else if (step.follow && 'spot' in item && item.access === 'unseen') { lines.push(s.check.follow.unseen); chips = groupChips(group => go({ id: 'check', at: step.at, kind: group })); }
+    else if (step.follow && 'spot' in item && item.access in FOLLOW_OF) {
+      const follow = FOLLOW_OF[item.access as FollowKind];
+      lines.push(s.check.follow[item.access as FollowKind]);
+      chips = (FOLLOWS[follow] as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[follow] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, follow, choice) }));
+      quiet = skip;
+    } else if (!('spot' in item)) {
+      // A kind along much of the walk is one question: whether the note mentions it, or for cobblestones whether there is a smoother way.
+      lines.push(s.check.kind({ n: slots.n, total: slots.total, what: slots.what, count: item.count }), earlier ? s.select.answered({ answer: earlier }) : s.check.ask[question](slots));
+      chips = ((question === 'smoother' ? ['nearby', 'none', 'unknown'] : QUESTIONS[question]) as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[question] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, question, choice) }));
+      quiet = skip;
     } else {
-      const about = !('spot' in item) ? s.check.kind({ n: slots.n, total: slots.total, what: slots.what, count: item.count })
-        : item.access === 'unseen' ? s.check.noPhotos(slots) : !data.views.length ? s.check.osm(slots) : slots.when ? s.check.sawWhen(slots) : s.check.saw(slots);
-      // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
-      const earlier = chosen && (s.check.answers[question] as Record<string, string>)[chosen.answer];
-      lines.push(about, ...(slots.osm ? [s.check.osmToo(slots)] : []), earlier ? s.select.answered({ answer: earlier }) : s.check.ask[question](slots));
-      chips = (QUESTIONS[question] as readonly Answer[]).map(choice => ({ id: choice, label: (s.check.answers[question] as Record<string, string>)[choice], pressed: chosen ? chosen.answer === choice : undefined, onClick: () => answer(step.at, question, choice) }));
-      if (around?.status === 'found' && 'spot' in item && around.avoids.some(steps => steps.stretches.some(index => item.spot.stretches.includes(index))))
-        chips.push({ id: 'around', label: s.around.chips.show, onClick: () => go({ id: 'around', at: step.at }) });
-      quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
+      const group = GROUP_OF[item.access], labels = (s.check.coreAnswers[group] as (kind: AccessKind) => Record<string, string>)(item.access), pressed = chosen ? coreOf(item, chosen.answer) : undefined;
+      const about = item.access === 'unseen' ? s.check.noPhotos(slots) : !data.views.length ? s.check.osm(slots) : slots.when ? s.check.sawWhen(slots) : s.check.saw(slots);
+      lines.push(about, ...(slots.osm ? [s.check.osmToo(slots)] : []), earlier ? s.select.answered({ answer: earlier }) : s.check.core[item.access]);
+      chips = (CORE[group] as readonly CoreAnswer[]).map(choice => ({ id: choice, label: labels[choice], pressed: pressed === undefined ? undefined : pressed === choice, onClick: () => answerCore(step.at, choice) }));
+      quiet = skip;
     }
     words = hear;
     above = cardOf(item, step.at);
+    // While she taps the map or looks at the way around on it, the map is what she needs.
+    if (step.tapping || step.around === 'match') above = null;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -820,7 +915,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.here) {
       const here = step.here;
       lines.push(s.missed.here({ spot: spotWords(here) }));
-      chips = kindChips(kind => go({ id: 'propose', proposal: { mode: 'add', text: '', target: here, kind, from: { id: 'missed' } } }));
+      chips = groupChips(group => go({ id: 'propose', proposal: { mode: 'add', text: '', target: here, group, from: { id: 'missed' } } }));
       if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
     } else {
       lines.push(s.missed.ask);
@@ -829,15 +924,22 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
   } else if (step.id === 'around' && around) {
     // Her answer is her record of the way, never a measurement; nothing about it is claimed until she says it works.
-    const said = (works: boolean | null, line: string) => () => { const next = setCheck(ways, works); setWays(next); if (!saveLines(next)) setProblem(s.notSaved); go(nextCheck(step.at), line); };
-    lines.push(s.around.offer({ metres: Math.max(0, Math.round((around.lengthMetres ?? around.walkMetres) - around.walkMetres)) }), s.around.show, s.around.ask);
-    chips = [{ id: 'works', label: s.around.chips.works, primary: true, onClick: said(true, s.around.kept) }, { id: 'notWorks', label: s.around.chips.notWorks, onClick: said(false, s.around.dropped) },
-      { id: 'unknown', label: s.around.chips.unknown, onClick: said(null, s.around.unchecked) }, { id: 'notNow', label: s.around.chips.notNow, onClick: back }];
+    lines.push(s.around.show, s.around.ask);
+    chips = [{ id: 'works', label: s.around.chips.works, primary: true, onClick: () => checkAround(step.at, true, s.around.kept) }, { id: 'notWorks', label: s.around.chips.notWorks, onClick: () => checkAround(step.at, false, s.around.dropped) },
+      { id: 'unknown', label: s.around.chips.unknown, onClick: () => checkAround(step.at, null, s.around.unchecked) }];
+    quiet = { id: 'notNow', label: s.around.chips.notNow, onClick: () => onward(step.at, '') };
   } else if (step.id === 'propose') {
-    const proposal = step.proposal;
-    if (proposal.mode === 'note') lines.push(s.check.words({ spot: spotWords(proposal.target) }));
-    else { lines.push(s.missed.propose({ kind: s.words.added[proposal.kind], where: whereWords(proposal.target) })); chips = kindChips(kind => setStep({ id: 'propose', proposal: { ...proposal, kind } }), proposal.kind); }
-    chips = [{ id: 'yes', label: s.missed.chips.yes, primary: true, onClick: () => confirm(proposal) }, ...chips, { id: 'no', label: s.missed.chips.no, onClick: back }];
+    const proposal = step.proposal, kind = proposal.kind, notQuite: Chip = { id: 'no', label: s.missed.chips.no, onClick: back };
+    if (proposal.mode === 'note') { lines.push(s.check.words({ spot: spotWords(proposal.target) })); chips = [{ id: 'yes', label: s.missed.chips.yes, primary: true, onClick: () => confirm(proposal) }, notQuite]; }
+    else if (kind) {
+      // Her words name what it is; if that is not quite it, she says what it is instead.
+      lines.push(s.missed.propose({ kind: s.words.added[kind], where: whereWords(proposal.target) }));
+      chips = [{ id: 'yes', label: s.missed.chips.yes, primary: true, onClick: () => confirm(proposal) }, { ...notQuite, onClick: () => go({ id: 'propose', proposal: { ...proposal, kind: undefined, group: undefined } }) }];
+    } else {
+      // Nothing says what it is: something in the way or something that helps, then which; her pick puts it on her map.
+      lines.push(proposal.text ? s.missed.found({ where: whereWords(proposal.target) }) : s.missed.here({ spot: spotWords(proposal.target) }));
+      chips = proposal.group ? kindChips(proposal.group, pick => confirm({ ...proposal, kind: pick })) : [...groupChips(group => go({ id: 'propose', proposal: { ...proposal, group } })), notQuite];
+    }
     if (proposal.text) above = <section className="gs-card gs-quote" data-tone="dark"><blockquote>{proposal.text}</blockquote></section>;
     else if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
   } else if (step.id === 'edit') {
@@ -974,6 +1076,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         <GlassButton className="gs-edit" icon={<NoteIcon />} pressed={step.id === 'edit'} onClick={openEdit}>{s.edit.chip}</GlassButton>
         {changed && <Segmented className="gs-compare" surface="glass" label={s.compare.label} value={before ? 'before' : 'now'} options={[{ value: 'before', label: s.compare.before }, { value: 'now', label: s.compare.now }]}
           onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); }} />}
+        {around?.status === 'found' && !before && <GlassButton className="gs-around" icon={<PathIcon />} pressed={showAround || !!ways.check?.works} onClick={() => setShowAround(shown => !shown)}>{s.around.mapToggle}</GlassButton>}
       </div>
       <Menu onHome={onHome} current={shownPlace} onPlace={next => { if (next !== shownPlace) (onPlace ?? onHome)(next); }} />
     </header>
@@ -981,7 +1084,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       <RouteMap ref={map} settled={settled} data={data} photoView="" walk={walk} markers={markers} labels={labels} insets={insets} highlight={highlight}
         onMarker={tapMarker} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         picking={step.id === 'street' && !step.found ? 'free' : (step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || (step.id === 'edit' && (step.mode === 'add' || step.mode === 'change')) || undefined}
-        paths={before ? [] : [...mapPaths(step.id === 'around' || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
+        paths={before ? [] : [...mapPaths(showAround || step.id === 'around' || (step.id === 'check' && step.around === 'match') || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
         words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
     </div>
     <Bot ref={bot} working={working} talk={talk} />

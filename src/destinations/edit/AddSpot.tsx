@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EDIT_KINDS, noteLangOf, ownNote, type EditKind, type NoteLang, type OwnNote } from '../../edits/store';
+import { BLOCK_KINDS, noteLangOf, ownNote, type EditKind, type NoteLang, type OwnNote } from '../../edits/store';
 import { EDIT_WORDS, type EditWords } from '../../edits/words';
 import { PrimaryAction, Section, Segmented, TextButton } from '../../ui';
 import { CloseIcon, PlusIcon } from '../../ui/icons';
@@ -28,7 +28,7 @@ export default function AddSpot({ where, range, onAdd, onCancel, guess, words = 
     <p className="edit-where">{words.addWhere(where, Math.round(range.from), Math.round(range.to))}</p>
     <div className="edit-kinds">
       <Segmented label={words.kindLabel} value={kind ?? ''} onChange={(next: string) => setKind(next as EditKind)}
-        options={EDIT_KINDS.map(item => ({ value: item as string, label: words.kinds[item] }))}/>
+        options={BLOCK_KINDS.map(item => ({ value: item as string, label: words.kinds[item] }))}/>
     </div>
     <NoteField id="add-note" label={words.noteLabel} value={text} language={language} onChange={setText} onLanguage={setChosen} words={words}/>
     <p className="edit-quiet">{words.noteKept}</p>

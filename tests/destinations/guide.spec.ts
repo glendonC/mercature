@@ -14,7 +14,7 @@ test('the guide goes through the walk, and her answer takes a spot off her map',
   await page.getByRole('button', {name:'Go through the walk', exact:true}).click();
   const progress = page.locator('.gs-card-meta > span').first();
   await expect(progress).toHaveText(/^1 of \d+$/);
-  await page.getByRole('button', {name:/no steps/i}).click();
+  await page.getByRole('button', {name:'Not there now', exact:true}).click();
   await expect(progress).toHaveText(/^2 of \d+$/);
   const review = await page.evaluate(() => JSON.parse(localStorage.getItem('mercature.route-review.v1.cusco-qorikancha')!));
   expect(review.decisions['0'].verdict).toBe('not-barrier');
