@@ -569,10 +569,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.id === 'check' && step.tapping) { const stretch = stretchFor(target); if (stretch !== null) answer(step.at, questionOf(items[step.at]), step.tapping, stretch); return; }
     if (step.id === 'propose') { setStep({ id: 'propose', proposal: { ...step.proposal, target } }); return; }
     if (step.id === 'edit' && step.mode === 'add') { go({ id: 'missed', here: target }); return; }
+    // Her words the model could not place go to the spot she taps next, a flagged one too.
+    const words = step.id === 'missed' ? pendingWords.current : ''; pendingWords.current = '';
+    if (words) { go({ id: 'propose', proposal: { mode: 'add', text: words, target, kind: kindIn(words), from: { id: 'missed' } } }); return; }
     const at = itemOfTarget(target);
     if (at >= 0) { go({ id: 'check', at }); return; }
-    const words = pendingWords.current; pendingWords.current = '';
-    if (words) { go({ id: 'propose', proposal: { mode: 'add', text: words, target, kind: kindIn(words), from: { id: 'missed' } } }); return; }
     go({ id: 'missed', here: target });
   }
   const routing = useRef<AbortController | null>(null);
@@ -643,8 +644,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const mine = before ? blankEdits : edits, gone = (stretches: readonly number[]) => !before && removed(stretches);
     const lines: string[] = [];
     let steps = false;
-    // The way around she says works goes beside the steps it avoids, in place of her own "There's a way around".
-    const avoided = around?.status === 'found' && !before && ways.check?.works ? walk.spots.find(spot => around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index)))) : undefined;
+    // The way around she says works goes beside the steps she said it for, in place of her own "There's a way around", else beside the first steps it avoids.
+    const avoids = (spot: Spot) => !!around && around.avoids.some(steps => steps.stretches.some(index => spot.stretches.includes(index)));
+    const avoided = around?.status === 'found' && !before && ways.check?.works ? walk.spots.find(spot => avoids(spot) && answerOf(mine, spot.id)?.answer === 'wayAround') ?? walk.spots.find(avoids) : undefined;
     const aroundLine = avoided && around ? AROUND_NOTE[language](whereOf(avoided), Math.max(0, Math.round(((around.lengthMetres ?? around.walkMetres) - around.walkMetres) / 10) * 10)) : '';
     for (const spot of walk.spots) {
       const fix = isFixed(mine, spot.stretches), subject = subjectOf(spot), said = answerOf(mine, spot.id), at = whereOf(spot), m = Math.round(spot.from);
