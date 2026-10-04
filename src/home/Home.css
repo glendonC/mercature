@@ -19,47 +19,27 @@
 .home-veil { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, var(--ground) 32%, color-mix(in srgb, var(--ground) 70%, transparent) 46%, transparent 58%); }
 .welcome-chrome { position: absolute; z-index: 10; inset: 30px 4vw auto; display: flex; align-items: center; justify-content: space-between; }
 .welcome-brand { font-size: 20px; letter-spacing: -.05em; font-weight: 400; }
-.welcome-tools { display: flex; align-items: center; gap: 2px; }
-.welcome-tool { display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; color: var(--muted); background: transparent; }
-.welcome-tool svg, .welcome-dialog header button svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.welcome-tool:hover { background: #fff8; }
 
 /* The headline, beside the walk on a wide screen and above it on a phone */
 .home-words { position: absolute; z-index: 2; left: 4vw; top: 50%; translate: 0 -54%; width: min(560px, 46vw); }
 .home-words h1 { margin: 0; font-size: clamp(36px, 4.3vw, 62px); font-weight: 300; letter-spacing: -.05em; line-height: 1.05; }
 
-/* The places this device can open: thin glass, hairlines, nothing filled */
-.home-places { position: absolute; z-index: 3; left: 4vw; right: 4vw; bottom: 32px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
-.home-place { display: flex; align-items: center; gap: 12px; min-height: var(--tap); padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px; background: rgb(255 255 255 / .58); backdrop-filter: var(--glass-blur); box-shadow: var(--shadow-s); text-align: left; }
-.home-place:hover, .home-place:focus-visible { background: rgb(255 255 255 / .76); }
-.home-place img, .home-place .result-plan { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 9px; object-fit: cover; }
-.home-place.is-hero img { flex-basis: 52px; width: 52px; height: 52px; }
-.result-plan { display: grid; place-items: center; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+/* Where the places panel sits over the walk */
+.home-places { position: absolute; z-index: 3; left: 4vw; bottom: 32px; width: min(420px, 92vw); }
+.home-places .ui-row-icon img, .home-places .result-plan, .home-saved-mark {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-s);
+  object-fit: cover;
+}
+.result-plan { background: rgb(255 255 255 / .9); }
+.home-saved-mark { background: var(--ui-fill); box-shadow: inset 0 0 0 1px var(--ui-hair); }
 .plan-ground { fill: rgb(29 33 37 / .07); }
 .plan-fixed { fill: var(--field); }
 .plan-movable { fill: var(--blocked); }
 .plan-unknown { fill: none; stroke: var(--field); stroke-width: .18; stroke-dasharray: .4 .3; }
-.home-place-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
-.home-place-text strong { font-size: 15px; font-weight: 500; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.home-place-text small { font-size: var(--text-phone-min); color: var(--muted); }
-.home-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 1px; font-size: var(--text-phone-min); color: var(--ink); }
-.home-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--blocked); box-shadow: 0 0 0 2.5px var(--blocked-fill); }
-.home-open { display: inline-grid; place-items: center; min-height: var(--tap); margin-left: 6px; padding: 0 14px; color: var(--ink); font-size: 14px; font-weight: 500; }
-.home-place .badge { display: inline-flex; align-items: center; height: 24px; margin-left: 4px; padding: 0 9px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: transparent; font-size: var(--text-phone-min); color: var(--muted); }
-.home-saved { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
-.home-saved p { margin: 0 2px 0 0; font-size: var(--text-phone-min); color: var(--muted); }
-.home-saved button { display: flex; align-items: baseline; gap: 8px; min-height: var(--tap); padding: 0 14px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: rgb(255 255 255 / .5); backdrop-filter: var(--glass-blur); font-size: 14px; }
-.home-saved small { font-size: var(--text-phone-min); color: var(--muted); }
 
-.welcome-dialog { position: fixed; inset: 0; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); margin: auto; padding: var(--space-5); overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-l); color: var(--ink); }
-.welcome-dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(6px); }
-.welcome-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.welcome-dialog h2 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
-.welcome-dialog header button { display: grid; place-items: center; flex: 0 0 var(--tap); width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; background: rgb(29 33 37 / .05); color: var(--ink); }
-.welcome-dialog p, .welcome-dialog li { font-size: var(--text-phone-min); line-height: 1.6; color: var(--muted); }
-.welcome-dialog ul { padding: 0; list-style: none; }
-.welcome-dialog li + li { margin-top: 8px; }
-.welcome-dialog li a { display: inline-flex; align-items: center; min-height: var(--tap); }
 
 @media (max-width: 639px) {
   .welcome-shell { min-height: 700px; }
@@ -67,13 +47,6 @@
   .home-veil { background: linear-gradient(180deg, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 38%, transparent 48%, transparent 62%, var(--ground) 76%); }
   .home-words { left: 16px; right: 16px; top: 92px; width: auto; translate: none; }
   .home-words h1 { font-size: clamp(30px, 7.8vw, 40px); }
-  .home-places { left: 12px; right: 12px; bottom: 30px; flex-direction: column; gap: 6px; }
-  .home-place { width: 100%; }
-  .home-place-text { flex: 1; }
-  .home-open { padding: 0 12px; }
+  .home-places { left: 12px; right: 12px; bottom: 26px; width: auto; }
   .home-credit { right: 16px; bottom: 10px; }
-  .home-saved button { flex: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .home-place, .home-open { transition: none; }
 }

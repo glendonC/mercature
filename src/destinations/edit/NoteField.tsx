@@ -1,5 +1,6 @@
 import { NOTE_LANGS, NOTE_LIMIT, type NoteLang } from '../../edits/store';
 import { EDIT_WORDS, type EditWords } from '../../edits/words';
+import { Select, TextArea } from '../../ui';
 import './edit.css';
 
 type Props = {
@@ -19,12 +20,12 @@ type Props = {
 export default function NoteField({ value, language, onChange, onLanguage, label, id, words = EDIT_WORDS }: Props) {
   return <div className="edit-note">
     <label className="edit-label" htmlFor={id}>{label}</label>
-    <textarea id={id} className="edit-field" rows={2} maxLength={NOTE_LIMIT} placeholder={words.notePlaceholder} value={value} onChange={event => onChange(event.target.value)}/>
+    <TextArea id={id} rows={2} maxLength={NOTE_LIMIT} placeholder={words.notePlaceholder} value={value} onChange={event => onChange(event.target.value)}/>
     {value.trim() && <div className="edit-taken">
       <label className="edit-quiet" htmlFor={`${id}-language`}>{words.changeLanguage}</label>
-      <select id={`${id}-language`} className="edit-select" aria-label={words.changeLanguage} value={language} onChange={event => onLanguage(event.target.value as NoteLang)}>
+      <Select id={`${id}-language`} aria-label={words.changeLanguage} value={language} onChange={event => onLanguage(event.target.value as NoteLang)}>
         {NOTE_LANGS.map(item => <option key={item} value={item}>{words.languages[item]}</option>)}
-      </select>
+      </Select>
     </div>}
   </div>;
 }

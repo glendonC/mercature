@@ -11,6 +11,7 @@ import { loadReview, verdictOf } from '../decisions/store';
 import { isFixed, loadEdits } from '../edits/store';
 import { useLanguage } from '../i18n';
 import Menu from './Menu';
+import Places, { type PlaceRow } from './Places';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -113,25 +114,15 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={place => place === 'noor-farm' ? onFarm() : onDestination(place)}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
-    <section className="home-places" ref={places} aria-label={t('home.onPhone')}>
-      <button className="home-place is-hero" aria-label={t('home.explore', { name: covers[0].name, area: covers[0].area })} onClick={() => onDestination(HERO)}>
-        <img src={qorikancha} alt=""/>
-        <span className="home-place-text">
-          <strong>{DESTINATIONS[HERO].name}</strong>
-          <small>{hero.data ? t('home.onFoot', { area: covers[0].area, metres: Math.round(hero.data.lengthMetres) }) : covers[0].area}</small>
-          {status && <span className="home-status">{status}</span>}
-        </span>
-        <span className="home-open">{t('home.open')}</span>
-      </button>
-      {others.map(cover => <button key={cover.id} className="home-place" aria-label={t('home.explore', { name: cover.name, area: cover.area })} onClick={() => onDestination(cover.id)}>
-        <img src={cover.image} alt=""/><span className="home-place-text"><strong>{cover.name}</strong><small>{cover.area}</small></span>
-      </button>)}
-      <button className="home-place" onClick={onFarm}>
-        <FarmPlan/><span className="home-place-text"><strong>{NOOR_FARM.name[lang]}</strong><small>{t('farm.place')}</small></span><span className="badge">{t('common.example')}</span>
-      </button>
-      {saved.length > 0 && <div className="home-saved"><p>{t('home.onDevice')}</p>{saved.map(entry => <button key={entry.id} onClick={() => onOpenSaved(entry)}>
-        <span>{entry.title}</span><small>{t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace')}</small>
-      </button>)}</div>}
-    </section>
+    <Places label={t('home.onPhone')} rows={[
+      { id: HERO, name: DESTINATIONS[HERO].name, label: t('home.explore', { name: covers[0].name, area: covers[0].area }),
+        detail: hero.data ? t('home.onFoot', { area: covers[0].area, metres: Math.round(hero.data.lengthMetres) }) : covers[0].area,
+        meta: status, thumb: <img src={qorikancha} alt=""/>, onOpen: () => onDestination(HERO) },
+      ...others.map(cover => ({ id: cover.id, name: cover.name, detail: cover.area, label: t('home.explore', { name: cover.name, area: cover.area }),
+        thumb: <img src={cover.image} alt=""/>, onOpen: () => onDestination(cover.id) })),
+      { id: 'noor-farm', name: NOOR_FARM.name[lang], detail: t('farm.place'), meta: t('common.example'), example: true, thumb: <FarmPlan/>, onOpen: onFarm },
+      ...saved.map(entry => ({ id: entry.id, name: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'),
+        thumb: <span className="home-saved-mark" aria-hidden="true"/>, onOpen: () => onOpenSaved(entry) })),
+    ] satisfies PlaceRow[]}/>
   </main>;
 }

@@ -1,19 +1,5 @@
-/* One small button, one full-screen sheet. Thin glass, hairlines, one calm fade. */
-.menu-button {
-  display: grid;
-  place-items: center;
-  width: var(--tap);
-  height: var(--tap);
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ink);
-}
-.menu-button:hover { background: rgb(255 255 255 / .55); }
-.menu-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
-
-.menu-sheet {
+/* The menu button, and the surface it opens: a card under the button on a wide screen, a sheet on a phone. */
+.menu-dialog {
   width: 100vw;
   max-width: none;
   height: 100dvh;
@@ -21,69 +7,21 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: color-mix(in srgb, var(--paper) 82%, transparent);
-  backdrop-filter: var(--glass-blur);
-  color: var(--ink);
+  background: transparent;
 }
-.menu-sheet::backdrop { background: rgb(20 22 24 / .18); }
-.menu-sheet[open] { animation: menu-in var(--slow) var(--ease); }
-.menu-sheet[open]::backdrop { animation: menu-in var(--slow) var(--ease); }
+.menu-dialog::backdrop { background: rgb(20 22 24 / .28); backdrop-filter: blur(2px); }
+.menu-dialog[open], .menu-dialog[open]::backdrop { animation: menu-in var(--motion-panel) var(--ease-out); }
 @keyframes menu-in { from { opacity: 0; } to { opacity: 1; } }
 
-.menu-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  width: min(420px, 100%);
-  min-height: 100%;
-  margin: 0 auto;
-  padding: 24px 20px calc(28px + env(safe-area-inset-bottom));
-  box-sizing: border-box;
+/* The panel itself: anchored under the button on a wide screen; phone="sheet" takes over at 640 px. */
+@media (min-width: 641px) {
+  .menu-panel { position: absolute; top: 72px; right: 4vw; width: min(360px, 92vw); max-height: min(72svh, 640px); }
 }
-.menu-top { display: flex; align-items: center; justify-content: space-between; }
-.menu-brand { font-size: 17px; letter-spacing: -.05em; }
-.menu-text { min-height: var(--tap); padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
-.menu-text:hover { background: rgb(255 255 255 / .6); color: var(--ink); }
-
-.menu-group { display: flex; flex-direction: column; gap: 2px; }
-.menu-label { margin: 0 0 4px; font-size: var(--font-xs); font-weight: 400; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
-.menu-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  min-height: var(--tap);
-  padding: 10px 12px;
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 16px;
-  text-align: left;
-}
-.menu-group .menu-row:last-child { border-bottom: 1px solid var(--line); }
-.menu-row:hover { background: rgb(255 255 255 / .55); }
-.menu-row small { font-size: var(--text-phone-min); color: var(--muted); }
-.menu-row[aria-current] { font-weight: 500; }
-.menu-row[aria-current]::after { content: ''; width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: var(--ink); }
-
-.menu-languages { display: flex; gap: 6px; }
-.menu-chip {
-  min-height: var(--tap);
-  padding: 0 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--ink);
-  font-size: 14px;
-}
-.menu-chip[aria-pressed=true] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-
-.menu-source { margin: 0; font-size: var(--font-xs); line-height: 1.55; color: var(--muted); }
-.menu-covers { margin: 4px 0 0; padding: 0; list-style: none; font-size: var(--font-xs); line-height: 1.55; color: var(--muted); }
+.menu-source { margin: 0 0 6px; font-size: var(--font-xs); line-height: var(--leading-read); color: var(--ui-muted); }
+.menu-covers { margin: 2px 0 4px; padding: 0; list-style: none; font-size: var(--font-xs); line-height: var(--leading-read); color: var(--ui-muted); }
 .menu-covers li + li { margin-top: 2px; }
-.menu-covers a { display: inline-block; min-height: 24px; color: var(--ink); }
+.menu-covers a { display: inline-block; min-height: 24px; color: var(--ui-ink); }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu-sheet[open], .menu-sheet[open]::backdrop { animation: none; }
+  .menu-dialog[open], .menu-dialog[open]::backdrop { animation: none; }
 }

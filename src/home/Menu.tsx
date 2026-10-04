@@ -1,7 +1,9 @@
 import { useRef } from 'react';
 import { DESTINATIONS } from '../destinations/data';
 import { NOOR_FARM } from '../site/farm';
-import { LANGS, LANG_NAMES, useLanguage } from '../i18n';
+import { LANGS, LANG_NAMES, useLanguage, type Lang } from '../i18n';
+import { List, Panel, PanelHead, Row, Section, Segmented, IconButton, TextButton } from '../ui';
+import { CloseIcon, HomeIcon, MoreIcon } from '../ui/icons';
 import { covers } from './Home';
 import './menu.css';
 
@@ -16,48 +18,30 @@ type Props = {
   className?: string;
 };
 
-const MenuIcon = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>;
-
 /**
- * One small button, one full-screen sheet: where to go, which language, and where everything came from.
- * The sheet is a modal dialog, so Escape closes it, focus stays inside while it is open and returns to the button.
+ * One small button, one charcoal surface: where to go, which language, and where everything came from.
+ * It opens as a modal dialog, so Escape closes it, focus stays inside while it is open and returns to the button.
  */
 export default function Menu({ onHome, onPlace, current, className = '' }: Props) {
   const { t, lang, setLang } = useLanguage();
   const sheet = useRef<HTMLDialogElement>(null);
   const close = () => sheet.current?.close();
   const go = (run: () => void) => { close(); run(); };
-  const cover = covers[0];
   return <>
-    <button type="button" className={`menu-button ${className}`.trim()} aria-label={t('home.menu')} onClick={() => sheet.current?.showModal()}><MenuIcon/></button>
-    <dialog ref={sheet} className="menu-sheet" aria-label={t('home.menu')} onClick={event => { if (event.target === sheet.current) close(); }}>
-      <div className="menu-inner">
-        <header className="menu-top">
-          <span className="menu-brand">mercature</span>
-          <button type="button" className="menu-text" onClick={close}>{t('home.closeMenu')}</button>
-        </header>
-
-        {onHome && <nav className="menu-group"><button type="button" className="menu-row" onClick={() => go(onHome)}>{t('common.home')}</button></nav>}
-
-        <section className="menu-group" aria-labelledby="menu-places">
-          <h2 className="menu-label" id="menu-places">{t('home.onPhone')}</h2>
-          <button type="button" className="menu-row" aria-current={current === 'cusco-qorikancha' || undefined} onClick={() => go(() => onPlace('cusco-qorikancha'))}>
-            <span>{DESTINATIONS['cusco-qorikancha'].name}</span><small>{cover.area}</small>
-          </button>
-          <button type="button" className="menu-row" aria-current={current === 'noor-farm' || undefined} onClick={() => go(() => onPlace('noor-farm'))}>
-            <span>{NOOR_FARM.name[lang]}</span><small>{t('common.example')}</small>
-          </button>
-        </section>
-
-        <section className="menu-group" aria-labelledby="menu-language">
-          <h2 className="menu-label" id="menu-language">{t('language.label')}</h2>
-          <div className="menu-languages" role="group" aria-labelledby="menu-language">
-            {LANGS.map(item => <button key={item} type="button" className="menu-chip" lang={item} aria-pressed={lang === item} onClick={() => setLang(item)}>{LANG_NAMES[item]}</button>)}
-          </div>
-        </section>
-
-        <section className="menu-group" aria-labelledby="menu-sources">
-          <h2 className="menu-label" id="menu-sources">{t('home.sources')}</h2>
+    <IconButton label={t('home.menu')} className={`menu-button ${className}`.trim()} onClick={() => sheet.current?.showModal()}><MoreIcon/></IconButton>
+    <dialog ref={sheet} className="menu-dialog" aria-label={t('home.menu')} onClick={event => { if (event.target === sheet.current) close(); }}>
+      <Panel size="card" phone="sheet" scroll className="menu-panel">
+        <PanelHead title={t('home.menu')} actions={<IconButton label={t('home.closeMenu')} onClick={close}><CloseIcon/></IconButton>}/>
+        <List>
+          {onHome && <Row icon={<HomeIcon/>} label={t('common.home')} onClick={() => go(onHome)}/>}
+          <Row label={DESTINATIONS['cusco-qorikancha'].name} detail={covers[0].area} selected={current === 'cusco-qorikancha'} onClick={() => go(() => onPlace('cusco-qorikancha'))}/>
+          <Row label={NOOR_FARM.name[lang]} detail={t('common.example')} selected={current === 'noor-farm'} onClick={() => go(() => onPlace('noor-farm'))}/>
+        </List>
+        <Section title={t('language.label')}>
+          <Segmented label={t('language.label')} value={lang} onChange={(next: Lang) => setLang(next)}
+            options={LANGS.map(item => ({ value: item, label: LANG_NAMES[item], lang: item }))}/>
+        </Section>
+        <Section title={t('home.sources')}>
           <p className="menu-source">{t('home.sourceMap')}</p>
           <p className="menu-source">{t('home.sourcePhotos')}</p>
           <p className="menu-source">{t('home.sourceModel')}</p>
@@ -65,8 +49,8 @@ export default function Menu({ onHome, onPlace, current, className = '' }: Props
           <ul className="menu-covers">{covers.map(item => <li key={item.name}>
             <a href={item.source} target="_blank" rel="noreferrer">{item.name}</a> · {item.author}, {item.year} · <a href={item.licenseUrl} target="_blank" rel="noreferrer">{item.license}</a>
           </li>)}</ul>
-        </section>
-      </div>
+        </Section>
+      </Panel>
     </dialog>
   </>;
 }

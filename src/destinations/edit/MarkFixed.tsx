@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ownNote, type NoteLang, type OwnNote } from '../../edits/store';
 import { EDIT_WORDS, recordDate, type EditWords } from '../../edits/words';
+import { PrimaryAction, Section, TextButton } from '../../ui';
+import { CloseIcon, FixedIcon } from '../../ui/icons';
 import NoteField from './NoteField';
 import './edit.css';
 
@@ -23,14 +25,13 @@ export default function MarkFixed({ spot, date, onFix, onCancel, guess, words = 
   const [chosen, setChosen] = useState<NoteLang | null>(null);
   const language = chosen ?? asLang(guess?.(text) ?? 'en');
   const day = date ?? recordDate(new Date().toISOString(), 'en');
-  return <section className="edit-panel" aria-label={words.fixTitle}>
-    <h2 className="edit-title">{words.fixTitle}</h2>
+  return <Section title={words.fixTitle} label={words.fixTitle} className="edit-section">
     <p className="edit-where">{spot}</p>
     <p className="edit-quiet">{words.fixOn(day)}</p>
     <NoteField id="fix-note" label={words.fixNoteLabel} value={text} language={language} onChange={setText} onLanguage={setChosen} words={words}/>
     <div className="edit-actions">
-      <button type="button" className="edit-text-button" onClick={onCancel}>{words.cancel}</button>
-      <button type="button" className="edit-go" onClick={() => onFix(ownNote(text, language))}>{words.fix}</button>
+      <TextButton muted icon={<CloseIcon/>} onClick={onCancel}>{words.cancel}</TextButton>
+      <PrimaryAction icon={<FixedIcon/>} shortcut="mod+enter" onClick={() => onFix(ownNote(text, language))}>{words.fix}</PrimaryAction>
     </div>
-  </section>;
+  </Section>;
 }

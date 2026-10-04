@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ownNote, type NoteLang, type OwnNote as Note } from '../../edits/store';
 import { EDIT_WORDS, type EditWords } from '../../edits/words';
+import { PrimaryAction, Section, TextButton } from '../../ui';
+import { CheckIcon, CloseIcon, RemoveIcon } from '../../ui/icons';
 import NoteField from './NoteField';
 import './edit.css';
 
@@ -21,13 +23,13 @@ export default function OwnNote({ value, onSave, onCancel, guess, words = EDIT_W
   const [chosen, setChosen] = useState<NoteLang | null>(value?.text ? value.language : null);
   const language = chosen ?? asLang(guess?.(text) ?? 'en');
   const had = !!value?.text;
-  return <section className="edit-panel" aria-label={words.yourNote}>
+  return <Section label={words.yourNote} className="edit-section">
     <NoteField id="spot-note" label={words.yourNote} value={text} language={language} onChange={setText} onLanguage={setChosen} words={words}/>
     <p className="edit-quiet">{words.noteKept}</p>
     <div className="edit-actions">
-      {onCancel && <button type="button" className="edit-text-button" onClick={onCancel}>{words.cancel}</button>}
-      {had && !text.trim() && <button type="button" className="edit-text-button" onClick={() => onSave(ownNote('', language))}>{words.remove}</button>}
-      <button type="button" className="edit-go" disabled={!text.trim() && !had} onClick={() => onSave(ownNote(text, language))}>{words.save}</button>
+      {onCancel && <TextButton muted icon={<CloseIcon/>} onClick={onCancel}>{words.cancel}</TextButton>}
+      {had && !text.trim() && <TextButton muted icon={<RemoveIcon/>} onClick={() => onSave(ownNote('', language))}>{words.remove}</TextButton>}
+      <PrimaryAction icon={<CheckIcon/>} shortcut="mod+enter" disabled={!text.trim() && !had} onClick={() => onSave(ownNote(text, language))}>{words.save}</PrimaryAction>
     </div>
-  </section>;
+  </Section>;
 }
