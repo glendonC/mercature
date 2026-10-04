@@ -63,7 +63,7 @@
 /* Messages filed at a spot: a small outlined count above its marker */
 .route-marker-count { position: absolute; left: calc(50% + 5px); bottom: calc(50% + 5px); min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.92); color: var(--ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 40%, transparent); font-size: var(--font-xs); font-weight: 500; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
 /* Captions: a small icon in the marker's colour, a short label and any message count, beside the marker on the side with room */
-.route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--glass-charcoal); box-shadow: var(--glass-charcoal-edge), 0 1px 4px rgb(20 22 24 / 0.16); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: #f2f3f4; pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
+.route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--glass-charcoal); box-shadow: var(--glass-charcoal-edge), 0 1px 4px rgb(20 22 24 / 0.16); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: #f2f3f4; pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out), translate var(--hover-time, var(--motion-hover)) var(--ease-out), background-color var(--hover-time, var(--motion-hover)) var(--ease-out); }
 .route-marker[data-side=left] .route-marker-tag { left: auto; right: calc(50% + 14px); }
 .route-marker-tag .ui-icon { flex: none; color: var(--mark, var(--ring-ink, #f2f3f4)); }
 .route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) { --ring-ink: var(--kind-barrier, #e0905f); }
@@ -75,7 +75,7 @@
 /* Raised: under a fine pointer, at keyboard focus, or pointed at by the page; it lifts and its caption firms up, and the motion
    layer sends a ring over the ground */
 .route-marker:is(:focus-visible, [data-hovered]) .route-marker-dot { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink); }
-.route-marker:is(:focus-visible, [data-hovered]) .route-marker-tag { opacity: 1; box-shadow: var(--glass-charcoal-edge), 0 0 0 1px rgb(255 255 255 / 0.5), 0 2px 8px rgb(20 22 24 / 0.24); }
+.route-marker:is(:focus-visible, [data-hovered], :active) .route-marker-tag { translate: 0 -3px; background-color: color-mix(in srgb, var(--glass-charcoal), #fff 12%); opacity: 1; box-shadow: var(--glass-charcoal-edge), 0 0 0 1px rgb(255 255 255 / 0.5), var(--shadow-lift, 0 2px 8px rgb(20 22 24 / 0.24)); }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
 .route-card-slot { position: absolute; z-index: 6; width: 340px; }
 /* The map credit in a corner of the free map, on charcoal glass: the full line at first, then a small chip that a tap opens again */
@@ -113,6 +113,7 @@
    with a ring spreading on the ground under it */
 .route-map[data-lean] :is(.route-marker-dot, .route-marker-tag, .route-marker-count) { translate: 0 -11px; }
 .route-map[data-lean] .route-marker:is(:focus-visible, [data-hovered]) .route-marker-dot { translate: 0 -15px; }
+.route-map[data-lean] .route-marker:is(:focus-visible, [data-hovered], :active) .route-marker-tag { translate: 0 -15px; }
 .route-map[data-lean] .route-marker-changed { translate: 0 -11px; }
 .route-map[data-lean] .route-marker:is(:focus-visible, [data-hovered]) .route-marker-changed { translate: 0 -15px; }
 .route-map[data-lean] .route-marker[data-gone] .route-marker-dot { translate: 0 -36px; }
@@ -133,7 +134,7 @@
   .route-credit span { font-size: var(--text-phone-min); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .route-marker-dot, .route-marker, .route-marker-changed, .route-marker[data-gone] .route-marker-dot { transition: none; }
+  .route-marker-dot, .route-marker, .route-marker-changed, .route-marker-tag, .route-marker[data-gone] .route-marker-dot { transition: none; }
 }
 
 /* Zones along the walk: a soft clay glow where a barrier may be, a grey hatch where no photo was taken */
