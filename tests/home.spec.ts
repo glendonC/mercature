@@ -44,9 +44,9 @@ test('search filters prepared places as she types, and one clear answer builds a
   expect(asked).toHaveLength(0);
   await field.fill('Museo de Arte de Lima');
   await field.press('Enter');
-  await expect(page.locator('.route-inbox')).toBeVisible({ timeout: 8000 });
-  await expect(page.locator('.ri-place')).toContainText('Plaza Prueba, 507 m on foot');
-  await expect(page.locator('.ri-place')).toContainText('Map only. No street photos read yet.');
+  await expect(page.locator('.guide-screen')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('.gs-place')).toContainText('Plaza Prueba, 507 m on foot');
+  await expect(page.locator('.guide-screen .ui-dialogue')).toContainText(/about 500 m/i, { timeout: 8000 });
   expect(asked).toHaveLength(1);
 });
 
