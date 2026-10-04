@@ -1,30 +1,32 @@
 # Product
 
-Mercature helps a small tour operator act on what visitors tell her about a place, in languages she cannot read. A small model on her phone reads a visitor's message and points to the spots on her route it most likely means. She checks each one on a real street photo and decides. After one download it works offline. The interface is in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
+Mercature helps a small tour operator act on what visitors tell her about a walk, in languages she cannot read. A small model on her phone reads each visitor's message, finds the spot on her walk it means, and drafts a reply in the visitor's language from her map. She decides. After one download it works offline. The interface is in English and Spanish. The Spanish interface, and the Spanish and Korean notes and replies, have not been reviewed by a native speaker.
 
 It answers the tourism challenge of the World Bank Small AI for Development brief (Annex C): a small operator who cannot read every visitor's language and has no simple way to turn feedback into an improvement.
 
 ## The place: the Qorikancha walk
 
-A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model outlined steps and kerbs in the photos. 8 of the 52 findings are flagged as possible barriers, on 6 stretches. None is verified until the operator checks it.
+A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned the photos and left 287 marks of steps, kerbs, crossings and paving; 8 findings are flagged as possible barriers, none checked by a person.
 
-## The loop
+## How it works
 
-1. **Place.** The route on a monochrome map, with its real photos and the possible barriers.
-2. **Message.** She pastes what a visitor wrote. The model says whether it is a problem, praise or a question, and the spots it most likely means light up, best first.
-3. **Verify on the photo.** For each suggested spot she opens the photo with its recorded outline and chooses Confirm, Not a barrier, or Check on site.
-4. **Changes.** She adds a visitor note from fixed templates and copies a pre-written reply in English, Spanish or Korean.
+1. **The walk.** Opening the place replays how the walk was built from its photos, then shows it on a leaning city map with labelled markers.
+2. **Messages.** Visitor messages arrive in an inbox (the ones shipped with the app are labelled Example). The model says whether each is a problem, praise or a question and which spot it means, and the map flies there.
+3. **Reply.** A reply in the visitor's language (English, Spanish or Korean) is drafted from fixed templates and what her map says about the spot, ready to copy.
+4. **Not sure.** When the model cannot tell, it says so and she taps the spot. For messages the model cannot read, such as Quechua, the phone remembers her choice for similar messages later.
+5. **Her map.** She keeps it current: mark a spot fixed, add her note, remove a spot or add one. Messages pile up on their spots, and a route note for visitors can be copied in English, Spanish or Korean.
 
-## Example: Noor's farm
+## Who it is for
 
-Noor, the operator in the brief, runs coffee farm tours in La Convención. Her farm is an authored map labeled Example. On it, the operator can move an obstruction and recheck which places a path 0.9 m wide reaches before and after (an illustrative width, not a wheelchair standard).
+Noor, the operator in the brief, runs coffee farm tours in La Convención. Her farm exists in Mercature only as the model's synthetic training data: the example messages that trained its heads are about an authored farm, labelled synthetic. The app's place is the real walk.
 
 ## What the model does and does not do
 
-- It answers only from fixed lists: message kind, and the place's own named spots. It never writes free text, so it cannot invent a place, a measurement or a promise.
+- It answers only from fixed lists: message kind, and the place's own named spots. It never writes free text: replies are fixed templates filled from her map, so it cannot invent a place, a measurement or a promise.
 - When it is unsure it says Not sure, and she decides. Messages that do not look like English, Spanish or Korean always get Not sure.
 - It does not translate, and it does not judge whether a path is passable.
 - On the route the issue type is never shown: it did not carry over from the farm-trained model.
+- It learns from her taps only for messages that fail the language check, such as Quechua: on machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and 9.4 with three linked messages per spot. Only the order of spots changes, and the link stays on the phone. This limit was decided after the test, because one Korean message lost its right spot in a few draws.
 - A large model ran once to prepare the route; only the small model runs on the phone.
 
 Results by language, size and speed are in [language](language.md).
@@ -32,7 +34,7 @@ Results by language, size and speed are in [language](language.md).
 ## Honesty limits
 
 - No widths, heights, slopes or reachability are claimed on the route. A stretch with no flagged barrier means only that no barrier was seen in the photos.
-- Photo outlines are recorded and unverified until the operator confirms them.
+- Photo marks were recorded once, when the route was prepared, and none has been checked by a person.
 - The farm and all test messages are synthetic; the messages were written by a large language model and none has been reviewed by a native speaker.
 - A saved plan or note is a proposal, not proof that anything changed on the ground.
 - No phone has been measured, and no real operator has used it.

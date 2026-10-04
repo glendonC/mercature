@@ -7,8 +7,6 @@
 
 <h1 align="center">Mercature</h1>
 
-<!-- Subtitle pending the Home text decision. -->
-
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="docs/product.md">Product</a> ·
@@ -26,10 +24,12 @@ Peru welcomed over four million international visitors in 2025, and 7 in 10 of i
 in businesses of ten people or fewer. Small tour operators live on what visitors tell them, and much
 of it arrives in languages they cannot read, about places they cannot easily check.
 
-Mercature turns a visitor's message into a checked spot on a real route. A small multilingual model
-on the phone reads the message and lights up the spots it most likely means. The operator opens the
-real street photo for each one and decides: Confirm, Not a barrier, or Check on site. She then adds
-a note for future visitors and copies a pre-written reply. After one download, it works offline.
+Mercature keeps a tour operator's walk on her phone, built from public street photos, and reads
+her visitors' messages for her. A small multilingual model on the phone says whether a message is a
+problem, praise or a question and which spot on the walk it means, and the map flies there. A reply
+in the visitor's language is drafted from fixed templates and what her map says, ready to copy. When
+the model is unsure she taps the spot herself. She keeps the map current: mark a spot fixed, add a
+note, remove a spot or add one. After one download, it works offline.
 
 Built for the World Bank Small AI for Development challenge, tourism track.
 
@@ -39,13 +39,10 @@ Built for the World Bank Small AI for Development challenge, tourism track.
 
 A real route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60
 stretches, seen through 403 Mapillary street photos taken between 2015 and 2023. A large
-segmentation model outlined steps and kerbs once, when the route was prepared; 8 of its 52 findings
-are flagged as possible barriers, and none is verified until the operator checks the photo. A
-stretch with no flagged barrier means only that no barrier was seen in the photos: Mercature claims
-no widths, slopes or reachability.
-
-Noor's farm, the persona from the brief, is a second, authored place labeled Example, where an
-obstruction can be moved and the path rechecked.
+segmentation model scanned the photos once, when the route was prepared, and left 287 marks of steps,
+kerbs, crossings and paving; 8 findings are flagged as possible barriers, none checked by a person.
+A stretch with no flagged barrier means only that no barrier was seen in the photos: Mercature
+claims no widths, slopes or reachability.
 
 ## The model
 
@@ -55,8 +52,14 @@ Runtime Web. It downloads once and then works with no connection: 83,783,194 byt
 from fixed lists and says Not sure when unsure. On 48 held-out English, Spanish and Korean messages
 about the farm it put the right spot first 46 times; moved to the Qorikancha walk with no new
 training, 28 of 31. It failed on Quechua, so messages that do not look like English, Spanish or
-Korean now always get Not sure. About 29 ms per message on the development Mac; no phone has been measured.
-All test messages are synthetic, written by a large language model. Details: [model and
+Korean now always get Not sure. For those messages the phone also learns from her: when she taps the
+spot, it keeps the link on the device, and later similar messages rank that spot first. On
+machine-translated Quechua test messages the right spot came first for 5 of 16 with no links, and
+7.3, 8.8 and 9.4 with one, two and three linked messages per spot. A Korean message lost its right
+spot in a few draws, so after that test the memory was limited to messages that fail the language
+check. About 29 ms per message on the development Mac; no phone has been measured.
+All test messages are synthetic, written by a large language model; the farm-tour messages from the
+brief's persona, Noor, trained the model's heads. Details: [model and
 evaluation](docs/language.md).
 
 ## Get started
@@ -70,8 +73,7 @@ npm ci
 npm run dev
 ```
 
-Open [127.0.0.1:4173](http://127.0.0.1:4173) and choose **Open** on Qorikancha, or open
-**Noor's farm**, the example. The first visit downloads the model once. To try the installable offline build, run
+Open [127.0.0.1:4173](http://127.0.0.1:4173) and tap **Qorikancha**. The first visit downloads the model once. To try the installable offline build, run
 `npm run build` and `npm run preview`.
 
 ## Checks
@@ -93,7 +95,7 @@ Set `MERCATURE_PORT` to use a port other than 4173.
 ## Data and credits
 
 Street photos are by Mapillary contributors under CC BY-SA 4.0, credited on every photo; this
-repository ships 27 credited crops of the route in `public/places/qorikancha`. Places and paths are
+repository ships the route's package in `public/places/qorikancha`, with 27 credited photo crops. Places and paths are
 from OpenStreetMap (ODbL), the walking route from Valhalla, outlines from SAM 3. Partial 3D from VGGT
 exists only in a local install; the published package has no points. Test messages are synthetic (CC0) and none has been reviewed by a native speaker. The sources
 behind every figure, and what the data does not cover, are in [evidence](docs/evidence.md); licenses
