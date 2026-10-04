@@ -2,13 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import type { Photo, View } from '../destinations/data';
 import { LOCALES, useLanguage, type Lang } from '../i18n';
 import { fromRecord } from '../i18n/records';
-import { FitIcon } from '../ui/icons';
+import { CheckIcon, FitIcon } from '../ui/icons';
 import { markOf } from '../ui/kinds';
 import '../ui/ui.css';
 import { PHOTO_WORDS, reviewLine, type Review } from './copy';
 import { GROUND, KindIcon, kindOf } from './kinds';
 import { autoBudget, boundsOf, placeLabels, type Box, type Point } from './layout';
-import { drawOrder, labelOrder, type PhotoMark } from './marks';
+import { drawOrder, labelOrder, type MarkAnswer, type PhotoMark } from './marks';
 import './photo.css';
 
 export type LabelledPhotoProps = {
@@ -38,6 +38,8 @@ export type LabelledPhotoProps = {
   credit?: 'below' | 'overlay';
   /** Her own check of this spot, said under the photo: not checked yet (the default), checked on a date, or taken off her map. */
   review?: Review;
+  /** Her answer for each mark's spot, by mark id: a fixed one turns blue with a tick, one that is not a barrier grey, one still there keeps the clay badge. Unanswered marks stay as drawn. */
+  answers?: Readonly<Record<string, MarkAnswer>>;
   lang?: Lang;
   className?: string;
 };
@@ -96,7 +98,7 @@ const zoomAround = (z: Zoom, k: number, at: Point): Zoom => ({ k, x: at[0] - (at
 const licenceName = (licence: string) => /^CC-BY-SA-4\.0$/i.test(licence) ? 'CC BY-SA 4.0' : licence.replace(/-/g, ' ');
 
 /** A recorded photo with every model outline drawn on it and a label chip beside each, in its kind's hue. */
-export function LabelledPhoto({ view, photo, src, marks, selected = null, onSelect, mode = 'static', onTraced, pace = 220, duration, delay = 0, zoomable = true, frameSelected = true, fit = 'contain', height, labels = 'auto', credit = 'below', review, lang: chosen, className }: LabelledPhotoProps) {
+export function LabelledPhoto({ view, photo, src, marks, selected = null, onSelect, mode = 'static', onTraced, pace = 220, duration, delay = 0, zoomable = true, frameSelected = true, fit = 'contain', height, labels = 'auto', credit = 'below', review, answers, lang: chosen, className }: LabelledPhotoProps) {
   const { lang: appLang } = useLanguage();
   const lang = chosen ?? appLang, words = PHOTO_WORDS[lang] ?? PHOTO_WORDS.en;
   const frame = useRef<HTMLDivElement>(null);
@@ -136,7 +138,14 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
   useEffect(() => { if (typeof document !== 'undefined' && document.fonts) document.fonts.load(CHIP_FONT).then(() => setFontsReady(n => n + 1), () => undefined); }, []);
 
   const nameOf = useCallback((m: PhotoMark) => { const kind = markOf(m.concept); return kind ? words.kinds[kind] : fromRecord(m.kindLabel ?? m.label, lang); }, [words, lang]);
-  const spoken = useCallback((m: PhotoMark) => m.flagged ? words.possible(fromRecord(m.label, lang)) : words.mark(fromRecord(m.label, lang)), [words, lang]);
+  const answerOf = (m: PhotoMark): MarkAnswer | undefined => answers?.[m.id];
+  const badged = (m: PhotoMark) => { const answer = answers?.[m.id]; return answer === 'still-there' || (m.flagged && !answer); };
+  const spoken = useCallback((m: PhotoMark) => {
+    const said = m.flagged ? words.possible(fromRecord(m.label, lang)) : words.mark(fromRecord(m.label, lang)), answer = answers?.[m.id];
+    return answer ? `${said}. ${words.answers[answer]}` : said;
+  }, [words, lang, answers]);
+  /** The disc on a chip: the kind's icon, or a tick once she said it is gone or fixed. */
+  const glyph = (m: PhotoMark) => <span className="lp-glyph" aria-hidden="true">{answerOf(m) === 'fixed' ? <CheckIcon size={12} /> : <KindIcon concept={m.concept} size={12} />}</span>;
   const ranked = useMemo(() => labelOrder(marks), [marks]);
   const drawn = useMemo(() => { const order = drawOrder(marks), at = order.findIndex(m => m.id === selected); return at < 0 ? order : [...order.slice(0, at), ...order.slice(at + 1), order[at]]; }, [marks, selected]);
   // Trace timing: each outline draws in `draw` ms, the next starts `step` ms later, its label lands three quarters into its draw.
@@ -285,8 +294,9 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
       {!failed && projected && size && <svg className="lp-marks" width={size.w} height={size.h} viewBox={`0 0 ${size.w} ${size.h}`} aria-hidden="true">
         {drawn.map(m => {
           const points = pointsOf(m.id), b = boundsOf(projected.get(m.id) ?? []), small = b.w < 44 || b.h < 44, mine = m.id === selected;
-          const kind = kindOf(m.concept), ground = GROUND.has(kind), length = ground ? undefined : 1;
-          return <g key={m.id} className="lp-mark" data-mark-id={m.id} data-kind={kind} data-ground={ground || undefined} data-barrier={m.barrier || undefined} data-flagged={m.flagged || undefined} data-selected={mine || undefined} style={at(m.id)}>
+          // Dashed lines (the ground, and a mark she said is not a barrier) measure their dashes in pixels; the rest trace with pathLength 1.
+          const kind = kindOf(m.concept), ground = GROUND.has(kind), length = ground || answerOf(m) === 'not-barrier' ? undefined : 1;
+          return <g key={m.id} className="lp-mark" data-mark-id={m.id} data-mark={kind} data-ground={ground || undefined} data-barrier={m.barrier || undefined} data-flagged={badged(m) || undefined} data-answer={answerOf(m)} data-selected={mine || undefined} style={at(m.id)}>
             {small && <rect className="lp-hit" x={b.x + b.w / 2 - Math.max(44, b.w) / 2} y={b.y + b.h / 2 - Math.max(44, b.h) / 2} width={Math.max(44, b.w)} height={Math.max(44, b.h)} />}
             <polygon className="lp-fill" points={points} />
             <polygon className="lp-halo" points={points} pathLength={length} />
@@ -299,7 +309,7 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
           const edge: Point = [Math.min(box.x + box.w, Math.max(box.x, anchor[0])), Math.min(box.y + box.h, Math.max(box.y, anchor[1]))];
           if (Math.hypot(edge[0] - anchor[0], edge[1] - anchor[1]) < 5) return null;
           const m = marks.find(x => x.id === id);
-          return <g key={id} className="lp-lead" data-kind={m ? kindOf(m.concept) : undefined} data-selected={id === selected || undefined} style={at(id)}>
+          return <g key={id} className="lp-lead" data-mark={m ? kindOf(m.concept) : undefined} data-answer={m ? answerOf(m) : undefined} data-selected={id === selected || undefined} style={at(id)}>
             <line x1={edge[0]} y1={edge[1]} x2={anchor[0]} y2={anchor[1]} /><circle cx={anchor[0]} cy={anchor[1]} r={2.75} />
           </g>;
         })}
@@ -307,23 +317,23 @@ export function LabelledPhoto({ view, photo, src, marks, selected = null, onSele
       {!failed && layout && ranked.map(m => {
         const spot = spots.get(m.id), b = spot ? null : boundsOf(projected?.get(m.id) ?? [[0, 0]]);
         const style = spot ? { ...at(m.id), left: spot.box.x, top: spot.box.y } : { left: Math.max(0, b!.x + b!.w / 2), top: Math.max(0, b!.y + b!.h / 2) };
-        return <button key={m.id} type="button" className="lp-chip" data-mark-id={m.id} data-kind={kindOf(m.concept)} data-barrier={m.barrier || undefined} data-flagged={m.flagged || undefined}
+        return <button key={m.id} type="button" className="lp-chip" data-mark-id={m.id} data-mark={kindOf(m.concept)} data-barrier={m.barrier || undefined} data-flagged={badged(m) || undefined} data-answer={answerOf(m)}
           data-selected={m.id === selected || undefined} data-hidden={spot ? undefined : true} aria-pressed={m.id === selected} aria-label={spoken(m)} title={fromRecord(m.label, lang)}
           style={style} onFocus={() => setFocused(m.id)} onBlur={() => setFocused(id => id === m.id ? null : id)}>
-          <span className="lp-glyph" aria-hidden="true"><KindIcon concept={m.concept} size={12} /></span><span className="lp-name">{nameOf(m)}</span>{m.flagged && <span className="lp-badge" aria-hidden="true" />}
+          {glyph(m)}<span className="lp-name">{nameOf(m)}</span><span className="lp-badge" aria-hidden="true" />
         </button>;
       })}
       {!failed && hidden.length > 0 && <>
         <button type="button" className="lp-more" aria-expanded={listOpen} aria-label={words.more(hidden.length)} onClick={() => setListOpen(open => !open)}>+{hidden.length}</button>
         {listOpen && <div className="lp-list" role="group" aria-label={words.marks}>
-          {hidden.map(m => <button key={m.id} type="button" data-mark-id={m.id} data-kind={kindOf(m.concept)} aria-label={spoken(m)}><span className="lp-glyph" aria-hidden="true"><KindIcon concept={m.concept} size={12} /></span>{nameOf(m)}{m.flagged && <span className="lp-badge" aria-hidden="true" />}</button>)}
+          {hidden.map(m => <button key={m.id} type="button" data-mark-id={m.id} data-mark={kindOf(m.concept)} data-flagged={badged(m) || undefined} data-answer={answerOf(m)} aria-label={spoken(m)}>{glyph(m)}{nameOf(m)}<span className="lp-badge" aria-hidden="true" /></button>)}
         </div>}
       </>}
       {zoomable && zoomed && <button type="button" className="lp-reset" aria-label={words.whole} title={words.whole} onClick={() => base && size && animateTo(bound(REST, base, size))}><FitIcon size={18} /></button>}
     </div>
     <figcaption ref={creditRef} className="lp-credit">
       <span>{photo.creator}{date ? `, ${date}` : ''} · {/BY-SA-4\.0/i.test(photo.licence) ? <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">{licenceName(photo.licence)}</a> : licenceName(photo.licence)} · {photo.link ? <a href={photo.link} target="_blank" rel="noreferrer">Mapillary</a> : 'Mapillary'}</span>
-      <span className="lp-note" data-review={review?.state ?? 'unchecked'}>{reviewLine(review, lang)}</span>
+      {marks.length > 0 && <span className="lp-note" data-review={review?.state ?? 'unchecked'}>{reviewLine(review, lang)}</span>}
     </figcaption>
   </figure>;
 }

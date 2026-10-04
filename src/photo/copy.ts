@@ -10,6 +10,7 @@ export const PHOTO_WORDS = {
     alt: (kinds: string) => kinds ? `Street photo with the model's marks: ${kinds}` : 'Street photo',
     more: (n: number) => `${n} more ${n === 1 ? 'mark' : 'marks'}`,
     marks: 'Marks on this photo',
+    answers: { fixed: 'You marked it gone or fixed', 'not-barrier': 'You said it is not a barrier', 'still-there': 'You said it is still there' },
     whole: 'Whole photo',
     missing: 'Photo unavailable',
   },
@@ -20,6 +21,7 @@ export const PHOTO_WORDS = {
     alt: (kinds: string) => kinds ? `Foto de la calle con las marcas del modelo: ${kinds}` : 'Foto de la calle',
     more: (n: number) => n === 1 ? '1 marca más' : `${n} marcas más`,
     marks: 'Marcas en esta foto',
+    answers: { fixed: 'Marcaste que ya no está o se arregló', 'not-barrier': 'Dijiste que no es una barrera', 'still-there': 'Dijiste que sigue ahí' },
     whole: 'Ver la foto entera',
     missing: 'Foto no disponible',
   },
@@ -32,7 +34,8 @@ export type Review = { state: 'unchecked' } | { state: 'checked'; at: string } |
 export function reviewLine(review: Review | undefined, lang: Lang): string {
   const es = lang === 'es';
   if (review?.state === 'checked') {
-    const at = new Date(review.at), date = Number.isNaN(at.getTime()) ? '' : new Intl.DateTimeFormat(es ? 'es-419' : 'en-GB', { day: 'numeric', month: 'long' }).format(at);
+    // A bare day is read as that day here, not as midnight in UTC.
+    const at = new Date(/^\d{4}-\d{2}-\d{2}$/.test(review.at) ? `${review.at}T12:00` : review.at), date = Number.isNaN(at.getTime()) ? '' : new Intl.DateTimeFormat(es ? 'es-419' : 'en-GB', { day: 'numeric', month: 'long' }).format(at);
     if (!date) return es ? 'Lo revisaste' : 'You checked this';
     return es ? `Lo revisaste el ${date}` : `You checked this on ${date}`;
   }

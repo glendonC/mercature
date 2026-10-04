@@ -5,14 +5,17 @@ import { BARRIER_KINDS, MARK_ORDER, markOf } from '../ui/kinds';
  * id: the finding id when the mark is one of the place's findings, else the scan mark id.
  * barrier: its kind can be a barrier (steps, kerb, broken pavement), drawn in the clay family.
  * flagged: one of the walk's possible barriers, drawn heavier and labelled first.
- * label: the record's words for this mark (a finding's own words when it is one); kindLabel: the words for its kind ('Steps', 'Handrail'), for a chip. */
-export type PhotoMark = { id: string; concept: string; label: string; kindLabel?: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; finding: string | null };
+ * label: the record's words for this mark (a finding's own words when it is one); kindLabel: the words for its kind ('Steps', 'Handrail'), for a chip.
+ * stretches: the stretches of the walk it lies on, so a screen can give it the answer she gave for its spot. */
+export type PhotoMark = { id: string; concept: string; label: string; kindLabel?: string; outline: Coordinate[]; barrier: boolean; flagged: boolean; finding: string | null; stretches?: number[] };
+/** Her answer for a mark's spot: gone or fixed, not a barrier, or still there. No answer leaves the mark as the model drew it. */
+export type MarkAnswer = 'fixed' | 'not-barrier' | 'still-there';
 /** Everything one view needs: the view, its photo for the credit, the image URL and every mark on it. */
 export type Shown = { view: View; photo: Photo; src: string; marks: PhotoMark[] };
 
 const SURFACES: ReadonlySet<string> = new Set(['footway', 'cobblestones', 'road', 'crossing']);
 const fromFinding = (data: Destination, f: Finding): PhotoMark => ({ id: f.id, concept: f.concept || f.label, label: f.label, kindLabel: data.scan?.kinds.find(k => k.concept === f.concept)?.label, outline: f.outline,
-  barrier: BARRIER_KINDS.has(markOf(f.concept || f.label) ?? 'road'), flagged: f.barrier, finding: f.id });
+  barrier: BARRIER_KINDS.has(markOf(f.concept || f.label) ?? 'road'), flagged: f.barrier, finding: f.id, stretches: f.stretches });
 
 /** Every outline on one view: the scan's marks, a mark that is a finding keeping the finding's id and words, and any finding the scan does not name. */
 export function marksOn(data: Destination, viewId: string): PhotoMark[] {
@@ -22,7 +25,8 @@ export function marksOn(data: Destination, viewId: string): PhotoMark[] {
     const finding = m.finding && !used.has(m.finding) ? m.finding : null, id = finding ?? m.id;
     if (used.has(id)) continue;
     used.add(id);
-    result.push({ id, concept: m.concept, label: (finding && findings.get(finding)?.label) || m.label, kindLabel: m.label, outline: m.outline, barrier: m.barrier, flagged: m.flagged, finding });
+    result.push({ id, concept: m.concept, label: (finding && findings.get(finding)?.label) || m.label, kindLabel: m.label, outline: m.outline, barrier: m.barrier, flagged: m.flagged, finding,
+      stretches: (finding && findings.get(finding)?.stretches) || m.stretches });
   }
   for (const f of data.findings) if (f.viewId === viewId && f.outline.length > 2 && !used.has(f.id)) { used.add(f.id); result.push(fromFinding(data, f)); }
   return result;
