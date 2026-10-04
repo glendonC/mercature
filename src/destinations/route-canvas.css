@@ -109,9 +109,7 @@ button.route-photo-frame[aria-pressed=true] { cursor: zoom-in; }
 .route-panel .ai-result-spots { display: grid; gap: 6px; margin-top: 12px; }
 .route-panel .ai-result-spots button { display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); border-radius: var(--radius-m); background: rgb(255 255 255 / 0.6); text-align: left; font-size: var(--text-label); }
 .route-panel .ai-result-spots button[aria-pressed=true] { border-color: var(--ink); background: var(--primary); color: var(--on-primary); }
-.route-panel .ai-result-spots button[aria-pressed=true] .ai-rank { background: var(--on-primary); color: var(--ink); }
 .route-panel .ai-result-spots button:last-child { border-style: dashed; color: var(--muted); }
-.ai-rank { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--on-primary); font-size: 12px; }
 .route-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .route-list li { border-bottom: 1px solid var(--line); }
 .route-list button { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; min-height: var(--tap); padding: 10px 2px; border: 0; background: transparent; text-align: left; font-size: var(--text-label); }

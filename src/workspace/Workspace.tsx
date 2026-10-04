@@ -424,7 +424,7 @@ export default function Workspace({
     <div className="canvas-actions"><button className="primary" onClick={() => {setMode('proactive'); begin('proactive');}}>{t('ws.planFix')}</button><button onClick={() => {setSection('messages'); setStep('message');}}>{t('ws.linkMessage')}</button></div>{selectedDetails}
   </> : section === 'messages' ? (step === 'confirm' || thinking) && <>
     <span className="place-kicker">{t(thinking ? 'ws.kicker.reading' : 'ws.kicker.check')}</span><h2>{t(thinking ? 'ws.finding' : 'ws.which')}</h2>
-    {resultCard && !thinking && <AIResultCard result={resultCard} selectedId={selected} onSpot={selectSpot} onNotSure={() => setSelected(null)} />}
+    {resultCard && !thinking && <AIResultCard numbered result={resultCard} selectedId={selected} onSpot={selectSpot} onNotSure={() => setSelected(null)} />}
     {!thinking && <>{understanding?.status === 'unavailable' && <p className="place-copy">{t('ws.aiUnavailable')}</p>}{spotPicker}<div className="canvas-actions"><button className="primary" disabled={!selectedFeature} onClick={confirm}>{t('ws.yesThis')}</button></div>{selectedDetails}</>}
   </> : confirmation || step === 'confirm' ? <>
     <span className="place-kicker">{t(plan ? 'ws.kicker.saved' : reviewed ? 'ws.kicker.review' : 'ws.kicker.try')}</span>
