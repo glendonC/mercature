@@ -320,11 +320,11 @@ const en: Script = {
   },
   home: {
     greet: 'Hi. Search for your walk, or open one below.',
-    search: 'Where does your walk go?',
+    search: 'A square, a landmark or a street',
     open: s => `Open ${s.place}`,
   },
   reveal: {
-    hello: s => `Hi. Here’s your walk to ${s.target}.`,
+    hello: s => `Hi. This is the walk to ${s.target}.`,
     photos: s => s.photos ? 'First, the street photos people shared along it.' : 'This walk comes from the map.',
     walk: s => `This is the way you walk, about ${about(s.metres)} m.`,
     reading: () => 'And this is what the photos show.',
@@ -332,7 +332,7 @@ const en: Script = {
     marks: s => s.spots === 0 ? 'Nothing in the photos looks like a problem.' : `${cap(count_en(s.spots, 'spot', 'spots'))} might be a problem for some visitors.`,
   },
   hello: {
-    greet: () => 'Let’s go through your walk together.',
+    greet: () => 'Let’s go through this walk together.',
     walk: s => s.spots === 0 ? `It’s about ${about(s.metres)} m, and nothing looks like a problem.` : `It’s about ${about(s.metres)} m, with ${count_en(s.spots, 'spot', 'spots')} that might give visitors trouble.`,
     mapOnly: s => s.osm ? `It’s about ${about(s.metres)} m on foot. OpenStreetMap shows ${count_en(s.osm, 'thing', 'things')} to check.` : `It’s about ${about(s.metres)} m on foot. Tell me what visitors meet on the way.`,
     altitude: s => `It’s about ${s.metres.toLocaleString('en')} m up here, so walking tires visitors faster.`,
@@ -340,10 +340,10 @@ const en: Script = {
   },
   select: {
     answered: s => `You said: ${s.answer}. Change it?`,
-    overview: () => 'Your whole walk. Tap any spot or street to look closer.',
+    overview: () => 'The whole walk. Tap any spot or street to look closer.',
     spot: s => `${cap(s.what)} ${s.where}, ${s.metres < 10 ? 'right at the start' : `about ${about(s.metres)} m in`}.`,
     outline: s => `That looks like ${s.what}${yearOf(s.when) ? `, in a ${yearOf(s.when)} photo` : ''}.`,
-    street: s => `${s.street} isn’t on your walk yet. Add it?`,
+    street: s => `${s.street} isn’t on this walk yet. Add it?`,
     next: 'Tap a spot or a street to look closer.',
   },
   check: {
@@ -434,7 +434,7 @@ const en: Script = {
     unchecked: 'Okay. I won’t suggest it until you’ve checked it.',
     none: 'OpenStreetMap doesn’t know a way around these steps.',
     offline: 'I need internet to look for a way around.',
-    same: 'OpenStreetMap doesn’t show any steps on your walk, so there’s nothing to go around.',
+    same: 'OpenStreetMap doesn’t show any steps on this walk, so there’s nothing to go around.',
     chips: { show: 'Show the way around', works: 'It works', notWorks: 'It doesn’t work', unknown: 'I’m not sure', better: 'I know a better way', notNow: 'Not now' },
   },
   street: {
@@ -447,7 +447,7 @@ const en: Script = {
     failed: 'I couldn’t find a way on foot there. Try other points.',
     offline: 'I need internet to add a street.',
     busy: 'The map service is busy right now. Try again in a minute.',
-    tooFar: 'That’s a bit far from your walk. Tap closer to it.',
+    tooFar: 'That’s a bit far from the walk. Tap closer to it.',
     tooLong: 'That’s a long way. Try a shorter street.',
     removed: s => `Took ${s.street} off your map.`,
     chips: { add: 'Add a street', keep: 'Keep this street', again: 'Try again', cancel: 'Cancel', remove: 'Remove this street' },
@@ -569,11 +569,11 @@ const es: Script = {
   },
   home: {
     greet: '¡Hola! Busca tu recorrido o abre uno de abajo.',
-    search: '¿Adónde va tu recorrido?',
+    search: 'Una plaza, un monumento o una calle',
     open: s => `Abrir ${s.place}`,
   },
   reveal: {
-    hello: s => `¡Hola! Este es tu recorrido hasta ${s.target}.`,
+    hello: s => `¡Hola! Este es el recorrido hasta ${s.target}.`,
     photos: s => s.photos ? 'Primero, las fotos de la calle que la gente compartió a lo largo del camino.' : 'Este recorrido viene del mapa.',
     walk: s => `Este es tu camino, unos ${about(s.metres)} m.`,
     reading: () => 'Y esto es lo que se ve en las fotos del camino.',
@@ -581,7 +581,7 @@ const es: Script = {
     marks: s => s.spots === 0 ? 'Nada en las fotos parece un problema.' : `${cap(count_es(s.spots, 'punto podría', 'puntos podrían'))} ser un problema para algunos visitantes.`,
   },
   hello: {
-    greet: () => 'Revisemos juntos tu recorrido.',
+    greet: () => 'Revisemos juntos este recorrido.',
     walk: s => s.spots === 0 ? `Son unos ${about(s.metres)} m y nada parece un problema.` : `Son unos ${about(s.metres)} m, con ${count_es(s.spots, 'punto', 'puntos')} que podrían complicar a los visitantes.`,
     mapOnly: s => s.osm ? `Son unos ${about(s.metres)} m a pie. Según OpenStreetMap, hay ${count_es(s.osm, 'cosa', 'cosas', true)} por revisar.` : `Son unos ${about(s.metres)} m a pie. Cuéntame qué encuentran los visitantes en el camino.`,
     altitude: s => `Aquí estamos a unos ${s.metres.toLocaleString('es')} m de altura, así que caminar cansa más.`,
@@ -589,10 +589,10 @@ const es: Script = {
   },
   select: {
     answered: s => `Dijiste: ${s.answer}. ¿Lo cambias?`,
-    overview: () => 'Todo tu recorrido. Toca un punto o una calle para verlo de cerca.',
+    overview: () => 'Todo el recorrido. Toca un punto o una calle para verlo de cerca.',
     spot: s => `${cap(s.what)} ${s.where}, ${s.metres < 10 ? 'justo al inicio' : `a unos ${about(s.metres)} m de la salida`}.`,
     outline: s => yearOf(s.when) ? `En esta foto de ${yearOf(s.when)}, parece que hay ${s.what}.` : `Parece que hay ${s.what}.`,
-    street: s => `${cap(s.street)} aún no está en tu recorrido. ¿La agrego?`,
+    street: s => `${cap(s.street)} aún no está en este recorrido. ¿La agrego?`,
     next: 'Toca un punto o una calle para verlo de cerca.',
   },
   check: {
@@ -683,7 +683,7 @@ const es: Script = {
     unchecked: 'De acuerdo. No lo sugeriré hasta que lo revises.',
     none: 'Según OpenStreetMap, no hay otro camino que evite estos escalones.',
     offline: 'Necesito internet para buscar otro camino.',
-    same: 'OpenStreetMap no muestra escalones en tu recorrido, así que no hay nada que evitar.',
+    same: 'OpenStreetMap no muestra escalones en este recorrido, así que no hay nada que evitar.',
     chips: { show: 'Ver el otro camino', works: 'Sí sirve', notWorks: 'No sirve', unknown: 'No sé', better: 'Conozco uno mejor', notNow: 'Ahora no' },
   },
   street: {
@@ -696,7 +696,7 @@ const es: Script = {
     failed: 'No encontré un camino a pie ahí. Prueba con otros puntos.',
     offline: 'Necesito internet para agregar una calle.',
     busy: 'El servicio de mapas está ocupado. Inténtalo en un minuto.',
-    tooFar: 'Eso queda un poco lejos de tu recorrido. Toca más cerca.',
+    tooFar: 'Eso queda un poco lejos del recorrido. Toca más cerca.',
     tooLong: 'Es un camino muy largo. Prueba con una calle más corta.',
     removed: s => `Quité ${s.street} de tu mapa.`,
     chips: { add: 'Agregar una calle', keep: 'Guardar esta calle', again: 'Intentar de nuevo', cancel: 'Cancelar', remove: 'Quitar esta calle' },
