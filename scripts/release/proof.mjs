@@ -21,7 +21,8 @@ const base = new URL(args[0] ?? 'http://127.0.0.1:4186/mercature/');
 const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-z0-9.-]/gi, '-')}`);
 // The Korean demo message: steps by the church on the way were too steep for the writer's mother.
 const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.';
-const EXPECTED = { kind: 'Problem', spots: ['Stone steps on Calle Loreto', 'Steps on Calle Loreto', 'Qorikancha ticket booth'] };
+// The measured answer: spots steps-340-350, steps-130-140 and qorikancha-ticket-booth, as the card names them.
+const EXPECTED = { kind: 'Problem', spots: ['Calle Loreto, 340 to 350 m', 'Calle Loreto, 130 to 140 m', 'Qorikancha ticket booth'] };
 
 const report = { url: base.href, started: new Date().toISOString(), checks: [], downloads: [], offsite: [], answers: {}, transfer: {} };
 const check = (name, pass, detail = '') => {
@@ -75,13 +76,13 @@ async function launch(offline) {
 
 async function openRoute(page, name) {
   await page.getByRole('button', { name: 'Explore Qorikancha · Cusco', exact: true }).click();
-  const reveal = page.getByRole('region', { name: 'Qorikancha, recorded preparation' });
-  await reveal.waitFor();
+  // The reveal is the screen that offers Skip.
+  const skip = page.getByRole('button', { name: 'Skip', exact: true });
+  await skip.waitFor();
   if (name) {
     await page.waitForTimeout(2500);
     await page.screenshot({ path: resolve(out, `${name}.png`) });
   }
-  const skip = page.getByRole('button', { name: 'Skip', exact: true });
   if (await skip.isVisible()) await skip.click();
   await page.getByRole('tab', { name: 'Place', exact: true }).waitFor();
 }
