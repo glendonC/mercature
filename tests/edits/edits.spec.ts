@@ -90,15 +90,15 @@ test('the merged place keeps the authored spots and their order, and changes onl
 
 test('a fixed spot says she recorded it, never that the way is clear', () => {
   const where = { en: 'near Loreto', es: 'cerca de Loreto', ko: '로레토' };
-  expect(fixedLine('steps', where, 215.4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, about 215 m along the walk, as fixed.');
-  expect(fixedLine('kerb', where, 95, at, 'en')).toBe('Update, October 4, 2026: we recorded the kerb near Loreto, about 95 m along the walk, as fixed.');
+  expect(fixedLine('steps', where, 215.4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, about 215 m along the route, as fixed.');
+  expect(fixedLine('kerb', where, 95, at, 'en')).toBe('Update, October 4, 2026: we recorded the kerb near Loreto, about 95 m along the route, as fixed.');
   expect(fixedLine('steps', where, 215, at, 'es')).toBe('Actualización, 4 de octubre de 2026: anotamos como arreglados los escalones cerca de Loreto, a unos 215 m del inicio.');
   expect(fixedLine('kerb', where, 215, at, 'es')).toContain('anotamos como arreglado el bordillo cerca de Loreto');
   // "registrar" can read as "to search a place", so the record uses "anotar".
   for (const kind of EDIT_KINDS) expect(fixedLine(kind, where, 215, at, 'es'), kind).not.toContain('registramos');
   expect(fixedLine('steps', where, 215, at, 'ko')).toBe('업데이트 (2026년 10월 4일): 출발점에서 약 215m, 로레토 근처 계단을 수리 완료로 기록했습니다.');
   // Inside the first 10 m the line names the start of the walk, as the route note does, never "about 0 m".
-  expect(fixedLine('steps', where, 4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, at the start of the walk, as fixed.');
+  expect(fixedLine('steps', where, 4, at, 'en')).toBe('Update, October 4, 2026: we recorded the steps near Loreto, at the start of the route, as fixed.');
   expect(fixedLine('steps', where, 4, at, 'es')).toBe('Actualización, 4 de octubre de 2026: anotamos como arreglados los escalones cerca de Loreto, al inicio del recorrido.');
   expect(fixedLine('steps', where, 4, at, 'ko')).toBe('업데이트 (2026년 10월 4일): 출발점, 로레토 근처 계단을 수리 완료로 기록했습니다.');
   for (const language of ['en', 'es', 'ko'] as const) expect(fixedLine('kerb', where, 0, at, language), language).not.toMatch(/\b0 m|0m/);

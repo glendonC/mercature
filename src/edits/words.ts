@@ -85,12 +85,12 @@ export function objectParticle(noun: string): string {
 /**
  * The visitor-facing line for a spot she has marked fixed. It reports that she recorded it,
  * with the date, and never says the way is clear, passable or safe.
- * Inside the first 10 m it names the start of the walk, as the route note does, rather than "about 0 m".
+ * Inside the first 10 m it names the start of the route, as the route note does, rather than "about 0 m".
  */
 export const UPDATE = {
   fixed: {
     en: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, ${metres < 10 ? 'at the start of the walk' : `about ${metres} m along the walk`}, as fixed.`,
+      `Update, ${date}: we recorded ${FIXED_SUBJECT[kind].en} ${where.en}, ${metres < 10 ? 'at the start of the route' : `about ${metres} m along the route`}, as fixed.`,
     es: (kind: EditKind, where: Where, metres: number, date: string) =>
       `Actualización, ${date}: anotamos como ${FIXED_SUBJECT[kind].esDone} ${FIXED_SUBJECT[kind].es} ${where.es}, ${metres < 10 ? 'al inicio del recorrido' : `a unos ${metres} m del inicio`}.`,
     ko: (kind: EditKind, where: Where, metres: number, date: string) =>
