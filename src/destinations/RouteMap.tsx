@@ -129,7 +129,8 @@ const settle = (t: number) => 1 - Math.pow(1 - t, 3);
 const sway = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 /** How long the map takes to lean back once the reveal has landed on it. */
 const LEAN_FOR = 1000;
-type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number };
+/** A camera move; arc is how far it draws back halfway, so a long flight keeps both ends in sight. */
+type Tween = { from: View; to: View; started: number; duration: number; ease: (t: number) => number; arc?: number };
 
 /** Every recorded photo position, faint and one size at any zoom or lean, and the photos that open a little stronger. */
 const Cameras = memo(function Cameras({ walk, open, lens }: { walk: Walk; open: Point[]; lens: Lens | null }) {
@@ -277,7 +278,8 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     if (c) {
       const t = Math.min(1, (now - c.started) / c.duration), e = c.ease(t);
       const turn = (c.from.turn ?? 0) + ((c.to.turn ?? 0) - (c.from.turn ?? 0)) * e;
-      next = { ...next, x: c.from.x + (c.to.x - c.from.x) * e, y: c.from.y + (c.to.y - c.from.y) * e, k: c.from.k * Math.pow(c.to.k / c.from.k, e), turn };
+      const back = 1 + (c.arc ?? 0) * Math.sin(Math.PI * e);
+      next = { ...next, x: c.from.x + (c.to.x - c.from.x) * e, y: c.from.y + (c.to.y - c.from.y) * e, k: c.from.k * Math.pow(c.to.k / c.from.k, e) / back, turn };
       if (t >= 1) tween.current = null;
     }
     if (l) {
@@ -298,9 +300,12 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     // The map turns the shorter way round.
     const target = from ? { ...aim, turn: (from.turn ?? 0) + folded((aim.turn ?? 0) - (from.turn ?? 0)) } : aim;
     if (!from || !animate || quiet()) { tween.current = null; const next = { ...target, lean: from?.lean ?? target.lean }; live.current = next; setCamera(next); return; }
-    // A move that turns the map takes longer, so the turn reads as one with the flight.
-    const turning = Math.abs((target.turn ?? 0) - (from.turn ?? 0));
-    tween.current = { from, to: target, started: performance.now(), duration: 520 + Math.min(400, turning * 3), ease: settle };
+    // A long flight draws back halfway, as far as keeps both ends on screen; it and a move that turns the map take longer, so
+    // the turn reads as one with the flight.
+    const screen = box.current ? Math.hypot(box.current.clientWidth, box.current.clientHeight) : 1000;
+    const far = Math.hypot(target.x - from.x, target.y - from.y), mean = Math.sqrt(from.k * target.k), both = far ? 0.6 * screen / far : Infinity;
+    const arc = mean > both ? Math.min(4, mean / both - 1) : 0, turning = Math.abs((target.turn ?? 0) - (from.turn ?? 0));
+    tween.current = { from, to: target, started: performance.now(), duration: 520 + Math.min(400, Math.max(turning * 3, arc * 160)), ease: settle, arc };
     run();
   }, [run]);
   // As close as nine times the whole walk, or 30 m across the screen for a long walk.
