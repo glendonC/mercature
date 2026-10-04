@@ -668,7 +668,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   });
   const inset = safeArea();
   // The map always keeps some room above the dialogue, however tall the dialogue grows, so the walk can still be framed.
-  const top = (narrow ? 64 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - 180));
+  // On a phone the Edit row sits under the header, so the map's free area starts below it; a short strip above the card still frames the spot.
+  const top = (narrow ? 112 : 76) + inset.top, under = (height: number) => Math.max(120, Math.min(height + 16, innerHeight - top - (narrow ? 90 : 180)));
   const sides = frame.left > 0 || frame.right > 0;
   const insets = { top, right: Math.max(24 + inset.right, sides ? frame.right + 24 : 0), bottom: under(sides ? frame.below : dockHeight), left: Math.max(24 + inset.left, sides ? frame.left + 24 : 0) };
   const aimFor = (): { kind: 'fit' } | { kind: 'frame'; points: Point[] } => {
@@ -927,9 +928,16 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const box = host.getBoundingClientRect(), size = element.offsetWidth || 52, { focus, insets: free } = botAim.current;
     const at = focus && lens.current ? lens.current.at(focus) : null;
     const away = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"], .route-marker[data-rank="1"]')?.dataset.side === 'left' ? 1 : -1;
-    const [x, y] = at ? [at[0] + away * (size / 2 + 20) - size / 2, at[1] - size - 20] : [free.left + 24, box.height - free.bottom - 24 - size];
     const right = box.width - free.right - size, bottom = box.height - free.bottom - size;
-    element.style.transform = `translate(${Math.round(Math.max(free.left - 12, Math.min(right + 12, x)))}px, ${Math.round(Math.max(free.top, Math.min(bottom, y)))}px)`;
+    const fit = ([x, y]: [number, number]): [number, number] => [Math.max(free.left - 12, Math.min(right + 12, x)), Math.max(free.top, Math.min(bottom, y))];
+    // It never sits on a marker or its caption: the first place around the spot (or the parking place) that is clear of them.
+    const taken = [...host.querySelectorAll<HTMLElement>('.route-marker-dot, .route-marker-tag, .route-credit, .destination-map-credit')].map(one => one.getBoundingClientRect()).filter(rect => rect.width && rect.height);
+    const clear = ([x, y]: [number, number]) => !taken.some(rect => x < rect.right - box.left + 4 && x + size > rect.left - box.left - 4 && y < rect.bottom - box.top + 4 && y + size > rect.top - box.top - 4);
+    const gap = size / 2 + 20, places: [number, number][] = at
+      ? [[at[0] + away * gap - size / 2, at[1] - size - 20], [at[0] - away * gap - size / 2, at[1] - size - 20], [at[0] + away * (gap + 12) - size / 2, at[1] - size / 2], [at[0] + away * gap - size / 2, at[1] + 20], [at[0] - size / 2, at[1] - size - 36]]
+      : [[free.left + 24, box.height - free.bottom - 24 - size], [free.left + 24, box.height - free.bottom - 96 - size], [free.left + 96, box.height - free.bottom - 24 - size], [free.left + 24, free.top + 16]];
+    const [x, y] = places.map(fit).find(clear) ?? fit(places[0]);
+    element.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     element.dataset.placed = '';
   }, []);
   const onLens = useCallback((next: Lens) => { lens.current = next; placeBot(); }, [placeBot]);
