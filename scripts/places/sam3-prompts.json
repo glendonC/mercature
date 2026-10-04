@@ -1,0 +1,15 @@
+[
+  {"prompt": "stairs", "concept": "steps", "label": "Steps", "barrier": true, "threshold": 0.6},
+  {"prompt": "steps", "concept": "steps", "label": "Steps", "barrier": true, "threshold": 0.45},
+  {"prompt": "curb", "concept": "kerb", "label": "Kerb", "barrier": true, "threshold": 0.5},
+  {"prompt": "curb ramp", "concept": "kerb ramp", "label": "Kerb ramp", "barrier": false, "threshold": 0.5},
+  {"prompt": "ramp", "concept": "ramp", "label": "Ramp", "barrier": false, "threshold": 0.5},
+  {"prompt": "cracked sidewalk", "concept": "broken pavement", "label": "Broken pavement", "barrier": true, "threshold": 0.5},
+  {"prompt": "pothole", "concept": "pothole", "label": "Pothole", "barrier": false, "threshold": 0.6, "context": true},
+  {"prompt": "bollard", "concept": "bollard", "label": "Bollard or post", "barrier": false, "threshold": 0.5},
+  {"prompt": "handrail", "concept": "handrail", "label": "Handrail", "barrier": false, "threshold": 0.5},
+  {"prompt": "sidewalk", "concept": "footway", "label": "Pavement", "barrier": false, "threshold": 0.5, "context": true},
+  {"prompt": "road", "concept": "road", "label": "Road", "barrier": false, "threshold": 0.5, "context": true},
+  {"prompt": "crosswalk", "concept": "crossing", "label": "Pedestrian crossing", "barrier": false, "threshold": 0.5, "context": true},
+  {"prompt": "cobblestones", "concept": "cobblestones", "label": "Cobblestones", "barrier": false, "threshold": 0.5, "context": true}
+]
