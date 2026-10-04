@@ -291,6 +291,9 @@ export type Script = {
     stopped: string;
     failed: string;
     tryAgain: string;
+    /** The app was updated while open, so the model's code is gone until it opens again; her changes stay on the device. */
+    outdated: string;
+    reload: string;
   };
   missed: {
     ask: string;
@@ -620,6 +623,8 @@ const en: Script = {
     stopped: 'The download stopped. Try again, or place it yourself.',
     failed: 'Something went wrong here. You can place it yourself.',
     tryAgain: 'Try again',
+    outdated: 'The app was updated. Open it again to read messages; your changes are kept.',
+    reload: 'Open again',
   },
   missed: {
     ask: 'Did the photos miss anything? Tell me, or tap the spot.',
@@ -912,6 +917,8 @@ const es: Script = {
     stopped: 'La descarga se detuvo. Reintenta o ubícalo tú.',
     failed: 'Algo falló aquí. Igual puedes ubicarlo tú.',
     tryAgain: 'Reintentar',
+    outdated: 'La app se actualizó. Ábrela de nuevo para leer mensajes; tus cambios se guardan.',
+    reload: 'Abrir de nuevo',
   },
   missed: {
     ask: '¿Faltó algo en las fotos? Cuéntamelo o toca el punto.',

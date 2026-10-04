@@ -271,7 +271,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   useEffect(() => {
     if (!place || model.status === 'ready') return;
     let alive = true;
-    void modelDownloadBytes().then(bytes => { if (alive) setDownloadBytes(bytes); });
+    // Asking for the size loads the model's code, which can find the page outlived by a deploy: then the model is outdated.
+    void modelDownloadBytes().then(bytes => { if (!alive) return; setDownloadBytes(bytes); const now = modelState(); if (now.status === 'outdated') setModel(now); });
     return () => { alive = false; };
   }, [authored, model.status]); // eslint-disable-line react-hooks/exhaustive-deps
   const ai = !!place && (model.status === 'ready' || stored);
@@ -975,7 +976,10 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       if (step.at === 0 && !ack && !step.pasted) lines.push(s.messages.intro({ total: rows.length }));
       lines.push(s.messages.arrived({ n: step.at + 1, total: rows.length, language }));
       const first = answer?.candidates.map(targetOf).find((target): target is Target => !!target) ?? null;
-      if (busy === 'download') { if (model.status === 'downloading') progress = s.model.downloading({ done: Math.round(model.loadedBytes / 1e6), total: Math.round(model.totalBytes / 1e6) }); else lines.push(s.model.reading); }
+      if (model.status === 'outdated' && !message?.spot) {
+        lines.push(s.model.outdated);
+        chips = [{ id: 'reload', label: s.model.reload, primary: true, onClick: () => location.reload() }];
+      } else if (busy === 'download') { if (model.status === 'downloading') progress = s.model.downloading({ done: Math.round(model.loadedBytes / 1e6), total: Math.round(model.totalBytes / 1e6) }); else lines.push(s.model.reading); }
       else if (reading === row.id || (!message && ai)) lines.push(s.model.reading);
       else if (!message && !ai) {
         lines.push(unkept === 'not-kept' ? s.model.notKept : unkept === 'stopped' ? s.model.stopped : downloadBytes === null || model.status === 'failed' ? s.model.failed : s.model.download({ mb: Math.max(1, Math.round((downloadBytes ?? 0) / 1e6)) }));
