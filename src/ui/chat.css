@@ -6,7 +6,7 @@
 .ui-dialogue-line { min-width: 0; max-width: 100%; min-height: 48px; padding: 12px 18px; border-radius: var(--radius-panel); background: var(--line-surface); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-panel-dark); font-size: var(--chat-text); line-height: var(--chat-leading); overflow-wrap: anywhere; animation: ui-line-in var(--motion-panel) var(--ease-out) both; }
 .ui-dialogue-line:lang(ko), .ui-dialogue-line :lang(ko), .ui-copy-text:lang(ko) { word-break: keep-all; }
 .ui-dialogue-meta { margin: 0 0 2px; font-size: var(--font-xs); line-height: var(--leading-tight); color: var(--line-muted); font-variant-numeric: tabular-nums; }
-.ui-dialogue-text { display: grid; gap: 4px; }
+.ui-dialogue-text { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
 .ui-dialogue-text p { margin: 0; text-wrap: pretty; }
 /* Paged words: the part not typed yet keeps its room, so the box never changes size while a page types */
 .ui-dialogue-line[data-paged] { position: relative; }

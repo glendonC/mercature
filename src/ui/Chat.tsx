@@ -102,6 +102,12 @@ function pagesOf(say: readonly string[], width: number, measure: (s: string) => 
   return pages;
 }
 
+/** The box is narrower than its pages were laid out for: the line overflows its section, or a page asks for more room than the line has. */
+function narrower(line: HTMLElement, section: HTMLElement) {
+  const page = line.querySelector<HTMLElement>('.ui-dialogue-page'), room = page?.parentElement?.clientWidth ?? Infinity;
+  return line.getBoundingClientRect().width > section.clientWidth + 1 || (page ? parseFloat(page.style.width) > room + 1 : false);
+}
+
 /** The pages of words for the dialogue's current width, measured in its own font, and each page's widest line, so the box fits its words exactly. */
 function usePages(say: string | readonly string[] | undefined, box: RefObject<HTMLElement | null>) {
   const key = say === undefined ? '' : typeof say === 'string' ? say : say.join('\n');
@@ -114,7 +120,7 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
     const run = () => {
       const element = box.current;
       const section = element?.parentElement;
-      if (element && section && element.getBoundingClientRect().width > section.clientWidth + 1) cap = section.clientWidth;
+      if (element && section && narrower(element, section)) cap = Math.min(section.clientWidth, Math.round(element.getBoundingClientRect().width));
       if (!element || !context) { setLaid({ pages: (typeof say === 'string' ? [say] : [...say]).flatMap(item => item.split(PAGE_BREAK)).map(item => item.trim()).filter(Boolean), widths: [] }); return; }
       const style = getComputedStyle(element), narrow = matchMedia('(max-width: 640px)').matches;
       context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
@@ -129,7 +135,7 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
     run();
     document.fonts?.ready.then(run).catch(() => undefined);
     const resize = () => { cap = Infinity; run(); };
-    const fit = new ResizeObserver(() => { const element = box.current, section = element?.parentElement; if (element && section && element.getBoundingClientRect().width > section.clientWidth + 1) run(); });
+    const fit = new ResizeObserver(() => { const element = box.current, section = element?.parentElement; if (element && section && narrower(element, section)) run(); });
     if (box.current?.parentElement) fit.observe(box.current.parentElement);
     if (box.current) fit.observe(box.current);
     addEventListener('resize', resize);
