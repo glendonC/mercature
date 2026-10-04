@@ -25,7 +25,9 @@
 .route-marker:focus-visible .route-marker-dot { outline: 2px solid var(--ink); outline-offset: 5px; }
 .route-marker-dot { --ring: var(--blocked); position: relative; display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: rgb(255 255 255 / 0.78); box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 1px rgb(255 255 255 / 0.55), 0 1px 4px rgb(20 22 24 / 0.14); color: var(--ink); font-size: var(--font-xs); font-weight: 500; line-height: 1; opacity: var(--haze, 1); transition: transform var(--motion-fast) var(--ease-out), translate var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
 .route-marker-dot::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--ring); }
-.route-marker[data-state=open] .route-marker-dot::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--blocked); opacity: 0; animation: route-pulse 2.4s var(--ease) infinite; }
+/* A possible barrier: its kind's hue on a charcoal dot, and a small clay badge, never a clay ring */
+.route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) .route-marker-dot { --ring: var(--mark, #f2f3f4); background: #1d2125; box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 1.5px rgb(255 255 255 / 0.92), 0 1px 4px rgb(20 22 24 / 0.22); }
+.route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) .route-marker-dot::after { content: ''; position: absolute; top: -4px; right: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--kind-barrier, #e0905f); box-shadow: 0 0 0 1.5px #fff; }
 .route-marker:is([data-state=barrier], [data-state=fixed], [data-state=added]) .route-marker-dot { border-radius: 3px; }
 .route-marker[data-state=barrier] .route-marker-dot::before { width: 6px; height: 6px; border-radius: 1px; }
 .route-marker[data-state=not-barrier] .route-marker-dot::before { display: none; }
@@ -36,9 +38,11 @@
 /* Her own record of something the photos missed: a clay square with a plus */
 .route-marker[data-state=added] .route-marker-dot::before { width: 7px; height: 7px; border-radius: 0; background: linear-gradient(var(--ring) 0 0) center / 100% 1.5px no-repeat, linear-gradient(var(--ring) 0 0) center / 1.5px 100% no-repeat; }
 /* An OpenStreetMap record: a small muted icon, quiet under the markers that stand for her check; struck through when it records a lack */
-.route-marker[data-state=osm] .route-marker-dot { --ring: color-mix(in srgb, var(--ink) 28%, transparent); width: 20px; height: 20px; background: rgb(255 255 255 / 0.74); box-shadow: inset 0 0 0 1px var(--ring), 0 1px 3px rgb(20 22 24 / 0.1); color: color-mix(in srgb, var(--ink) 74%, transparent); }
+.route-marker[data-state=osm] .route-marker-dot { --ring: transparent; width: 18px; height: 18px; background: rgb(29 33 37 / 0.6); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7); color: var(--mark, #e8eaec); }
 .route-marker[data-state=osm] .route-marker-dot::before { display: none; }
-.route-marker[data-state=osm][data-missing] .route-marker-dot::after { content: ''; position: absolute; width: 16px; height: 1.5px; border-radius: 1px; background: currentColor; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.8); transform: rotate(-45deg); }
+.route-marker[data-state=osm] .route-marker-dot:empty::before { display: block; width: 5px; height: 5px; background: currentColor; }
+.route-marker[data-state=osm]:is([aria-pressed=true], [data-hovered], :focus-visible) .route-marker-dot { background: rgb(29 33 37 / 0.88); }
+.route-marker[data-state=osm][data-missing] .route-marker-dot::after { content: ''; position: absolute; width: 16px; height: 1.5px; border-radius: 1px; background: currentColor; box-shadow: 0 0 0 1px rgb(29 33 37 / 0.9); transform: rotate(-45deg); }
 .route-marker[data-state=fixed] .route-marker-dot::before { width: 6px; height: 3px; border-radius: 0; background: none; border: solid var(--reachable); border-width: 0 0 1.5px 1.5px; transform: translateY(-1px) rotate(-45deg); }
 .route-marker[data-state=landmark] .route-marker-dot { --ring: var(--ink); width: 11px; height: 11px; box-shadow: inset 0 0 0 1px var(--ink), 0 1px 3px rgb(20 22 24 / 0.12); }
 .route-marker[data-state=landmark] .route-marker-dot::before { width: 4px; height: 4px; }
@@ -51,19 +55,19 @@
 /* Messages filed at a spot: a small outlined count above its marker */
 .route-marker-count { position: absolute; left: calc(50% + 5px); bottom: calc(50% + 5px); min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.92); color: var(--ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 40%, transparent); font-size: var(--font-xs); font-weight: 500; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
 /* Captions: a small icon in the marker's colour, a short label and any message count, beside the marker on the side with room */
-.route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.8); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: var(--ink); pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
+.route-marker-tag { position: absolute; left: calc(50% + 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; height: 23px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--glass-charcoal); box-shadow: var(--glass-charcoal-edge), 0 1px 4px rgb(20 22 24 / 0.16); font-size: var(--font-xs); letter-spacing: 0.01em; white-space: nowrap; color: #f2f3f4; pointer-events: none; transition: opacity var(--motion-hover) var(--ease-out), box-shadow var(--motion-hover) var(--ease-out); }
 .route-marker[data-side=left] .route-marker-tag { left: auto; right: calc(50% + 14px); }
-.route-marker-tag .ui-icon { flex: none; color: var(--ring-ink, var(--ink)); }
-.route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) { --ring-ink: var(--blocked); }
-.route-marker:is([data-state=fixed], [data-state=clear]) { --ring-ink: var(--reachable); }
-.route-marker:is([data-state=no-photos], [data-state=not-barrier]) { --ring-ink: var(--unknown); }
-.route-marker-said { display: inline-flex; align-items: center; gap: 3px; margin-left: 3px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.route-marker-said .ui-icon { color: var(--muted); }
+.route-marker-tag .ui-icon { flex: none; color: var(--mark, var(--ring-ink, #f2f3f4)); }
+.route-marker:is([data-state=open], [data-state=barrier], [data-state=added]) { --ring-ink: var(--kind-barrier, #e0905f); }
+.route-marker:is([data-state=fixed], [data-state=clear]) { --ring-ink: color-mix(in srgb, var(--reachable) 45%, #fff); }
+.route-marker:is([data-state=no-photos], [data-state=not-barrier]) { --ring-ink: #c4c8cc; }
+.route-marker:is([data-state=fixed], [data-state=clear], [data-state=no-photos], [data-state=not-barrier]) .route-marker-tag .ui-icon { color: var(--ring-ink); }
+.route-marker-said { display: inline-flex; align-items: center; gap: 3px; margin-left: 3px; color: rgb(242 243 244 / 0.76); font-variant-numeric: tabular-nums; }
+.route-marker-said .ui-icon { color: rgb(242 243 244 / 0.76); }
 /* Raised: under a fine pointer, at keyboard focus, or pointed at by the page; it lifts and its caption firms up, and the motion
    layer sends a ring over the ground */
 .route-marker:is(:focus-visible, [data-hovered]) .route-marker-dot { translate: 0 -3px; box-shadow: inset 0 0 0 1.5px var(--ring), 0 0 0 3px rgb(255 255 255 / 0.85), 0 0 0 4px var(--ink); }
-.route-marker:is(:focus-visible, [data-hovered]) .route-marker-tag { opacity: 1; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 35%, transparent), 0 2px 8px rgb(20 22 24 / 0.12); }
-@keyframes route-pulse { 0% { opacity: 0.55; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.5); } }
+.route-marker:is(:focus-visible, [data-hovered]) .route-marker-tag { opacity: 1; box-shadow: var(--glass-charcoal-edge), 0 0 0 1px rgb(255 255 255 / 0.5), 0 2px 8px rgb(20 22 24 / 0.24); }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
 .route-card-slot { position: absolute; z-index: 6; width: 340px; }
 /* The map credit in a corner of the free map, on charcoal glass: the full line at first, then a small chip that a tap opens again */
@@ -106,8 +110,6 @@
 .route-map[data-lean] .route-marker[data-state=osm]:not([aria-pressed=true], [data-hovered], :focus-visible) .route-marker-dot { translate: none; }
 .route-map[data-lean] .route-marker[data-state=osm]:not([aria-pressed=true], [data-hovered], :focus-visible)::after { display: none; }
 .route-map[data-lean] .route-marker[aria-pressed=true]::before { content: ''; position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border: 1.5px solid var(--ink); border-radius: 50%; opacity: 0; transform: scaleY(var(--squash, 1)) scale(0.35); animation: map-ground-ring 2.4s var(--ease-out) infinite; pointer-events: none; }
-/* The selected marker keeps one pulse, its ring on the ground, on the map's one beat. */
-.route-map[data-lean] .route-marker[aria-pressed=true] .route-marker-dot::after { animation: none; opacity: 0; }
 @keyframes map-ground-ring { 0% { opacity: 0.6; transform: scaleY(var(--squash, 1)) scale(0.35); } 100% { opacity: 0; transform: scaleY(var(--squash, 1)) scale(1.8); } }
 @media (prefers-reduced-motion: reduce) {
   .route-map[data-lean] .route-marker[aria-pressed=true]::before { animation: none; opacity: 0.35; transform: scaleY(var(--squash, 1)); }
@@ -120,7 +122,6 @@
   .route-credit span { font-size: var(--text-phone-min); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .route-marker[data-state=open] .route-marker-dot::after { animation: none; opacity: 0.35; transform: none; }
   .route-marker-dot { transition: none; }
 }
 

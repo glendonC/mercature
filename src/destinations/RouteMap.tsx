@@ -27,6 +27,8 @@ export type Marker = {
   count?: number;
   /** The record says the icon's thing is missing, such as no handrail or no ramp: the icon is struck through. Say it in the label too. */
   missing?: boolean;
+  /** The kind it is, such as 'steps' or 'bench', as kindOf names it: the marker takes the kind's hue. */
+  kind?: string;
 };
 const ICONS: Partial<Record<MarkerIcon, Icon>> = {
   steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, dismissed: RemoveIcon,
@@ -635,7 +637,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
           {count && !caption && <span className="route-marker-count" aria-hidden="true">{count}</span>}
           {caption && <span className="route-marker-tag" aria-hidden="true">{Glyph && <Glyph size={13} />}{caption.text}{count && <span className="route-marker-said"><MessageIcon size={12} />{count}</span>}</span>}
         </>;
-        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
+        const shared = { className: 'route-marker', 'data-state': marker.state, 'data-rank': marker.rank, 'data-far': far(at), 'data-side': caption?.side, 'data-hovered': marker.id === lifted || undefined, 'data-missing': marker.missing || undefined, 'data-mark': marker.kind, 'data-change': changes.get(marker.id)?.change, 'data-was': changes.get(marker.id)?.was ?? undefined, style: { left: at[0], top: at[1], '--haze': faded(marker, at) } as CSSProperties };
         return still ? <span key={marker.id} {...shared} aria-hidden="true">{inside}</span>
           : <button key={marker.id} type="button" {...shared} aria-pressed={marker.selected} aria-label={marker.label} onClick={() => { quietUntil.current = performance.now() + 650; onMarker(marker.id); }}
             onPointerMove={event => { if (event.nativeEvent === moving.current && performance.now() >= quietUntil.current) raise(marker.id); }} onPointerLeave={() => { if (pointedNow.current === marker.id) raise(null); }}
