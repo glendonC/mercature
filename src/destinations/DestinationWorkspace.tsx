@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, PointerEvent } from 'react';
 import Companion from '../components/Companion';
-import { Preparation } from '../preparation/Preparation';
-import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, isDestinationId, loadDestination, type Cloud, type Destination, type DestinationId, type View } from './data';
+import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, isDestinationId, loadDestination, type Cloud, type Destination, type DestinationId } from './data';
 import GeographicMap from './GeographicMap';
 import RouteCanvas, { hasRouteCanvas } from './RouteCanvas';
 import type { MenuPlace } from '../home/Menu';
@@ -17,7 +16,6 @@ function Missing({onHome}: {onHome: () => void}) { const { t } = useLanguage(); 
 function Session({ id, onHome, onPlace, initial }: {id:DestinationId;onHome:()=>void;onPlace?:(place: MenuPlace)=>void;initial?:Destination}) {
   const { t, lang, locale } = useLanguage();
   const [mapZoom, setMapZoom] = useState(1), [camera, setCamera] = useState({yaw:.55,pitch:.45,zoom:1});
-  const [preparing, setPreparing] = useState(!initial), [preparationStage, setPreparationStage] = useState<'views' | 'scene'>('views'), [rendered, setRendered] = useState(false);
   const [data, setData] = useState<Destination | null>(initial ?? null), [error, setError] = useState(''), [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState(initial?.views[0]?.id ?? ''), [view, setView] = useState<'map' | '3d' | 'split'>('map');
   const [pieceId, setPieceId] = useState(() => initial ? initial.pieces.find(p => p.views.includes(initial.views[0]?.id))?.id ?? initial.pieces[0]?.id ?? '' : ''), [cloud, setCloud] = useState<Cloud | null>(null), [cloudError, setCloudError] = useState(''), [cloudBusy, setCloudBusy] = useState(false);
@@ -26,7 +24,6 @@ function Session({ id, onHome, onPlace, initial }: {id:DestinationId;onHome:()=>
   useEffect(() => { if (initial && retry === 0) return; const controller = new AbortController(); setError(''); setData(null); loadDestination(id, controller.signal).then(next => { setData(next); setSelected(next.views[0]?.id ?? ''); setPieceId(next.pieces.find(p => p.views.includes(next.views[0]?.id))?.id ?? next.pieces[0]?.id ?? ''); }).catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : t('error.destination')); }); return () => controller.abort(); }, [id, retry]);
   const source = data?.views.find(v => v.id === selected), photo = data?.photos.find(p => p.id === source?.photoId);
   const piece = data?.pieces.find(p => p.id === pieceId);
-  useEffect(() => { setRendered(false); }, [pieceId]);
   useEffect(() => { setImageError(false); }, [selected]);
   useEffect(() => {
     if (!piece || view === 'map') { setCloudBusy(false); return; }
@@ -38,27 +35,6 @@ function Session({ id, onHome, onPlace, initial }: {id:DestinationId;onHome:()=>
   function select(viewId: string) { setSelected(viewId); const matching = data?.pieces.find(p => p.views.includes(viewId)); if (matching) setPieceId(matching.id); }
   const findings = data?.findings.filter(f => f.viewId === selected) ?? [];
   const hasGeometry = !!data?.pieces.length;
-  const cameraCount = new Set(data?.views.map(v => v.photoId)).size;
-  const previewViews = data?.views.slice(0, 6) ?? [];
-  if (source && !previewViews.some(view => view.id === source.id)) previewViews.splice(5, 1, source);
-  if (preparing) {
-    const atScene = preparationStage === 'scene';
-    const failed = error || cloudError;
-    const busy = !failed && (!data || (atScene && hasGeometry && (cloudBusy || !cloud || !rendered)));
-    const ready = !!data && (!hasGeometry || (!!cloud && rendered));
-    return <Preparation title={DESTINATIONS[id].name} provenance={t('dest.provenance')} stage={preparationStage} busy={busy}
-      message={t(failed ? 'dest.attention' : !data ? 'dest.openingRecords' : !atScene ? 'dest.viewsHere' : !hasGeometry ? 'dest.explorePhotos' : busy ? 'dest.openingScene' : 'prep.sceneReady')}
-      detail={!data ? undefined : !atScene ? t('dest.chooseView') : !hasGeometry ? t('dest.no3d') : !busy ? t('dest.partial') : undefined}
-      error={failed} onHome={onHome} onSkip={() => { setPreparing(false); if (!cloud) setView('map'); }}
-      action={error ? t('common.tryAgain') : cloudError ? t('dest.explorePhotosAction') : !data ? undefined : !atScene ? t(hasGeometry ? 'prep.loadScene' : 'common.continue') : ready ? t('prep.enterScene') : undefined}
-      onAction={() => { if (error) setRetry(r => r + 1); else if (cloudError) { setPreparing(false); setView('map'); } else if (!atScene) { setPreparationStage('scene'); if (hasGeometry) setView('3d'); } else setPreparing(false); }}>
-      {data ? atScene && hasGeometry ? cloud && !cloudError ? <PointCloud orbit={camera} setOrbit={setCamera} cloud={cloud} selectedView={selected} onReady={() => setRendered(true)} onFailure={setCloudError}/> : <div className="preparation-empty"><p>{cloudError || t('dest.readingPoints')}</p></div> : <>
-        <GeographicMap zoom={mapZoom} setZoom={setMapZoom} data={data} selected={selected} onSelect={select} hidden={false}/>
-        <span className="preparation-source-count">{t(data.views.length === 1 ? 'dest.view' : 'dest.views', { count: data.views.length })} · {t(cameraCount === 1 ? 'dest.camera' : 'dest.cameras', { count: cameraCount })}</span>
-        <div className="preparation-capture-strip" aria-label={t('dest.previewViews')}>{previewViews.map((item) => <SourcePreview key={item.id} data={data} view={item} index={data.views.indexOf(item)} selected={selected === item.id} onSelect={() => select(item.id)}/>)}</div>
-      </> : <div className="preparation-empty"><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="m8 16 16-6 16 8 16-6v38l-16 6-16-8-16 6zM24 10v38m16-30v38" stroke="currentColor" strokeWidth="1.3"/></svg></div>}
-    </Preparation>;
-  }
   if (data && hasRouteCanvas(data)) return <RouteCanvas data={data} asset={file => assetUrl(data, file)} onHome={onHome} onPlace={onPlace} settled={!!initial}/>;
   return <main className="destination-workspace">
     <header className="destination-header"><button onClick={onHome} aria-label={t('common.home')}>←</button><div><h1>{DESTINATIONS[id].name}</h1><span>{fromRecord(DESTINATIONS[id].place, lang)}</span></div><button onClick={() => credits.current?.showModal()}>{t('dest.sources')}</button></header>
@@ -107,13 +83,4 @@ function PointCloud({cloud, selectedView, onReady, onFailure, orbit, setOrbit}: 
   },[sample,bounds,orbit,linked,selectedIndex]);
   function pointer(event:PointerEvent<HTMLCanvasElement>){if(!drag.current)return;const dx=event.clientX-drag.current.x,dy=event.clientY-drag.current.y;drag.current={x:event.clientX,y:event.clientY};setOrbit(o=>({...o,yaw:o.yaw+dx*.009,pitch:Math.max(-1.25,Math.min(1.25,o.pitch+dy*.007))}));}
   return <div className="destination-points">{canvasError?<p role="alert">{canvasError}</p>:<canvas ref={canvas} tabIndex={0} aria-label={t('dest.pointsLabel')} onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={pointer} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onKeyDown={e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();setOrbit(o=>({...o,yaw:o.yaw+(e.key==='ArrowLeft'?-.15:e.key==='ArrowRight'?.15:0),pitch:Math.max(-1.25,Math.min(1.25,o.pitch+(e.key==='ArrowUp'?.1:e.key==='ArrowDown'?-.1:0)))}));}}}/>}<div className="destination-point-controls"><button onClick={()=>setOrbit(o=>({...o,zoom:Math.min(5,o.zoom*1.25)}))} aria-label={t('dest.zoomIn')}>+</button><button onClick={()=>setOrbit(o=>({...o,zoom:Math.max(.4,o.zoom/1.25)}))} aria-label={t('dest.zoomOut')}>−</button><button onClick={()=>setOrbit({yaw:.55,pitch:.45,zoom:1})}>{t('dest.resetView')}</button></div><p className="destination-point-status">{t(linked?'dest.linked':'dest.outside')}</p></div>;
-}
-
-function SourcePreview({data, view, index, selected, onSelect}: {data: Destination; view: View; index: number; selected: boolean; onSelect: () => void}) {
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const { t } = useLanguage();
-  return <button aria-label={t('dest.previewView', { n: index + 1 })} aria-pressed={selected} onClick={onSelect}>
-    <img src={assetUrl(data, view.file)} alt="" onLoad={() => setState('ready')} onError={() => setState('error')} hidden={state === 'error'}/>
-    {state !== 'ready' && <span>{t(state === 'error' ? 'dest.missing' : 'common.opening')}</span>}
-  </button>;
 }

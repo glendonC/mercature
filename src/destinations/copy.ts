@@ -86,11 +86,6 @@ export const NOTE = {
     es: (kind: EditKind, w: Where, m: number) => m < 10 ? `${cap(KIND_WORDS[kind].es)} ${w.es}, al inicio del recorrido.` : `${cap(KIND_WORDS[kind].es)} ${w.es}, a unos ${m} m del inicio.`,
     ko: (kind: EditKind, w: Where, m: number) => m < 10 ? `출발점, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}이 있습니다.` : `출발점에서 약 ${m}m, ${w.ko} 근처에 ${KIND_WORDS[kind].ko}이 있습니다.`,
   },
-  check: {
-    en: (_s: Subject, w: Where) => `We have not checked the path ${w.en} yet.`,
-    es: (_s: Subject, w: Where) => `Aún no hemos revisado el camino ${w.es}.`,
-    ko: (_s: Subject, w: Where) => `${w.ko} 근처 길은 아직 확인하지 못했습니다.`,
-  },
   steps: { en: 'Ask us if steps are hard for you.', es: 'Pregúntenos si los escalones le resultan difíciles.', ko: '계단이 힘드시면 미리 문의해 주세요.' },
   basis: { en: 'From street photos, not measurements.', es: 'Según fotos de la calle, no mediciones.', ko: '측정이 아닌 거리 사진을 바탕으로 합니다.' },
 };

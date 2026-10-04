@@ -5,7 +5,8 @@ import { ISSUE_CATEGORIES, MESSAGE_KINDS, type IssueCategory, type MessageKind }
  * Kept on this device only. It records judgements about photos, never measurements, and the
  * synthetic plan schema is not used because nothing here is geometry.
  */
-export const VERDICTS = ['barrier', 'not-barrier', 'check'] as const;
+/** What she decides about a flagged stretch: only that it is not a barrier, so it leaves her map. Other verdicts from older builds are ignored when read. */
+export const VERDICTS = ['not-barrier'] as const;
 export type Verdict = (typeof VERDICTS)[number];
 export type Decision = { readonly verdict: Verdict; readonly at: string };
 export type ModelAnswer = {
@@ -60,8 +61,8 @@ export function parseReview(raw: string, place: string): Review {
   if (!isRecord(value) || value.schema !== 'mercature-route-review/1' || value.place !== place || !isRecord(value.decisions) || !Array.isArray(value.messages)) throw new Error('shape');
   const decisions: Record<string, Decision> = {};
   for (const [stretch, decision] of Object.entries(value.decisions)) {
-    if (!/^\d{1,4}$/.test(stretch) || !isRecord(decision) || !VERDICTS.includes(decision.verdict as Verdict) || !isTime(decision.at)) throw new Error('decision');
-    decisions[stretch] = { verdict: decision.verdict as Verdict, at: decision.at };
+    if (!/^\d{1,4}$/.test(stretch) || !isRecord(decision) || !isTime(decision.at)) throw new Error('decision');
+    if (VERDICTS.includes(decision.verdict as Verdict)) decisions[stretch] = { verdict: decision.verdict as Verdict, at: decision.at };
   }
   const messages = value.messages.slice(0, 200).map(item => {
     if (!isRecord(item) || !isText(item.id, 80) || !isText(item.text, 4000) || !isText(item.language, 20) || !isTime(item.at) || (item.spot !== null && !isText(item.spot, 80))) throw new Error('message');
