@@ -18,7 +18,7 @@ export function SceneIcon({ className }: IconProps) {
 export function ExternalIcon({ className }: IconProps) {
   return <svg {...base} className={className}><path d="M9 6h9v9M18 6 6 18"/></svg>;
 }
-/** The destination a route leads to. */
+/** The destination a tour route leads to. */
 export function TargetIcon({ className }: IconProps) {
   return <svg {...base} className={className}><path d="M12 3.5 20.5 12 12 20.5 3.5 12z"/><circle cx="12" cy="12" r="2"/></svg>;
 }

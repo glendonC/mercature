@@ -23,9 +23,9 @@ import './reveal.css';
 
 /** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
 const BUILD_FROM = 600, PHOTOS_FOR = 1200, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
-/** A long walk's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
+/** A long tour route's stretches and findings share at most this long each, so any place's reveal stays near ten seconds. */
 const COUNT_MAX = 800;
-/** The guide's line for each step: a colleague's words, with no counts; the counts sit in the figures under the place's name. */
+/** The guide's line for each step, with no counts; the counts sit in the figures under the place's name. */
 const LINE_OF = { photos: 'photos', areas: 'photos', walk: 'walk', stretches: 'walk', reading: 'reading', marks: 'reading', barriers: 'marks' } as const;
 type Beat = 'hello' | (typeof LINE_OF)[keyof typeof LINE_OF];
 /** Lines the replay leaves out, so every line it says can be read and the whole replay stays near 12 s; a left-out line's steps stay with the line before. */
@@ -53,7 +53,7 @@ type Placed = { left: number; top: number; x: number; y: number; w: number; h: n
 type StepId = 'photos' | 'areas' | 'walk' | 'stretches' | 'reading' | 'marks' | 'barriers';
 type Step = { id: StepId; at: number; until: number };
 
-/** The build in order: photos, retained 3D areas where this device has them, the walk, its stretches, a few photos read, the findings, then the possible barriers. A step with nothing to show is left out. */
+/** The build in order: photos, retained 3D areas where this device has them, the route, its stretches, a few photos read, the findings, then the possible barriers. A step with nothing to show is left out. */
 function schedule(data: Destination, marks: readonly Mark[], reads: number, leaned: boolean, lines: Record<Beat, string> | null): Step[] {
   const order: [StepId, number][] = [['photos', PHOTOS_FOR]];
   // Retained areas show only on the flat map; a leaned replay stays on its one map.
@@ -63,7 +63,7 @@ function schedule(data: Destination, marks: readonly Mark[], reads: number, lean
   if (reads) order.push(['reading', (reads - 1) * READ_GAP + READ_FOR]);
   if (marks.length) order.push(['marks', Math.min(COUNT_MAX, marks.length * MARK_GAP + 300)]);
   if (marks.some(mark => mark.barrier)) order.push(['barriers', BARRIERS_FOR]);
-  // Each line stays at least its reading time: a run of steps spoken under one line is stretched at its end when the line needs longer
+  // Each line stays at least its reading time: a run of steps spoken under one line is stretched at its end when the line needs more time
   if (lines) {
     const by = speakers(order.map(([id]) => id));
     for (let start = 0; start < order.length;) {
@@ -105,7 +105,7 @@ function fitView(data: Destination, width: number, height: number, top: number):
 }
 
 const year = (iso: string | null) => iso?.slice(0, 4) ?? '';
-/** The walk's end as the guide says it, with its article where the place names it in the reader's language: "the Qorikancha ticket booth", "la boletería del Qorikancha". */
+/** The route's end as the guide says it, with its article where the place names it in the reader's language: "the Qorikancha ticket booth", "la boletería del Qorikancha". */
 function endOf(data: Destination, lang: keyof typeof SCRIPT): string {
   const named = ROUTE_PLACES[data.id]?.features.find(feature => !feature.stretches.length && feature.landmark === data.target.name)?.name[lang];
   if (!named) return data.target.name;
@@ -187,7 +187,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   // A place with a route canvas replays on that canvas's own leaned map, so the hand-off is only a fade.
   const leaned = !!data && hasRouteCanvas(data);
   const walk = useMemo(() => data && leaned ? buildWalk(data) : null, [data, leaned]);
-  // The route screen opens behind the replay with its phone sheet at this peek, so both frame the walk alike.
+  // The route screen opens behind the replay with its phone sheet at this peek, so both frame the route alike.
   const insets = useMemo(() => mapInsets(narrow, PEEK), [narrow]);
   const mapWords = useMemo<MapWords>(() => ({ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }), [t]);
   const cards = useMemo(() => data ? chooseCards(data) : [], [data]);
@@ -217,7 +217,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
     return { hello: say.hello(slots), photos: say.photos(slots), walk: say.walk(slots), reading: say.reading(slots), marks: say.marks(slots) };
   }, [data, walk, marks, lang, id]);
   const steps = useMemo(() => data ? schedule(data, marks, cards.length, leaned, lines) : [], [data, marks, cards.length, leaned, lines]);
-  /** The walk's flagged spots, the guide's count of what is left to check. */
+  /** The route's flagged spots, the guide's count of what is left to check. */
   const flagged = useMemo(() => data ? (walk ?? buildWalk(data)).spots.filter(spot => spot.kind === 'flagged').length : 0, [data, walk]);
   const stepOf = (id: StepId) => steps.find(item => item.id === id);
   /** The build layer's beats, on its clock. */
@@ -262,7 +262,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const handoffAt = (steps.at(-1)?.until ?? BUILD_FROM) + HOLD_END, readFrom = stepOf('reading')?.at ?? Infinity;
   // Only photos whose turn came during the replay; each plays its reading once and folds away, and a skip never flashes the rest.
   const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || elapsed >= readFrom + i * READ_GAP));
-  // Marks are counted as they are placed: those each photo leaves as it folds back, then every one as the findings pop in walking order.
+  // Marks are counted as they are placed: those each photo leaves as it folds back, then every one as the findings pop in route order.
   const readCount = surfaced.reduce((sum, card) => quiet || elapsed >= readFrom + cards.indexOf(card) * READ_GAP + READ_LANDS ? sum + card.findings.filter(f => f.position).length : sum, 0);
   const placedCount = quiet || phase !== 'play' || !beats.marks ? marks.length : Math.min(marks.length, Math.max(readCount, marksShown(marks.length, beats.marks, began + elapsed)));
 
@@ -380,7 +380,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const spokenBy = speakers(steps.map(item => item.id));
   const beat: Beat | null = !data ? null : quiet || phase !== 'play' ? 'marks' : elapsed < helloFor ? 'hello' : spokenBy[step ? steps.indexOf(step) : 0] ?? null;
   const line = lines && beat ? lines[beat] : null;
-  // The counts, each as it is placed, in small figures under the place's name: photos landed, the walk's length, marks placed, the possible barriers.
+  // The counts, each as it is placed, in small figures under the place's name: photos landed, the route's length, marks placed, the possible barriers.
   const at = (id: StepId) => { const index = steps.findIndex(item => item.id === id); return index >= 0 && !!step && steps.indexOf(step) >= index; };
   const metresText = data ? t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) }) : '';
   type Figure = { id: keyof typeof GLYPHS; value: string; label: string };
@@ -388,7 +388,7 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
   const figures: Figure[] = !data ? [] : ([
     at('photos') && { id: 'photos', value: t(shown === 1 ? 'reveal.figure.photo' : 'reveal.figure.photos', { count: shown.toLocaleString(locale) }), label: t(shown === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: shown.toLocaleString(locale) }) },
     at('walk') && { id: 'walk', value: metresText, label: t('reveal.build.walk', { length: metresText, route }) },
-    // The spots to check, by the guide's own rule (the walk's flagged spots), once the last step is in; the marks and outlines are not counted here
+    // The spots to check, by the guide's own rule (the route's flagged spots), once the last step is in; the marks and outlines are not counted here
     (quiet || phase !== 'play' || step === steps.at(-1)) && { id: 'barriers', value: toCheck, label: toCheck },
   ] as (Figure | false)[]).filter((figure): figure is Figure => !!figure);
   return <div className="reveal-host" ref={root}>
@@ -440,7 +440,7 @@ const GLYPHS: Record<'photos' | 'walk' | 'marks' | 'barriers', ReactNode> = {
   barriers: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" className="glyph-barrier"/></svg>,
 };
 
-/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk, in map units on the flat map. */
+/** The route's 10 m stretches as ticks, then every recorded mark, in order along the route, in map units on the flat map. */
 const BuildLayer = memo(function BuildLayer({ data, marks, steps, unit }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number }) {
   const { project } = routeFrame(data);
   const ticks = data.stretches.flatMap((stretch, i) => {

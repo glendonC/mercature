@@ -1,7 +1,7 @@
 import { ISSUE_CATEGORIES, MESSAGE_KINDS, type IssueCategory, type MessageKind } from '../site/contracts';
 
 /**
- * What a person decided about recorded places on a walk, and the visitor messages they linked.
+ * What a person decided about recorded places on a tour route, and the visitor messages they linked.
  * Kept on this device only. It records judgements about photos, never measurements, and the
  * synthetic plan schema is not used because nothing here is geometry.
  */

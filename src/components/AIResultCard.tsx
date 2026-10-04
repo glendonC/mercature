@@ -1,5 +1,5 @@
 import { useLanguage } from '../i18n';
-/** UI boundary for the language session. Spot IDs must match selectable scene features. */
+/** Presents a language result. Spot IDs must match selectable scene features. */
 export type AIResult = {
   messageType: string;
   issueType: string;

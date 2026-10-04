@@ -8,7 +8,7 @@ import RecordedReveal from "./preparation/RecordedReveal";
 import { isDestinationId, type DestinationId } from "./destinations/data";
 import { useLanguage } from "./i18n";
 const planStore = createPlanStore();
-/** Nothing links here: ?place=farm opens the farm example getting ready. Read once, then dropped from the address. */
+/** Nothing links here. ?place=farm opens the farm example getting ready, is read once, and is then removed from the address. */
 const farmAsked = (() => {
   const query = new URLSearchParams(location.search);
   if (query.get("place") !== "farm") return false;
@@ -64,7 +64,7 @@ export default function App() {
     setActive("destination");
     setError("");
   }
-  /** Home from any screen, the menu's included, steps back through the entry its screen added, as the browser's Back and Android's back gesture do. */
+  /** Home from any screen, including the menu, steps back through the entry its screen added, as the browser's Back and Android's back gesture do. */
   function goHome() {
     if (openedOf(history.state)) history.back();
     else setActive("home");

@@ -18,7 +18,7 @@
 .reveal-map.is-leaned .route-map { cursor: default; }
 .reveal .route-cameras, .reveal .route-overlay, .reveal .route-zones { transition: opacity .6s ease; }
 .reveal .route-cameras, .reveal:is([data-step=none], [data-step=photos], [data-step=areas], [data-step=walk]) .route-overlay { opacity: 0; }
-/* The walk's shading (clay where it is flagged, hatched where no photo saw it) arrives with the possible barriers. */
+/* The tour route's shading (clay where it is flagged, hatched where no photo saw it) arrives with the possible barriers. */
 .reveal:not([data-step=barriers], [data-phase=handoff]) .route-zones { opacity: 0; }
 .reveal-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 /* Words sit over the map's free part, left of the panel the route screen opens on wide screens. */
@@ -55,7 +55,7 @@
 .reveal-photo img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.35); }
 .reveal-photo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .reveal-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / .45) 50%, transparent 65%); transform: translateX(-100%); animation: reveal-read-pass 360ms var(--ease-in-out) 160ms both; pointer-events: none; }
-/* The photo's marks in the shared kind colours, as the route screen draws them, drawn on line first, then filled. */
+/* The photo's marks in the shared kind colours, as the route screen draws them, drawn as an outline first, then filled. */
 .reveal-photo :is(.ui-mark, .ui-mark-halo) { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: reveal-draw 420ms var(--ease-in-out) 220ms forwards; }
 .reveal-photo .ui-mark { fill-opacity: 0; animation: reveal-draw 420ms var(--ease-in-out) 220ms forwards, reveal-fill 160ms ease 600ms forwards; }
 .reveal-card figcaption { display: grid; gap: 1px; padding: 7px 4px 3px; }
@@ -71,7 +71,7 @@
 /* The inspection map has the same controls in the same place; the route canvas has its own. */
 .reveal[data-phase=handoff]:not(.to-canvas) :is(.destination-map-controls, .destination-map-credit) { opacity: 1; }
 .reveal[data-phase=handoff] .map-route polyline { animation: none; stroke-dashoffset: 0; }
-/* On the leaned map the build layer draws the walk; the map's own line takes over as that beat ends. */
+/* On the leaned map the build layer draws the route; the map's own line takes over as that beat ends. */
 .reveal.is-leaned .map-route polyline { animation: none; stroke-dashoffset: 0; }
 .reveal.is-leaned .map-route { animation: reveal-show 1ms linear calc(var(--walk-at, 2100ms) + var(--walk-for, 800ms)) both; }
 .reveal.is-leaned[data-phase=handoff] .map-route { animation: none; }

@@ -40,9 +40,9 @@
   --blocked: #a6501c;
   --blocked-fill: #f6d2b8;
   --unknown: #5f6368;
-  /* The way: a route line and its scan highlight share the access blue */
+  /* The way: a tour route line and its scan highlight share the access blue */
   --accent: var(--reachable);
-  /* Type: the older names, now set on the scale below */
+  /* Type tokens. Several take their size from the scale below. */
   --text-display: clamp(40px, 6vw, 84px);
   --text-title: var(--font-xl);
   --text-guide: 18px;
@@ -142,7 +142,7 @@
   --kind-spare-4: #fbcfe8;
   --kind-casing: rgb(10 12 14 / 0.78);
   --kind-barrier: #e0905f;
-  /* The older names, now the kind hues */
+  /* Aliases of the kind hues. */
   --mark-steps: var(--kind-steps);
   --mark-kerb: var(--kind-kerb);
   --mark-broken: var(--kind-broken);
