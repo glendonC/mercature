@@ -113,7 +113,7 @@ const HALF = Math.atan2(14, 31), REACH = 31;
  * The open photo as a camera standing where it was taken: its view laid on the ground in the photo's own light and shade inside
  * an ink outline, four edges up to a frame the shape of the photo, and the photo in that frame. A new photo swings it over.
  */
-export function camera(to: Shot, from: Shot | null, started: number, { grow = 420, swing = 600, photo = true } = {}): Effect {
+export function camera(to: Shot, from: Shot | null, started: number, { grow = 400, swing = 520, photo = true } = {}): Effect {
   return ({ ctx, project, squash, scale, now }) => {
     const colours = palette(), t = now - started;
     const g = from ? 1 : easeOut(clamp01(t / grow)), w = from ? easeInOut(clamp01(t / swing)) : 1;
@@ -166,7 +166,7 @@ export function camera(to: Shot, from: Shot | null, started: number, { grow = 42
  */
 export function beam(at: Point, colour: keyof Palette, started: number, still: boolean, { tall = 96, cycle = 2400 } = {}): Effect {
   return ({ ctx, project, squash, now, width }) => {
-    const colours = palette(), rgb = colours[colour], t = now - started, show = still ? 1 : easeOut(clamp01(t / 380));
+    const colours = palette(), rgb = colours[colour], t = now - started, show = still ? 1 : easeOut(clamp01(t / 400));
     // Upright on screen, as a standing thing looks through this lens.
     const height = (width < 640 ? tall * 0.75 : tall) * show, base = project(at), top: Seen = [base[0], base[1] - height, base[2]];
     const [x, y] = base, [tx, ty] = top;

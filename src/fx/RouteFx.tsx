@@ -10,8 +10,8 @@ import { spaceOf } from './space';
 
 /** After landing, the light waits for the lean and the spots to arrive; after Whole route, for the camera to settle. */
 const FLOW_AFTER_LANDING = 1500, FLOW_AFTER_FIT = 520;
-/** The ring where she fixed or added a spot: wider and longer than a hover's. An added spot's starts as its marker comes down. */
-const EDIT_RING = { spread: 700, reach: 30, strength: 0.7 }, LANDS = 160;
+/** The ring where she fixed or added a spot: wider and stronger than a hover's, as long. An added spot's starts as its marker comes down. */
+const EDIT_RING = { spread: 640, reach: 30, strength: 0.7 }, LANDS = 160;
 
 type FxMarker = { id: string; at: Point; state: string; selected: boolean };
 type Props = {
