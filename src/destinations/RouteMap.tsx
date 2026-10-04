@@ -9,6 +9,7 @@ import { riseWave } from '../fx/rise';
 import { useChanges } from '../fx/changes';
 import type { Point, Run, Walk } from './walk';
 import { AddedIcon, BollardIcon, BrokenPavementIcon, CobblestonesIcon, CrossingIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, iconFor, type Icon } from '../ui/icons';
+import { kindOf } from '../ui/kinds';
 
 export type Insets = { top: number; right: number; bottom: number; left: number };
 /** open: a possible barrier nobody has answered; barrier: she says it is still there; fixed: she fixed it; not-barrier: she says it
@@ -120,6 +121,35 @@ type Props = {
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NO_PATHS: MapPath[] = [];
+/** The point a share of the way along a polyline. */
+function along(points: Point[], share: number): Point {
+  const lengths = points.slice(1).map((p, i) => Math.hypot(p[0] - points[i][0], p[1] - points[i][1]));
+  let left = lengths.reduce((sum, d) => sum + d, 0) * share;
+  for (let i = 0; i < lengths.length; i++) {
+    if (left <= lengths[i] && lengths[i] > 0) { const t = left / lengths[i]; return [points[i][0] + (points[i + 1][0] - points[i][0]) * t, points[i][1] + (points[i + 1][1] - points[i][1]) * t]; }
+    left -= lengths[i];
+  }
+  return points.at(-1) ?? [0, 0];
+}
+/** What OpenStreetMap records along a walk built from the map alone, as quiet markers: a node at its point, a way's tag at the middle
+ * of the stretches it runs along, several on one stretch spread over it. Possible barriers are left out, since they are the walk's
+ * flagged spots already. */
+function recordsOf(data: Destination, walk: Walk): Marker[] {
+  const tagged = data.findings.filter(finding => finding.osm && !finding.viewId && !finding.barrier && (finding.position || finding.stretches.length));
+  const middle = (stretches: readonly number[]) => [...stretches].sort((a, b) => a - b)[Math.floor(stretches.length / 2)];
+  const sharing = new Map<number, string[]>();
+  for (const finding of tagged) if (!finding.position) sharing.set(middle(finding.stretches), [...(sharing.get(middle(finding.stretches)) ?? []), finding.id]);
+  return tagged.flatMap((finding): Marker[] => {
+    const index = finding.position ? -1 : middle(finding.stretches), stretch = data.stretches.find(item => item.index === index), peers = sharing.get(index) ?? [];
+    const at = finding.position ? walk.project(finding.position) : stretch ? along(stretch.line.map(walk.project), (peers.indexOf(finding.id) + 1) / (peers.length + 1)) : null;
+    if (!at) return [];
+    // A tag that says a thing is missing keeps the thing's icon, struck through, and no hue of its own.
+    const lacks = /=no$/.test(finding.concept), named = /^lit=/.test(finding.concept) ? 'lighting' : finding.concept.replace(/=no$/, '');
+    const said = finding.label.replace(/^OpenStreetMap says:\s*/, '');
+    return [{ id: `osm:${finding.id}`, at, label: finding.label, state: 'osm', selected: false, tag: said.charAt(0).toUpperCase() + said.slice(1), icon: iconFor(named) ?? undefined, kind: lacks ? undefined : kindOf(named) ?? undefined, missing: lacks }];
+  });
+}
+
 /** The point of a polyline nearest a point. */
 function nearestOn(points: Point[], p: Point): Point {
   let best: Point = points[0] ?? p, d = Infinity;
@@ -148,9 +178,10 @@ const Cameras = memo(function Cameras({ walk, open, lens }: { walk: Walk; open: 
   return <g className="route-cameras"><path d={dots(walk.cameras)} /><path d={dots(open)} className="is-open-ring" /><path d={dots(open)} className="is-open" /></g>;
 });
 /** Over the shared map's blue walk: the stretches without photos, the selected spot, and where the open photo was taken. */
-const Overlay = memo(function Overlay({ unseen, highlight, photo, lens }: { unseen: Run[]; highlight: Point[] | null; photo: Point | null; lens: Lens | null }) {
-  const to = lens ? (p: Point) => lens.at(p) : undefined, at = photo && (to ? to(photo) : photo);
+const Overlay = memo(function Overlay({ unseen, highlight, photo, start, lens }: { unseen: Run[]; highlight: Point[] | null; photo: Point | null; start: Point | null; lens: Lens | null }) {
+  const to = lens ? (p: Point) => lens.at(p) : undefined, at = photo && (to ? to(photo) : photo), from = start && (to ? to(start) : start);
   return <g className="route-overlay">
+    {from && <><path className="route-start-ring" d={`M${from[0].toFixed(1)} ${from[1].toFixed(1)}h0`} /><path className="route-start-core" d={`M${from[0].toFixed(1)} ${from[1].toFixed(1)}h0`} /></>}
     {unseen.map((run, i) => <g key={i}><polyline className="route-unseen-cover" points={line(run.path, to)} /><polyline className="route-unseen" points={line(run.path, to)} /></g>)}
     {highlight && <><polyline className="route-highlight-halo" points={line(highlight, to)} /><polyline className="route-highlight" points={line(highlight, to)} /></>}
     {at && <><path className="route-photo-ring" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /><path className="route-photo-at" d={`M${at[0].toFixed(1)} ${at[1].toFixed(1)}h0`} /></>}
@@ -202,8 +233,18 @@ function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] =
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers: given, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
+  // A walk built from the map alone had no photos read anywhere, so its no-photos spots say nothing; what OpenStreetMap records
+  // along it shows instead, unless the page draws those itself, and its start is marked.
+  // Judged by its stretches, since a replay hides photos until each lands; a backdrop shows only the markers it is given.
+  const mapOnly = data.stretches.length > 0 && data.stretches.every(stretch => !stretch.views.length);
+  const records = useMemo(() => mapOnly && !still ? recordsOf(data, walk) : [], [mapOnly, still, data, walk]);
+  const markers = useMemo(() => {
+    if (!mapOnly || still) return given;
+    const own = given.filter(marker => marker.state !== 'no-photos');
+    return own.some(marker => marker.state === 'osm') ? own : [...own, ...records];
+  }, [given, mapOnly, records]);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [camera, setCamera] = useState<View | null>(null);
@@ -679,7 +720,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => setPick(null)} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} unseen={unseen} glowing={glowing} lens={flat ? null : view} /><Paths paths={drawn} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>
-      <Overlay unseen={unseen} highlight={highlight} photo={photoAt} lens={flat ? null : view} />
+      <Overlay unseen={unseen} highlight={highlight} photo={photoAt} start={mapOnly ? walk.route[0] ?? null : null} lens={flat ? null : view} />
     </GeographicMap>
     {!still && <RouteFx data={data} walk={walk} lens={view} tilt={view?.tilt} markers={markers} hover={lifted} changes={changes} />}
     <div className="route-labels" aria-hidden="true">
