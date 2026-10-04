@@ -5,6 +5,7 @@ import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '.
 import { KIND_WORDS, recordDate } from '../edits/words';
 import { forgetPlace, modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, remember, understand, type ModelState } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
+import type { RoutePlace } from '../site/route';
 import { useLanguage } from '../i18n';
 import { useEditWords } from '../i18n/edit';
 import { fromRecord } from '../i18n/records';
@@ -82,13 +83,17 @@ const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
  * The route screen: visitors' messages placed on the walk and answered in their language, on a map she can edit.
  * settled: opened behind the reveal, which has already framed and leaned the same map.
  */
-export default function RouteInbox({ data, asset, onHome, onPlace, settled = false }: { data: Destination; asset: (file: string) => string; onHome: () => void; onPlace?: (place: MenuPlace) => void; settled?: boolean }) {
+export default function RouteInbox({ data, asset, onHome, onPlace, settled = false, spots, caption }: { data: Destination; asset: (file: string) => string; onHome: () => void; onPlace?: (place: MenuPlace) => void; settled?: boolean;
+  /** The spots of a walk built on this device, which the registry does not list. Keep the same object between renders. */
+  spots?: RoutePlace;
+  /** One plain line under the walk, such as where its findings came from. */
+  caption?: string }) {
   const { lang } = useLanguage();
   const editWords = useEditWords();
   const t = COPY[lang], w = t.inbox;
   const narrow = useNarrow();
   const walk = useMemo(() => buildWalk(data), [data]);
-  const authored = ROUTE_PLACES[data.id] ?? null;
+  const authored = spots ?? ROUTE_PLACES[data.id] ?? null;
   const views = useMemo(() => new Map(data.views.map(view => [view.id, view])), [data.views]);
   const photos = useMemo(() => new Map(data.photos.map(photo => [photo.id, photo])), [data.photos]);
   const map = useRef<MapHandle>(null);
@@ -733,7 +738,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   return <main ref={root} className="route-inbox route-canvas" data-pane={pane.kind} data-peek={peeking || undefined} style={{ '--peek': `${PEEK}px` } as CSSProperties} aria-label={t.workspace} lang={lang} onKeyDown={event => { if (event.key === 'Escape' && pane.kind !== 'inbox') home(); }}>
     <header className="ri-bar">
-      <div className="ri-place"><h1>{DESTINATIONS[data.id].name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p></div>
+      <div className="ri-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start?.name ?? data.title, Math.round(data.lengthMetres))}</p>{caption && <p className="ri-caption">{caption}</p>}</div>
       <Menu onHome={onHome} current={shownPlace} onPlace={place => { if (place !== shownPlace) (onPlace ?? onHome)(place); }} />
     </header>
     <Panel as="aside" phone="sheet" scroll className="ri-panel" ref={sheet} aria-label={pane.kind === 'inbox' ? w.messages : undefined} data-preview={previewing ? '' : undefined}
