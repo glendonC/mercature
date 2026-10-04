@@ -8,8 +8,6 @@ import { beam, camera, columns, flow, meaning, ping, pulse, sawStretches, unglow
 import { fxScene } from './scene';
 import { spaceOf } from './space';
 
-/** After landing, the light waits for the lean and the spots to arrive; after Whole route, for the camera to settle. */
-const FLOW_AFTER_LANDING = 1500, FLOW_AFTER_FIT = 520;
 /** The ring where she fixed or added a spot: wider and stronger than a hover's, as long. An added spot's starts as its marker comes down. */
 const EDIT_RING = { spread: 640, reach: 30, strength: 0.7 }, LANDS = 160;
 
@@ -20,10 +18,6 @@ type Props = {
   /** The map's live projection, and the tilt it is drawn with when known. */
   lens: Lens | null;
   tilt?: Tilt;
-  /** The map has landed and leans: the light runs along the walk once. */
-  landed: boolean;
-  /** Raised each time the whole route is shown again: the light runs once more. */
-  replay?: number;
   markers: readonly FxMarker[];
   /** The spot to draw the eye to: the one the open message is about, or the one under the pointer. */
   focus?: string | null;
@@ -36,12 +30,12 @@ type Props = {
 };
 
 /** The route canvas's motion, over its map: mount it inside the map's box, after the map, before its words and markers. */
-export default function RouteFx({ data, walk, lens, tilt, landed, replay = 0, markers, focus = null, hover = null, photoView = '', changes }: Props) {
+export default function RouteFx({ data, walk, lens, tilt, markers, focus = null, hover = null, photoView = '', changes }: Props) {
   const scene = useMemo(() => fxScene(data, walk), [data, walk]);
   const still = useMemo(quiet, []);
   const at = (id: string | null) => markers.find(marker => marker.id === id) ?? null;
 
-  const ran = useMemo(() => landed && !still ? flow(scene, performance.now() + (replay ? FLOW_AFTER_FIT : FLOW_AFTER_LANDING)) : null, [scene, landed, replay, still]);
+  const flowing = useMemo(() => flow(scene, still), [scene, still]);
 
   const selected = markers.find(marker => marker.selected) ?? null;
   const pinged = useMemo(() => {
@@ -92,7 +86,7 @@ export default function RouteFx({ data, walk, lens, tilt, landed, replay = 0, ma
   // A marker's place on the map is fixed; only a new change draws anew.
   }), [changes, still, walk]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const effects = useMemo(() => [filmed, ran, ...edited, pinged, beamed, pulsed].filter((effect): effect is Effect => !!effect), [filmed, ran, edited, pinged, beamed, pulsed]);
+  const effects = useMemo(() => [flowing, filmed, ...edited, pinged, beamed, pulsed].filter((effect): effect is Effect => !!effect), [flowing, filmed, edited, pinged, beamed, pulsed]);
   const space = useMemo(() => lens ? spaceOf(lens, tilt) : null, [lens, tilt]);
   return <FxCanvas effects={effects} space={() => space}/>;
 }

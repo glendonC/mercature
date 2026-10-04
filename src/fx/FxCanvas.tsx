@@ -5,8 +5,8 @@ import './fx.css';
 /** Where the map is on this canvas right now, how much a circle on its ground flattens, and its pixels per route-frame unit. */
 export type Space = { project: Project; squash: number; scale: number };
 export type FxFrame = Space & { ctx: CanvasRenderingContext2D; width: number; height: number; now: number };
-/** Draws one frame of an effect; returns true while it still needs frames. */
-export type Effect = (frame: FxFrame) => boolean;
+/** Draws one frame of an effect: true while it needs every frame, a number of milliseconds when its next frame can wait that long, false once it holds still. */
+export type Effect = (frame: FxFrame) => boolean | number;
 
 /** Pixel density cap: effects are soft light and thin lines, and three times the pixels costs a phone more than it shows. */
 const DENSITY = 2;
@@ -15,13 +15,14 @@ export const quiet = () => typeof matchMedia === 'function' && matchMedia('(pref
 
 /**
  * One canvas over a map, the size of its container, for every effect. It repaints whenever its host renders and runs frames
- * only while an effect is moving, so a still map costs nothing.
+ * only while an effect is moving, at the slowest rate the moving effects allow, so a still map costs nothing.
  */
 export default function FxCanvas({ space, effects, className = '' }: { space: (canvas: HTMLCanvasElement) => Space | null; effects: readonly Effect[]; className?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const latest = useRef({ space, effects });
   latest.current = { space, effects };
-  const frame = useRef(0);
+  const frame = useRef(0), timer = useRef(0);
+  const stop = () => { cancelAnimationFrame(frame.current); clearTimeout(timer.current); };
   const paint = useRef(() => {});
   paint.current = () => {
     frame.current = 0;
@@ -36,17 +37,18 @@ export default function FxCanvas({ space, effects, className = '' }: { space: (c
     if (!where) return;
     context.setTransform(density, 0, 0, density, 0, 0);
     const now = performance.now();
-    let more = false;
-    for (const effect of latest.current.effects) more = effect({ ...where, ctx: context, width, height, now }) || more;
-    if (more) frame.current = requestAnimationFrame(() => paint.current());
+    let wait = Infinity;
+    for (const effect of latest.current.effects) { const next = effect({ ...where, ctx: context, width, height, now }); if (next === true) wait = 0; else if (typeof next === 'number') wait = Math.min(wait, next); }
+    if (wait === 0) frame.current = requestAnimationFrame(() => paint.current());
+    else if (wait < Infinity) timer.current = window.setTimeout(() => { frame.current = requestAnimationFrame(() => paint.current()); }, wait);
   };
-  useLayoutEffect(() => { cancelAnimationFrame(frame.current); paint.current(); });
+  useLayoutEffect(() => { stop(); paint.current(); });
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
-    const observer = new ResizeObserver(() => { cancelAnimationFrame(frame.current); paint.current(); });
+    const observer = new ResizeObserver(() => { stop(); paint.current(); });
     observer.observe(element);
-    return () => { observer.disconnect(); cancelAnimationFrame(frame.current); };
+    return () => { observer.disconnect(); stop(); };
   }, []);
   return <canvas ref={canvas} className={`fx-canvas ${className}`} aria-hidden="true"/>;
 }

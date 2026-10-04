@@ -1,4 +1,5 @@
-import type { Effect, FxFrame } from './FxCanvas';
+import { quiet, type Effect, type FxFrame } from './FxCanvas';
+import { flow } from './route';
 import type { FxScene } from './scene';
 import { pointAt, slice, type Seen } from './space';
 import { arrive, clamp01, dot, easeInOut, easeOut, glow, line, mix, palette, rgba, ring, sway, within } from './paint';
@@ -18,6 +19,8 @@ const NEAR = 22, AHEAD = 12, OVER = 16;
 const RUN = 16;
 /** The drawn walk gives way to the map's own line this long after its beat. */
 const HOLD = 250, YIELD = 250;
+/** Milliseconds the flow along the walk takes to come up once the walk is drawn. */
+const FLOW_IN = 400;
 
 const ends = (beats: Beats) => Math.max(...Object.values(beats).map(w => w ? w[0] + w[1] : -Infinity));
 
@@ -153,15 +156,18 @@ function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: 
 /**
  * The build replay: photos land in capture order, the walk is drawn through them, a light along it ticks each stretch, the marks pop
  * in walking order and the possible barriers turn clay together. Done draws the end state at once, leaving the photos and the
- * walk to the map, which shows its own.
+ * walk to the map, which shows its own. Once the walk is drawn its flow comes up and runs on, through the hand-off, in step with
+ * the route screen's.
  */
 export function build(scene: FxScene, beats: Beats, done: boolean): Effect {
-  const last = ends(beats) + 800;
+  const last = ends(beats) + 800, along = flow(scene, quiet()), walked = beats.walk ? beats.walk[0] + beats.walk[1] : -Infinity;
   return frame => {
-    const now = done ? Infinity : frame.now, finished = done;
+    const now = done ? Infinity : frame.now, finished = done, since = done ? Infinity : frame.now - walked;
+    let next: boolean | number = false;
+    if (since >= 0) { frame.ctx.globalAlpha = clamp01(since / FLOW_IN); next = along(frame); frame.ctx.globalAlpha = 1; }
     if (!finished) { photos(frame, scene, beats, now); walk(frame, scene, beats, now); }
     stretches(frame, scene, beats, now, finished);
     marks(frame, scene, beats, now, finished);
-    return !done && frame.now < last;
+    return !done && frame.now < last ? true : next;
   };
 }
