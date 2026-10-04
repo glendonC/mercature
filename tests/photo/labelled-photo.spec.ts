@@ -17,7 +17,7 @@ test('label chips keep off each other and off their own outline, and wait behind
   for (const p of placed) {
     expect(coversOutline(p.box, items.find(item => item.id === p.id)!.points)).toBe(false);
     expect(p.box.x >= 0 && p.box.y >= 0 && p.box.x + p.box.w <= 358 && p.box.y + p.box.h <= 240).toBe(true);
-    for (const q of placed) if (q !== p) expect(overlaps(p.box, q.box)).toBe(false);
+    for (const q of placed) if (q !== p) expect(overlaps({ ...p.box, y: p.box.y - 10, h: p.box.h + 20 }, { ...q.box, y: q.box.y - 10, h: q.box.h + 20 })).toBe(false);
   }
 });
 
@@ -29,7 +29,8 @@ test('the labelled photo names each outline on the photo, selects by tap or key,
   await expect(chips.first()).toBeVisible();
   const shown = await boxes(chips);
   expect(shown.length).toBeGreaterThan(2);
-  for (const a of shown) for (const b of shown) if (a !== b) expect(overlaps(a, b)).toBe(false);
+  // 44 px targets: neighbours keep 20 px apart above and below, 8 px to the sides.
+  for (const a of shown) for (const b of shown) if (a !== b) expect(overlaps({ ...a, x: a.x - 4, y: a.y - 10, w: a.w + 8, h: a.h + 20 }, { ...b, x: b.x - 4, y: b.y - 10, w: b.w + 8, h: b.h + 20 })).toBe(false);
   await expect(photo.locator('.lp-more')).toHaveText(/^\+\d+$/);
 
   // The credit stays readable: contributor, date, licence and a Mapillary link at 13 px or more.

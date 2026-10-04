@@ -35,7 +35,7 @@
 .lp-mark { cursor: pointer; transition: opacity var(--motion-fast) var(--ease-out); }
 .lp-fill { fill: color-mix(in srgb, var(--hue, #c8ccd0) 16%, transparent); stroke: none; }
 .lp-mark[data-ground] .lp-fill { fill: color-mix(in srgb, var(--hue, #c8ccd0) 7%, transparent); }
-.lp-mark[data-flagged] .lp-fill { fill: color-mix(in srgb, var(--hue) 24%, transparent); }
+.lp-mark[data-flagged] .lp-fill { fill: color-mix(in srgb, var(--hue) 30%, transparent); }
 .lp-halo, .lp-line, .lp-ink { fill: none; stroke-linejoin: round; pointer-events: none; }
 .lp-halo { stroke: var(--lp-casing); stroke-width: 4.75px; }
 .lp-line { stroke: var(--hue, #c8ccd0); stroke-width: 2.25px; }
@@ -60,7 +60,7 @@
   background: var(--glass-charcoal); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); color: #fff;
   font: 500 13px/1 Outfit, system-ui, sans-serif; letter-spacing: 0; white-space: nowrap; cursor: pointer; box-shadow: var(--glass-charcoal-edge);
   transition: opacity var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out); }
-.lp-chip::before { content: ''; position: absolute; inset: -10px -3px; }
+.lp-chip::before { content: ''; position: absolute; inset: -10px -4px; }
 .lp-glyph { display: inline-grid; flex: none; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--hue, #c8ccd0); color: #15181b; }
 .lp-glyph .ui-icon { width: 12px; height: 12px; }
 .lp-badge { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--lp-badge); box-shadow: 0 0 0 1.5px #fff; }
