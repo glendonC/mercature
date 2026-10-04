@@ -21,7 +21,7 @@ export default function PlaceCanvas({title, view, onView, onHome, scene, overvie
     event.preventDefault(); onView(views[next].id);
     document.getElementById(`${id}-${views[next].id}`)?.focus();
   }
-  return <main className="place-canvas" data-view={view} aria-label={t('canvas.workspace', {title})}>
+  return <main className="place-canvas" data-view={view} data-inspector={!!inspector} aria-label={t('canvas.workspace', {title})}>
     <div className="place-scene guide-scene" ref={sceneRef}>{scene}</div>
     <header className="place-bar">
       <button className="place-home" onClick={onHome} aria-label={t('common.home')} title={t('common.home')}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 10 12 3l8 7v11h-6v-7h-4v7H4Z" /></svg></button>

@@ -1,24 +1,29 @@
 import { BotAvatar } from "bot-avatars";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useLanguage } from "../i18n";
+
+/** The guide's one colour on every screen: the neutral field grey of the design tokens. */
+export const guideColor = () => getComputedStyle(document.documentElement).getPropertyValue("--field").trim() || "gray";
+
 export default function Companion({
   children,
   working = false,
-  tone = "guide",
 }: {
   children: ReactNode;
   working?: boolean;
+  /** The screen's mode. The guide looks the same in every mode. */
   tone?: "guide" | "evidence" | "review";
 }) {
   const { t } = useLanguage();
+  const [color] = useState(guideColor);
   return (
     <aside className="companion" aria-label={t("guide.place")}>
       <span aria-hidden="true">
         <BotAvatar
-          type={tone === "evidence" ? "clover" : "blob"}
+          type="blob"
           state={working ? "working" : "default"}
           size={64}
-          color={tone === "evidence" ? "#b6cfa3" : tone === "review" ? "#dcb8a1" : "#a4c7d7"}
+          color={color}
           shading="plastic"
           speed={0.4}
           turn={0.25}

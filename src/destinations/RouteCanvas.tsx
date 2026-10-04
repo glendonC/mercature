@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { BotAvatar } from 'bot-avatars';
 import AIResultCard, { type AIResult } from '../components/AIResultCard';
+import { guideColor } from '../components/Companion';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review, type Verdict } from '../decisions/store';
 import { modelDownloadBytes, modelState, modelStored, prepareModel, prepareSite, understand, type ModelState, type Understanding } from '../language/understand';
 import { ROUTE_PLACES } from '../site/registry';
@@ -466,7 +467,7 @@ function LanguageSwitch({ value, onChange, label }: { value: VisitorLang; onChan
 
 /** The one line the guide says. It looks busy only while a real promise runs. */
 function Guide({ text, working, size }: { text: string; working: boolean; size: number }) {
-  const [silver] = useState(() => getComputedStyle(document.documentElement).getPropertyValue('--field').trim() || 'gray');
+  const [silver] = useState(guideColor);
   return <div className="route-guide">
     <span className="route-guide-avatar" aria-hidden="true"><BotAvatar type="blob" state={working ? 'working' : 'default'} size={size} color={silver} shading="plastic" speed={0.4} turn={0.25} jumpEvery={0} interactive={false} saturation={1} theme="light" /></span>
     <p role="status" aria-live="polite">{text}</p>
