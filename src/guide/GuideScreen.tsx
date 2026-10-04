@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { decide, loadReview, logMessage, saveReview, startOver, updateMessage, verdictOf, type LoggedMessage, type ModelAnswer, type Review } from '../decisions/store';
 import { EDIT_KINDS, NO_NOTE, addSpot, answerOf, clearEdits, clearFixed, isFixed, loadEdits, markFixed, noteLangOf, noteOf, ownNote, removeSpot, saveEdits, setAnswer, setNote, type EditKind, type Edits } from '../edits/store';
 import { addedFeature, fixedLine, ownNoteLines, withEdits, type Locate } from '../edits/place';
@@ -512,6 +512,15 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (step.id === 'check' && step.tapping) { select({ kind: 'stretch', index: stretch.index }); return; }
     select(spot ? { kind: 'spot', id: spot.id } : addedHere ? { kind: 'added', id: addedHere.id } : { kind: 'stretch', index: stretch.index });
   }
+  /** A tap in the 3D view on the street or a wall near the walk works as a tap on the map there; a marker tap arrives through onMarker. */
+  function pick3d(pick: { lonLat: readonly [number, number] | LonLat; spotId?: string }) {
+    if (pick.spotId) return;
+    const index = nearestStretch(data, walk, walk.project([pick.lonLat[0], pick.lonLat[1]]));
+    if (index === null) return;
+    if (step.id === 'check' && step.tapping) { select({ kind: 'stretch', index }); return; }
+    const spot = spotOf(index), addedHere = edits.added.find(item => item.stretch === index);
+    select(spot ? { kind: 'spot', id: spot.id } : addedHere ? { kind: 'added', id: addedHere.id } : { kind: 'stretch', index });
+  }
   function tapPhoto(viewId: string) {
     const stretch = data.stretches.find(item => item.views.includes(viewId)); if (!stretch) return;
     const spot = spotOf(stretch.index);
@@ -725,7 +734,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
     above = <CheckCard key={item.key} data={data} progress={s.check.progress({ n: step.at + 1, total: items.length })} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
-      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
+      stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(step.at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -983,11 +992,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
  * The photo for one item of the check, with every outline named on the photo itself, where it is and who it affects. Where the walk
  * has 3D, she can turn to it and tap spots there as on the map. It lives outside the screen so a new line never rebuilds the photo.
  */
-function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, height, lang, words, answerAt }: {
+function CheckCard({ data, progress, title, affects, empty, evidence, viewId, stretches, markers, onMarker, onPick, onPlace, height, lang, words, answerAt }: {
   data: Destination; progress: string; title: string; affects: string; empty: string;
   /** The findings a photo shows, one page each; none for another kind near the walk, which shows viewId instead. */
   evidence: readonly { id: string; viewId?: string | null }[]; viewId: string | null;
   stretches: readonly number[]; markers: Marker[]; onMarker: (id: string) => void; onPick: (findingId: string) => void;
+  /** A tap in the 3D view on the street or a wall, as a place on the walk. */
+  onPlace?: ComponentProps<typeof PhotoOr3D>['onPick'];
   /** The photo's height on a phone, which leaves a strip of map above the card; a wide screen shows the whole photo. */
   /** Her answer for the spot an outline lies on, so the photo shows it; left out, the photo shows the walk before her changes. */
   answerAt?: (stretches: readonly number[]) => MarkAnswer | null;
@@ -1003,7 +1014,7 @@ function CheckCard({ data, progress, title, affects, empty, evidence, viewId, st
       <button type="button" className="gs-turn-photo" aria-label={words.previous} disabled={at === 0} onClick={() => turn(-1)}><ChevronIcon size={18} style={{ transform: 'scaleX(-1)' }} /></button>
       <span aria-live="polite">{words.photo({ n: at + 1, total: evidence.length })}</span>
       <button type="button" className="gs-turn-photo" aria-label={words.next} disabled={at === evidence.length - 1} onClick={() => turn(1)}><ChevronIcon size={18} /></button></span>}</p>
-    {shown ? <PhotoOr3D data={data} stretches={stretches} markers={markers} onMarker={onMarker} height={height}>
+    {shown ? <PhotoOr3D data={data} stretches={stretches} markers={markers} onMarker={onMarker} onPick={onPlace} height={height}>
       <div className="gs-swipe" onPointerDown={event => { swipe.current = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY }; }}
         onPointerUp={event => { const from = swipe.current; swipe.current = null; if (!from || evidence.length < 2) return; const dx = event.clientX - from.x;
           if (Math.abs(dx) > 48 && Math.abs(dx) > 2 * Math.abs(event.clientY - from.y)) { swiped.current = true; turn(dx < 0 ? 1 : -1); } }}
