@@ -204,7 +204,8 @@ than 4173.
 
 ## Credits
 
-Street photos by Mapillary contributors (CC BY-SA 4.0), credited on every photo; the published
+The code is under the [MIT License](LICENSE); the data keeps the licences below. Street photos by
+Mapillary contributors (CC BY-SA 4.0), credited on every photo; the published
 packages carry 27 and 72 credited photo views. Map data, places and the records along each route ©
 OpenStreetMap contributors (ODbL). Routes on foot and ways around from Valhalla, outlines from SAM 3,
 and partial 3D from VGGT, published in thinned pieces under CC BY-SA 4.0. The encoder is
