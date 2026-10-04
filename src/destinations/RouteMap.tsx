@@ -5,7 +5,7 @@ import { aimed, framing, hazeAt, lens, tiltChosen, tiltFor, type Box, type Lens,
 import './destinations.css';
 import './map.css';
 import type { Point, Walk } from './walk';
-import { AddedIcon, FixedIcon, KerbIcon, MessageIcon, NoPhotosIcon, RemoveIcon, RoadIcon, StepsIcon, type Icon } from '../ui/icons';
+import { AddedIcon, FixedIcon, KerbIcon, LookIcon, MessageIcon, NoPhotosIcon, PathIcon, RemoveIcon, StepsIcon, type Icon } from '../ui/icons';
 
 export type Camera = { x: number; y: number; k: number };
 export type Insets = { top: number; right: number; bottom: number; left: number };
@@ -20,9 +20,7 @@ export type Marker = {
   /** Visitor messages filed at this spot, shown with the caption, or as a small count when the caption is hidden. Say it in the label too. */
   count?: number;
 };
-/** Check on site: a lens over the spot, drawn like the shared set until it has one. */
-const CheckIcon: Icon = ({ size = 18 }) => <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={Math.min(2.25, Math.max(1.5, 33.6 / size))} strokeLinecap="round" strokeLinejoin="round" className="ui-icon" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5 5" /></svg>;
-const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: RoadIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, check: CheckIcon, dismissed: RemoveIcon };
+const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, check: LookIcon, dismissed: RemoveIcon };
 type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 export type MapHandle = {
