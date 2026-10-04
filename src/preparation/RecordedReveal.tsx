@@ -1,26 +1,42 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import DestinationWorkspace from '../destinations/DestinationWorkspace';
 import RecordedPreview from './RecordedPreview';
 import GeographicMap, { MAP_VIEWBOX, captureOrder, routeFrame } from '../destinations/GeographicMap';
 import { hasRouteCanvas } from '../destinations/RouteCanvas';
+import { buildWalk } from '../destinations/walk';
 import { DESTINATIONS, assetUrl, decodeCloud, fetchLocal, loadDestination, metres, type Cloud, type Coordinate, type Destination, type DestinationId, type Finding, type Photo, type View } from '../destinations/data';
 import { useLanguage } from '../i18n';
-import { possibleFromRecord } from '../i18n/records';
+import { fromRecord, possibleFromRecord } from '../i18n/records';
+import { loadMarks, type Mark } from './marks';
 import './reveal.css';
 
-/** Milliseconds after the records are read. Every element shown is a retained record. */
-const CAMERAS_FROM = 1900, CAMERAS_FOR = 2800, POINTS_FROM = 4800, POINT_GAP = 95, CARDS_FROM = 7000, CARD_GAP = 550, HANDOFF_AT = 9900, HANDOFF_LATEST = 11200, MAX_CARDS = 4;
-/** Without point areas the cards follow the photos directly, and the hand-off follows the last card. */
-const PHOTO_CARDS_FROM = CAMERAS_FROM + CAMERAS_FOR + 400, HANDOFF_AFTER_CARDS = 1250;
+/** Milliseconds after the records are read. Every element shown is a retained record, replayed in the order the place was built. */
+const BUILD_FROM = 300, PHOTOS_FOR = 1800, WALK_FOR = 800, BARRIERS_FOR = 700, TICK_GAP = 12, MARK_GAP = 10, POINT_GAP = 95;
+/** Photo cards follow the build, then the hand-off; retained 3D areas, read only on this device, may hold it back a little. */
+const CARD_GAP = 300, CARD_SETTLE = 650, HANDOFF_WAIT = 1300, MAX_CARDS = 4;
 /** The landing on the inspection map, then the fade that uncovers it. */
 const LAND_FOR = 720, FADE_FOR = 220;
 /** The point layer covers the map view plus a margin, at this many pixels per map unit. */
 const LAYER = { x: -100, y: -100, width: 1000, height: 700, density: 1.5 } as const;
 /** Card footprints in pixels, width by height, used until the cards themselves can be measured. */
-const CARD = { wide: [232, 224], phone: [164, 170] } as const;
+const CARD = { wide: [196, 190], phone: [148, 162] } as const;
 
 type Card = { view: View; findings: Finding[]; position: Coordinate; photo: Photo };
 type Placed = { left: number; top: number; x: number; y: number; w: number; h: number };
+type StepId = 'photos' | 'areas' | 'walk' | 'stretches' | 'marks' | 'barriers';
+type Step = { id: StepId; at: number; until: number };
+
+/** The build in order: photos, retained 3D areas where this device has them, the walk, its stretches, the marks, then the possible barriers. A step with nothing to show is left out. */
+function schedule(data: Destination, marks: readonly Mark[]): Step[] {
+  const order: [StepId, number][] = [['photos', PHOTOS_FOR]];
+  if (data.pieces.length) order.push(['areas', data.pieces.length * POINT_GAP + 300]);
+  order.push(['walk', WALK_FOR]);
+  if (data.stretches.length) order.push(['stretches', (data.stretches.length + 1) * TICK_GAP + 200]);
+  if (marks.length) order.push(['marks', marks.length * MARK_GAP + 300]);
+  if (marks.some(mark => mark.barrier)) order.push(['barriers', BARRIERS_FOR]);
+  let at = BUILD_FROM;
+  return order.map(([id, length]) => { const step = { id, at, until: at + length }; at += length; return step; });
+}
 
 /** Draws one retained area in grey, sampled to bound device work; coordinates are not altered. */
 function paint(image: ImageData, cloud: Cloud, toMap: (east: number, north: number) => Coordinate) {
@@ -37,17 +53,16 @@ function paint(image: ImageData, cloud: Cloud, toMap: (east: number, north: numb
   }
 }
 
-/** Frames the route and its cameras in the space left between the banner and the hint line. */
+/** Frames the route and its cameras in the space left between the banner and the line that names each step. */
 function fitView(data: Destination, width: number, height: number, top: number): number[] {
   const { project } = routeFrame(data);
   const points = [...data.line, data.target.position, ...data.photos.filter(photo => data.views.some(view => view.photoId === photo.id)).map(photo => photo.position)].map(project);
   const xs = points.map(p => p[0]), ys = points.map(p => p[1]), pad = 24;
   const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad, minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
-  const bottom = height - 56, scale = Math.min((width - 32) / (maxX - minX), (bottom - top) / (maxY - minY));
+  const bottom = height - 116, scale = Math.min((width - 32) / (maxX - minX), (bottom - top) / (maxY - minY));
   return [(minX + maxX) / 2 - width / 2 / scale, (minY + maxY) / 2 - (top + (bottom - top) / 2) / scale, width / scale, height / scale];
 }
 
-const month = (iso: string | null, locale: string) => iso ? new Date(iso).toLocaleDateString(locale, { month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
 const year = (iso: string | null) => iso?.slice(0, 4) ?? '';
 
 /** Up to four photos with model outlines, barriers first, spread along the route from start to end. */
@@ -70,7 +85,7 @@ function chooseCards(data: Destination): Card[] {
   return picked.sort((a, b) => a.at - b.at).map(({ view, findings, position, photo }) => ({ view, findings, position, photo }));
 }
 
-/** Plays the retained preparation of a recorded place, then opens its inspection on the same map. */
+/** Replays how a recorded place was built, step by step, then opens its inspection on the same map. */
 export default function RecordedReveal({ id, onHome, onOpen }: { id: DestinationId; onHome: () => void; onOpen: (id: DestinationId) => void }) {
   const { t, rich, lang, locale } = useLanguage();
   const [data, setData] = useState<Destination | null>(null);
@@ -82,6 +97,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   const [layer, setLayer] = useState<{ url: string; areas: number } | null>(null);
   const [pointsDone, setPointsDone] = useState(false);
   const [view, setView] = useState<number[] | null>(null);
+  const [marks, setMarks] = useState<Mark[]>([]);
   const quiet = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const root = useRef<HTMLDivElement>(null), mapBox = useRef<HTMLDivElement>(null), svg = useRef<SVGSVGElement>(null), cardBoxes = useRef<(HTMLElement | null)[]>([]);
 
@@ -89,7 +105,12 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   useEffect(() => {
     const controller = new AbortController();
     setFailed(false);
-    loadDestination(id, controller.signal).then(setData).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    // The marks come with the records, so the replay starts with its whole schedule known.
+    loadDestination(id, controller.signal).then(async next => {
+      const found = await loadMarks(next, controller.signal);
+      setMarks(found);
+      setData(next);
+    }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, [id, attempt]);
 
@@ -111,7 +132,9 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     return () => clearInterval(timer);
   }, [data, phase]);
 
-  const startPoints = !!data && (quiet || phase !== 'play' || elapsed >= POINTS_FROM);
+  const steps = useMemo(() => data ? schedule(data, marks) : [], [data, marks]);
+  const stepOf = (id: StepId) => steps.find(item => item.id === id);
+  const startPoints = !!data && (quiet || phase !== 'play' || elapsed >= (stepOf('areas')?.at ?? 0));
   useEffect(() => {
     if (!data || !startPoints) return;
     if (!data.pieces.length) return setPointsDone(true);
@@ -142,15 +165,15 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
     return () => { controller.abort(); setTimeout(() => urls.forEach(url => URL.revokeObjectURL(url)), 2000); };
   }, [data, startPoints, id]);
 
-  const total = ordered.length;
-  const shown = phase !== 'play' || quiet ? total : Math.max(0, Math.min(total, Math.round((elapsed - CAMERAS_FROM) / CAMERAS_FOR * total)));
-  const areas = !!data?.pieces.length;
-  const cardsFrom = areas ? CARDS_FROM : PHOTO_CARDS_FROM;
-  const handoffAt = areas ? HANDOFF_AT : cardsFrom + Math.max(0, cards.length - 1) * CARD_GAP + HANDOFF_AFTER_CARDS;
+  const total = ordered.length, photos = stepOf('photos');
+  const shown = phase !== 'play' || quiet || !photos ? total : Math.max(0, Math.min(total, Math.round((elapsed - photos.at) / (photos.until - photos.at) * total)));
+  const step = steps.filter(item => quiet || phase !== 'play' || elapsed >= item.at).at(-1);
+  const cardsFrom = steps.at(-1)?.until ?? BUILD_FROM;
+  const handoffAt = cardsFrom + (cards.length ? (cards.length - 1) * CARD_GAP + CARD_SETTLE : 400);
   // Only cards whose turn came during the replay; a skip fades those out and never flashes the rest.
   const surfaced = cards.filter((card, i) => loaded.has(card.view.id) && (quiet || elapsed >= cardsFrom + i * CARD_GAP));
 
-  useEffect(() => { if (phase === 'play' && data && elapsed >= handoffAt && (pointsDone || elapsed >= HANDOFF_LATEST)) setPhase('handoff'); }, [phase, data, elapsed, pointsDone, handoffAt]);
+  useEffect(() => { if (phase === 'play' && data && elapsed >= handoffAt && (pointsDone || elapsed >= handoffAt + HANDOFF_WAIT)) setPhase('handoff'); }, [phase, data, elapsed, pointsDone, handoffAt]);
   useEffect(() => {
     if (phase !== 'play' || !data) return;
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape' || event.key === ' ') { event.preventDefault(); setPhase('handoff'); } };
@@ -176,7 +199,7 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
       if (!matrix || !live) return;
       const { project } = routeFrame(data);
       const phone = innerWidth < 640, [fw, fh] = phone ? CARD.phone : CARD.wide, gap = phone ? 18 : 30;
-      const top = (element.ownerDocument.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = innerHeight - 60, taken: { left: number; top: number; w: number; h: number }[] = [];
+      const top = (element.ownerDocument.querySelector('.reveal-banner')?.getBoundingClientRect().bottom ?? 120) + 16, bottom = (element.ownerDocument.querySelector('.reveal-say')?.getBoundingClientRect().top ?? innerHeight - 110) - 10, taken: { left: number; top: number; w: number; h: number }[] = [];
       let crowded = false;
       const spots = cards.map((card, i) => {
         const box = cardBoxes.current[i], w = box?.offsetWidth || fw, h = box?.offsetHeight || fh;
@@ -242,26 +265,33 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
   if (failed) return <RecordedPreview id={id} onHome={onHome} onOpen={onOpen} onRetry={() => setAttempt(n => n + 1)}/>;
   const name = DESTINATIONS[id].name;
   const targetName = data && (data.target.name.toLocaleLowerCase().startsWith(`${name.toLocaleLowerCase()} `) ? `the ${data.target.name.slice(name.length + 1)}` : data.target.name);
-  const last = ordered[Math.max(0, shown - 1)];
-  const first = year(ordered[0]?.capturedAt ?? null), final = year(ordered.at(-1)?.capturedAt ?? null);
-  const span = first && final ? first === final ? first : t('reveal.span', { from: first, to: final }) : '';
   const route = !data ? '' : id === 'cusco-qorikancha' ? t('reveal.route.qorikancha') : data.start ? t('reveal.route', { start: data.start.name, target: lang === 'en' ? targetName ?? '' : data.target.name }) : data.title;
   const toCanvas = !!data && hasRouteCanvas(data);
+  const spots = toCanvas && data ? buildWalk(data).spots.filter(spot => spot.kind === 'flagged').length : 0;
+  const barriers = marks.filter(mark => mark.barrier).length, walk = stepOf('walk');
+  const say = !data || !step ? null : {
+    photos: rich(Math.max(1, shown) === 1 ? 'reveal.build.photo' : 'reveal.build.photos', { count: <strong>{Math.max(1, shown).toLocaleString(locale)}</strong> }),
+    areas: rich('reveal.areas', { shown: <strong>{layer?.areas ?? 0}</strong>, total: data.pieces.length }),
+    walk: rich('reveal.build.walk', { length: <strong>{t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) })}</strong>, route }),
+    stretches: rich('reveal.build.stretches', { count: <strong>{data.stretches.length}</strong>, length: t('common.metres', { m: Math.round((data.stretches[0]?.to ?? 0) - (data.stretches[0]?.from ?? 0)) }) }),
+    marks: rich(marks.length === 1 ? 'reveal.build.mark' : 'reveal.build.marks', { count: <strong>{marks.length}</strong> }),
+    barriers: barriers === 1 ? rich('reveal.build.barrier', { count: <strong>1</strong> }) : spots > 1 ? rich('reveal.build.barriersAt', { count: <strong>{barriers}</strong>, spots: <strong>{spots}</strong> }) : rich('reveal.build.barriers', { count: <strong>{barriers}</strong> }),
+  }[step.id];
   return <div className="reveal-host" ref={root}>
     {data && phase !== 'play' && <DestinationWorkspace id={id} onHome={onHome} initial={data}/>}
-    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${toCanvas ? ' to-canvas' : ''}`} data-phase={phase} role="region" aria-label={name}>
+    {phase !== 'done' && <div className={`reveal${quiet ? ' is-quiet' : ''}${toCanvas ? ' to-canvas' : ''}`} data-phase={phase} data-step={step?.id ?? 'none'} role="region" aria-label={name} style={walk && { '--walk-at': `${walk.at}ms`, '--walk-for': `${walk.until - walk.at}ms` } as CSSProperties}>
       {data && <>
         <div className="reveal-map" ref={mapBox}>
           <GeographicMap data={data} selected={phase === 'play' || toCanvas ? '' : data.views[0]?.id ?? ''} onSelect={() => {}} hidden={false} zoom={1} setZoom={() => {}} shown={shown} svgRef={svg} className="is-revealing" viewBox={view?.join(' ')} words={{ zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') }}
             underlay={layer && <image href={layer.url} x={LAYER.x} y={LAYER.y} width={LAYER.width} height={LAYER.height} preserveAspectRatio="none" className="reveal-points"/>}>
+            <BuildLayer data={data} marks={marks} steps={steps} unit={view ? view[2] / innerWidth : 1}/>
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
         </div>
         <div className="reveal-scan" aria-hidden="true"/>
         <header className="reveal-banner">
           <h1>{name}</h1>
-          <p>{route} · {t('common.metres', { m: Math.round(data.lengthMetres).toLocaleString(locale) })}</p>
-          <div className="reveal-counter">{shown < total ? <><span>{rich('reveal.photosOf', { shown: <strong>{shown}</strong>, total })}</span><span className="reveal-when">{month(last?.capturedAt ?? null, locale)}</span></> : <><span>{rich(total === 1 ? 'reveal.photo' : 'reveal.photos', { count: <strong>{total}</strong> })}{span ? `, ${span}` : ''}</span><span className="reveal-when">{layer && rich('reveal.areas', { shown: <strong>{layer.areas}</strong>, total: data.pieces.length })}</span></>}</div>
+          <p>{fromRecord(DESTINATIONS[id].place, lang)}</p>
         </header>
         <svg className="reveal-leaders" aria-hidden="true">{surfaced.map(card => { const spot = placed[cards.indexOf(card)]; return spot && <line key={card.view.id} x1={spot.x} y1={spot.y} x2={spot.left + (spot.left > spot.x ? 0 : spot.w)} y2={spot.top + (spot.top > spot.y ? 0 : spot.h)}/>; })}</svg>
         {cards.map((card, i) => { const spot = placed[i]; return <figure key={card.view.id} ref={box => { cardBoxes.current[i] = box; }} className={`reveal-card${spot && surfaced.includes(card) ? '' : ' is-waiting'}`} style={spot && { left: spot.left, top: spot.top }}>
@@ -271,9 +301,43 @@ export default function RecordedReveal({ id, onHome, onOpen }: { id: Destination
           </div>
           <figcaption><strong>{possibleFromRecord(card.findings.find(f => f.barrier)?.label ?? card.findings[0].label, lang)}</strong><span>{card.photo.creator}{card.photo.capturedAt ? `, ${year(card.photo.capturedAt)}` : ''}</span></figcaption>
         </figure>; })}
+        {phase === 'play' && step && <p className="reveal-say" key={step.id}>{GLYPHS[step.id]}<span>{say}</span></p>}
         <footer className="reveal-hints"><span className="reveal-credit-long">{t('reveal.credit')}</span><span className="reveal-credit-short">{t('reveal.creditShort')}</span><button onClick={() => setPhase('handoff')} disabled={phase !== 'play'}>{t('common.skip')}</button></footer>
       </>}
       {!data && <p className="reveal-opening" role="status">{t('reveal.opening', { name })}</p>}
     </div>}
   </div>;
+}
+
+/** One small sign per step, drawn like the thing it names on the map. */
+const GLYPHS: Record<StepId, ReactNode> = {
+  photos: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="5" cy="13" r="2.1" className="glyph-photo"/><circle cx="11" cy="8" r="2.1" className="glyph-photo"/><circle cx="17" cy="12" r="2.1" className="glyph-photo"/></svg>,
+  areas: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 15h.01M8 12h.01M11 15h.01M11 9h.01M14 12h.01M17 15h.01M14 6h.01M8 6h.01" className="glyph-areas"/></svg>,
+  walk: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M3 16C8 5 13 17 19 6" className="glyph-walk"/></svg>,
+  stretches: <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M2 11H20M4 7V15M9 7V15M14 7V15M19 7V15" className="glyph-ticks"/></svg>,
+  marks: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="4" className="glyph-mark"/></svg>,
+  barriers: <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" className="glyph-barrier"/></svg>,
+};
+
+/** The walk's 10 m stretches as ticks, then every recorded mark, in order along the walk. */
+function BuildLayer({ data, marks, steps, unit }: { data: Destination; marks: readonly Mark[]; steps: readonly Step[]; unit: number }) {
+  const { project } = routeFrame(data);
+  const ticks = data.stretches.flatMap((stretch, i) => {
+    const ends = i === data.stretches.length - 1 ? [0, stretch.line.length - 1] : [0];
+    return ends.map(end => {
+      const a = project(stretch.line[end]), b = project(stretch.line[end === 0 ? 1 : end - 1] ?? stretch.line[end]);
+      const dx = b[0] - a[0], dy = b[1] - a[1], length = Math.hypot(dx, dy) || 1, n = [-dy / length * 7 * unit, dx / length * 7 * unit];
+      return [a[0] - n[0], a[1] - n[1], a[0] + n[0], a[1] + n[1]];
+    });
+  });
+  const line = data.line.map(project);
+  const along = (p: number[]) => line.reduce((best, q, i) => Math.hypot(p[0] - q[0], p[1] - q[1]) < Math.hypot(p[0] - line[best][0], p[1] - line[best][1]) ? i : best, 0);
+  const placed = marks.map(mark => ({ ...mark, xy: project(mark.at) })).sort((a, b) => along(a.xy) - along(b.xy));
+  const ticksAt = steps.find(step => step.id === 'stretches')?.at ?? 0, marksAt = steps.find(step => step.id === 'marks')?.at ?? 0;
+  const mark = (item: typeof placed[number], i: number) => <circle key={i} cx={item.xy[0]} cy={item.xy[1]} r={(item.barrier ? 4.6 : 3.4) * unit} className={`reveal-mark${item.barrier ? ' is-barrier' : ''}`} style={{ '--at': `${marksAt + i * MARK_GAP}ms` } as CSSProperties}/>;
+  return <g className="reveal-build" aria-hidden="true">
+    <g className="reveal-ticks">{ticks.map(([x1, y1, x2, y2], i) => <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} className="reveal-tick" style={{ animationDelay: `${ticksAt + i * TICK_GAP}ms` }}/>)}</g>
+    <g className="reveal-marks">{placed.map((item, i) => item.barrier ? null : mark(item, i))}</g>
+    <g className="reveal-barriers">{placed.map((item, i) => item.barrier ? mark(item, i) : null)}</g>
+  </g>;
 }
