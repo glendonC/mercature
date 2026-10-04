@@ -10,5 +10,5 @@ export { markOf, kindOf, MARK_ORDER, KIND_ORDER, BARRIER_KINDS, GROUND_KINDS, ty
 export { Segmented } from './Segmented';
 export { TextArea, Select } from './Field';
 export { Dialogue, Companion, Choices, Choice, Composer, CopyBox, ScrollFade, useScrollFade } from './Chat';
-export { GlassButton, ChangeRow } from './Edit';
+export { GlassButton, GlassCircle, ChangeRow } from './Edit';
 export type { Tone } from './cx';

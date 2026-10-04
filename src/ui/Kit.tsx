@@ -4,7 +4,7 @@ import { loadReview } from '../decisions/store';
 import { spotMarkers } from '../destinations/markers';
 import RouteMap from '../destinations/RouteMap';
 import { buildWalk } from '../destinations/walk';
-import { BARRIER_KINDS, ChangeRow, GlassButton, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
+import { BARRIER_KINDS, ChangeRow, GlassButton, GlassCircle, Choice, Choices, Companion, GROUND_KINDS, KIND_ORDER, kindOf, Composer, CopyBox, Dialogue, IconButton, Kbd, Legend, MARK_ORDER, List, MapLabel, MarkerBadge, Panel, PanelHead, PrimaryAction, Row, Quote, ScrollFade, Segmented, Select, Tag, TextArea, TextButton, type Tone } from '.';
 import * as I from './icons';
 import './kit.css';
 
@@ -116,7 +116,8 @@ export default function Kit() {
       <div className="kit-edit-bar"><GlassButton icon={<I.NoteIcon />}>Edit</GlassButton><BeforeNow /></div>
       <Companion className="kit-companion" working={scene === 'reading'} talking={talking} />
       {focus && <div className="kit-focus" data-scene={scene}>{focus}{choices}</div>}
-      <Dialogue key={scene} label="Guide" say={said} onTalking={setTalking} continueLabel="More" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
+      <Dialogue key={scene} label="Guide" say={said} back={scene === 'check' || scene === 'message' ? <GlassCircle label="Back"><I.BackIcon /></GlassCircle> : undefined}
+        actions={scene === 'check' ? <TextButton muted icon={<I.SkipIcon />}>Skip for now</TextButton> : undefined} onTalking={setTalking} continueLabel="More" working={scene === 'reading'} workingLabel="Reading" meta={scene === 'check' ? '1 of 8' : undefined}
         composer={scene === 'long' ? undefined : <Composer label="In your words" sendLabel="Send" onSend={() => {}} disabled={scene === 'reading'} />} />
     </div>
 

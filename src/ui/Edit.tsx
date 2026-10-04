@@ -18,6 +18,11 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(funct
   </button>;
 });
 
+/** A round action over the map, in charcoal glass: 48 px, an icon and its name for screen readers. The guide's Back, and the search row's Go. */
+export const GlassCircle = forwardRef<HTMLButtonElement, Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & { label: string; children: ReactNode }>(function GlassCircle({ label, className, children, type = 'button', ...rest }, ref) {
+  return <button ref={ref} type={type} className={cx('ui-glass-circle', className)} aria-label={label} title={label} {...rest}>{children}</button>;
+});
+
 type ChangeRowProps = {
   /** The kind the change is about: its icon, in its hue. */
   kind?: Kind | null;

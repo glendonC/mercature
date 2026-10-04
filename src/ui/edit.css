@@ -22,6 +22,13 @@
 .ui-segmented[data-surface=glass] .ui-segment[aria-pressed=true] .ui-button-label { color: var(--ink); }
 .ui-segmented[data-surface=glass] .ui-segment.ui-segment:focus-visible { outline-color: #fff; outline-offset: -6px; }
 
+/* GlassCircle: a 48 px charcoal glass circle, the same as the search row's Go */
+.ui-glass-circle { position: relative; display: grid; place-items: center; flex: none; width: 48px; height: 48px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--line-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color var(--motion-hover) ease, transform var(--motion-hover) ease; }
+.ui-glass-circle:hover { background: rgb(50 54 58 / 0.9); }
+.ui-glass-circle:active { transform: scale(0.96); }
+.ui-glass-circle .ui-icon { width: 20px; height: 20px; }
+.ui-glass-circle.ui-glass-circle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
 /* ChangeRow: one of her changes */
 .ui-change { display: flex; align-items: center; gap: 2px; min-height: var(--tap); }
 .ui-change + .ui-change { border-top: var(--hair-width) solid var(--ui-hair); }

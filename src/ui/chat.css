@@ -12,6 +12,12 @@
 .ui-dialogue-line[data-paged] { position: relative; padding-inline-end: 40px; }
 .ui-dialogue-line[data-advance] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-untyped { color: transparent; }
+/* The field's row: Back at its left, the field filling the rest */
+.ui-dialogue-row { display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
+.ui-dialogue-row > .ui-composer { flex: 1; min-width: 0; }
+.ui-dialogue-row > .ui-glass-circle { margin-bottom: 0; }
+/* Quiet actions inside the line, at its end */
+.ui-dialogue-actions { display: flex; justify-content: flex-end; margin: 2px -10px -8px 0; }
 /* The continue mark: a small white triangle in the corner, when another page follows */
 .ui-dialogue-more { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: var(--radius-panel); background: none; cursor: pointer; }
 .ui-dialogue-more > span { width: 0; height: 0; border-inline: 5px solid transparent; border-top: 6px solid var(--line-ink); animation: ui-more 0.9s var(--ease-in-out) infinite alternate; }

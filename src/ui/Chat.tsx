@@ -29,6 +29,10 @@ type DialogueProps = {
   meta?: ReactNode;
   /** Her own words: a Composer, under the line. */
   composer?: ReactNode;
+  /** A step back: a GlassCircle with BackIcon, at the left of the field's row. Leave it out when there is nothing to go back to. */
+  back?: ReactNode;
+  /** Quiet secondary actions inside the line, at its end, such as "Skip for now": TextButton muted. */
+  actions?: ReactNode;
   /** The guide is working, as while the model reads a message: three dots in place of the words. Never a pause put on for show. */
   working?: boolean;
   /** The dots' name for screen readers, such as "Reading". */
@@ -105,7 +109,7 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
 }
 
 /** The bottom dialogue: always in the same place, centred, as wide as its words between 280 and 640 px, clear of the home indicator and a landscape notch. */
-export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, children, meta, composer, working, workingLabel, label, lang, className }: DialogueProps) {
+export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, children, meta, composer, back, actions, working, workingLabel, label, lang, className }: DialogueProps) {
   const line = useRef<HTMLDivElement>(null);
   const pages = usePages(say, line);
   const [at, setAt] = useState(0);
@@ -162,10 +166,11 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
             {paged && <p className="ui-dialogue-page"><span aria-hidden="true">{page.slice(0, shown)}<span className="ui-untyped">{page.slice(shown)}</span></span><span className="sr-only">{page}</span></p>}
             {children}
           </div>
+          {actions && !more && <div className="ui-dialogue-actions" onClick={event => event.stopPropagation()}>{actions}</div>}
           {more && !typing && <button type="button" className="ui-dialogue-more" aria-label={continueLabel} title={continueLabel} onClick={event => { event.stopPropagation(); next(); }}><span /></button>}
         </>}
     </div>
-    {composer}
+    {(back || composer) && <div className="ui-dialogue-row">{back}{composer}</div>}
   </section>;
 }
 
