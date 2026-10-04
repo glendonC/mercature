@@ -37,7 +37,7 @@ export const COPY = {
     map: { zoomIn: 'Acercar el mapa', zoomOut: 'Alejar el mapa', fit: 'Toda la ruta', credit: '© colaboradores de OpenStreetMap' },
     pageOf: (n: number, total: number) => `${n} de ${total}`, previous: 'Anterior', next: 'Siguiente', whole: 'Ver la foto entera', closer: 'Ver la parte marcada',
     message: 'Mensaje del visitante', messagePlaceholder: 'Pega o escribe lo que escribió el visitante', language: 'Idioma del mensaje',
-    withoutAi: 'Usar sin IA', noModel: 'El modelo no pudo cargar aquí. Aún puedes ubicarlo tú.', download: (mb: number) => `Descargar ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, downloading: 'Descargando el modelo…',
+    withoutAi: 'Usar sin IA', noModel: 'No se pudo cargar el modelo aquí. Aún puedes ubicarlo tú.', download: (mb: number) => `Descargar ${mb} MB`, downloadProgress: (done: number, total: number) => `${done} de ${total} MB`, downloading: 'Descargando el modelo…',
     kinds: { problem: 'Problema', praise: 'Elogio', question: 'Pregunta' } as Record<MessageKind, string>, maybe: (kind: string) => `¿${kind}?`,
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
