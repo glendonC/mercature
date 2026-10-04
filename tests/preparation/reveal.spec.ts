@@ -1,4 +1,4 @@
-import {test, expect} from '@playwright/test';
+import {test, expect, type Page} from '@playwright/test';
 
 // Invented contract record exercising a photo-only place without redistributing captures.
 const photoOnly = {schema:'mercature-route/1',id:'kathmandu-swayambhu',synthetic:false,local_only:true,title:'Test source',place:'Test record',
@@ -6,18 +6,32 @@ const photoOnly = {schema:'mercature-route/1',id:'kathmandu-swayambhu',synthetic
   photos:[{id:'p1',position:[0,0],heading:0,captured_at:null,creator:{username:'Fixture'},licence:'Fixture only',link:null,file:null,thumb:null}],
   views:[{id:'v1',photo_id:'p1',file:'views/v1.jpg',width:2,height:2,cut:null}],spots:[],findings:[],sources:[],map_context:{buildings:{features:[]},ways:{features:[]}}};
 
+/** Every line the replay says, in order, kept as it happens: a step's line shows for under a second, shorter than a polling gap. */
+async function listen(page: Page) {
+  await page.evaluate(() => {
+    const said: string[] = [];
+    (window as unknown as { said: string[] }).said = said;
+    new MutationObserver(() => { const line = document.querySelector('.reveal-say')?.textContent?.trim(); if (line && said.at(-1) !== line) said.push(line); })
+      .observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+  return () => page.evaluate(() => (window as unknown as { said: string[] }).said);
+}
+
 test('the Qorikancha reveal replays how the walk was built and opens the inspection on the same map', async ({page}) => {
   test.setTimeout(25000);
   await page.route('**/routes/**', route => route.fulfill({status:404, body:'Prepared files are not installed on this device.'}));
   await page.goto('/');
+  const said = await listen(page);
   await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
   const reveal = page.getByRole('region', {name:'Qorikancha', exact:true});
   await expect(reveal.getByRole('heading', {name:'Qorikancha'})).toBeVisible();
-  await expect(reveal).toContainText(/\d+ street photos of this walk/);
+  await expect(reveal).toHaveAttribute('data-step', 'barriers', {timeout: 10000});
+  const lines = await said();
+  expect(lines.some(line => /^\d+ street photos of this walk$/.test(line))).toBe(true);
   // Every mark the package records, not only those whose photos are published.
-  await expect(reveal).toContainText('52 marks along the walk');
+  expect(lines).toContain('52 marks along the walk');
+  expect(lines).toContain('8 might be barriers, at 5 spots');
   await expect(reveal.getByRole('figure').first()).toBeVisible({timeout: 10000});
-  await expect(reveal).toContainText('8 might be barriers, at 5 spots');
   await expect(reveal).not.toContainText(/recorded|unverified/i);
   await page.getByRole('button', {name:'Skip', exact:true}).click();
   // The replay lands on the canvas map before it gives way, rather than cutting to it.
