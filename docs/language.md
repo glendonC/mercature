@@ -1,6 +1,6 @@
 # Message understanding
 
-A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and Noor decides. It never writes free text, so it cannot invent a place or a promise. It also learns from her: in a language the model cannot read, such as Quechua, a message she links to a spot helps rank that spot first for similar messages later, on the phone.
+A small multilingual model on the phone reads a visitor's message and answers three questions from fixed lists: is it a problem, praise or a question; for a problem, which of six issue types; and which of the site's named features it most likely concerns (up to three, best first). When it is not sure it says so, with a reason, and the operator decides. It never writes free text, so it cannot invent a place or a promise. It also learns from the operator: in a language the model cannot read, such as Quechua, a message the operator links to a spot helps rank that spot first for similar messages later, on the phone.
 
 ## What runs on the phone
 
@@ -142,7 +142,7 @@ The heads were trained only on farm messages. To see whether they carry over, 44
 
 ## Learning from the operator's confirmations
 
-When the operator links a message to a spot ("Yes, this spot"), the phone keeps that message as an example for the place: the 384 numbers the model computed for it, a sketch of its spelling, the spot and the time, never the text. A new message in a language the encoder cannot read, such as Quechua, that is close to a kept example gets that spot first. The tool adapts to the operator's own visitors from her own decisions: no retraining, no server, nothing leaves the phone. English, Spanish and Korean messages are left to the model (see the restriction below).
+When the operator links a message to a spot ("Yes, this spot"), the phone keeps that message as an example for the place: the 384 numbers the model computed for it, a sketch of its spelling, the spot and the time, never the text. A new message in a language the encoder cannot read, such as Quechua, that is close to a kept example gets that spot first. The tool adapts to the operator's own visitors from the operator's own decisions: no retraining, no server, nothing leaves the phone. English, Spanish and Korean messages are left to the model (see the restriction below).
 
 - **Only the order changes.** Every message still runs through the model, and kind and issue type are always the model's own. Nothing is answered from storage.
 - **A person decides.** When the memory supplies the first spot, the answer is *Not sure* with the reason `remembered`, so the screen can say the first spot is where a similar message was linked before. The memory never gives a confident answer and never acts on a message the model judged to be about no place.

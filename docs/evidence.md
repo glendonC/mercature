@@ -92,7 +92,7 @@ The second place in the app: a route in Tbilisi, Georgia, from the Narikala cabl
 
 ## Noor's farm (training data only)
 
-In the brief, Noor farms in the fictional Ondera highlands; her farm is set in La Convención, Cusco, for the synthetic messages. Her farm is the authored setting of the synthetic messages that trained the model's heads, labeled synthetic. Its workspace stays in the code as a hidden example reached only by ?place=farm, not offered from the app. It has 17 named features in Spanish and English, with aliases in English, Spanish and Korean, and Quechua aliases on 16 of them (unreviewed), and every dimension is invented. Its path check uses an illustrative 0.9 m square envelope on one flat level, which is not a wheelchair standard; slopes, steps and surface firmness are not modelled. The model's held-out evaluation uses messages about this farm.
+In the brief, Noor farms in the fictional Ondera highlands; for the synthetic messages, Noor's farm is set in La Convención, Cusco. The farm is the authored setting of the synthetic messages that trained the model's heads, labeled synthetic. Its workspace stays in the code as a hidden example reached only by ?place=farm, not offered from the app. It has 17 named features in Spanish and English, with aliases in English, Spanish and Korean, and Quechua aliases on 16 of them (unreviewed), and every dimension is invented. Its path check uses an illustrative 0.9 m square envelope on one flat level, which is not a wheelchair standard; slopes, steps and surface firmness are not modelled. The model's held-out evaluation uses messages about this farm.
 
 ## Data the tool is built with
 
