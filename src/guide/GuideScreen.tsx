@@ -801,23 +801,23 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   const turn = `${JSON.stringify(step)} ${ack}`;
 
-  // The bot is out in the map, beside the spot the conversation is about, and travels with the camera; with no spot it waits by the walk's start.
+  // The bot is out in the map on every step: beside the spot the conversation is about, on the side away from its caption, and
+  // travelling with the camera; with no spot it waits at the free map's lower left, just above the dialogue.
   const lens = useRef<Lens | null>(null);
+  const focusTarget = selected ?? (ranked.length ? targetOf(ranked[0]) : null);
+  const botAim = useRef({ focus: null as Point | null, insets });
+  botAim.current = { focus: focusTarget ? pointOf(focusTarget) : null, insets };
   const placeBot = useCallback(() => {
     const element = bot.current, host = screen.current;
     if (!element || !host) return;
-    const box = host.getBoundingClientRect(), size = element.offsetWidth || 44;
-    const marker = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"], .route-marker[data-rank="1"]');
-    const dot = marker?.querySelector('.route-marker-dot')?.getBoundingClientRect();
-    const start = walk.start && lens.current ? lens.current.at(walk.start.at) : null;
-    // Beside the marker, out and up, on the side away from its caption; never on the marker itself.
-    const away = marker?.dataset.side === 'left' ? 1 : -1;
-    const [cx, cy] = dot ? [dot.left + dot.width / 2 - box.left + away * (28 + size / 2), dot.top + dot.height / 2 - box.top - 28 - size / 2]
-      : start ? [start[0] - 28 - size / 2, start[1] - 28 - size / 2] : [40, 110];
-    const floor = (dock.current?.getBoundingClientRect().top ?? box.bottom) - box.top - size - 8;
-    element.style.transform = `translate(${Math.round(Math.max(12, Math.min(box.width - size - 12, cx - size / 2)))}px, ${Math.round(Math.max(68, Math.min(floor, cy - size / 2)))}px)`;
+    const box = host.getBoundingClientRect(), size = element.offsetWidth || 52, { focus, insets: free } = botAim.current;
+    const at = focus && lens.current ? lens.current.at(focus) : null;
+    const away = host.querySelector<HTMLElement>('.route-marker[aria-pressed="true"], .route-marker[data-rank="1"]')?.dataset.side === 'left' ? 1 : -1;
+    const [x, y] = at ? [at[0] + away * (size / 2 + 20) - size / 2, at[1] - size - 20] : [free.left + 24, box.height - free.bottom - 24 - size];
+    const right = box.width - free.right - size, bottom = box.height - free.bottom - size;
+    element.style.transform = `translate(${Math.round(Math.max(free.left - 12, Math.min(right + 12, x)))}px, ${Math.round(Math.max(free.top, Math.min(bottom, y)))}px)`;
     element.dataset.placed = '';
-  }, [walk]);
+  }, []);
   const onLens = useCallback((next: Lens) => { lens.current = next; placeBot(); }, [placeBot]);
   useLayoutEffect(() => { placeBot(); });
   useEffect(() => { addEventListener('resize', placeBot); return () => removeEventListener('resize', placeBot); }, [placeBot]);
