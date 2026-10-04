@@ -12,16 +12,18 @@ import { CheckIcon, CopyIcon, SendIcon } from './icons';
 
 type DialogueProps = {
   /** Words to page and type in, as a game shows dialogue: pages of at most two lines, split by sentence and never mid-word.
-   *  Each page types in within 1.1 s; a tap, Enter or Space completes a page, then turns to the next; a small mark shows when more follows.
+   *  Each page types in at a calm 40 characters a second; a tap, Enter or Space completes a typing page, then turns to the next.
+   *  A page that is not the last waits for her, with a small continue mark, unless advanceAfter is set.
    *  A line that starts with PAGE_BREAK ('\f') always opens its own page. Leave it out to show children as they are. */
   say?: string | readonly string[];
   /** True while a page types in, false once it is whole: give it to the Companion as talking. */
   onTalking?: (talking: boolean) => void;
-  /** Called once the last page is whole. */
+  /** Called once the last page has been whole for 600 ms: show her choices then, never on top of words still being read. */
   onDone?: () => void;
   /** The continue mark's name for screen readers, such as "More". */
   continueLabel?: string;
-  /** Turn pages by themselves, this many ms after each is whole, for a screen that runs on its own timer. A tap still turns at once. */
+  /** Turn pages by themselves, for a screen that runs on its own timer (only the reveal). It is a floor: a page stays at least its reading time
+   *  (300 ms a word plus 1.2 s) and never less than 2.5 s. A tap still turns at once. */
   advanceAfter?: number;
   /** Anything after the words, such as a plain error line. */
   children?: ReactNode;
@@ -43,7 +45,12 @@ type DialogueProps = {
   className?: string;
 };
 
-const PER_CHAR = 16, MOST = 1100, LINES = 2;
+/** A calm typing pace, about 40 characters a second, however long the page: words must be readable as they come. */
+const PER_CHAR = 25, LINES = 2;
+/** How long the last page stays whole before onDone, so choices never arrive on top of words still being read. */
+const SETTLE = 600;
+/** How long a page stays once whole before it turns by itself: never less than its reading time (300 ms a word plus 1.2 s) or 2.5 s, whatever the screen asks. */
+const dwellFor = (page: string, floor: number) => Math.max(floor, 2500, 1200 + 300 * page.split(/\s+/).filter(Boolean).length);
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Sentences, each with its closing mark, so a page never ends mid-sentence when it can help it. */
@@ -156,29 +163,44 @@ export function Dialogue({ say, onTalking, onDone, continueLabel, advanceAfter, 
   const typing = paged && shown < page.length;
   const more = paged && at < pages.length - 1;
   useEffect(() => { setAt(0); }, [pages]);
+  // A tap while a page types completes it: the typing loop stops for good, so the page stays whole
+  const completed = useRef(false);
   useLayoutEffect(() => {
     if (!paged) return;
+    completed.current = false;
     if (reduced()) { setShown(page.length); return; }
     setShown(0);
-    const per = Math.min(PER_CHAR, MOST / Math.max(1, page.length)), began = performance.now();
+    const per = PER_CHAR, began = performance.now();
     let frame = 0;
-    const step = () => { const typed = Math.floor((performance.now() - began) / per); setShown(Math.min(typed, page.length)); if (typed < page.length) frame = requestAnimationFrame(step); };
+    const step = () => {
+      if (completed.current) return;
+      const typed = Math.floor((performance.now() - began) / per);
+      setShown(Math.min(typed, page.length));
+      if (typed < page.length) frame = requestAnimationFrame(step);
+    };
     frame = requestAnimationFrame(step);
-    // A page that is not painting gets no frames: it shows whole by MOST regardless.
-    const whole = window.setTimeout(() => setShown(page.length), MOST + 150);
+    // A page that is not painting gets no frames: it shows whole once its typing time is up regardless.
+    const whole = window.setTimeout(() => setShown(page.length), page.length * PER_CHAR + 150);
     return () => { cancelAnimationFrame(frame); clearTimeout(whole); };
   }, [paged, page]);
   const talk = useRef(onTalking); talk.current = onTalking;
   const done = useRef(onDone); done.current = onDone;
   useEffect(() => { talk.current?.(typing); }, [typing]);
   useEffect(() => () => talk.current?.(false), []);
-  useEffect(() => { if (paged && !typing && !more && page) done.current?.(); }, [paged, typing, more, page]);
-  const next = () => { if (typing) setShown(page.length); else if (more) setAt(index => index + 1); };
+  useEffect(() => {
+    if (!paged || typing || more || !page) return;
+    const settled = window.setTimeout(() => done.current?.(), SETTLE);
+    return () => clearTimeout(settled);
+  }, [paged, typing, more, page]);
+  const next = () => {
+    if (typing) { completed.current = true; setShown(page.length); }
+    else if (more) setAt(index => index + 1);
+  };
   useEffect(() => {
     if (advanceAfter === undefined || typing || !more) return;
-    const turn = window.setTimeout(() => setAt(index => index + 1), advanceAfter);
+    const turn = window.setTimeout(() => setAt(index => index + 1), dwellFor(page, advanceAfter));
     return () => clearTimeout(turn);
-  }, [advanceAfter, typing, more, at]);
+  }, [advanceAfter, typing, more, at, page]);
   const nextRef = useRef(next); nextRef.current = next;
   useEffect(() => {
     if (!paged || (!typing && !more)) return;
