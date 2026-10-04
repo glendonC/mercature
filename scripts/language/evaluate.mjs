@@ -1,8 +1,9 @@
 /**
  * Evaluate the shipped heads and thresholds on one split with fresh inference for every message.
- * Usage: node scripts/language/evaluate.mjs [dev|test|route]. The held-out split ("test") is for the
- * single preregistered run; thresholds are never changed after it. "route" scores the Qorikancha
- * walk messages against that place with the same farm-trained heads, as a transfer test.
+ * Usage: node scripts/language/evaluate.mjs [dev|test|route] [--place <id>]. The held-out split ("test") is for the
+ * single preregistered run; thresholds are never changed after it. "route" scores a recorded walk's messages
+ * against that place with the same farm-trained heads, as a transfer test: Qorikancha by default, or another
+ * place in ROUTE_MESSAGES with --place.
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -10,17 +11,21 @@ import { resolve } from 'node:path';
 import { aliasBaseline } from '../../src/language/index.ts';
 import { RUNTIME_WASM } from '../../src/language/model.ts';
 import { buildIndex, decide, looksSupported, prepareHeads, queryText, score } from '../../src/language/policy.ts';
-import { QORIKANCHA_PLACE } from '../../src/site/route.ts';
+import { ROUTE_PLACES } from '../../src/site/registry.ts';
 import { FARM_FEATURES, HEADS_PATH, VARIANT, asExpected, categoryLabels, concernsPlace, confidentWrong, encoderInfo, hasPlaceLabel, loadMessages } from './data.mjs';
 
 const SPLITS = ['train', 'dev', 'test', 'route'];
 const split = process.argv.slice(2).find(arg => SPLITS.includes(arg)) ?? 'dev';
+/** Each place's labelled walk messages. */
+const ROUTE_MESSAGES = { 'cusco-qorikancha': './route-messages.json', 'tbilisi-narikala': './narikala-messages.json' };
+const flag = process.argv.indexOf('--place'), placeId = flag > 0 ? process.argv[flag + 1] : 'cusco-qorikancha';
+if (!Object.hasOwn(ROUTE_MESSAGES, placeId) || !ROUTE_PLACES[placeId]) throw new Error(`--place must be one of: ${Object.keys(ROUTE_MESSAGES).join(', ')}.`);
 const headsText = await readFile(HEADS_PATH, 'utf8');
 const heads = JSON.parse(headsText);
-const data = split === 'route' ? JSON.parse(await readFile(new URL('./route-messages.json', import.meta.url), 'utf8')) : await loadMessages();
+const data = split === 'route' ? JSON.parse(await readFile(new URL(ROUTE_MESSAGES[placeId], import.meta.url), 'utf8')) : await loadMessages();
 if (split !== 'route' && heads.training.messagesSha256 !== data.sha256) console.warn('Warning: messages.json changed since the heads were trained.');
 const messages = data.messages.filter(message => message.split === split);
-const features = split === 'route' ? QORIKANCHA_PLACE.features : FARM_FEATURES;
+const features = split === 'route' ? ROUTE_PLACES[placeId].features : FARM_FEATURES;
 
 const encoder = await encoderInfo();
 const indexStarted = performance.now();
@@ -108,7 +113,7 @@ const failures = rows.filter(row => !expectation(row) || readyWrong(row) || (has
   got: row.decision, top3: ranked(row).slice(0, 3),
 }));
 await mkdir(resolve('.local/language'), { recursive: true });
-const out = resolve('.local/language', `results-${split}${VARIANT ? `-${VARIANT}` : ''}.json`);
+const out = resolve('.local/language', `results-${split}${split === 'route' && placeId !== 'cusco-qorikancha' ? `-${placeId}` : ''}${VARIANT ? `-${VARIANT}` : ''}.json`);
 await writeFile(out, JSON.stringify({ report, failures, rows: rows.map(row => ({ id: row.message.id, decision: row.decision, ranked: ranked(row), kind: row.scores.kind, category: row.scores.category, place: row.scores.place, baseline: row.baseline, ms: row.ms })) }, null, 2));
 console.log(JSON.stringify(report, null, 2));
 console.log(`${failures.length} messages with a wrong ranking or decision; details in ${out}`);
