@@ -711,9 +711,9 @@ const es: Script = {
   },
   reveal: {
     hello: s => `¡Hola! Este es el recorrido hasta ${s.target}.`,
-    photos: s => s.photos ? 'Primero, las fotos de la calle que la gente compartió a lo largo del camino.' : 'Este recorrido viene del mapa.',
+    photos: s => s.photos ? 'Primero, las fotos que compartió la gente.' : 'Este recorrido viene del mapa.',
     walk: s => `Este es tu camino, unos ${dist_es(s.metres)}.`,
-    reading: () => 'Y esto es lo que se ve en las fotos del camino.',
+    reading: () => 'Y esto se ve en las fotos.',
     areas: () => 'Y aquí está la calle a su alrededor, en 3D.',
     marks: s => s.spots === 0 ? 'Nada en las fotos parece un problema.' : `${cap(count_es(s.spots, 'punto podría', 'puntos podrían'))} ser un problema para algunos visitantes.`,
   },
