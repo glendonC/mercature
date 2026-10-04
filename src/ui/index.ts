@@ -10,7 +10,7 @@ export { Tag, Kbd, Quote, Callout, Swatch, Legend, MarkerBadge, MapLabel, type S
 export { markOf, kindOf, MARK_ORDER, KIND_ORDER, BARRIER_KINDS, GROUND_KINDS, type MarkKind, type Kind } from './kinds';
 export { Segmented } from './Segmented';
 export { TextArea, Select } from './Field';
-export { Dialogue, Companion, Choices, Choice, Composer, CopyBox, ScrollFade, useScrollFade } from './Chat';
+export { Dialogue, Companion, Choices, Choice, Composer, CopyBox, ScrollFade, useScrollFade, PAGE_BREAK, paginate } from './Chat';
 export { GlassButton, GlassCircle, EditToggle, ChangeRow } from './Edit';
 export { VisitorAvatar, visitorLook } from './Visitor';
 export type { Tone } from './cx';

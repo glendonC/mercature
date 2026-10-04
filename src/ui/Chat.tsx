@@ -13,7 +13,7 @@ import { CheckIcon, CopyIcon, SendIcon } from './icons';
 type DialogueProps = {
   /** Words to page and type in, as a game shows dialogue: pages of at most two lines, split by sentence and never mid-word.
    *  Each page types in within 1.1 s; a tap, Enter or Space completes a page, then turns to the next; a small mark shows when more follows.
-   *  Leave it out to show children as they are. */
+   *  A line that starts with PAGE_BREAK ('\f') always opens its own page. Leave it out to show children as they are. */
   say?: string | readonly string[];
   /** True while a page types in, false once it is whole: give it to the Companion as talking. */
   onTalking?: (talking: boolean) => void;
@@ -62,8 +62,24 @@ function wrapped(text: string, width: number, measure: (s: string) => number) {
   return lines;
 }
 const linesOf = (text: string, width: number, measure: (s: string) => number) => wrapped(text, width, measure).length;
-/** Pages of at most two lines at a width: whole sentences where they fit, a long sentence cut between words. */
+/** A page break the words force: a line that starts with it (or any text after it) always opens a new page, never joined to the page before. It is never shown. */
+export const PAGE_BREAK = '\f';
+
+/**
+ * Pages of at most two lines at a width: whole sentences where they fit, a long sentence cut between words.
+ * A PAGE_BREAK starts a new page wherever it stands, so a line can stand alone, such as a payoff before the next question.
+ */
 export function paginate(say: string | readonly string[], width: number, measure: (s: string) => number, most = LINES): string[] {
+  const blocks: string[][] = [[]];
+  for (const item of typeof say === 'string' ? [say] : say) item.split(PAGE_BREAK).forEach((part, index) => {
+    if (index > 0 && blocks[blocks.length - 1].length) blocks.push([]);
+    if (part.trim()) blocks[blocks.length - 1].push(part);
+  });
+  const pages = blocks.flatMap(block => block.length ? pagesOf(block, width, measure, most) : []);
+  return pages.length ? pages : [''];
+}
+
+function pagesOf(say: readonly string[], width: number, measure: (s: string) => number, most: number): string[] {
   const pages: string[] = [];
   let page = '';
   const fits = (text: string) => linesOf(text, width, measure) <= most;
@@ -78,12 +94,12 @@ export function paginate(say: string | readonly string[], width: number, measure
   };
   const words = (piece: string) => { const all = piece.split(/\s+/); return all.length > 1 && !fits(piece) ? all : null; };
   const clauses = (piece: string) => { const all = piece.split(/(?<=[,;:])\s+/); return all.length > 1 ? all : words(piece); };
-  for (const sentence of (typeof say === 'string' ? [say] : say).flatMap(sentencesOf)) {
+  for (const sentence of say.flatMap(sentencesOf)) {
     if (page && !fits(`${page} ${sentence}`) && fits(sentence)) { pages.push(page); page = sentence; continue; }
     add(sentence, clauses);
   }
   if (page) pages.push(page);
-  return pages.length ? pages : [''];
+  return pages;
 }
 
 /** The pages of words for the dialogue's current width, measured in its own font, and each page's widest line, so the box fits its words exactly. */
@@ -99,7 +115,7 @@ function usePages(say: string | readonly string[] | undefined, box: RefObject<HT
       const element = box.current;
       const section = element?.parentElement;
       if (element && section && element.getBoundingClientRect().width > section.clientWidth + 1) cap = section.clientWidth;
-      if (!element || !context) { setLaid({ pages: typeof say === 'string' ? [say] : [...say], widths: [] }); return; }
+      if (!element || !context) { setLaid({ pages: (typeof say === 'string' ? [say] : [...say]).flatMap(item => item.split(PAGE_BREAK)).map(item => item.trim()).filter(Boolean), widths: [] }); return; }
       const style = getComputedStyle(element), narrow = matchMedia('(max-width: 640px)').matches;
       context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
       const measure = (text: string) => context.measureText(text).width;

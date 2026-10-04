@@ -83,7 +83,7 @@ export default function Kit() {
     reply: 'Here is a reply in Korean, from what your map says.',
     note: 'Here is the route note.',
     reading: undefined,
-    long: ['Let\u2019s go through your walk together.', 'It runs about 600 m from the Plaza de Armas to the Qorikancha ticket booth, past the cathedral and down Calle Loreto.', 'Street photos show five spots that might give visitors trouble, most of them steps.', 'We will look at each one, and you tell me what is there now.'],
+    long: ['Let\u2019s go through your walk together.', 'It runs about 600 m from the Plaza de Armas to the Qorikancha ticket booth, past the cathedral and down Calle Loreto.', 'Street photos show five spots that might give visitors trouble, most of them steps.', 'We will look at each one, and you tell me what is there now.', '\fVisitors will now read: \u201cThe ticket booth has a ramp.\u201d'],
   }[scene];
   const [talking, setTalking] = useState(false);
   const choices = {
