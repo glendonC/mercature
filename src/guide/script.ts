@@ -411,7 +411,7 @@ const en: Script = {
     languages: { en: 'English', es: 'Spanish', ko: 'Korean', qu: 'Quechua', other: 'another language' },
   },
   home: {
-    greet: 'Here you see what on a tour route might stop a visitor, such as steps, so you can check it and answer visitors’ messages about it. Open a route below or type a place.',
+    greet: 'Here you see what on a tour route might stop a visitor, such as steps. You can check it and answer visitors’ messages about it. Open a route below or type a place.',
     search: 'A square, a landmark or a street',
     open: s => `Open ${s.place}`,
   },
@@ -705,7 +705,7 @@ const es: Script = {
     languages: { en: 'inglés', es: 'español', ko: 'coreano', qu: 'quechua', other: 'otro idioma' },
   },
   home: {
-    greet: '¡Hola! Busca tu recorrido o abre uno de abajo.',
+    greet: 'Aquí ves qué podría detener a un visitante en un recorrido, como unos escalones. Puedes revisarlo y responder a los mensajes de los visitantes sobre eso. Abre un recorrido de abajo o escribe un lugar.',
     search: 'Una plaza, un monumento o una calle',
     open: s => `Abrir ${s.place}`,
   },
