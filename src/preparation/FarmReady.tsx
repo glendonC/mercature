@@ -167,7 +167,7 @@ export default function FarmReady({ onHome, onReady }: { onHome: () => void; onR
         {row.id === 'model' && step >= 2 && model.kind === 'off' && (model.stored ? model.failed && <button className="step-action" onClick={download}>{t('common.tryAgain')}</button> : !!downloadSize && <button className="step-action" onClick={download}>{t('farm.download', { size: megabytes(downloadSize) })}</button>)}
       </li>)}</ol>
       {error && <p className="guide-error" role="alert">{error}</p>}
-      <div className="canvas-actions"><button ref={enterButton} className={result || error ? 'primary' : undefined} onClick={error ? onHome : enter}>{t(error ? 'common.returnHome' : 'common.enter')}</button></div>
+      <div className="canvas-actions"><button ref={enterButton} onClick={error ? onHome : enter}>{t(error ? 'common.returnHome' : 'common.enter')}</button></div>
     </div>}
     dialogue={<><div className="farm-ready-bot"><Companion working={!result && !error}><span className="sr-only">{t('common.guide')}</span></Companion></div><p role="status">{line}</p></>}/>;
 }
