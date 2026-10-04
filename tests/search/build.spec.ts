@@ -76,6 +76,9 @@ test('the route screen reads a built package as a place with no photos', () => {
   expect(data.buildings.map(b => b.name)).toEqual(['Casa de Prueba']);
   expect(data.ways.find(w => w.name === 'Jirón Prueba')?.kind).toBe('residential');
   expect(data.target.name).toBe('Museo de Prueba');
+  // Every kind OpenStreetMap lists reaches the guide's check, the bench beside the walk included, with its own flags.
+  expect(data.access?.map(tag => tag.concept).sort()).toEqual(['amenity=bench', 'handrail=no', 'highway=steps', 'kerb=raised']);
+  expect(data.access?.find(tag => tag.concept === 'kerb=raised')?.barrier).toBe(false);
 });
 
 test('a Valhalla shape decodes at six decimals', () => {

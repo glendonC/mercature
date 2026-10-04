@@ -189,6 +189,8 @@ export function toDestination(place: PlacePackage): Destination {
     line: place.route.line, lengthMetres: place.route.length_m, start: place.request.start, target: { name: place.request.destination.name, position: place.request.destination.position },
     photos: [], views: [], stretches, pieces: [], findings, walkFindings: findings.map(f => ({ id: f.id, concept: f.concept, label: f.label, barrier: f.barrier, position: f.position, stretches: f.stretches })),
     marks: [], scan: null, buildings: features(place.map_context.buildings, true), ways: features(place.map_context.ways, false),
+    // Every kind OpenStreetMap lists along the walk, with its own flags, for the guide's walk check.
+    access: [...place.osm.findings],
     sources: place.sources.map(s => ({ name: s.name, credit: s.credit, licence: s.licence, link: s.link })),
   };
 }
