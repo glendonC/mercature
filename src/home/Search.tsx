@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLanguage } from '../i18n';
+import { SCRIPT } from '../guide/script';
 import { IconButton, List, Panel, PanelHead, Row, Section } from '../ui';
 import { BackIcon, CloseIcon, PhotoIcon, PinIcon, RotateIcon } from '../ui/icons';
 import type { Built } from '../search/build';
@@ -173,7 +174,7 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
   return <div className="home-search" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape' && (words || stage.kind !== 'find')) { event.stopPropagation(); clear(); } }}>
     <form role="search" onSubmit={submit} aria-label={t('search.label')} className="home-search-row" data-tone="dark">
       <div className="home-search-field">
-        <input ref={field} value={words} placeholder={t('search.label')} aria-label={t('search.label')} enterKeyHint="search" autoComplete="off" spellCheck={false}
+        <input ref={field} value={words} placeholder={SCRIPT[lang].home.search} aria-label={t('search.label')} enterKeyHint="search" autoComplete="off" spellCheck={false}
           onChange={event => { setWords(event.target.value); if (stage.kind !== 'find') { work.current?.abort(); setStage({ kind: 'find' }); onPreview(null); } onLine(null); }} />
         {words && <IconButton label={t('search.clear')} onClick={clear}><CloseIcon size={16} /></IconButton>}
       </div>

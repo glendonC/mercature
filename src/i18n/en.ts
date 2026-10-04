@@ -54,6 +54,7 @@ export const en = {
   'home.savedPlan': 'Improvement plan',
   'home.savedPlace': 'Photos & notes',
   'home.more': 'More',
+  'home.ready': 'Ready to open',
   'home.guide': 'Guide',
   'search.label': 'Search a place',
   'search.recent': 'Recent',

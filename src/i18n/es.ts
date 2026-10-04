@@ -58,6 +58,7 @@ export const es = {
   'home.savedPlan': 'Plan de mejora',
   'home.savedPlace': 'Fotos y notas',
   'home.more': 'Más',
+  'home.ready': 'Listos para abrir',
   'home.guide': 'Guía',
   'search.label': 'Buscar un lugar',
   'search.recent': 'Recientes',

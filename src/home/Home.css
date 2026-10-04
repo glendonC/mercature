@@ -95,3 +95,7 @@
   .site-home .home-guide { left: auto; right: calc(var(--chat-edge) + var(--safe-right)); transform: none; width: calc(100% - 2 * var(--chat-edge) - var(--companion) - 12px - var(--safe-left) - var(--safe-right)); }
   .home-bot { left: calc(var(--chat-edge) + var(--safe-left)); }
 }
+
+/* A small label over the place photos: what is there to open. */
+.home-ready { position: absolute; z-index: 3; top: calc(var(--photos-top, 100%) - 18px); left: calc(4vw + var(--safe-left) + 4px); margin: 0; font-size: var(--font-xs); font-weight: 500; color: var(--muted); text-shadow: var(--halo); }
+@media (max-width: 639px) { .home-ready { left: calc(16px + var(--safe-left) + 4px); top: calc(var(--photos-top, 100%) - 14px); } }
