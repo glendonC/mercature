@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLanguage } from '../i18n';
 import { IconButton, List, Panel, PanelHead, Row, Section } from '../ui';
-import { BackIcon, ChevronIcon, CloseIcon, PhotoIcon, PinIcon, RotateIcon } from '../ui/icons';
+import { BackIcon, CloseIcon, PhotoIcon, PinIcon, RotateIcon } from '../ui/icons';
 import type { Built } from '../search/build';
 import { SEARCH_LINES } from '../search/lines';
 import { matchPrepared, type Prepared } from '../search/prepared';
@@ -167,10 +167,9 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
         <label className="home-search-label" htmlFor="home-search-start">{t('search.start')}</label>
         <div className="home-search-row">
           <div className="home-search-field">
-            <SearchIcon />
             <input id="home-search-start" value={startWords} onChange={event => setStartWords(event.target.value)} placeholder={t('search.startHint', { name: target.name })} enterKeyHint="search" autoComplete="off" spellCheck={false} />
           </div>
-          <IconButton type="submit" label={t('search.go')} className="home-search-go"><ChevronIcon /></IconButton>
+          <IconButton type="submit" label={t('search.go')} className="home-search-go"><SearchIcon /></IconButton>
         </div>
       </form>
       {startFound && startFound.length > 0 && <List label={t('search.start')}>{startFound.map(found => <Row key={found.id} icon={<PinIcon />} label={found.name} detail={found.detail} onClick={() => void build(target, found)} />)}</List>}
@@ -180,12 +179,11 @@ export default function Search({ prepared, onPrepared, onWalk, onLine, onPreview
   return <div className="home-search" onFocus={() => setFocused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }} onKeyDown={event => { if (event.key === 'Escape' && (words || stage.kind !== 'find')) { event.stopPropagation(); clear(); } }}>
     <form role="search" onSubmit={submit} aria-label={t('search.label')} className="home-search-row" data-tone="dark">
       <div className="home-search-field">
-        <SearchIcon />
         <input ref={field} value={words} placeholder={t('search.label')} aria-label={t('search.label')} enterKeyHint="search" autoComplete="off" spellCheck={false}
           onChange={event => { setWords(event.target.value); if (stage.kind !== 'find') { work.current?.abort(); setStage({ kind: 'find' }); onPreview(null); } onLine(null); }} />
         {words && <IconButton label={t('search.clear')} onClick={clear}><CloseIcon size={16} /></IconButton>}
       </div>
-      <IconButton type="submit" label={t('search.go')} className="home-search-go"><ChevronIcon /></IconButton>
+      <IconButton type="submit" label={t('search.go')} className="home-search-go"><SearchIcon /></IconButton>
     </form>
     {panel && <Panel size="card" scroll className="home-search-panel" aria-label={t('search.results')}>{panel}</Panel>}
   </div>;
