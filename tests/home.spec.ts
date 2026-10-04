@@ -38,3 +38,24 @@ test('the install manifest uses relative paths and every icon it names is served
   expect(manifest.icons.map((icon: {purpose: string}) => icon.purpose)).toContain('maskable');
   for (const icon of manifest.icons) expect((await request.get(icon.src)).status(), icon.src).toBe(200);
 });
+
+test('Back from a place returns Home without replaying it, and the menu\'s Home steps back the same way', async ({page}) => {
+  test.setTimeout(20000);
+  await page.goto('/');
+  const home = page.getByRole('heading', {name:'An editable spatial accessibility model'});
+  const open = async () => {
+    await page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true}).click();
+    await page.getByRole('button', {name:'Skip', exact:true}).click();
+    await expect(page.locator('.route-inbox')).toBeVisible();
+  };
+  await open();
+  await page.goBack();
+  await expect(home).toBeVisible();
+  await expect(page.locator('.reveal')).toHaveCount(0);
+  await open();
+  await page.locator('.route-inbox .menu-button').click();
+  await page.getByRole('button', {name:'Home', exact:true}).click();
+  await expect(home).toBeVisible();
+  // Home is the first entry again, so the next Back leaves the app instead of returning to the place.
+  expect(await page.evaluate(() => history.state)).toBeNull();
+});
