@@ -200,6 +200,8 @@ export type Script = {
     /** For an answer that needs a place on the map. */
     tapWhere: (s: ItemSlots) => string;
     chips: { next: string; skip: string };
+    /** Said alone once every spot is checked, before the parts with no photos and the kinds along the route, which have no counter. */
+    extras: string;
     /** Her own words about the item, read by the model, offered back as a note on the spot it found. */
     words: (s: SpotSlots) => string;
     noted: (s: SpotSlots) => string;
@@ -513,6 +515,7 @@ const en: Script = {
     },
     tapWhere: () => 'Show me where on the map.',
     chips: { next: 'Next', skip: 'Skip for now' },
+    extras: 'That’s every spot. Now a few things along the route.',
     words: s => `Add that as your note on ${s.spot}?`,
     noted: () => 'Done. Visitors will see your note, in your words.',
     end: s => s.skipped ? 'That’s the route. You can come back to the ones you skipped.' : 'That’s the whole route. Thanks for going through it.',
@@ -795,6 +798,7 @@ const es: Script = {
     },
     tapWhere: () => 'Muéstrame dónde, en el mapa.',
     chips: { next: 'Siguiente', skip: 'Omitir por ahora' },
+    extras: 'Esos son todos los puntos. Ahora, unas cosas del recorrido.',
     words: s => `¿Lo guardo como tu nota en ${s.spot}?`,
     noted: () => 'Listo. Los visitantes verán tu nota con tus palabras.',
     end: s => s.skipped ? 'Ese es el recorrido. Puedes volver a los puntos que omitiste.' : 'Ese es todo el recorrido. Gracias por revisarlo.',

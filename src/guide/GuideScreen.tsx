@@ -42,7 +42,7 @@ type Step =
    * follow: the follow-up after her core answer; kind: she said something is where no photo shows, and picks what in this group;
    * tapping: an answer that needs her tap on the map; around: OpenStreetMap's way around these steps, asked as hers (match) or offered (offer).
    */
-  | { id: 'check'; at: number; follow?: true; kind?: KindGroup; tapping?: Answer; around?: 'match' | 'offer' }
+  | { id: 'check'; at: number; follow?: true; kind?: KindGroup; tapping?: Answer; around?: 'match' | 'offer'; /** The first thing after the spots, said with check.extras. */ extras?: true }
   | { id: 'checkEnd' }
   | { id: 'message'; at: number; another?: boolean }
   /** ask: nobody could place the message, so the reply asks the visitor where it was. */
@@ -362,6 +362,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   /** A spot's question fits its kind; a kind along much of the walk asks whether the note mentions it, but cobblestones ask for a smoother way. */
   const questionOf = (item: Item): QuestionId => 'spot' in item ? QUESTION_OF[item.access] : item.mark === 'cobblestones' ? 'smoother' : 'mention';
   const itemOfTarget = (target: Target) => target.kind === 'spot' ? items.findIndex(item => 'spot' in item && item.spot.id === target.id) : -1;
+  /** What the check counts, as the greeting does: the flagged spots on a route with photos, every item on a route from the map alone. The rest come after with no counter. */
+  const counted = (item: Item | undefined) => !!item && (!data.views.length || ('spot' in item && item.spot.kind === 'flagged'));
+  const countedItems = items.filter(counted);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   function slotsOf(item: Item, at: number): ItemSlots {
     if (!('spot' in item)) return { n: at + 1, total: items.length, what: s.words.marks[item.mark](item.count), where: '', metres: 0, photos: item.viewId ? 1 : 0, when: '', osm: '' };
@@ -475,7 +478,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
   function back() { const previous = history.current.pop(); if (previous) { setStep(previous); setAck(''); setSaid(''); } }
   const takenOff = (one: Item) => 'spot' in one && (removed(one.spot.stretches) || ['notThere', 'gone'].includes(answerOf(latestEdits.current, one.key)?.answer ?? ''));
-  const nextCheck = (at: number): Step => { const next = items.findIndex((one, i) => i > at && !takenOff(one)); return next >= 0 ? { id: 'check', at: next } : { id: 'checkEnd' }; };
+  const nextCheck = (at: number): Step => { const next = items.findIndex((one, i) => i > at && !takenOff(one)); return next >= 0 ? { id: 'check', at: next, ...(counted(items[at]) && !counted(items[next]) ? { extras: true as const } : {}) } : { id: 'checkEnd' }; };
   const nextMessage = (at: number): Step => at + 1 < rows.length ? { id: 'message', at: at + 1 } : { id: 'insights' };
 
   // Reading: a visitor's message through the model on this device.
@@ -794,7 +797,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }, [aimKey, narrow, settledDock]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** The check card for one item; a card she picked a place from in 3D stays open while she says what is there. */
-  const cardOf = (item: Item, at: number) => <CheckCard key={item.key} data={data} progress={s.check.progress({ n: at + 1, total: items.length })} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
+  const cardOf = (item: Item, at: number) => <CheckCard key={item.key} data={data} progress={counted(item) ? s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length }) : ''} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
       stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
@@ -822,6 +825,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const skip: Chip = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
     // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
     const earlier = chosen ? saidLabel(item.key) : null;
+    if (step.extras && !step.tapping && !step.kind && !step.around && !step.follow) lines.push(s.check.extras);
     if (step.tapping) lines.push(s.check.tapWhere(slots));
     else if (step.kind) { lines.push(s.check.follow.unseen); chips = kindChips(step.kind, kind => somethingThere(step.at, kind)); }
     else if (step.around === 'match') {
