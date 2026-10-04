@@ -323,7 +323,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     if (!('spot' in item)) return { n: at + 1, total: items.length, what: s.words.marks[item.mark](item.count), where: '', metres: 0, photos: item.viewId ? 1 : 0, when: '', osm: '' };
     const spot = item.spot, shown = spot.findings.filter(f => f.viewId && views.has(f.viewId));
     const newest = shown.map(f => photos.get(views.get(f.viewId!)!.photoId)?.capturedAt ?? '').sort().at(-1);
-    return { n: at + 1, total: items.length, what: s.words.access[item.access], where: whereOf(spot)[lang], metres: Math.round(spot.from), photos: shown.length, when: monthOf(newest), osm: '' };
+    // What OpenStreetMap records at the spot, said beside what the photos show: never checked by a person, like the photos.
+    const mapped = spot.findings.find(f => f.osm && f.label)?.label;
+    return { n: at + 1, total: items.length, what: s.words.access[item.access], where: whereOf(spot)[lang], metres: Math.round(spot.from), photos: shown.length, when: monthOf(newest), osm: mapped ? fromRecord(mapped, lang) : '' };
   }
   /** Her answer about one thing, on her map at once and said back on the way to the next. A place she names is a tap on the map. */
   function answer(at: number, question: QuestionId, choice: Answer, stretch?: number) {
