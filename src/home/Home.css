@@ -24,22 +24,23 @@
 .home-words { position: absolute; z-index: 2; left: 4vw; top: 50%; translate: 0 -54%; width: min(560px, 46vw); }
 .home-words h1 { margin: 0; font-size: clamp(36px, 4.3vw, 62px); font-weight: 300; letter-spacing: -.05em; line-height: 1.05; }
 
-/* Where the places panel sits over the walk */
-.home-places { position: absolute; z-index: 3; left: 4vw; bottom: 32px; width: min(420px, 92vw); }
-.home-places .ui-row-icon img, .home-places .result-plan, .home-saved-mark {
-  display: block;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-s);
-  object-fit: cover;
-}
-.result-plan { background: rgb(255 255 255 / .9); }
-.home-saved-mark { background: var(--ui-fill); box-shadow: inset 0 0 0 1px var(--ui-hair); }
-.plan-ground { fill: rgb(29 33 37 / .07); }
-.plan-fixed { fill: var(--field); }
-.plan-movable { fill: var(--blocked); }
-.plan-unknown { fill: none; stroke: var(--field); stroke-width: .18; stroke-dasharray: .4 .3; }
+/* A place is its own photograph: a squircle, quiet until you reach for it, with a charcoal label on it. */
+.home-photos { position: absolute; z-index: 3; left: 4vw; bottom: 36px; display: flex; align-items: flex-end; gap: 14px; }
+.home-photo { position: relative; display: block; width: clamp(260px, 26vw, 400px); aspect-ratio: 1.9; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.home-photo-frame { display: block; width: 100%; height: 100%; mask: url('../covers/photo-squircle-mask.png') center / 100% 100% no-repeat; }
+.home-photo img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .52; filter: saturate(.7); transition: opacity var(--motion-panel) var(--ease-out), filter var(--motion-panel) var(--ease-out); }
+.home-photo:hover, .home-photo:focus-visible { outline: none; }
+.home-photo:hover img, .home-photo:focus-visible img { opacity: .95; filter: saturate(1); }
+.home-photo:hover, .home-photo:focus-visible { translate: 0 -3px; transition: translate var(--motion-hover) var(--ease-out); }
+.home-photo:focus-visible .home-photo-label { outline: 2px solid var(--ink); outline-offset: 3px; }
 
+/* The label rests on the photograph, in the app's charcoal glass. */
+.home-photo-label { position: absolute; inset: auto auto 12px 12px; display: flex; flex-direction: column; gap: 1px; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: var(--radius-m); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge); text-align: left; }
+.home-photo-name { font-size: var(--font-s); font-weight: 500; line-height: var(--leading-tight); color: rgb(242 243 244); }
+.home-photo-meta { font-size: var(--font-xs); line-height: var(--leading-tight); color: rgb(242 243 244 / .72); }
+
+.home-saved { position: absolute; z-index: 3; left: 4vw; bottom: 36px; width: min(320px, 92vw); }
+.home-photos:has(+ .home-saved) { bottom: 128px; }
 
 @media (max-width: 639px) {
   .welcome-shell { min-height: 700px; }
@@ -47,6 +48,9 @@
   .home-veil { background: linear-gradient(180deg, var(--ground) 30%, color-mix(in srgb, var(--ground) 55%, transparent) 38%, transparent 48%, transparent 62%, var(--ground) 76%); }
   .home-words { left: 16px; right: 16px; top: 92px; width: auto; translate: none; }
   .home-words h1 { font-size: clamp(30px, 7.8vw, 40px); }
-  .home-places { left: 12px; right: 12px; bottom: 26px; width: auto; }
+  .home-photos { left: 16px; right: 16px; bottom: 26px; }
+  .home-photo { width: 100%; }
+  .home-saved { left: 16px; right: 16px; bottom: 26px; width: auto; }
+  .home-photos:has(+ .home-saved) { bottom: 92px; }
   .home-credit { right: 16px; bottom: 10px; }
 }

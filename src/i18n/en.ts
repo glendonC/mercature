@@ -201,10 +201,11 @@ export const en = {
   // Editing the walk
   'edit.addTitle': 'Add a spot you know about',
   'edit.addWhere': '{where}, {from} to {to} m',
+  'edit.kindLabel': 'What is there',
   'edit.kind.steps': 'Steps',
   'edit.kind.kerb': 'Kerb',
   'edit.kind.narrow': 'Narrow',
-  'edit.kind.other': 'Something else',
+  'edit.kind.other': 'Other',
   'edit.noteLabel': 'Your note',
   'edit.notePlaceholder': 'What a visitor should know',
   'edit.noteKept': 'Kept on this phone. Visitors see it in the route note.',

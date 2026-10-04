@@ -1,30 +1,42 @@
 import type { ReactNode } from 'react';
-import { List, Panel, Row, Tag } from '../ui';
+import { List, Panel, Row } from '../ui';
 import { ChevronIcon } from '../ui/icons';
 import './Home.css';
 
-export type PlaceRow = {
+export type PlacePhoto = {
   id: string;
-  /** The name as the place itself gives it. */
   name: string;
-  /** Where it is, or what it is: one short line under the name. */
-  detail: string;
-  /** A count or a tag at the end of the row. */
-  meta?: ReactNode;
-  /** What a screen reader hears instead of the row's own words. */
-  label?: string;
-  thumb: ReactNode;
+  /** One quiet line under the name: where it is, how long the walk is, what it still flags. */
+  meta: string;
+  /** What a screen reader hears instead of the photo's own words. */
+  label: string;
+  image: string;
   onOpen: () => void;
-  example?: boolean;
 };
+export type SavedRow = { id: string; title: string; detail: string; onOpen: () => void };
 
-/** The places this device can open, as one charcoal surface with a row each. */
-export default function Places({ rows, label }: { rows: readonly PlaceRow[]; label: string }) {
-  return <Panel size="card" className="home-places" aria-label={label}>
-    <List>
-      {rows.map(row => <Row key={row.id} icon={row.thumb} label={row.name} detail={row.detail}
-        meta={row.example ? <Tag tone="example">{row.meta}</Tag> : row.meta}
-        trailing={<ChevronIcon/>} aria-label={row.label} onClick={row.onOpen}/>)}
-    </List>
-  </Panel>;
+/**
+ * A place is its own photograph, cut to a squircle and quiet until you reach for it,
+ * with a charcoal glass label resting on it. The whole shape is the control.
+ */
+export default function Places({ places, saved = [], label, savedLabel }: {
+  places: readonly PlacePhoto[];
+  saved?: readonly SavedRow[];
+  label: string;
+  savedLabel: string;
+}) {
+  return <>
+    <div className="home-photos" aria-label={label}>
+      {places.map(place => <button key={place.id} type="button" className="home-photo" aria-label={place.label} onClick={place.onOpen}>
+        <span className="home-photo-frame"><img src={place.image} alt=""/></span>
+        <span className="home-photo-label">
+          <span className="home-photo-name">{place.name}</span>
+          <span className="home-photo-meta">{place.meta}</span>
+        </span>
+      </button>)}
+    </div>
+    {saved.length > 0 && <Panel size="card" className="home-saved" aria-label={savedLabel}>
+      <List>{saved.map(entry => <Row key={entry.id} label={entry.title} detail={entry.detail} trailing={<ChevronIcon/>} onClick={entry.onOpen}/>)}</List>
+    </Panel>}
+  </>;
 }

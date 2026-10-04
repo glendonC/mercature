@@ -10,7 +10,7 @@ import { loadReview, verdictOf } from '../decisions/store';
 import { isFixed, loadEdits } from '../edits/store';
 import { useLanguage } from '../i18n';
 import Menu from './Menu';
-import Places, { type PlaceRow } from './Places';
+import Places from './Places';
 import './Home.css';
 export const covers = [
   { id: 'cusco-qorikancha', area: 'Cusco', name: 'Qorikancha', aliases: 'Plaza de Armas Coricancha Qoricancha Korikancha Temple of the Sun Templo del Sol', image: qorikancha, author: 'Draceane', year: 2023, license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: 'https://commons.wikimedia.org/wiki/File:Cuzco,_Coricancha,_2023_(01).jpg' },
@@ -102,14 +102,14 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
     {hero.data && <p className="home-credit">{t('map.credit')}</p>}
     <header className="welcome-chrome"><span className="welcome-brand">mercature</span><Menu onPlace={onDestination}/></header>
     <div className="home-words" ref={words}><h1>{rich('home.title', { br: <br/> })}</h1></div>
-    <Places label={t('home.onPhone')} rows={[
-      { id: HERO, name: DESTINATIONS[HERO].name, label: t('home.explore', { name: covers[0].name, area: covers[0].area }),
-        detail: hero.data ? t('home.onFoot', { area: covers[0].area, metres: Math.round(hero.data.lengthMetres) }) : covers[0].area,
-        meta: status, thumb: <img src={qorikancha} alt=""/>, onOpen: () => onDestination(HERO) },
-      ...others.map(cover => ({ id: cover.id, name: cover.name, detail: cover.area, label: t('home.explore', { name: cover.name, area: cover.area }),
-        thumb: <img src={cover.image} alt=""/>, onOpen: () => onDestination(cover.id) })),
-      ...saved.map(entry => ({ id: entry.id, name: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'),
-        thumb: <span className="home-saved-mark" aria-hidden="true"/>, onOpen: () => onOpenSaved(entry) })),
-    ] satisfies PlaceRow[]}/>
+    <Places label={t('home.onPhone')} savedLabel={t('home.onDevice')}
+      places={[
+        { id: HERO, name: DESTINATIONS[HERO].name, image: qorikancha, label: t('home.explore', { name: covers[0].name, area: covers[0].area }),
+          meta: [covers[0].area, hero.data && t('common.metres', { m: Math.round(hero.data.lengthMetres) }), status].filter(Boolean).join(' · '),
+          onOpen: () => onDestination(HERO) },
+        ...others.map(cover => ({ id: cover.id, name: cover.name, image: cover.image, meta: cover.area,
+          label: t('home.explore', { name: cover.name, area: cover.area }), onOpen: () => onDestination(cover.id) })),
+      ]}
+      saved={saved.map(entry => ({ id: entry.id, title: entry.title, detail: t(entry.kind === 'plan' ? 'home.savedPlan' : 'home.savedPlace'), onOpen: () => onOpenSaved(entry) }))}/>
   </main>;
 }

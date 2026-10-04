@@ -21,7 +21,8 @@ export const KIND_WORDS: Readonly<Record<EditKind, { en: string; es: string; ko:
 export const EDIT_WORDS = {
   addTitle: 'Add a spot you know about',
   addWhere: (where: string, from: number, to: number) => `${where}, ${from} to ${to} m`,
-  kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow', other: 'Something else' } as Record<EditKind, string>,
+  kindLabel: 'What is there',
+  kinds: { steps: 'Steps', kerb: 'Kerb', narrow: 'Narrow', other: 'Other' } as Record<EditKind, string>,
   noteLabel: 'Your note',
   notePlaceholder: 'What a visitor should know',
   noteKept: 'Kept on this phone. Visitors see it in the route note.',

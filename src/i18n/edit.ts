@@ -9,6 +9,7 @@ export function useEditWords(): EditWords {
   return useMemo(() => ({
     addTitle: t('edit.addTitle'),
     addWhere: (where: string, from: number, to: number) => t('edit.addWhere', { where, from, to }),
+    kindLabel: t('edit.kindLabel'),
     kinds: { steps: t('edit.kind.steps'), kerb: t('edit.kind.kerb'), narrow: t('edit.kind.narrow'), other: t('edit.kind.other') } as Record<EditKind, string>,
     noteLabel: t('edit.noteLabel'),
     notePlaceholder: t('edit.notePlaceholder'),

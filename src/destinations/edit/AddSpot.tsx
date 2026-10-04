@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { EDIT_KINDS, ownNote, type EditKind, type NoteLang, type OwnNote } from '../../edits/store';
 import { EDIT_WORDS, type EditWords } from '../../edits/words';
-import { PrimaryAction, Section, TextButton } from '../../ui';
+import { PrimaryAction, Section, Segmented, TextButton } from '../../ui';
 import { CloseIcon, PlusIcon } from '../../ui/icons';
 import NoteField from './NoteField';
 import './edit.css';
@@ -27,8 +27,9 @@ export default function AddSpot({ where, range, onAdd, onCancel, guess, words = 
   const language = chosen ?? asLang(guess?.(text) ?? 'en');
   return <Section title={words.addTitle} label={words.addTitle} className="edit-section">
     <p className="edit-where">{words.addWhere(where, Math.round(range.from), Math.round(range.to))}</p>
-    <div className="edit-kinds" role="group" aria-label={words.addTitle}>
-      {EDIT_KINDS.map(item => <button key={item} type="button" className="edit-chip" aria-pressed={kind === item} onClick={() => setKind(item)}>{words.kinds[item]}</button>)}
+    <div className="edit-kinds">
+      <Segmented label={words.kindLabel} value={kind ?? ''} onChange={(next: string) => setKind(next as EditKind)}
+        options={EDIT_KINDS.map(item => ({ value: item as string, label: words.kinds[item] }))}/>
     </div>
     <NoteField id="add-note" label={words.noteLabel} value={text} language={language} onChange={setText} onLanguage={setChosen} words={words}/>
     <p className="edit-quiet">{words.noteKept}</p>
