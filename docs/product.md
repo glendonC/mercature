@@ -6,7 +6,7 @@ It answers the tourism challenge of the World Bank Small AI for Development brie
 
 ## The place: the Qorikancha walk
 
-A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned the photos: its raw scan left 287 marks of every kind (paths, paving, kerbs, steps, crossings), and separately the walk's build has 52 findings of steps and kerbs on the walk's stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers; none has been checked by a person.
+A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket booth: 594 m in 60 stretches, built from 403 Mapillary street photos taken between 2015 and 2023. When the route was prepared, a large segmentation model scanned 116 views of those photos and made 479 marks above its threshold; the package keeps 287 of them (paths, paving, kerbs, steps, crossings), the 218 near the walk and 69 more on the 27 published photos. Separately, the walk's build has 52 findings of steps and kerbs on its stretches, including one OpenStreetMap steps tag. 8 of the 52 are flagged as possible barriers; none has been checked by a person.
 
 ## How it works
 
@@ -18,7 +18,7 @@ A real walking route in Cusco, from the Plaza de Armas to the Qorikancha ticket 
 
 ## Who it is for
 
-Noor, the operator in the brief, runs coffee farm tours in La Convención. Her farm exists in Mercature only as the model's synthetic training data: the example messages that trained its heads are about an authored farm, labelled synthetic. The app's place is the real walk.
+In the brief, Noor farms in the fictional Ondera highlands; we set her farm in La Convención, Cusco, for the synthetic messages. Her farm exists in Mercature as the model's synthetic training data: the example messages that trained its heads are about an authored farm, labelled synthetic. Its workspace stays in the code, reachable only through a test entry, and is not offered in the app. The app's place is the real walk.
 
 ## What the model does and does not do
 

@@ -9,10 +9,11 @@ Mercature runs entirely in the browser. There is no server: the app, the publish
 | `src/site/` | What a place is. `route.ts` lists the Qorikancha spots with the words visitors use, `registry.ts` lists every place with spots, `farm.ts` and `inventory.ts` hold Noor's farm, and `contracts.ts` holds the shared types and the fixed lists the model answers from. |
 | `scripts/places/package.mjs` | Builds a place's published package from its recorded walk. |
 | `public/places/qorikancha/` | The published package: `place.json` (route, stretches, findings, every photo as a credited record, spots) and the photo views the app shows. |
-| `src/destinations/` | Loads a recorded place (`data.ts`) and shows it: the route canvas (`RouteCanvas.tsx`, `RouteMap.tsx`, `walk.ts`) and the note and reply templates (`copy.ts`). |
+| `src/destinations/` | Loads a recorded place (`data.ts`) and shows it: the inbox route screen (`RouteInbox.tsx`; `RouteCanvas.tsx` is an alias of it), the map (`RouteMap.tsx`, `walk.ts`) and the note and reply templates (`copy.ts`). |
 | `src/decisions/store.ts` | What a person decided for each stretch, and the visitor messages they linked, kept on the device. |
+| `src/edits/` | The operator's own edits to the walk, kept on the device: spots she adds, marks a spot fixed, her notes and removals (`store.ts`), the place the model and the map see with those included (`place.ts`), and the words for each kind (`words.ts`). |
 | `src/language/` | The on-device model. `understand.ts` is its whole interface. |
-| `src/workspace/`, `src/spatial/`, `src/plans/` | Noor's farm: its canvas, the path check (Connected, Blocked, Unknown) and saved fix plans. |
+| `src/workspace/`, `src/spatial/`, `src/plans/` | Noor's farm, the synthetic training setting: its workspace, the path check (Connected, Blocked, Unknown) and saved fix plans. It is reachable only through a test entry and is not offered in the app. |
 | `src/home/`, `src/preparation/`, `src/App.tsx` | Home, which draws the walk and lists the places that open on this device, the reveal before a place opens, and the app shell. |
 | `src/i18n/` | Interface text in English (`en.ts`) and Spanish (`es.ts`), and the switch between them. |
 | `src/components/` | Pieces shared by the canvases. |
@@ -24,10 +25,10 @@ Mercature runs entirely in the browser. There is no server: the app, the publish
 3. **Package.** `node scripts/places/package.mjs cusco-qorikancha` writes `public/places/qorikancha/`: the route, stretches and findings, every photo as a credited record, only the views the app shows, and the spot list. It also needs the scan output linked at `.local/scans/<id>` (`scans.json` and `masks/`), and adds every SAM 3 mark above its threshold on the views it ships, plus the marks near the route; nobody has checked them. The same input gives the same bytes.
 4. **Load.** `loadDestination` in `src/destinations/data.ts` reads the package on any host, and offline once cached. Every field is checked before use.
 5. **Read a message.** `understand(message, place)` in `src/language/understand.ts` returns the message kind (problem, praise or question), an issue type for problems, and up to three spot ids, best first, or Not sure with a reason. It never writes text. The suggested spots light up on the map; the route never shows the issue type (see below).
-6. **Decide.** A person confirms on the photo, marks it Not a barrier, or chooses Check on site. `src/decisions/store.ts` keeps that for each stretch, with the linked message.
+6. **Decide.** The message lands on the spot the model ranks first and the map flies there; when it is unsure, she taps the spot herself, and for messages that fail the language check the phone remembers that link. She keeps the map current: mark a spot fixed, add her note, remove a spot or add one (`src/edits/`). Linked messages are kept per stretch in `src/decisions/store.ts`.
 7. **Answer.** The visitor note and the reply in English, Spanish or Korean come from fixed templates in `src/destinations/copy.ts`.
 
-Noor's farm is the Example with geometry. `NOOR_FARM` in `src/site/farm.ts` has an authored layout, so a fix (move or remove an object) is checked before and after with `solveScene` in `src/spatial/solver.ts` and saved as a plan with `src/plans/` (records in `docs/contracts.md`). Nothing on the route claims geometry.
+Noor's farm is the synthetic training setting, kept in the code and reachable only through a test entry. `NOOR_FARM` in `src/site/farm.ts` has an authored layout, so a fix (move or remove an object) is checked before and after with `solveScene` in `src/spatial/solver.ts` and saved as a plan with `src/plans/` (records in `docs/contracts.md`). Nothing on the route claims geometry.
 
 ## Add a place
 
