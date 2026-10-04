@@ -84,6 +84,7 @@ export const en = {
   // Opening a place
   'reveal.route': '{start} to {target}',
   'reveal.route.qorikancha': 'Plaza de Armas to the ticket booth',
+  'reveal.route.narikala': 'Narikala cable car top station to the fortress gate',
   'reveal.opening': 'Opening {name}',
   'reveal.areas': '{shown} of {total} areas in 3D',
   'reveal.build.photos': '{count} street photos of this walk',

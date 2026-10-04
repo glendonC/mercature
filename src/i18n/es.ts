@@ -87,6 +87,7 @@ export const es = {
   // Opening a place
   'reveal.route': 'de {start} a {target}',
   'reveal.route.qorikancha': 'de la Plaza de Armas a la boletería',
+  'reveal.route.narikala': 'de la estación superior del teleférico a la puerta de la fortaleza',
   'reveal.opening': 'Abriendo {name}',
   'reveal.areas': '{shown} de {total} áreas en 3D',
   'reveal.build.photos': '{count} fotos de calle de este recorrido',
