@@ -278,8 +278,6 @@ export const en = {
   'ws.readingMessage': 'Reading message…',
   'ws.find': 'Find the spot',
   'ws.kept': 'Kept on this device.',
-  'ws.useAi': 'Use AI on this device',
-  'ws.prepareOnce': 'Prepare it once while connected. You can also choose a spot yourself.',
   'ws.progress': '{loaded} / {total} MB',
   'ws.preparingAi': 'Preparing AI…',
   'ws.downloadAi': 'Download AI (about {mb} MB)',

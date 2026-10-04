@@ -281,8 +281,6 @@ export const es = {
   'ws.readingMessage': 'Leyendo el mensaje…',
   'ws.find': 'Buscar el punto',
   'ws.kept': 'Se guarda en este dispositivo.',
-  'ws.useAi': 'Usar IA en este dispositivo',
-  'ws.prepareOnce': 'Prepárala una vez con conexión. También puedes elegir un punto directamente.',
   'ws.progress': '{loaded} / {total} MB',
   'ws.preparingAi': 'Preparando la IA…',
   'ws.downloadAi': 'Descargar IA (unos {mb} MB)',
