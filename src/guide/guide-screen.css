@@ -48,6 +48,8 @@
 .gs-turn-photo:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: -4px; }
 .gs-swipe { display: contents; }
 .gs-empty { margin: 4px 0; font-size: var(--font-s); color: var(--ui-muted); }
+/* Your changes, kept beside the Edit choices: with none yet, one quiet line */
+.gs-changes-none { margin: 2px 0 4px; font-size: var(--font-s); color: var(--ui-muted); }
 .gs-quote .gs-card-meta { margin-block: -2px 6px; }
 .gs-quote .gs-card-meta .ui-visitor { margin-inline-start: -4px; }
 .gs-quote blockquote { margin: 0; font-size: var(--font-m); line-height: var(--leading-read); overflow-wrap: anywhere; }

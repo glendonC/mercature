@@ -21,7 +21,7 @@ import { RouteTrouble } from '../routes/valhalla';
 import type { LonLat } from '../routes/shape';
 import { buildWalk, midpoint, nearestStretch, type Point, type Spot } from '../destinations/walk';
 import { BackIcon, ChevronIcon, NoteIcon, PathIcon, SkipIcon, iconFor } from '../ui/icons';
-import { ChangeRow, Composer, CopyBox, Dialogue, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
+import { ChangeRow, Composer, CopyBox, Dialogue, EditToggle, GlassButton, GlassCircle, MARK_ORDER, Panel, PanelHead, Segmented, TextButton, type Kind, Tag, VisitorAvatar, kindOf, markOf, type MarkKind } from '../ui';
 import { LabelledPhoto, photoOf, type MarkAnswer } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
@@ -57,11 +57,13 @@ type Step =
   | { id: 'note'; clearing?: boolean }
   /** A narrow place she just added: whether a wheelchair or a stroller gets through, from what she knows. then: where the conversation goes after. */
   | { id: 'through'; spot: string; then: Step }
-  /** What she wants to change, from the Edit pill on any step: a spot to add (a tap or her words), a spot to change (a tap), or her own note. */
+  /** Edit, a mode she enters from the pill on any step: a spot to add (a tap or her words), a spot to change (a tap), or her own note. */
   | { id: 'edit'; mode?: 'add' | 'change' | 'note' };
 
 /** Where her own note for the whole walk is kept among her notes on spots. */
 const WALK_NOTE = 'walk';
+/** The Edit menu as where a change goes on to, which then says what visitors will now read. */
+const EDITED: Step = { id: 'edit' };
 const same = (a: Target | null, b: Target | null) => !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
 const bare = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
 /** A thing's words from the script with the definite article, such as "a kerb" to "the kerb" or "escalones" to "los escalones". */
@@ -371,8 +373,9 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const spot = item.spot, shown = spot.findings.filter(f => f.viewId && views.has(f.viewId));
     const newest = shown.map(f => photos.get(views.get(f.viewId!)!.photoId)?.capturedAt ?? '').sort().at(-1);
     // What OpenStreetMap records at the spot, said beside what the photos show: never checked by a person, like the photos.
-    const mapped = spot.findings.find(f => f.osm && f.label)?.label;
-    return { n: at + 1, total: items.length, what: s.words.access[item.access], where: whereOf(spot)[lang], metres: Math.round(spot.from), photos: shown.length, when: monthOf(newest), osm: mapped ? fromRecord(mapped, lang) : '' };
+    // A bare kind such as "Steps" says nothing the line has not; the rest reads as a phrase after the colon, "5 steps, no handrail, no ramp".
+    const mapped = spot.findings.find(f => f.osm && f.label && !/^\p{Lu}\p{Ll}+$/u.test(f.label))?.label, phrase = mapped ? fromRecord(mapped, lang) : '';
+    return { n: at + 1, total: items.length, what: s.words.access[item.access], where: whereOf(spot)[lang], metres: Math.round(spot.from), photos: shown.length, when: monthOf(newest), osm: phrase && `${phrase.charAt(0).toLocaleLowerCase(lang)}${phrase.slice(1)}` };
   }
   /** Her answer about one thing, on her map at once: taken off, fixed, or kept as she says it is. */
   function record(at: number, question: QuestionId, choice: string, stretch?: number) {
@@ -387,6 +390,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
   /** On to the next thing, or back to the step an edit paused, saying her answer back on the way. */
   function onward(at: number, line: string) {
+    if (editing) { finish(); return; }
     if (resume) { const paused = resume; setResume(null); go(paused, line); return; }
     go(nextCheck(at), line);
   }
@@ -434,7 +438,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const target: Target = { kind: 'spot', id: item.spot.id };
     const next = edit(edits => setAnswer(addSpot(edits, item.spot.stretches[0], kind), item.key, { question: QUESTION_OF[item.access], answer: 'something' }));
     const line = s.missed.added({ kind: s.words.added[kind], where: whereWords(target) }), id = next.added[next.added.length - 1]?.id;
-    if (kind === 'narrow' && id) { go({ id: 'through', spot: id, then: resume ?? nextCheck(at) }, line); if (resume) setResume(null); return; }
+    if (kind === 'narrow' && id) { go({ id: 'through', spot: id, then: editing ? EDITED : resume ?? nextCheck(at) }, line); if (resume && !editing) setResume(null); return; }
     onward(at, line);
   }
   /** The chip she tapped for her saved answer about a thing, said back when she opens it again. */
@@ -464,19 +468,49 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   const [step, setStep] = useState<Step>({ id: 'hello' });
   /** The check item whose card she picked a place from in 3D: it stays open, in 3D, until the new spot is on her map. */
   const [card3d, setCard3d] = useState<number | null>(null);
+  /** Whether the open card showed the 3D at the last paint, so a question she answers with a tap keeps it there. */
+  const shows3d = useRef(false);
+  useLayoutEffect(() => { shows3d.current = !!screen.current?.querySelector('.gs-photo .space3d-frame'); });
   const [ack, setAck] = useState('');
   const history = useRef<Step[]>([]);
   const [said, setSaid] = useState('');
   /** A line of good news said on the way to a step, such as her change saved: the bot smiles while it is the line shown. */
   const [cheer, setCheer] = useState('');
-  function go(next: Step, line = '', good = false) { setView('now'); if (next.id !== 'missed' && next.id !== 'propose') setCard3d(null); history.current.push(step); setStep(next); setAck(line); setCheer(good ? line : ''); setSaid(''); }
-  // The Edit pill pauses whatever step she is on; "Back to where I was" returns to it.
-  const [resume, setResume] = useState<Step | null>(null);
-  function openEdit() {
-    if (step.id !== 'edit') { setResume(paused => paused ?? step); go({ id: 'edit' }); return; }
-    if (resume) { const paused = resume; setResume(null); history.current.push(step); setStep(paused); setAck(''); }
+  function go(next: Step, line = '', good = false) {
+    // Leaving an Edit step, the route note as it reads now is kept, so the change she makes next can be said as what visitors will read.
+    if (step.id === 'edit') noteBefore.current = noteText(lang);
+    setView('now'); if (next.id !== 'missed' && next.id !== 'propose') setCard3d(null); history.current.push(step); setStep(next); setAck(line); setResult(null); setCheer(good ? line : ''); setSaid('');
   }
-  function back() { const previous = history.current.pop(); if (previous) { setStep(previous); setAck(''); setSaid(''); } }
+  // Edit is a mode: the pill turns into Done, the step she was on waits, and every change she makes ends back in the Edit menu.
+  const [editing, setEditing] = useState(false);
+  const [resume, setResume] = useState<Step | null>(null);
+  const editBase = useRef(0), noteBefore = useRef('');
+  /** Once a change is made, what visitors will now read is said, worked out from the route note before and after it. said: what changed on her map when the note did not. */
+  const [result, setResult] = useState<{ said?: string } | null>(null);
+  function openEdit() {
+    if (editing) { closeEdit(s.edit.closed); return; }
+    editBase.current = history.current.length;
+    setEditing(true); setResume(step.id === 'edit' ? null : step);
+    go({ id: 'edit' }, s.edit.intro);
+  }
+  /** Done: back to the step she paused, with the line said on the way. */
+  function closeEdit(line: string) {
+    const paused = resume ?? { id: 'hello' };
+    setEditing(false); setResume(null);
+    history.current.length = Math.min(history.current.length, editBase.current);
+    setView('now'); setCard3d(null); setStep(paused); setAck(line); setResult(null); setCheer(line); setSaid('');
+  }
+  /** A change made in Edit ends back in its menu, where the guide says what visitors will now read; Back from there leaves Edit. */
+  function finish(said = '') {
+    history.current.length = Math.min(history.current.length, editBase.current + 1);
+    setView('now'); setCard3d(null); setStep({ id: 'edit' }); setAck(''); setResult(said ? { said } : {}); setCheer(''); setSaid('');
+  }
+  function back() {
+    const previous = history.current.pop();
+    if (!previous) return;
+    if (editing && history.current.length <= editBase.current) { setEditing(false); setResume(null); }
+    setStep(previous); setAck(''); setResult(null); setSaid('');
+  }
   const takenOff = (one: Item) => 'spot' in one && (removed(one.spot.stretches) || ['notThere', 'gone'].includes(answerOf(latestEdits.current, one.key)?.answer ?? ''));
   const nextCheck = (at: number): Step => { const next = items.findIndex((one, i) => i > at && !takenOff(one)); return next >= 0 ? { id: 'check', at: next, ...(counted(items[at]) && !counted(items[next]) ? { extras: true as const } : {}) } : { id: 'checkEnd' }; };
   const nextMessage = (at: number): Step => at + 1 < rows.length ? { id: 'message', at: at + 1 } : { id: 'insights' };
@@ -548,11 +582,13 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
   function confirm(proposal: Proposal) {
     const language = noteLangOf(guessLanguage(proposal.text));
+    noteBefore.current = noteText(lang);
     if (proposal.mode === 'note') {
       const key = keyOf(proposal.target);
       edit(edits => setNote(edits, key, ownNote(proposal.text, language)));
       if (place?.features.some(feature => feature.id === key)) void remember(proposal.text, place, key);
-      history.current.push(step); setStep(proposal.from); setAck(s.check.noted({ spot: spotWords(proposal.target) }));
+      if (editing) { finish(); return; }
+      history.current.push(step); setStep(proposal.from); setAck(''); setResult({});
       return;
     }
     const stretch = stretchFor(proposal.target), kind = proposal.kind;
@@ -560,10 +596,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     const next = edit(edits => addSpot(edits, stretch, kind, ownNote(proposal.text, language)));
     const id = next.added[next.added.length - 1]?.id;
     if (id && proposal.text && authored) void remember(proposal.text, withEdits(authored, next, locate), id);
-    const then: Step = card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from;
+    const then: Step = editing ? EDITED : card3d !== null ? { id: 'check', at: card3d } : proposal.from.id === 'propose' ? { id: 'missed' } : proposal.from;
+    if (editing && kind !== 'narrow') { finish(); return; }
     history.current.push(step);
-    setStep(kind === 'narrow' && id ? { id: 'through', spot: id, then } : then);
-    setAck(s.missed.added({ kind: s.words.added[kind], where: whereWords(proposal.target) }));
+    // What visitors will now read is said before the conversation goes on; a narrow place first asks whether it gets through.
+    if (kind === 'narrow' && id) { setStep({ id: 'through', spot: id, then }); setAck(s.missed.added({ kind: s.words.added[kind], where: whereWords(proposal.target) })); return; }
+    setStep(then); setAck(''); setResult({});
   }
 
   /** Natural selection: a spot tapped on the map, or a photo's place, becomes what the conversation is about. */
@@ -796,12 +834,15 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return () => clearTimeout(aimTimer.current);
   }, [aimKey, narrow, settledDock]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** The check card for one item; a card she picked a place from in 3D stays open while she says what is there. */
-  const cardOf = (item: Item, at: number) => <CheckCard key={item.key} data={data} progress={counted(item) ? s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length }) : ''} title={'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={s.words.affects[item.access]}
+  /** The check card for one item; a card she picked a place from in 3D stays open, in 3D, and its head names the place she picked while she says what is there. */
+  const cardOf = (item: Item, at: number, here?: Target | null) => {
+    const away = !!here && !('spot' in item && same(here, { kind: 'spot', id: item.spot.id }));
+    return <CheckCard key={item.key} data={data} progress={away || !counted(item) ? '' : s.check.progress({ n: countedItems.indexOf(item) + 1, total: countedItems.length })} title={away ? tagOf(here!) : 'spot' in item ? tagOf({ kind: 'spot', id: item.spot.id }) : ''} affects={away ? '' : s.words.affects[item.access]}
       empty={data.views.length ? t.noPhotos : s.check.noStreetPhotos} evidence={'spot' in item ? item.spot.findings.filter(f => f.viewId && views.has(f.viewId)) : []} viewId={'spot' in item ? null : item.viewId}
       stretches={'spot' in item ? item.spot.stretches : []} markers={markers} onMarker={tapMarker} onPick={id => pickFinding(at, id)} onPlace={pick3d} height={narrow ? Math.round(Math.min(150, innerHeight * 0.18)) : undefined} lang={lang} words={{ photo: s.check.photo, previous: t.previous, next: t.next }} answerAt={before ? undefined : answerAt} />;
+  };
   // The step: what the guide says, what opens above the dialogue, her choices, and whether she can answer in her own words.
-  const lines: string[] = ack ? [ack] : [];
+  const lines: string[] = result ? editResult(result.said) : ack ? [ack] : [];
   let above: ReactNode = null, chips: Chip[] = [], words: ((text: string) => void) | null = null, progress = '', quiet: Chip | null = null, good = false;
   // What something is, in two turns of at most four: in the way or a help, then the kind.
   const groupChips = (pick: (group: KindGroup) => void): Chip[] => (Object.keys(KIND_GROUPS) as KindGroup[]).map(group => ({ id: `group-${group}`, label: s.words.groups[group], onClick: () => pick(group) }));
@@ -822,7 +863,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     words = hear;
   } else if (step.id === 'check' && item) {
     const slots = slotsOf(item, step.at), question = questionOf(item), chosen = answerOf(edits, item.key);
-    const skip: Chip = { id: 'skip', label: s.check.chips.skip, onClick: () => { setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
+    const skip: Chip = { id: 'skip', label: s.check.chips.skip, onClick: () => { if (editing) { finish(); return; } setSkipped(list => new Set(list).add(item.key)); go(nextCheck(step.at)); } };
     // A spot she answered before says her answer back and asks whether to change it; her chip stays pressed.
     const earlier = chosen ? saidLabel(item.key) : null;
     if (step.extras && !step.tapping && !step.kind && !step.around && !step.follow) lines.push(s.check.extras);
@@ -855,8 +896,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     words = hear;
     above = cardOf(item, step.at);
-    // While she taps the map or looks at the way around on it, the map is what she needs.
-    if (step.tapping || step.around === 'match') above = null;
+    // While she taps the map or looks at the way around on it, the map is what she needs, unless the card shows the 3D, where a tap answers too.
+    if ((step.tapping || step.around === 'match') && !(step.tapping && shows3d.current)) above = null;
   } else if (step.id === 'checkEnd') {
     const tally = { total: items.length, answered: 0, unknown: 0, skipped: 0 };
     for (const one of items) { const chosen = answerOf(edits, one.key)?.answer; if (!chosen) tally.skipped++; else if (chosen === 'unknown') tally.unknown++; else tally.answered++; }
@@ -930,7 +971,8 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       lines.push(s.street.found({ metres: Math.round(found.lengthMetres), osm: found.findings.length }));
       chips = [{ id: 'keep', label: s.street.chips.keep, primary: true, onClick: () => {
         const next = addStreet(ways, found); setWays(next); if (!saveLines(next)) setProblem(s.notSaved);
-        go({ id: 'missed' }, s.street.kept({ street: found.name ?? found.streets[0] ?? s.street.chips.add }), true);
+        const kept = s.street.kept({ street: found.name ?? found.streets[0] ?? s.street.chips.add });
+        if (editing) finish(kept); else go({ id: 'missed' }, kept, true);
       } }, { id: 'again', label: s.street.chips.again, onClick: () => setStep({ id: 'street' }) }, cancel];
     } else if (step.from && step.to) { lines.push(s.street.routing); chips = [cancel]; }
     else { lines.push(...(step.from ? [s.street.end] : [s.street.offer, s.street.start])); chips = [cancel]; }
@@ -939,7 +981,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       const here = step.here;
       lines.push(s.missed.here({ spot: spotWords(here) }));
       chips = groupChips(group => go({ id: 'propose', proposal: { mode: 'add', text: '', target: here, group, from: { id: 'missed' } } }));
-      if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
+      if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d, here);
     } else {
       lines.push(s.missed.ask);
       chips = [{ id: 'done', label: s.missed.chips.done, primary: true, onClick: () => go({ id: 'note' }) }, { id: 'street', label: s.street.chips.add, onClick: () => go({ id: 'street' }) }];
@@ -964,25 +1006,27 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
       chips = proposal.group ? kindChips(proposal.group, pick => confirm({ ...proposal, kind: pick })) : [...groupChips(group => go({ id: 'propose', proposal: { ...proposal, group } })), notQuite];
     }
     if (proposal.text) above = <section className="gs-card gs-quote" data-tone="dark"><blockquote>{proposal.text}</blockquote></section>;
-    else if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d);
+    else if (card3d !== null && items[card3d]) above = cardOf(items[card3d], card3d, proposal.target);
   } else if (step.id === 'through') {
     const { spot, then } = step, slots: ItemSlots = { n: 0, total: 0, what: s.words.added.narrow, where: '', metres: 0, photos: 0, when: '', osm: '' };
     lines.push(s.check.follow.narrow);
     chips = FOLLOWS.through.map(choice => ({ id: choice, label: s.check.answers.through[choice], onClick: () => {
-      edit(edits => setAnswer(edits, spot, { question: 'through', answer: choice })); history.current.push(step); setStep(then); setAck(s.check.said.through[choice](slots));
+      edit(edits => setAnswer(edits, spot, { question: 'through', answer: choice })); if (then === EDITED) { finish(); return; } history.current.push(step); setStep(then); setAck(s.check.said.through[choice](slots));
     } }));
-    quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { history.current.push(step); setStep(then); setAck(''); } };
+    quiet = { id: 'skip', label: s.check.chips.skip, onClick: () => { if (then === EDITED) { finish(); return; } history.current.push(step); setStep(then); setAck(''); } };
   } else if (step.id === 'edit') {
-    lines.push(step.mode === 'add' ? s.edit.addSpot : step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask);
+    // After a change, what visitors now read is all she hears before the choices.
+    if (!result) lines.push(...(step.mode === 'add' ? [s.edit.addSpot, s.edit.addSpotTap] : [step.mode === 'change' ? s.edit.changeSpot : step.mode === 'note' ? s.edit.note : s.edit.ask]));
     if (!step.mode) chips = [{ id: 'add', label: s.edit.chips.addSpot, onClick: () => go({ id: 'edit', mode: 'add' }) }, { id: 'change', label: s.edit.chips.changeSpot, onClick: () => go({ id: 'edit', mode: 'change' }) },
       { id: 'street', label: s.edit.chips.addStreet, onClick: () => go({ id: 'street' }) }, { id: 'note', label: s.edit.chips.note, onClick: () => go({ id: 'edit', mode: 'note' }) }];
-    // Every change she made, beside the choices: a tap flies the map there, Undo takes it back.
+    // Every change she made stays beside the choices while she edits: a tap flies the map there, Undo takes it back.
     const list = step.mode ? [] : changesOf();
-    if (list.length) above = <Panel tone="dark" size="card" className="gs-changes"><PanelHead as="h2" title={s.edit.chips.changes} meta={String(list.length)} />
-      {list.map(change => <ChangeRow key={change.id} kind={change.kind} label={change.label} undoLabel={s.changes.undo} onOpen={() => fly(change.points)} onUndo={() => { change.undo(); setAck(s.changes.undone); }} />)}</Panel>;
+    if (!step.mode) above = <Panel tone="dark" size="card" className="gs-changes"><PanelHead as="h2" title={s.edit.chips.changes} meta={list.length ? String(list.length) : undefined} />
+      {list.length ? list.map(change => <ChangeRow key={change.id} kind={change.kind} label={change.label} undoLabel={s.changes.undo} onOpen={() => fly(change.points)} onUndo={() => { change.undo(); setAck(s.changes.undone); setResult(null); }} />)
+        : <p className="gs-changes-none">{s.changes.none}</p>}</Panel>;
     // Her note for the whole walk is her own words, kept as she wrote them; anything else she says proposes a spot.
     if (step.mode === 'add') words = hear;
-    if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); go({ id: 'note' }, s.edit.noteSaved, true); };
+    if (step.mode === 'note') words = text => { edit(edits => setNote(edits, WALK_NOTE, ownNote(text, noteLangOf(guessLanguage(text))))); if (editing) finish(); else go({ id: 'note' }, s.edit.noteSaved, true); };
   } else if (step.id === 'note') {
     const text = noteText(noteLang, before);
     if (step.clearing) {
@@ -1033,6 +1077,15 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
   }
   /** The map flies to a change she opened. */
   const fly = (points: Point[]) => { if (points.length) map.current?.show({ kind: 'points', points }, insets); };
+  /** What her last change in Edit did to the route note, in her language: the line visitors will now read, a line taken out, or nothing new. */
+  function editResult(said?: string): string[] {
+    const now = noteText(lang).split('\n'), was = noteBefore.current.split('\n');
+    const frame = new Set([NOTE.steps[lang], NOTE.basis[lang], NOTE.basisChecked[lang], NOTE.basisMapped[lang]]);
+    const body = (lines: string[]) => lines.slice(1).filter(line => line && !frame.has(line));
+    const added = body(now).filter(line => !was.includes(line)), gone = body(was).filter(line => !now.includes(line));
+    if (added.length) return [s.edit.result({ line: added.join(' ') })];
+    return gone.length ? [s.edit.removed] : [...(said ? [said] : []), s.edit.unchanged];
+  }
 
   /** What her answer for a spot means for its outlines on a photo: fixed or gone, taken off, or still there. Unanswered gives nothing. */
   function answerAt(stretches: readonly number[]): MarkAnswer | null {
@@ -1053,7 +1106,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
 
   const working = busy === 'reading' || busy === 'download';
   // Good news gets a smile, and only good news: a reply ready, the whole walk checked, a change she made saved.
-  const happy = !working && (good || (!!cheer && cheer === ack));
+  const happy = !working && (good || !!result || (!!cheer && cheer === ack));
   const shownPlace: MenuPlace | undefined = data.id === 'cusco-qorikancha' ? data.id : undefined;
   const turn = `${JSON.stringify(step)} ${ack}`;
 
@@ -1116,12 +1169,12 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     return () => removeEventListener('keydown', pick);
   }, []);
 
-  return <main ref={screen} className="guide-screen route-canvas" data-step={step.id} aria-label={t.workspace} lang={lang} style={{ '--dock': `${dockHeight}px` } as CSSProperties}
+  return <main ref={screen} className="guide-screen route-canvas" data-step={step.id} data-editing={editing || undefined} aria-label={t.workspace} lang={lang} style={{ '--dock': `${dockHeight}px` } as CSSProperties}
     onKeyDown={event => { if (event.key === 'Escape' && history.current.length) back(); }}>
     <header className="gs-bar">
       <div className="gs-place"><h1>{DESTINATIONS[data.id]?.name ?? data.target.name}</h1><p>{t.walk(walk.start ? routeSpots.find(spot => !spot.stretches.length && spot.landmark === walk.start!.name)?.name[lang] ?? walk.start.name : data.title, Math.round(data.lengthMetres))}</p>{caption && <p>{caption}</p>}</div>
       <div className="gs-edits">
-        <GlassButton className="gs-edit" icon={<NoteIcon />} pressed={step.id === 'edit'} onClick={openEdit}>{s.edit.chip}</GlassButton>
+        <EditToggle className="gs-edit" editing={editing} onClick={openEdit} editLabel={s.edit.chip} doneLabel={s.edit.done} />
         {changed && <Segmented className="gs-compare" surface="glass" label={s.compare.label} value={before ? 'before' : 'now'} options={[{ value: 'before', label: s.compare.before }, { value: 'now', label: s.compare.now }]}
           onChange={next => { setView(next); setAck(next === 'before' ? s.compare.saidBefore : s.compare.saidNow); }} />}
         {(shortAround || !!ways.check?.works) && !before && <GlassButton className="gs-around" icon={<PathIcon />} pressed={showAround || !!ways.check?.works} onClick={() => setShowAround(shown => !shown)}>{s.around.mapToggle}</GlassButton>}
@@ -1133,11 +1186,11 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
         onMarker={tapMarker} onMap={tapMap} onPhoto={tapPhoto} onLens={onLens}
         picking={step.id === 'street' && !step.found ? 'free' : (step.id === 'check' && !!step.tapping) || step.id === 'missed' || (step.id === 'message' && !!step.another) || (step.id === 'edit' && (step.mode === 'add' || step.mode === 'change')) || undefined}
         paths={before ? [] : [...mapPaths(showAround || step.id === 'around' || (step.id === 'check' && step.around === 'match') || ways.check?.works ? around : null, ways.streets), ...(step.id === 'street' && step.found ? [{ id: 'new', kind: 'street' as const, line: step.found.line.map(point => [point[0], point[1]] as [number, number]) }] : [])]}
-        words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} />
+        words={t.map} clearBottom={dockHeight + 12} ariaLabel={data.title} editing={editing} />
     </div>
     <Bot ref={bot} working={working} mood={happy ? 'happy' : undefined} talk={talk} />
     <div className="gs-work" ref={dock} data-content={above ? '' : undefined}>
-      <div key={card3d !== null ? `card ${card3d}` : turn} className="gs-turn">
+      <div key={step.id === 'check' ? `card ${step.at}` : card3d !== null ? `card ${card3d}` : turn} className="gs-turn">
         {above && <div className="gs-content">{above}</div>}
         {chips.length > 0 && <div className="gs-actions">
           <Options chips={chips} />
@@ -1175,8 +1228,8 @@ function CheckCard({ data, progress, title, affects, empty, evidence, viewId, st
   // A sideways swipe on the photo turns it on a phone; the tap that ends a swipe never picks an outline.
   const swipe = useRef<{ x: number; y: number } | null>(null), swiped = useRef(false);
   const shown = photoOf(data, evidence.length ? lead?.viewId : viewId);
-  return <section className="gs-card gs-photo" data-tone="dark" aria-label={progress}>
-    <p className="gs-card-meta"><span>{progress}</span>{title && <span>{title}</span>}{evidence.length > 1 && <span className="gs-pager">
+  return <section className="gs-card gs-photo" data-tone="dark" aria-label={progress || title}>
+    <p className="gs-card-meta">{progress && <span>{progress}</span>}{title && <span>{title}</span>}{progress && evidence.length > 1 && <span className="gs-pager">
       <button type="button" className="gs-turn-photo" aria-label={words.previous} disabled={at === 0} onClick={() => turn(-1)}><ChevronIcon size={18} style={{ transform: 'scaleX(-1)' }} /></button>
       <span aria-live="polite">{words.photo({ n: at + 1, total: evidence.length })}</span>
       <button type="button" className="gs-turn-photo" aria-label={words.next} disabled={at === evidence.length - 1} onClick={() => turn(1)}><ChevronIcon size={18} /></button></span>}</p>
@@ -1190,7 +1243,7 @@ function CheckCard({ data, progress, title, affects, empty, evidence, viewId, st
       </div>
     </PhotoOr3D>
       : <p className="gs-empty">{empty}</p>}
-    <p className="gs-affects">{affects}</p>
+    {affects && <p className="gs-affects">{affects}</p>}
   </section>;
 }
 

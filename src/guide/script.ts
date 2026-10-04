@@ -311,7 +311,16 @@ export type Script = {
   /** One tap away on every step: what she wants to change on her map, while the step she was on waits for her. */
   /** Her map before her changes and now, side by side in time; the said lines come when she turns between them. */
   compare: { label: string; before: string; now: string; saidBefore: string; saidNow: string };
-  edit: { chip: string; ask: string; addSpot: string; changeSpot: string; note: string; noteSaved: string; chips: { addSpot: string; changeSpot: string; addStreet: string; note: string; back: string; changes: string } };
+  edit: { chip: string;
+    /** The pill while she edits; a tap ends the mode, and closed is said on the way back. */
+    done: string; closed: string;
+    /** Said on entering, before ask: why her changes matter. */
+    intro: string; ask: string;
+    /** Adding a spot, in two lines: what the photos may have missed, then where. */
+    addSpot: string; addSpotTap: string; changeSpot: string; note: string; noteSaved: string;
+    /** What each change does to what visitors read: the note line it made, a line it took out, or nothing new. */
+    result: (s: { line: string }) => string; removed: string; unchanged: string;
+    chips: { addSpot: string; changeSpot: string; addStreet: string; note: string; back: string; changes: string } };
   /** Every change she made, one row each, with Undo. A row about a spot starts with its marker's label, such as "Steps · 340 m". */
   changes: { intro: string; none: string; undo: string; undone: string; note: string; added: (s: { kind: string; at: string }) => string; street: (s: { street: string }) => string;
     takenOff: (s: { tag: string }) => string; around: { works: string; notWorks: string } };
@@ -619,7 +628,9 @@ const en: Script = {
   back: 'Back',
   compare: { label: 'Your map', before: 'Before', now: 'Now', saidBefore: 'This is the route before your changes.', saidNow: 'This is the route with your changes.' },
   edit: {
-    chip: 'Edit', ask: 'What would you like to change?', addSpot: 'Tap where it is, or tell me in your own words.', changeSpot: 'Tap the spot you want to change.',
+    chip: 'Edit', done: 'Done', closed: 'Done. Your route note is up to date.', intro: 'What you change here is what visitors read: your route note and your replies.', ask: 'What would you like to change?',
+    addSpot: 'Did the photos miss something new or temporary, like a broken step, a bench or roadworks?', addSpotTap: 'Tap where it is on the map, or tell me in your own words.', changeSpot: 'Tap the spot you want to change.',
+    result: s => `Visitors will now read: “${s.line}”`, removed: 'Visitors won’t read about this spot anymore.', unchanged: 'Your route note stays the same.',
     note: 'What should your note say? Write it in your own words.', noteSaved: 'Saved. Visitors will see it in your words.',
     chips: { addSpot: 'Add a spot', changeSpot: 'Change a spot', addStreet: 'Add a street', note: 'Change my note', back: 'Back to where I was', changes: 'Your changes' },
   },
@@ -902,7 +913,9 @@ const es: Script = {
   back: 'Volver',
   compare: { label: 'Tu mapa', before: 'Antes', now: 'Ahora', saidBefore: 'Así era el recorrido antes de tus cambios.', saidNow: 'Así queda el recorrido con tus cambios.' },
   edit: {
-    chip: 'Editar', ask: '¿Qué quieres cambiar?', addSpot: 'Toca dónde está o cuéntamelo con tus palabras.', changeSpot: 'Toca el punto que quieres cambiar.',
+    chip: 'Editar', done: 'Listo', closed: 'Listo. Tu nota de la ruta está al día.', intro: 'Lo que cambies aquí es lo que leen los visitantes: tu nota de la ruta y tus respuestas.', ask: '¿Qué quieres cambiar?',
+    addSpot: '¿Las fotos no muestran algo nuevo o pasajero, como un escalón roto, una banca u obras?', addSpotTap: 'Toca dónde está en el mapa o cuéntamelo con tus palabras.', changeSpot: 'Toca el punto que quieres cambiar.',
+    result: s => `Ahora los visitantes leerán: “${s.line}”`, removed: 'Los visitantes ya no leerán sobre este punto.', unchanged: 'Tu nota de la ruta queda igual.',
     note: '¿Qué debería decir tu nota? Escríbela con tus palabras.', noteSaved: 'Guardado. Los visitantes la verán con tus palabras.',
     chips: { addSpot: 'Agregar un punto', changeSpot: 'Cambiar un punto', addStreet: 'Agregar una calle', note: 'Cambiar mi nota', back: 'Volver a donde estaba', changes: 'Tus cambios' },
   },
