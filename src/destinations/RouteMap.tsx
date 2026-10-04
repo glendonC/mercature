@@ -119,6 +119,8 @@ type Props = {
   paths?: MapPath[];
   /** With still: once it has leaned, the map slowly turns full circle about its walk until the first pointer, key, wheel or touch. */
   turntable?: boolean;
+  /** Her map is open to edits: the city dims, every spot shows it can be tapped, and a mouse over the walk shows where a tap adds one. */
+  editing?: boolean;
 };
 
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -237,7 +239,7 @@ function spread(points: Point[], pinned: boolean[], gap: number, avoid: Rect[] =
   return out;
 }
 
-const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers: given, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false }, ref) {
+const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, photoView, markers: given, labels, insets, highlight, onMarker, onMap, onPhoto, card, cardFor, ariaLabel, clearBottom, words, still = false, settled = false, riseIn = false, onLens, onHover, hovered = null, picking = false, paths = NO_PATHS, turntable = false, editing = false }, ref) {
   const leaning = useMemo(tiltChosen, []);
   // A walk built from the map alone had no photos read anywhere, so its no-photos spots say nothing; what OpenStreetMap records
   // along it shows instead, unless the page draws those itself, and its start is marked.
@@ -583,7 +585,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
 
   // Asked to tap a place, a ring follows a fine pointer where the tap would land.
   const [pick, setPick] = useState<Point | null>(null);
-  useEffect(() => { if (!picking) setPick(null); }, [picking]);
+  useEffect(() => { if (!picking && !editing) setPick(null); }, [picking, editing]);
 
   // Drag to pan, pinch or wheel to zoom; a tap without movement selects the walk under it.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -599,9 +601,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     gesture.current = { moved: gesture.current?.moved ?? false, camera: live.current ?? camera!, x, y, spread };
   }
   function move(event: ReactPointerEvent<HTMLDivElement>) {
-    if (picking && view && event.pointerType !== 'touch' && !pointers.current.size) {
-      const { x, y } = local(event), at = view.ground([x, y]), on = picking === 'free' ? at : nearestOn(walk.route, at), seen = view.at(on);
-      setPick(picking === 'free' || Math.hypot(seen[0] - x, seen[1] - y) <= 28 ? on : null);
+    // Editing shows the ring only for a mouse, and not over a marker, which a tap would open instead.
+    if ((picking || (editing && event.pointerType === 'mouse')) && view && event.pointerType !== 'touch' && !pointers.current.size) {
+      const { x, y } = local(event), at = view.ground([x, y]), free = picking === 'free', on = free ? at : nearestOn(walk.route, at), seen = view.at(on);
+      setPick((free || Math.hypot(seen[0] - x, seen[1] - y) <= 28) && (picking || !(event.target as Element).closest('.route-marker')) ? on : null);
     }
     if (!pointers.current.has(event.pointerId) || !gesture.current) return;
     pointers.current.set(event.pointerId, local(event));
@@ -757,7 +760,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const frameStyle = { '--squash': flat ? undefined : Math.cos((camera?.lean ?? 0) * tilt.pitch * Math.PI / 180).toFixed(3),
     '--map-free-top': `${insets.top}px`, '--map-free-right': `${insets.right}px`, '--map-free-bottom': `${insets.bottom}px`, '--map-free-left': `${insets.left}px` } as CSSProperties;
   const picked = pick && view ? view.at(pick) : null;
-  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} data-picking={picking && !still ? '' : undefined} style={frameStyle}
+  return <div className="route-map" ref={box} data-still={still || undefined} data-lean={flat ? undefined : ''} data-arriving={arriving ?? undefined} data-picking={picking && !still ? '' : undefined} data-editing={editing && !still ? '' : undefined} style={frameStyle}
     onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => setPick(null)} aria-label={ariaLabel} role="group">
     <GeographicMap data={data} selected={photoView} onSelect={() => {}} hidden={false} zoom={1} setZoom={zoomTo} shown={0} className="is-canvas" viewBox={vb} words={words} still={still} credit={still}
       lens={flat ? undefined : view} rise={rise} riseOf={rising != null ? id => wave(id, performance.now() - rising) : undefined} underlay={<><Zones walk={walk} unseen={unseen} glowing={glowing} lens={flat ? null : view} /><Paths paths={drawn} lens={flat ? null : view} /><Cameras walk={walk} open={openDots} lens={flat ? null : view} /></>}>

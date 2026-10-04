@@ -168,3 +168,16 @@
 .route-map[data-picking], .route-map[data-picking]:active { cursor: crosshair; }
 .route-pick { position: absolute; z-index: 5; width: 24px; height: 24px; margin: -12px 0 0 -12px; border: 1.5px solid var(--ink); border-radius: 50%; background: rgb(255 255 255 / 0.4); box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7); transform: scaleY(var(--squash, 1)); pointer-events: none; }
 .route-pick::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: var(--ink); }
+
+/* Editing her map: the city dims while the walk stays bright, every spot breathes a thin outline to say it can be tapped, and a
+   faint ring follows a mouse along the walk where a tap adds a spot */
+.route-map .map-base, .route-map .route-labels { transition: opacity var(--motion-slow) var(--ease-in-out); }
+.route-map[data-editing] .map-base { opacity: 0.82; }
+.route-map[data-editing] .route-labels { opacity: 0.85; }
+.route-map[data-editing] .route-marker:not([data-gone], [data-state=osm], :focus-visible) .route-marker-dot { outline: 1.5px solid color-mix(in srgb, var(--ink) 45%, transparent); outline-offset: 4px; animation: map-edit-breathe 2.4s var(--ease-in-out) infinite; }
+@keyframes map-edit-breathe { 50% { outline-offset: 6px; outline-color: color-mix(in srgb, var(--ink) 20%, transparent); } }
+.route-map[data-editing]:not([data-picking]) .route-pick { opacity: 0.55; }
+@media (prefers-reduced-motion: reduce) {
+  .route-map[data-editing] .route-marker:not([data-gone], [data-state=osm], :focus-visible) .route-marker-dot { animation: none; }
+  .route-map .map-base, .route-map .route-labels { transition: none; }
+}
