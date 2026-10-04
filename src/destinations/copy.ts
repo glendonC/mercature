@@ -40,7 +40,7 @@ export const COPY = {
     copyFailed: 'Copia el texto de arriba. El portapapeles no está disponible.', notSaved: 'Este dispositivo no guardó el último cambio.',
     inbox: {
       messages: 'Mensajes', add: 'Agregar un mensaje', example: 'Ejemplo', unread: 'Sin leer', notFiled: 'Sin ubicar', back: 'Todos los mensajes', readEarlier: 'Leído antes',
-      guide: 'Toca un marcador para ver su foto o abre un mensaje.', start: 'Inicio',
+      guide: 'Toca un marcador para ver su foto o abre un mensaje.', start: 'Salida',
       found: 'Hallazgos en el recorrido', kinds: { steps: 'Escalones', kerb: 'Bordillo', path: 'En el camino', noPhotos: 'Sin fotos' } as Record<Subject | 'noPhotos', string>,
       raised: 'Los visitantes mencionan', note: 'Nota de la ruta para visitantes', copy: 'Copiar', copied: 'Copiado',
       paste: 'Pega lo que escribió un visitante.', read: 'Leer mensaje', cancel: 'Cancelar',

@@ -59,7 +59,7 @@ test('the panel comes before the map, so the keyboard reaches the messages first
   await expect(page.locator('.ri-row').first()).toBeFocused();
 });
 
-test('a message tapped before the stored model is found is read once it is, and its answer shows as read earlier on reopening', async ({page}) => {
+test('a message tapped before the stored model is found is read once it is, and once placed its kept answer shows as read earlier', async ({page}) => {
   test.skip(!existsSync('public/models/multilingual-e5-small-latin-hangul'), 'The trimmed model is not in public/models.');
   test.setTimeout(90000);
   await page.goto('/');
@@ -77,8 +77,11 @@ test('a message tapped before the stored model is found is read once it is, and 
   await openRoute(page);
   await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
   await expect(page.locator('.ri-reply')).toBeVisible({timeout:30000});
-  await expect(page.locator('.ri-panel .ri-row-meta').first()).not.toContainText('Read earlier');
+  const meta = page.locator('.ri-panel .ri-row-meta').first();
+  await expect(meta).not.toContainText('Read earlier');
+  // Unplaced, a message is read again on opening; placed, its answer is kept and shown as stored.
+  await page.locator('.route-marker[aria-label^="Calle Loreto, 340 to 350 m"]').click();
   await page.getByRole('button', {name:'All messages'}).click();
   await page.locator('.ri-row', {hasText:'Algunas partes'}).click();
-  await expect(page.locator('.ri-panel .ri-row-meta').first()).toContainText('Read earlier');
+  await expect(meta).toContainText('Read earlier');
 });

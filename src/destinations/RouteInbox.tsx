@@ -249,8 +249,10 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
   function read(id: string, text: string, language: string) {
     if (pane.kind === 'inbox') lastRow.current = id;
     setPane({ kind: 'message', id }); setReplyLang(null); setSaid(''); setReadNow(null);
+    // A placed message keeps its answer. An unplaced one is read again when the model is at hand,
+    // since a message she placed since may change where it points.
     const known = messageOf(id);
-    if (known) { show(known); return; }
+    if (known && (known.spot || !ai)) { show(known); return; }
     setPending({ id, text, language }); setLine('');
   }
   // A new message is read once the model is ready or found stored on this device, while its pane is open.
@@ -287,7 +289,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     const answer: ModelAnswer = { status: result.status, kind: result.kind, category: result.category, candidates, model: result.model ? `${result.model.id}@${result.model.revision}` : null, ...(result.reason === 'remembered' ? { remembered: true as const } : {}) };
     // A sure answer files itself on the first spot; she can move it with one tap.
     const spot = answer.status === 'ready' && candidates[0] ? candidates[0] : null;
-    commit(review => logMessage(review, { text, language, answer, spot }, id));
+    commit(review => review.messages.some(message => message.id === id) ? updateMessage(review, id, { answer, spot }) : logMessage(review, { text, language, answer, spot }, id));
     setPending(null); setReadNow(id);
     setLine(lineFor(answer, !!spot));
     // The camera follows the answer only while its message is still open.
@@ -488,7 +490,7 @@ export default function RouteInbox({ data, asset, onHome, onPlace, settled = fal
     if (!shown) return null;
     const answer = message?.answer ?? null, language = shown.language;
     const replyIn = replyLang ?? replyLanguage(language);
-    const isExample = shown.id.startsWith('example-'), earlier = !!answer && readNow !== shown.id;
+    const isExample = shown.id.startsWith('example-'), earlier = !!answer && readNow !== shown.id && pending?.id !== shown.id;
     return <>
       <Back onClick={home} label={w.back} />
       <p className="ri-row-meta">{isExample && <em>{w.example}</em>}<span className="ri-lang">{language.toUpperCase()}</span>{w.languages[language] ?? language}{answer?.kind && <> · {answer.status === 'ready' ? t.kinds[answer.kind] : `${t.kinds[answer.kind]}?`}</>}{earlier && <> · {w.readEarlier}</>}</p>
