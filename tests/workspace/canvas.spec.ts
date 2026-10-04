@@ -1,8 +1,7 @@
 import {test, expect, type Page} from '@playwright/test';
 
 async function openCanvas(page: Page) {
-  await page.goto('/');
-  await page.getByRole('button', {name:/^Noor's farm/}).click();
+  await page.goto('/?place=farm');
   await page.getByRole('button', {name:'Enter',exact:true}).click();
   await expect(page.getByRole('tab', {name:'Place',exact:true})).toHaveAttribute('aria-selected','true');
 }
