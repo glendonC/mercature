@@ -57,7 +57,7 @@
   .home-photos { left: 0; right: 0; bottom: calc(26px + var(--safe-bottom)); padding: 4px calc(16px + var(--safe-right)) 4px calc(16px + var(--safe-left)); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: calc(16px + var(--safe-left)); scrollbar-width: none; }
   .home-photos::-webkit-scrollbar { display: none; }
   /* A clipped edge fades, so a card cut off at the right reads as more to scroll to. */
-  .home-photos { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+  .home-photos { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); mask-image: linear-gradient(to right, #000 calc(100% - 88px), transparent calc(100% - 8px)); }
   .home-photos.is-end { -webkit-mask-image: none; mask-image: none; }
   .home-photo { flex: 0 0 min(300px, 80%); width: auto; scroll-snap-align: start; }
   .home-photo:only-child { flex-basis: 100%; }
