@@ -3,14 +3,13 @@ import Home, { type SavedEntry } from "./home/Home";
 import Workspace from "./workspace/Workspace";
 import { createPlanStore, type ImprovementPlan, type PlanSummary } from "./plans";
 import type { Project } from "./spatial/contracts";
-import DestinationWorkspace from "./destinations/DestinationWorkspace";
 import type { AuthoredViewState } from "./preparation/Preparation";
 import FarmReady from "./preparation/FarmReady";
 import RecordedReveal from "./preparation/RecordedReveal";
-import { isDestinationId } from "./destinations/data";
+import { isDestinationId, type DestinationId } from "./destinations/data";
 import { useLanguage } from "./i18n";
 const planStore = createPlanStore();
-/** Nothing links here: ?place=farm opens the farm example getting ready, as Home's farm card once did. Read once, then dropped from the address. */
+/** Nothing links here: ?place=farm opens the farm example getting ready. Read once, then dropped from the address. */
 const farmAsked = (() => {
   const query = new URLSearchParams(location.search);
   if (query.get("place") !== "farm") return false;
@@ -35,7 +34,7 @@ export default function App() {
     initialViewState?: AuthoredViewState;
   } | null>(null);
   const [error, setError] = useState(initial.error);
-  const [destination, setDestination] = useState<string | null>(null);
+  const [destination, setDestination] = useState<DestinationId | null>(null);
   function refresh() {
     const result = planStore.list();
     if (result.ok) setPlans(result.value);
@@ -50,6 +49,7 @@ export default function App() {
   }
   const entries: SavedEntry[] = plans.map((p) => ({ id: p.id, title: p.title, kind: "plan" as const }));
   function openDestination(id: string) {
+    if (!isDestinationId(id)) return;
     setDestination(id);
     setActive("destination");
     setError("");
@@ -82,7 +82,7 @@ export default function App() {
         </div>
       )}
       {active === "farm" && <FarmReady onHome={() => setActive("home")} onReady={(project, initialViewState) => { setWorkspace({key: crypto.randomUUID(), project, initialViewState}); setActive("spatial"); }} />}
-      {active === "destination" && destination && (isDestinationId(destination) ? <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openDestination} /> : <DestinationWorkspace key={destination} id={destination} onHome={() => setActive("home")} onPlace={openDestination} />)}
+      {active === "destination" && destination && <RecordedReveal key={destination} id={destination} onHome={() => setActive("home")} onOpen={setDestination} onPlace={openDestination} />}
       {error && (
         <div className="app-error" role="alert">
           {error}
