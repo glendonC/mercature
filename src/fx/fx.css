@@ -18,6 +18,44 @@
 .route-map:not([data-still]) .route-marker[data-state=open]:not([aria-pressed=true]) .route-marker-dot { animation: fx-breathe 2.4s var(--ease-out) infinite; }
 @keyframes fx-breathe { 0%, 45%, 100% { scale: 1; } 14% { scale: 1.1; } }
 
+/* Her edits, on a marker an edit has just changed (data-change and data-was, from useChanges); a map that opens with
+   them shows them as they are. Fixed: the clay ring turns blue, a round spot squares into her record and a tick draws
+   in. Removed: the ring fades to grey and its core goes. Added: the marker drops onto its stretch. Undoing either
+   morphs back. The selected marker's ground ring rests meanwhile, so the one ring the motion layer draws says what changed. */
+@property --ring { syntax: '<color>'; inherits: true; initial-value: #a6501c; }
+@property --ring-ink { syntax: '<color>'; inherits: true; initial-value: #1d2125; }
+@media (prefers-reduced-motion: no-preference) {
+  .route-map .route-markers .route-marker[data-change][data-state] { animation: var(--motion-slow) var(--ease-in-out) backwards; }
+  .route-map .route-markers .route-marker[data-change][data-state] .route-marker-dot { animation: var(--motion-slow) var(--ease-in-out) backwards; transition: none; }
+  .route-map .route-markers .route-marker[data-change=fixed][data-state] { animation-name: fx-ink-from-clay; }
+  .route-map .route-markers .route-marker[data-change=fixed][data-state] .route-marker-dot { animation-name: fx-from-clay; }
+  .route-map .route-markers .route-marker[data-change=fixed][data-was=open] .route-marker-dot { animation-name: fx-from-clay-round; }
+  .route-map .route-markers .route-marker[data-change=fixed][data-state] .route-marker-dot::before { animation: fx-tick var(--motion-panel) var(--ease-out) var(--motion-fast) backwards; }
+  .route-map .route-markers .route-marker[data-change=unfixed][data-state] { animation-name: fx-ink-from-way; }
+  .route-map .route-markers .route-marker[data-change=unfixed][data-state] .route-marker-dot { animation-name: fx-from-way; }
+  .route-map .route-markers .route-marker[data-change=removed][data-state] { animation-name: fx-ink-from-clay; }
+  .route-map .route-markers .route-marker[data-change=removed][data-state] .route-marker-dot { animation-name: fx-from-clay-whole; }
+  .route-map .route-markers .route-marker[data-change=removed][data-state] .route-marker-dot::before { display: block; animation: fx-core-out var(--motion-fast) var(--ease-out) forwards; }
+  .route-map .route-markers .route-marker[data-change=restored][data-state] { animation-name: fx-ink-from-grey; }
+  .route-map .route-markers .route-marker[data-change=restored][data-state] .route-marker-dot { animation-name: fx-from-grey; }
+  .route-map .route-markers .route-marker:is([data-change=restored], [data-change=unfixed])[data-state] .route-marker-dot::before { animation: fx-core-in var(--motion-panel) var(--ease-out) var(--motion-hover) backwards; }
+  .route-map .route-markers .route-marker[data-change=added][data-state] { animation: fx-drop var(--motion-slow) var(--ease-out) backwards; }
+  .route-map[data-lean] .route-markers .route-marker[data-change]::before { animation: none; opacity: 0; }
+}
+@keyframes fx-from-clay { from { --ring: var(--blocked); } }
+@keyframes fx-from-clay-round { from { --ring: var(--blocked); border-radius: 50%; } }
+@keyframes fx-from-way { from { --ring: var(--reachable); border-radius: 3px; } }
+@keyframes fx-from-clay-whole { from { --ring: var(--blocked); width: 14px; height: 14px; } }
+@keyframes fx-from-grey { from { --ring: var(--unknown); width: 12px; height: 12px; } }
+@keyframes fx-ink-from-clay { from { --ring-ink: var(--blocked); } }
+@keyframes fx-ink-from-way { from { --ring-ink: var(--reachable); } }
+@keyframes fx-ink-from-grey { from { --ring-ink: var(--unknown); } }
+/* The tick is two borders turned a quarter: clipping from its left draws the short stroke, then the long one. */
+@keyframes fx-tick { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes fx-core-out { to { opacity: 0; scale: 0.3; } }
+@keyframes fx-core-in { from { opacity: 0; scale: 0.3; } }
+@keyframes fx-drop { from { opacity: 0; translate: 0 -24px; scale: 0.6; } }
+
 @media (prefers-reduced-motion: reduce) {
   .route-map[data-arriving=go] .route-markers > .route-marker, .route-map .route-marker[data-state=open] .route-marker-dot { animation: none; }
 }

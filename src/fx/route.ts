@@ -189,13 +189,26 @@ export function beam(at: Point, colour: keyof Palette, started: number, still: b
   };
 }
 
-/** One ring over the ground from a marker the pointer has just reached. */
-export function pulse(at: Point, colour: keyof Palette, started: number, { spread = 640 } = {}): Effect {
+/** One ring over the ground from a marker: the pointer has just reached it, or an edit has just settled it. */
+export function pulse(at: Point, colour: keyof Palette, started: number, { spread = 640, reach = 24, strength = 0.55 } = {}): Effect {
   return ({ ctx, project, squash, now }) => {
     const u = (now - started) / spread;
     if (u >= 1) return false;
+    if (u < 0) return true;
     const [x, y] = project(at), rgb = palette()[colour];
-    ring(ctx, x, y, 7 + 24 * easeOut(clamp01(u)), squash, rgba(rgb, 0.55 * (1 - u)), 1.5);
+    ring(ctx, x, y, 7 + reach * easeOut(u), squash, rgba(rgb, strength * (1 - u)), 1.5);
+    return true;
+  };
+}
+
+/** The clay glow along a spot's stretch of the walk fading out, as an edit takes the possible barrier off it: the map's own glow goes at once. */
+export function unglow(path: readonly Point[], started: number, { fade = 400 } = {}): Effect {
+  return ({ ctx, project, now }) => {
+    const u = (now - started) / fade;
+    if (u >= 1) return false;
+    const rgb = palette().barrier, k = 1 - easeInOut(clamp01(u)), drawn = path.map(p => project(p));
+    line(ctx, drawn, rgba(rgb, 0.07 * k), 26);
+    line(ctx, drawn, rgba(rgb, 0.12 * k), 14);
     return true;
   };
 }
