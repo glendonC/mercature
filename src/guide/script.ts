@@ -251,7 +251,8 @@ export type Script = {
 
 const cap = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
 /** A distance the way a person says it: 594 m is "about 600 m". */
-const about = (m: number) => m < 100 ? Math.max(10, Math.round(m / 10) * 10) : m < 1000 ? Math.round(m / 50) * 50 : Math.round(m / 100) * 100;
+/** A distance as the guide and the route note say it: 594 m is about 600 m. */
+export const about = (m: number) => m < 100 ? Math.max(10, Math.round(m / 10) * 10) : m < 1000 ? Math.round(m / 50) * 50 : Math.round(m / 100) * 100;
 /** The year of a photo's month and year, such as "December 2015". */
 const yearOf = (when: string) => Number(when.slice(-4)) || 0;
 /** A photo older than this may show a street that has changed since. */

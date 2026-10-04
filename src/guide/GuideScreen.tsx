@@ -23,7 +23,7 @@ import { Composer, CopyBox, Dialogue, MARK_ORDER, Tag, kindOf, markOf, type Mark
 import { LabelledPhoto, photoOf } from '../photo';
 import { PhotoOr3D } from '../space3d';
 import Swap from '../fx/Swap';
-import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
+import { QUESTIONS, QUESTION_OF, SCRIPT, TAP_ANSWERS, about, type AccessKind, type Answer, type ItemSlots, type QuestionId, type WalkSlots } from './script';
 import { Bot, Options, type Chip } from './Say';
 import './guide.css';
 import './guide-screen.css';
@@ -544,7 +544,7 @@ export default function GuideScreen({ data, asset, onHome, onPlace, settled = fa
     }
     if (!lines.length) return '';
     const end = (name: string) => { const spot = routeSpots.find(item => !item.stretches.length && item.landmark === name); return !spot ? name : language === 'ko' ? spot.aliases.ko?.[0] ?? spot.name.en : spot.name[language]; };
-    const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), Math.round(data.lengthMetres)) : data.title;
+    const head = walk.start ? NOTE.title[language](end(walk.start.name), end(walk.target.name), about(data.lengthMetres)) : data.title;
     return [head, ...lines, ...(steps ? [NOTE.steps[language]] : []), (!data.photos.length ? NOTE.basisMapped : Object.values(edits.answers).some(said => said.answer !== 'unknown') ? NOTE.basisChecked : NOTE.basis)[language]].join('\n');
   }
   function copy(text: string, done: string) { navigator.clipboard.writeText(text).then(() => setSaid(done), () => setSaid(t.copyFailed)); }
