@@ -10,12 +10,12 @@ export type Beats = { photos?: Window; walk?: Window; stretches?: Window; marks?
 
 /** Milliseconds a photo takes to land, and the pixels it falls from. */
 const FALL = 600, DROP = 170;
-/** Milliseconds of the ring where a photo lands, where a mark pops, and of the flash where the scan lights a stretch. */
-const RIPPLE = 520, POP = 380, FLASH = 450;
+/** Milliseconds of the ring where a photo lands, where a mark pops, and of a stretch's tick growing as the light reaches it. */
+const RIPPLE = 520, POP = 380, TICK = 240;
 /** Photos this many metres from the walk hop onto it as the walk is drawn, starting this far ahead of it, over this distance. */
 const NEAR = 22, AHEAD = 12, OVER = 16;
-/** Pixels of the soft trail behind the scan bar. */
-const TRAIL = 110;
+/** Metres of the light that runs along the walk as its stretches are counted. */
+const RUN = 16;
 /** The drawn walk gives way to the map's own line this long after its beat. */
 const HOLD = 250, YIELD = 250;
 
@@ -91,23 +91,15 @@ function walk(f: FxFrame, scene: FxScene, beats: Beats, now: number) {
 function stretches(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: boolean) {
   const window = beats.stretches;
   if (!window || (!finished && now < window[0])) return;
-  const { ctx, project, width, height } = f, colours = palette(), u = finished ? 1 : within(now, window[0], window[1]);
-  // The bar crosses the screen along the walk's own direction, start to end.
-  const a = project(scene.route.points[0]), z = project(scene.route.points[scene.route.points.length - 1]);
-  const length = Math.hypot(z[0] - a[0], z[1] - a[1]) || 1, ux = (z[0] - a[0]) / length, uy = (z[1] - a[1]) / length;
-  const along = (p: Seen) => (p[0] - a[0]) * ux + (p[1] - a[1]) * uy;
-  const spread = scene.route.points.map(p => along(project(p))), lo = Math.min(...spread) - 30, hi = Math.max(...spread) + 30;
-  const bar = lo + (hi - lo) * easeInOut(u);
-  const reached = scene.stretches.flatMap(stretch => {
-    const q = along(project(stretch.mid));
-    if (!finished && q > bar) return [];
-    const lit = finished ? 1 : within(now, window[0] + window[1] * inverse(easeInOut, (q - lo) / (hi - lo)), FLASH);
-    return [{ stretch, lit, path: slice(scene.route, stretch.from, stretch.to).map(p => project(p)) }];
-  });
-  for (const { stretch, lit, path } of reached) if (stretch.status !== 'no-photos' && lit < 1) line(ctx, path, rgba(colours.way, 0.32 * (1 - lit)), 4 + 14 * (1 - lit));
-  for (const { stretch, path } of reached) {
+  const { ctx, project } = f, colours = palette(), u = finished ? 1 : within(now, window[0], window[1]), length = scene.route.length || 1;
+  // A short light runs along the walk from its start to its end; each stretch it reaches takes its tick.
+  const head = length * easeInOut(u);
+  const reached = scene.stretches.flatMap(stretch => finished || stretch.from <= head
+    ? [{ stretch, lit: finished ? 1 : within(now, window[0] + window[1] * inverse(easeInOut, stretch.from / length), TICK) }] : []);
+  for (const { stretch } of reached) {
     if (stretch.status !== 'no-photos') continue;
     // No photos here: the walk turns to grey dashes, as the canvas draws it.
+    const path = slice(scene.route, stretch.from, stretch.to).map(p => project(p));
     line(ctx, path, rgba(colours.surface, 1), 7, 'butt');
     ctx.setLineDash([3, 5]); line(ctx, path, rgba(colours.unknown, 1), 4, 'butt'); ctx.setLineDash([]);
   }
@@ -122,16 +114,13 @@ function stretches(f: FxFrame, scene: FxScene, beats: Beats, now: number, finish
     }
   }
   ctx.strokeStyle = rgba(colours.ink, 0.32); ctx.lineWidth = 1; ctx.lineCap = 'butt'; ctx.stroke();
-  const fade = finished ? 0 : 1 - within(now, window[0] + window[1] - 120, 300);
-  if (fade <= 0 || u <= 0) return;
-  const cx = a[0] + ux * bar, cy = a[1] + uy * bar, nx = -uy, ny = ux, reach = Math.hypot(width, height);
-  const trail = ctx.createLinearGradient(cx, cy, cx - ux * TRAIL, cy - uy * TRAIL);
-  trail.addColorStop(0, rgba(colours.way, 0.11 * fade)); trail.addColorStop(1, rgba(colours.way, 0));
-  ctx.beginPath();
-  ctx.moveTo(cx + nx * reach, cy + ny * reach); ctx.lineTo(cx - nx * reach, cy - ny * reach);
-  ctx.lineTo(cx - nx * reach - ux * TRAIL, cy - ny * reach - uy * TRAIL); ctx.lineTo(cx + nx * reach - ux * TRAIL, cy + ny * reach - uy * TRAIL);
-  ctx.closePath(); ctx.fillStyle = trail; ctx.fill();
-  line(ctx, [[cx + nx * reach, cy + ny * reach], [cx - nx * reach, cy - ny * reach]], rgba(colours.way, 0.75 * fade), 1.25, 'butt');
+  if (finished || u <= 0 || u >= 1) return;
+  // The light itself, inside the walk's line: brightest at its head, fading behind it.
+  const from = Math.max(0, head - RUN * scene.unit);
+  for (let i = 0; i < 8; i++) {
+    const a = from + (head - from) * i / 8, b = from + (head - from) * (i + 1) / 8, j = (i + 1) / 8;
+    if (b > a) line(ctx, slice(scene.route, a, b).map(p => project(p)), rgba(mix(colours.way, colours.surface, 0.5 + 0.5 * j), 0.2 + 0.8 * j), 2 + 1.5 * j);
+  }
 }
 
 function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: boolean) {
@@ -162,7 +151,7 @@ function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: 
 }
 
 /**
- * The build replay: photos land in capture order, the walk is drawn through them, the scan lights each stretch, the marks pop
+ * The build replay: photos land in capture order, the walk is drawn through them, a light along it ticks each stretch, the marks pop
  * in walking order and the possible barriers turn clay together. Done draws the end state at once, leaving the photos and the
  * walk to the map, which shows its own.
  */
