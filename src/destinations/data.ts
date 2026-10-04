@@ -1,6 +1,8 @@
 /** Inspection adapter for the retained mercature-route/1 records and their published mercature-place/1 packages.
  * It never supplies accepted geometry to the synthetic access solver. */
 import { ROUTE_PLACES } from '../site/registry';
+import { readWayAround } from '../routes/around';
+import type { WayAround } from '../routes/shape';
 export const DESTINATIONS = {
   'cusco-qorikancha': { name: 'Qorikancha', place: 'Cusco, Peru' },
   'tbilisi-narikala': { name: 'Narikala', place: 'Tbilisi, Georgia' },
@@ -27,7 +29,9 @@ export type ScanKind = { concept: string; label: string; barrier: boolean; surfa
 export type Scan = { views: number; nearMetres: number; kinds: ScanKind[]; leftOut: { concept: string; label: string; marks: number; views: number; reason: string }[] };
 /** A 10 m piece of the walk, as the preparation run classified it from its photos. */
 export type Stretch = { index: number; from: number; to: number; status: 'clear' | 'barrier' | 'no-photos'; line: Coordinate[]; findings: string[]; views: string[] };
-export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; stretches: Stretch[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; walkFindings: WalkFinding[]; marks: ScanMark[]; scan: Scan | null; sources: { name: string; credit: string; licence: string; link: string | null }[] };
+export type Destination = { id: DestinationId; title: string; place: string; localOnly: boolean; assets: string; origin: [number, number, number]; line: Coordinate[]; lengthMetres: number; start: { name: string; position: Coordinate } | null; target: { name: string; position: Coordinate }; photos: Photo[]; views: View[]; stretches: Stretch[]; pieces: Piece[]; buildings: MapFeature[]; ways: MapFeature[]; findings: Finding[]; walkFindings: WalkFinding[]; marks: ScanMark[]; scan: Scan | null; sources: { name: string; credit: string; licence: string; link: string | null }[];
+  /** The way around the walk's mapped steps that OpenStreetMap's router suggests, prepared with the package; null or absent when it has none, as for a walk built on this device. */
+  wayAround?: WayAround | null };
 export type Cloud = { spot: string; points: number; positions: Float32Array; colours: Uint8Array; views: string[]; view: Uint16Array };
 const fail = (text: string): never => { throw new Error(text); };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : fail('The prepared record is malformed.');
@@ -151,7 +155,7 @@ function parseRecord(value: unknown, expectedId: DestinationId, published: boole
   const line = list(route.line, 20000).map(coordinate);
   const start = request.start == null ? null : record(request.start);
   const walked = line.slice(1).reduce((sum, point, i) => sum + Math.hypot(...metres(point, line[i])), 0);
-  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, stretches, pieces, findings, walkFindings, marks, scan, buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
+  return { id: expectedId, title: text(root.title), place: text(root.place), localOnly: !published, assets: published ? `${BASE}places/${PACKAGES[expectedId] ?? fail('No published package for this place.')}/` : `/routes/${expectedId}/`, origin: [number(origin[0], -180, 180), number(origin[1], -90, 90), number(origin[2])], line, lengthMetres: route.length_m == null ? walked : number(route.length_m, 0, 100000), start: start && { name: text(start.name), position: coordinate(start.position) }, target: { name: text(destination.name), position: coordinate(destination.position) }, photos, views, stretches, pieces, findings, walkFindings, marks, scan, wayAround: root.way_around == null ? null : readWayAround(root.way_around), buildings: mapFeatures(context.buildings, true), ways: mapFeatures(context.ways, false), sources: list(root.sources, 30).map(raw => { const source = record(raw); return { name: text(source.name), credit: text(source.credit), licence: text(source.licence), link: link(source.link) }; }) };
 }
 export function parseDestination(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, false); }
 export function parsePlace(value: unknown, expectedId: DestinationId): Destination { return parseRecord(value, expectedId, true); }
