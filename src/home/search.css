@@ -13,7 +13,17 @@
 /* The search action is its own circle, charcoal glass like the pill, the same height. */
 .home-search-row > .home-search-go { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-ink); }
 .home-search-row > .home-search-go::before { display: none; }
-.home-search-row > .home-search-go:hover { background: rgb(27 30 33 / 0.92); }
+/* One quiet interaction everywhere: a lift and a lighter glass on hover where a pointer hovers, a slight press on tap. */
+.home-search-go, .menu-button { transition: background-color var(--hover-time) var(--ease-out), box-shadow var(--hover-time) var(--ease-out), translate var(--hover-time) var(--ease-out), transform var(--press-time) var(--ease-out); }
+.home-search-field { transition: box-shadow var(--hover-time) var(--ease-out); }
+@media (hover: hover) {
+  .home-search-row > .home-search-go:hover { background: var(--glass-hover); translate: 0 var(--lift); box-shadow: var(--glass-charcoal-edge), var(--shadow-lift); }
+  .home-search-field:hover:not(:focus-within) { box-shadow: var(--glass-charcoal-edge), inset 0 0 0 1px rgb(255 255 255 / 0.22), var(--shadow-float); }
+  .menu-button:hover { background: var(--ui-hover); }
+}
+.home-search-row > .home-search-go:active, .menu-button:active { transform: scale(var(--press-scale)); translate: 0 0; }
+.home-search-field input { caret-color: rgb(255 255 255 / 0.7); }
+.home-search-field:focus-within input { caret-color: #fff; }
 .home-search-panel { position: absolute; z-index: 6; top: 56px; left: 0; right: 0; max-height: min(58svh, 460px); padding-bottom: 8px; }
 .home-search-panel .ui-list { margin-top: 6px; }
 .home-search-recent > li { display: flex; align-items: center; gap: 2px; }
