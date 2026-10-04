@@ -1,7 +1,7 @@
 import { quiet, type Effect, type FxFrame } from './FxCanvas';
 import { flow } from './route';
 import type { FxScene } from './scene';
-import { pointAt, slice, type Seen } from './space';
+import { pointAt, slice } from './space';
 import { arrive, clamp01, dot, easeInOut, easeOut, glow, line, mix, palette, rgba, ring, sway, within } from './paint';
 
 /** A window of time: when it starts, on the performance.now() clock, and how long it lasts, in milliseconds. */
@@ -11,10 +11,8 @@ export type Beats = { photos?: Window; walk?: Window; stretches?: Window; marks?
 
 /** Milliseconds a photo takes to land, and the pixels it falls from. */
 const FALL = 600, DROP = 170;
-/** Milliseconds of the ring where a photo lands, where a mark pops, and of a stretch's tick growing as the light reaches it. */
-const RIPPLE = 520, POP = 380, TICK = 240;
-/** Photos this many metres from the walk hop onto it as the walk is drawn, starting this far ahead of it, over this distance. */
-const NEAR = 22, AHEAD = 12, OVER = 16;
+/** Milliseconds a mark takes to pop, and a stretch's tick to grow as the light reaches it. */
+const POP = 380, TICK = 240;
 /** Metres of the light that runs along the walk as its stretches are counted. */
 const RUN = 16;
 /** The drawn walk gives way to the map's own line this long after its beat. */
@@ -42,11 +40,9 @@ const disc = (path: Path2D, x: number, y: number, r: number) => { path.moveTo(x 
 function photos(f: FxFrame, scene: FxScene, beats: Beats, now: number) {
   const window = beats.photos;
   if (!window || now < window[0]) return;
-  const { ctx, project, squash } = f, colours = palette(), n = scene.photos.length;
+  const { ctx, project } = f, colours = palette(), n = scene.photos.length;
   const fall = Math.min(FALL, window[1] * 0.5), span = window[1] - fall;
-  const head = beats.walk && now >= beats.walk[0] ? scene.route.length * sway(within(now, beats.walk[0], beats.walk[1])) : null;
-  const ghosts = new Path2D(), landed = new Path2D(), opening = new Path2D();
-  const hops: Seen[] = [];
+  const landed = new Path2D(), opening = new Path2D();
   for (let i = 0; i < n; i++) {
     const photo = scene.photos[i], from = window[0] + span * (n > 1 ? i / (n - 1) : 0), u = (now - from) / fall;
     if (u <= 0) continue;
@@ -56,20 +52,11 @@ function photos(f: FxFrame, scene: FxScene, beats: Beats, now: number) {
       dot(ctx, x, y, 1.9 * Math.min(1.4, s), rgba(colours.ink, 0.5 * clamp01(u * 3)));
       continue;
     }
-    const [x, y] = project(photo.at), r = (now - from - fall) / RIPPLE;
-    if (r < 1) ring(ctx, x, y, 2 + 10 * easeOut(r), squash, rgba(colours.ink, 0.24 * (1 - r)), 1);
-    const g = head != null && photo.d < NEAR * scene.unit ? clamp01((head - photo.s + AHEAD * scene.unit) / (OVER * scene.unit)) : 0;
-    if (g > 0 && g < 1) {
-      // Gathered onto the walk beside it with a small hop; a faint dot stays where the photo was taken.
-      const foot = pointAt(scene.route, photo.s), k = easeInOut(g);
-      hops.push(project([photo.at[0] + (foot[0] - photo.at[0]) * k, photo.at[1] + (foot[1] - photo.at[1]) * k], Math.sin(Math.PI * k) * 14));
-    }
-    disc(g > 0 ? ghosts : photo.openable ? opening : landed, x, y, g > 0 ? 1.5 : photo.openable ? 2.3 : 1.7);
+    const [x, y] = project(photo.at);
+    disc(photo.openable ? opening : landed, x, y, photo.openable ? 2.3 : 1.7);
   }
-  ctx.fillStyle = rgba(colours.ink, 0.2); ctx.fill(ghosts);
   ctx.fillStyle = rgba(colours.ink, 0.45); ctx.fill(landed);
   ctx.fillStyle = rgba(colours.ink, 0.7); ctx.fill(opening);
-  for (const [x, y] of hops) dot(ctx, x, y, 2.1, rgba(colours.way, 0.9));
 }
 
 function walk(f: FxFrame, scene: FxScene, beats: Beats, now: number) {
@@ -136,12 +123,9 @@ function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: 
     const mark = scene.marks[i], from = window[0] + (window[1] - pop) * (count > 1 ? i / (count - 1) : 0), v = finished ? 9 : (now - from) / pop;
     if (v <= 0) continue;
     const [x, y] = project(mark.at);
-    if (v < 1.6) ring(ctx, x, y, 3 + 11 * easeOut(v / 1.6), squash, rgba(colours.unknown, 0.5 * (1 - v / 1.6)), 1);
     if (mark.barrier && flag > 0) {
-      // The flags turn clay together, each with a ring on the ground.
+      // The flags turn clay together, each with one ring on the ground.
       if (wave > 0 && wave < 1) ring(ctx, x, y, 4 + 20 * easeOut(wave), squash, rgba(colours.barrier, 0.6 * (1 - wave)), 1.6);
-      const late = wave - 0.22;
-      if (late > 0 && late < 1) ring(ctx, x, y, 4 + 13 * easeOut(late), squash, rgba(colours.barrier, 0.4 * (1 - late)), 1);
       const r = 2.6 + 1.3 * arrive(flag);
       dot(ctx, x, y, r + 1.3, rgba(colours.surface, 0.95));
       dot(ctx, x, y, r, rgba(mix(colours.unknown, colours.barrier, flag), 1));
@@ -154,7 +138,7 @@ function marks(f: FxFrame, scene: FxScene, beats: Beats, now: number, finished: 
 }
 
 /**
- * The build replay: photos land in capture order, the walk is drawn through them, a light along it ticks each stretch, the marks pop
+ * The build replay: photos land where they were taken, in capture order, the walk is drawn through them, a light along it ticks each stretch, the marks pop
  * in walking order and the possible barriers turn clay together. Done draws the end state at once, leaving the photos and the
  * walk to the map, which shows its own. Once the walk is drawn its flow comes up and runs on, through the hand-off, in step with
  * the route screen's.

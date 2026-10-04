@@ -1,7 +1,7 @@
 import type { Effect } from './FxCanvas';
 import type { FxScene } from './scene';
 import { slice, type Seen } from './space';
-import { clamp01, dot, easeInOut, easeOut, glow, line, mix, palette, rgba, ring, within, type Palette } from './paint';
+import { clamp01, dot, easeInOut, easeOut, line, mix, palette, rgba, ring, within, type Palette } from './paint';
 import type { Destination } from '../destinations/data';
 import type { Point } from '../destinations/walk';
 
@@ -42,16 +42,11 @@ export function flow(scene: FxScene, still: boolean): Effect {
   };
 }
 
-/** A tapped spot sends a ring over the ground, and the photos that saw it light as the ring reaches them, then settle. */
+/** A tapped spot lights the photos that saw it, the nearest first, then they settle back. */
 export function ping(scene: FxScene, at: Point, saw: ReadonlySet<string>, started: number, { reach = 70, spread = 1100 } = {}): Effect {
   return ({ ctx, project, now }) => {
-    const t = now - started, u = t / spread, colours = palette(), radius = reach * scene.unit;
-    if (u >= 2.2) return false;
-    if (u > 0 && u < 1) {
-      const circle = (r: number) => Array.from({ length: 49 }, (_, i) => { const a = i / 48 * Math.PI * 2; return project([at[0] + Math.cos(a) * r, at[1] + Math.sin(a) * r]); });
-      line(ctx, circle(radius * easeOut(u)), rgba(colours.surface, 0.7 * (1 - u)), 3);
-      line(ctx, circle(radius * easeOut(u)), rgba(colours.ink, 0.45 * (1 - u)), 1.2);
-    }
+    const t = now - started, colours = palette(), radius = reach * scene.unit;
+    if (t >= spread * 2.2) return false;
     for (const photo of scene.photos) {
       if (!saw.has(photo.id)) continue;
       const d = Math.hypot(photo.at[0] - at[0], photo.at[1] - at[1]);
@@ -78,7 +73,7 @@ export function sawStretches(scene: FxScene, data: Destination, stretches: reado
 }
 
 /** Where a photo was taken and which way it faced, and what it saw, as colours across its width. */
-export type Shot = { id: string; at: Point; heading: number; colours: Rgb[] | null; image: HTMLImageElement | null };
+export type Shot = { id: string; at: Point; heading: number; colours: Rgb[] | null };
 
 /** Sixteen colours across a photo, left to right, kept mostly to their lightness so stone never reads as clay. */
 export function columns(image: HTMLImageElement, count = 16): Rgb[] | null {
@@ -105,11 +100,11 @@ export function columns(image: HTMLImageElement, count = 16): Rgb[] | null {
 const HALF = Math.atan2(14, 31), REACH = 31;
 
 /**
- * The open photo as a camera standing where it was taken: its view laid on the ground in the photo's own light and shade inside
- * an ink outline, four edges up to a frame the shape of the photo, and the photo in that frame. A new photo swings it over.
+ * The open photo's view, laid on the ground where it was taken, in the photo's own light and shade inside an ink outline.
+ * A new photo swings it over.
  */
-export function camera(to: Shot, from: Shot | null, started: number, { grow = 400, swing = 520, photo = true } = {}): Effect {
-  return ({ ctx, project, squash, scale, now }) => {
+export function camera(to: Shot, from: Shot | null, started: number, { grow = 400, swing = 520 } = {}): Effect {
+  return ({ ctx, project, now }) => {
     const colours = palette(), t = now - started;
     const g = from ? 1 : easeOut(clamp01(t / grow)), w = from ? easeInOut(clamp01(t / swing)) : 1;
     const turn = from ? ((to.heading - from.heading + 540) % 360) - 180 : 0;
@@ -131,56 +126,7 @@ export function camera(to: Shot, from: Shot | null, started: number, { grow = 40
     line(ctx, [apex, arc[arc.length - 1]], rgba(colours.ink, 0.55 * g), 1);
     line(ctx, arc, rgba(colours.surface, 0.9 * g), 3.5);
     line(ctx, arc, rgba(colours.ink, 0.8 * g), 1.25);
-    // On a flat map the view on the ground is all there is; leaning, a frame stands at its far edge, as tall as the photo is
-    // for its width, the camera at its middle height.
-    if (squash > 0.99) return t < (from ? swing : grow);
-    const lift = 2 * REACH * Math.tan(HALF) * 0.75 * g * scale;
-    const left = ray(-HALF, reach), right = ray(HALF, reach), tl = project(left, lift), tr = project(right, lift), bl = project(left), br = project(right), eye = project(at, lift / 2);
-    const image = w < 0.5 && from ? from.image : to.image;
-    if (photo && image?.complete && image.naturalWidth) {
-      let [a, b, c] = [tl, tr, bl];
-      if ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) < 0) [a, b, c] = [tr, tl, br];
-      const density = ctx.getTransform().a, fade = from ? Math.abs(w - 0.5) * 2 : 1;
-      ctx.save();
-      ctx.setTransform(density * (b[0] - a[0]) / image.naturalWidth, density * (b[1] - a[1]) / image.naturalWidth, density * (c[0] - a[0]) / image.naturalHeight, density * (c[1] - a[1]) / image.naturalHeight, density * a[0], density * a[1]);
-      ctx.globalAlpha = 0.9 * g * fade;
-      ctx.drawImage(image, 0, 0);
-      ctx.restore();
-    }
-    for (const corner of [tl, tr, bl, br]) line(ctx, [eye, corner], rgba(colours.ink, 0.32 * g), 0.9);
-    line(ctx, [tl, tr, br, bl, tl], rgba(colours.ink, 0.7 * g), 1.1);
-    line(ctx, [apex, eye], rgba(colours.ink, 0.45 * g), 1);
-    dot(ctx, eye[0], eye[1], 2.2, rgba(colours.ink, g));
     return t < (from ? swing : grow);
-  };
-}
-
-/**
- * A soft column of light standing on the focused spot, in its own colour, with a brighter band rising through it now and then,
- * like the marker of a game's main mission. Still, without the band, when motion is reduced.
- */
-export function beam(at: Point, colour: keyof Palette, started: number, still: boolean, { tall = 96, cycle = 2400 } = {}): Effect {
-  return ({ ctx, project, squash, now, width }) => {
-    const colours = palette(), rgb = colours[colour], t = now - started, show = still ? 1 : easeOut(clamp01(t / 400));
-    // Upright on screen, as a standing thing looks through this lens.
-    const height = (width < 640 ? tall * 0.75 : tall) * show, base = project(at), top: Seen = [base[0], base[1] - height, base[2]];
-    const [x, y] = base, [tx, ty] = top;
-    const sideways = (half: number, p: Seen): [number, number] => { const dx = tx - x, dy = ty - y, n = Math.hypot(dx, dy) || 1; return [p[0] - dy / n * half, p[1] + dx / n * half]; };
-    const column = ctx.createLinearGradient(x, y, tx, ty);
-    column.addColorStop(0, rgba(rgb, 0.34)); column.addColorStop(0.55, rgba(rgb, 0.11)); column.addColorStop(1, rgba(rgb, 0));
-    const [l0x, l0y] = sideways(-7, base), [r0x, r0y] = sideways(7, base), [l1x, l1y] = sideways(-2.5, top), [r1x, r1y] = sideways(2.5, top);
-    ctx.beginPath(); ctx.moveTo(l0x, l0y); ctx.lineTo(l1x, l1y); ctx.lineTo(r1x, r1y); ctx.lineTo(r0x, r0y); ctx.closePath(); ctx.fillStyle = column; ctx.fill();
-    const core = ctx.createLinearGradient(x, y, tx, ty);
-    core.addColorStop(0, rgba(rgb, 0.75)); core.addColorStop(1, rgba(rgb, 0));
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.strokeStyle = core; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.save(); ctx.translate(x, y); ctx.scale(1, Math.max(0.2, squash));
-    glow(ctx, 0, 0, 24, rgba(rgb, 0.24 * show), rgba(rgb, 0));
-    ctx.restore();
-    if (still) return false;
-    const phase = (t % cycle) / cycle, rise = easeOut(phase), fade = 1 - phase;
-    const bx = x + (tx - x) * rise, by = y + (ty - y) * rise, ex = x + (tx - x) * Math.min(1, rise + 0.16), ey = y + (ty - y) * Math.min(1, rise + 0.16);
-    line(ctx, [[bx, by], [ex, ey]], rgba(mix(rgb, colours.surface, 0.55), 0.7 * fade * show), 2.5);
-    return true;
   };
 }
 

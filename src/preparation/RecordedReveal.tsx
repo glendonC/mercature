@@ -328,7 +328,6 @@ export default function RecordedReveal({ id, onHome, onOpen, onPlace }: { id: De
             {phase === 'play' && surfaced.map(card => { const [x, y] = routeFrame(data).project(card.position); return <circle key={card.view.id} cx={x} cy={y} r="7" className="reveal-ring"/>; })}
           </GeographicMap>
         </div>}
-        <div className="reveal-scan" aria-hidden="true"/>
         <header className="reveal-banner">
           <h1>{name}</h1>
           <p>{fromRecord(DESTINATIONS[id].place, lang)}</p>

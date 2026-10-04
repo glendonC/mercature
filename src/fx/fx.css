@@ -14,10 +14,6 @@
 .route-map[data-arriving=go] .route-markers > .route-marker:nth-child(n + 9) { animation-delay: 640ms; }
 @keyframes fx-arrive { from { opacity: 0; translate: 0 -16px; scale: 0.55; } }
 
-/* An open spot breathes with the ring it already sends out, on the same beat. */
-.route-map:not([data-still]) .route-marker[data-state=open]:not([aria-pressed=true]) .route-marker-dot { animation: fx-breathe 2.4s var(--ease-out) infinite; }
-@keyframes fx-breathe { 0%, 45%, 100% { scale: 1; } 14% { scale: 1.1; } }
-
 /* Her edits, on a marker an edit has just changed (data-change and data-was, from useChanges); a map that opens with
    them shows them as they are. Fixed: the clay ring turns blue, a round spot squares into her record and a tick draws
    in. Removed: the ring fades to grey and its core goes. Added: the marker drops onto its stretch. Undoing either
@@ -65,7 +61,7 @@
 @keyframes fx-swap-out { to { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-map[data-arriving=go] .route-markers > .route-marker, .route-map .route-marker[data-state=open] .route-marker-dot { animation: none; }
+  .route-map[data-arriving=go] .route-markers > .route-marker { animation: none; }
   .fx-swap { transition: none; }
   .fx-swap-now[data-in] { animation: none; }
 }

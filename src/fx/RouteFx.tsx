@@ -4,7 +4,7 @@ import type { Lens, Tilt } from '../destinations/lens';
 import type { Point, Walk } from '../destinations/walk';
 import type { Changed } from './changes';
 import FxCanvas, { quiet, type Effect } from './FxCanvas';
-import { beam, camera, columns, flow, meaning, ping, pulse, sawStretches, unglow, type Shot } from './route';
+import { camera, columns, flow, meaning, ping, pulse, sawStretches, unglow, type Shot } from './route';
 import { fxScene } from './scene';
 import { spaceOf } from './space';
 
@@ -19,8 +19,6 @@ type Props = {
   lens: Lens | null;
   tilt?: Tilt;
   markers: readonly FxMarker[];
-  /** The spot to draw the eye to: the one the open message is about, or the one under the pointer. */
-  focus?: string | null;
   /** The marker under the pointer: one ring as it is reached. */
   hover?: string | null;
   /** The open photo's view, drawn as a camera where it was taken. */
@@ -30,7 +28,7 @@ type Props = {
 };
 
 /** The route canvas's motion, over its map: mount it inside the map's box, after the map, before its words and markers. */
-export default function RouteFx({ data, walk, lens, tilt, markers, focus = null, hover = null, photoView = '', changes }: Props) {
+export default function RouteFx({ data, walk, lens, tilt, markers, hover = null, photoView = '', changes }: Props) {
   const scene = useMemo(() => fxScene(data, walk), [data, walk]);
   const still = useMemo(quiet, []);
   const at = (id: string | null) => markers.find(marker => marker.id === id) ?? null;
@@ -44,8 +42,6 @@ export default function RouteFx({ data, walk, lens, tilt, markers, focus = null,
   // A new selection pings once; markers moving on screen do not.
   }, [selected?.id, scene, data, walk, still]);
 
-  const focused = at(focus), focusState = focused?.state ?? '';
-  const beamed = useMemo(() => focused ? beam(focused.at, meaning(focusState), performance.now(), still) : null, [focus, focusState, still, focused?.at[0], focused?.at[1]]);
   const hovered = at(hover);
   const pulsed = useMemo(() => hovered && !still ? pulse(hovered.at, meaning(hovered.state), performance.now()) : null, [hover, still]);
 
@@ -59,9 +55,9 @@ export default function RouteFx({ data, walk, lens, tilt, markers, focus = null,
     const view = data.views.find(item => item.id === photoView), photo = view && data.photos.find(item => item.id === view.photoId);
     const heading = view?.heading ?? photo?.heading;
     if (!view || !photo || heading == null) return null;
-    const made: Shot = { id: photoView, at: walk.project(photo.position), heading, colours: null, image: null };
+    const made: Shot = { id: photoView, at: walk.project(photo.position), heading, colours: null };
     const image = new Image();
-    image.onload = () => { made.image = image; made.colours = columns(image); setRead(n => n + 1); };
+    image.onload = () => { made.colours = columns(image); setRead(n => n + 1); };
     image.src = assetUrl(data, view.file);
     shots.current.set(photoView, made);
     return made;
@@ -86,7 +82,7 @@ export default function RouteFx({ data, walk, lens, tilt, markers, focus = null,
   // A marker's place on the map is fixed; only a new change draws anew.
   }), [changes, still, walk]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const effects = useMemo(() => [flowing, filmed, ...edited, pinged, beamed, pulsed].filter((effect): effect is Effect => !!effect), [flowing, filmed, edited, pinged, beamed, pulsed]);
+  const effects = useMemo(() => [flowing, filmed, ...edited, pinged, pulsed].filter((effect): effect is Effect => !!effect), [flowing, filmed, edited, pinged, pulsed]);
   const space = useMemo(() => lens ? spaceOf(lens, tilt) : null, [lens, tilt]);
   return <FxCanvas effects={effects} space={() => space}/>;
 }
