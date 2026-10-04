@@ -209,15 +209,19 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     run();
   }, [landed, size, fitCamera, run]);
 
-  // The selected marker stays in the free band between the place title and the guide, or any sheet, as they change.
+  // The selected marker, or the one last opened while it is still in view, stays in the free band between the place title
+  // and the guide, or any sheet, as they change. Panning or the whole route lets the last one go.
   const chosen = markers.find(marker => marker.selected) ?? null;
+  const lastOpened = useRef<string | null>(null);
   useEffect(() => {
-    const current = tween.current?.to ?? live.current;
-    if (!chosen || !current || !size.height) return;
+    if (chosen) lastOpened.current = chosen.id;
+    const spot = chosen ?? markers.find(marker => marker.id === lastOpened.current) ?? null, current = tween.current?.to ?? live.current;
+    if (!spot || !current || !size.height) return;
     const top = insetsRef.current.top, bottom = size.height - clearBottom, aim = { ...current, lean: goal.current };
-    const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(chosen.at);
+    const [x, y] = lens(aim, tiltOf(size.width, size.height), size.width, size.height).at(spot.at);
+    if (!chosen && (x < 0 || x > size.width || y < 0 || y > size.height)) return;
     if (y >= top && y <= bottom - 28) return;
-    go(clamp(place(chosen.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean)));
+    go(clamp(place(spot.at, [x, Math.max(Math.min((top + bottom) / 2, bottom - 28), Math.min(top + 28, bottom - 28))], aim.k, aim.lean)));
   // Only a new selection or a new band moves the camera; a person's own panning is left alone.
   }, [chosen?.id, clearBottom]);
 
@@ -267,6 +271,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     let k = g.camera.k;
     if (points.length > 1 && g.spread > 0) { k = g.camera.k * Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) / g.spread; g.moved = true; }
     if (!g.moved) return;
+    lastOpened.current = null;
     const anchor = lens(g.camera, tilt, size.width, size.height).ground([g.x, g.y]);
     tween.current = null;
     const next = clamp(place(anchor, [x, y], k, live.current?.lean ?? g.camera.lean));
@@ -289,7 +294,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       const c = live.current; if (!c) return;
       const r = element.getBoundingClientRect(), sx = event.clientX - r.left, sy = event.clientY - r.top;
       const anchor = lens(c, tiltOf(r.width, r.height), r.width, r.height).ground([sx, sy]);
-      tween.current = null;
+      tween.current = null; lastOpened.current = null;
       const next = clamp(place(anchor, [sx, sy], c.k * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)), c.lean));
       live.current = next; setCamera(next);
     };
@@ -339,6 +344,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
 
   // The shared map's own zoom buttons drive this camera; level 1 is the whole walk.
   const zoomTo = (action: SetStateAction<number>) => {
+    lastOpened.current = null;
     const fit = fitCamera(size.width, size.height), current = live.current ?? fit;
     const level = typeof action === 'function' ? action(current.k / fit.k) : action;
     go(level <= 1 ? fit : clamp({ ...current, k: fit.k * level }));
