@@ -651,8 +651,9 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // Markers sit on their spots unless their 44 px targets would overlap, or a marker would cover the credit chip; then they step
   // aside, and a hairline leads back. The chip's box is kept clear of a marker's dot, which floats 11 px up on a leaning map.
   const clearOf = (lift: number): Rect[] => still ? [] : [{ x: creditX - 14, y: creditMiddle - 25.5 + lift, w: creditWidth + 28, h: 51 }], keepClear = clearOf(flat ? 0 : 11);
-  // An OpenStreetMap record stays on its spot, under the others, and never pushes one aside unless it is the one chosen.
-  const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => !marker.gone && (marker.state !== 'osm' || marker.selected) ? [i] : []);
+  // An OpenStreetMap record or a stretch without photos, which the walk's grey dashes already show, stays on its spot, under the
+  // others, and never pushes one aside unless it is the one chosen.
+  const spots = markers.map(marker => toScreen(marker.at)), standing = markers.flatMap((marker, i) => !marker.gone && ((marker.state !== 'osm' && marker.state !== 'no-photos') || marker.selected) ? [i] : []);
   const apart = [...spots], stepped = spread(standing.map(i => spots[i]), standing.map(i => markers[i].selected), 46, keepClear);
   standing.forEach((i, j) => { apart[i] = stepped[j]; });
   // The quiet ones lie on the ground and give way to the credit chip.
