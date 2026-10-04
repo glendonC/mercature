@@ -42,7 +42,7 @@ const WORDS = {
 
 /** Times of the assembly, in seconds. */
 const RISE_FROM = 0.15, RISE_SPREAD = 1.5, LINE_FROM = 0.5, LINE_FOR = 1.7, PINS_FROM = 2.1, PINS_FOR = 0.55, SETTLE_FROM = 2.75, SETTLE_FOR = 1.05;
-const MIN_PITCH = 0.14, MAX_PITCH = 1.5, OBLIQUE = 0.86;
+const MIN_PITCH = 0.14, MAX_PITCH = 1.5, OBLIQUE = 0.78;
 
 const css = (name: string, fallback: string) => (typeof document === 'undefined' ? '' : getComputedStyle(document.documentElement).getPropertyValue(name).trim()) || fallback;
 function rgbOf(colour: string): Vec3 {
@@ -168,12 +168,11 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     if (!space || !host.current) return;
     const { width, height } = host.current.getBoundingClientRect(), aspect = width / Math.max(1, height);
     const origin: Coordinate = [data.origin[0], data.origin[1]];
-    // The intro shows the whole walk; otherwise the focused stretches, or the areas there are.
-    const chosen = focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : intro ? data.line : space.pieces.map(p => p.center);
+    // The focused stretches, or else the areas there are; the intro starts there too and settles over the whole walk.
+    const chosen = focus?.length ? data.stretches.filter(s => focus.includes(s.index)).flatMap(s => s.line) : space.pieces.map(p => p.center);
     const points = (chosen.length ? chosen : data.line).map(p => { const [x, y] = metres(p, origin); return [x, y, ground(x, y)] as Vec3; });
-    const close = !intro || !!focus?.length;
-    const to = framing(points, aspect, close ? 0.95 : OBLIQUE, walk);
-    if (close) to.distance = Math.max(to.distance + 30, 70);
+    const to = framing(points, aspect, intro ? OBLIQUE : 0.95, walk);
+    to.distance = Math.max(to.distance + 30, 70);
     if (!camera.current || reduced()) camera.current = to;
     else goal.current = { from: { ...camera.current }, to, at: performance.now(), for: 700 };
     dirty.current = true;
@@ -197,6 +196,15 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     const observer = new ResizeObserver(resize);
     if (host.current) observer.observe(host.current);
     let settleFrom: Camera | null = null;
+    const origin: Coordinate = [data.origin[0], data.origin[1]];
+    const tour = [...space.pieces].map(p => { const [x, y] = metres(p.center, origin), along = nearest(walk, x, y).along; return { at: [x, y, groundAt(space, along) + 2] as Vec3, along }; }).sort((a, b) => a.along - b.along).map(p => p.at);
+    const tourYaw = camera.current?.yaw ?? 0;
+    // Where the intro settles: straight down on the whole walk, north up, as the map frames it.
+    const overview = () => {
+      const box = host.current?.getBoundingClientRect(), origin: Coordinate = [data.origin[0], data.origin[1]];
+      const whole = framing(data.line.map(p => { const [x, y] = metres(p, origin); return [x, y, groundAt(space, nearest(walk, x, y).along)] as Vec3; }), (box?.width ?? 1) / Math.max(1, box?.height ?? 1), MAX_PITCH + 0.06, walk);
+      return { ...whole, yaw: 0, distance: whole.distance * 0.92 };
+    };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
       const playing = intro && !still && !clock.current.done;
@@ -208,10 +216,16 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
         if (k >= 1) goal.current = null;
         moving = true;
       }
+      // Before it settles, the intro travels along the areas as they rise, turning a little for depth.
+      if (playing && !focus?.length && tour.length && camera.current && t < SETTLE_FROM) {
+        const u = clamp(t / SETTLE_FROM, 0, 1), k = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2, at = k * (tour.length - 1), i = Math.min(tour.length - 2, Math.floor(at)), f = at - Math.max(0, i);
+        const a = tour[Math.max(0, i)], b = tour[Math.min(tour.length - 1, Math.max(0, i) + 1)], box = host.current?.getBoundingClientRect(), portrait = !!box && box.width < box.height;
+        camera.current = { target: tour.length === 1 ? tour[0] : a.map((v, j) => v + (b[j] - v) * f) as Vec3, yaw: tourYaw + 0.5 * k - 0.25, pitch: 0.62 + 0.12 * k, distance: portrait ? 95 : 70 };
+      }
       if (playing && settle && camera.current && t >= SETTLE_FROM) {
         settleFrom ??= { ...camera.current };
-        const k = ease((t - SETTLE_FROM) / SETTLE_FOR);
-        camera.current = { ...settleFrom, pitch: settleFrom.pitch + (MAX_PITCH + 0.06 - settleFrom.pitch) * k, yaw: settleFrom.yaw * (1 - k) };
+        const k = ease((t - SETTLE_FROM) / SETTLE_FOR), to = overview(), turn = Math.atan2(Math.sin(to.yaw - settleFrom.yaw), Math.cos(to.yaw - settleFrom.yaw));
+        camera.current = { target: settleFrom.target.map((v, i) => v + (to.target[i] - v) * k) as Vec3, pitch: settleFrom.pitch + (to.pitch - settleFrom.pitch) * k, yaw: settleFrom.yaw + turn * k, distance: settleFrom.distance * Math.pow(to.distance / settleFrom.distance, k) };
       }
       if (!moving && !dirty.current) return;
       dirty.current = false;
@@ -224,6 +238,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
     frame = requestAnimationFrame(tick);
     if (!ended && still) { ended = true; callbacks.current.onIntroEnd?.(); }
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [space, intro, settle, walk]);
 
   // Touch and mouse: one finger or the left button turns, two fingers pinch and pan, the right button or Shift pans, the wheel zooms.
@@ -323,7 +338,7 @@ export default function Space3D({ data, markers = [], marks = true, onMarker, on
 
   if (failed) return null;
   return <div ref={host} className={['space3d', className].filter(Boolean).join(' ')} data-ready={loaded > 0 || undefined}>
-    <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />
+    {still ? <canvas ref={canvas} className="space3d-canvas" role="img" aria-label={words.label} /> : <canvas ref={canvas} className="space3d-canvas" tabIndex={0} role="img" aria-label={`${words.label}. ${words.view}.`} onKeyDown={keys} {...handlers} />}
     <p className="space3d-label">{words.label}</p>
     {space && loaded < space.pieces.length && <p className="space3d-loading" role="status">{words.loading}</p>}
     {!still && <div className="space3d-controls">
