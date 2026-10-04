@@ -85,6 +85,9 @@
   .site-home .home-photo { width: clamp(240px, 21vw, 300px); aspect-ratio: 2.7; }
 }
 
-/* The guide stands near the walk on the map, above the place photos, never on its own line, and under the search's answers. */
-.home-bot { position: absolute; z-index: 4; left: 63%; bottom: calc(var(--guide) + 220px + var(--safe-bottom)); }
-@media (max-width: 639px) { .home-bot { left: auto; right: calc(20px + var(--safe-right)); bottom: calc(var(--guide) + 196px + var(--safe-bottom)); } }
+/* The guide stands just left of its line, bottom-aligned with it, never on the box. A screen too narrow to keep it beside the box gives the box less width. */
+.home-bot { position: absolute; z-index: 4; left: calc(var(--guide-left, 50%) - var(--companion) - 12px); bottom: calc(var(--chat-edge) + var(--safe-bottom)); }
+@media (max-width: 879px) {
+  .site-home .home-guide { left: auto; right: calc(var(--chat-edge) + var(--safe-right)); transform: none; width: calc(100% - 2 * var(--chat-edge) - var(--companion) - 12px - var(--safe-left) - var(--safe-right)); }
+  .home-bot { left: calc(var(--chat-edge) + var(--safe-left)); }
+}

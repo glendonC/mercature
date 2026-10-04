@@ -135,9 +135,11 @@ export default function Home({onDestination, saved = [], onOpenSaved}: Props) {
   useLayoutEffect(() => {
     const root = shell.current, line = root?.querySelector<HTMLElement>('.home-guide');
     if (!root || !line) return;
-    const fit = () => root.style.setProperty('--guide', `${line.offsetHeight}px`);
+    const box = line.querySelector<HTMLElement>('.ui-dialogue-line') ?? line;
+    // Its height lifts the photos above it; its left edge places the bot beside it, since the box narrows to its words.
+    const fit = () => { root.style.setProperty('--guide', `${line.offsetHeight}px`); root.style.setProperty('--guide-left', `${box.getBoundingClientRect().left - root.getBoundingClientRect().left}px`); };
     fit();
-    const observer = new ResizeObserver(fit); observer.observe(line);
+    const observer = new ResizeObserver(fit); observer.observe(line); observer.observe(box);
     return () => observer.disconnect();
   });
   // What the guide says while she searches, the walk being built drawn behind it, and the last walk built, which can take another start.
