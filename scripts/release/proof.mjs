@@ -5,12 +5,12 @@
  *   3. The service worker controls the app's path only.
  *   4. After a cold restart with no network, the route opens and the model answers the Korean Example
  *      message afresh: Start over clears the first answer, never the model.
- *   node scripts/release/proof.mjs [url] [--serve dist] [--out dir]
+ *   node scripts/release/proof.mjs [url] [--serve dist] [--out dir] [--browser chromium|webkit]
  * With --serve, the build is served like GitHub Pages under the URL's path and the server is
  * stopped before the offline restart. The offline restart also sends every request, the service
  * worker's own included, to a proxy that drops it. Screenshots and report.json go to the out directory.
  */
-import { chromium } from '@playwright/test';
+import { chromium, webkit } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
@@ -21,8 +21,10 @@ const args = process.argv.slice(2);
 const option = name => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
 const serve = option('--serve');
 const outOption = option('--out');
+const browserName = option('--browser') ?? 'chromium';
+const engine = { chromium, webkit }[browserName] ?? (() => { throw new Error(`Unknown browser ${browserName}.`); })();
 const base = new URL(args[0] ?? 'http://127.0.0.1:4186/mercature/');
-const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-z0-9.-]/gi, '-')}`);
+const out = resolve(outOption ?? `.local/release/proof-${base.host.replace(/[^a-z0-9.-]/gi, '-')}${browserName === 'chromium' ? '' : `-${browserName}`}`);
 // The Korean demo message, the inbox's Korean Example: steps by the church were too steep for the writer's mother.
 const ROW = 'example-ko-steps';
 const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 있는 돌계단이 너무 가팔라서 어머니가 내려가시기 힘들었어요.';
@@ -30,7 +32,7 @@ const MESSAGE = '코리칸차 가는 길에 성당 옆 잉카 돌담 골목에 �
 const EXPECTED = { kind: 'Problem?', spots: ['Calle Loreto, 340 to 350 m', 'Calle Loreto, 130 to 140 m', 'Qorikancha ticket booth'] };
 const REVIEW = 'mercature.route-review.v1.cusco-qorikancha';
 
-const report = { url: base.href, started: new Date().toISOString(), checks: [], downloads: [], offsite: [], answers: {}, transfer: {} };
+const report = { url: base.href, browser: browserName, started: new Date().toISOString(), checks: [], downloads: [], offsite: [], answers: {}, transfer: {}, errors: [] };
 const check = (name, pass, detail = '') => {
   report.checks.push({ name, pass, detail });
   console.log(`${pass ? 'PASS' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
@@ -51,19 +53,22 @@ async function startServer() {
 let dropped = 0;
 const sink = createServer(socket => { dropped++; socket.destroy(); });
 await new Promise(done => sink.listen(0, '127.0.0.1', done));
-const proxy = { server: `http://127.0.0.1:${sink.address().port}`, bypass: '<-loopback>' };
+// Chromium needs <-loopback> to send 127.0.0.1 through the proxy too.
+const proxy = { server: `http://127.0.0.1:${sink.address().port}`, ...(browserName === 'chromium' ? { bypass: '<-loopback>' } : {}) };
 
 let profile = null;
 let context;
 async function launch(offline) {
   await context?.close();
-  context = await chromium.launchPersistentContext(profile, {
+  context = await engine.launchPersistentContext(profile, {
     headless: true, viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: 'allow',
     ...(offline ? { proxy } : {}),
   });
   await context.setOffline(offline);
   const phase = offline ? 'offline' : 'online';
   const transfer = report.transfer[phase] = { requests: 0, bytes: 0 };
+  context.on('weberror', error => report.errors.push({ phase, kind: 'page error', text: String(error.error()).slice(0, 300) }));
+  context.on('console', message => { if (message.type() === 'error') report.errors.push({ phase, kind: 'console', text: message.text().slice(0, 300) }); });
   context.on('requestfinished', async request => {
     const url = new URL(request.url());
     const response = await request.response();
@@ -214,5 +219,6 @@ report.finished = new Date().toISOString();
 await writeFile(resolve(out, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
 for (const item of report.downloads) console.log(`download ${item.phase} ${item.status} ${item.path}: ${item.transferBytes} bytes on the wire, encoding ${item.encoding}`);
 for (const [phase, item] of Object.entries(report.transfer)) console.log(`${phase}: ${item.requests} network responses, ${item.bytes} bytes on the wire`);
+for (const item of report.errors) console.log(`${item.phase} ${item.kind}: ${item.text}`);
 console.log(`Report and screenshots in ${out}`);
 if (report.checks.some(item => !item.pass)) process.exit(1);
