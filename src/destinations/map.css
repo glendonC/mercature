@@ -65,11 +65,14 @@
 @keyframes route-pulse { 0% { opacity: 0.55; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.5); } }
 .route-leader { position: absolute; z-index: 4; height: 1px; background: color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
 .route-card-slot { position: absolute; z-index: 6; width: 340px; }
-/* The map credit in a corner of the free map: the full line at first, then a small chip that a tap opens again */
+/* The map credit in a corner of the free map, on charcoal glass: the full line at first, then a small chip that a tap opens again */
 .route-credit { position: absolute; z-index: 5; display: grid; place-items: center end; min-width: var(--tap); min-height: var(--tap); padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; }
-.route-credit span { padding: 3px 9px; border-radius: var(--radius-pill); background: rgb(255 255 255 / 0.8); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); color: var(--muted); font-size: var(--font-xs); line-height: 1.3; white-space: nowrap; }
+.route-credit span { padding: 3px 9px; border-radius: var(--radius-pill); background: var(--glass-charcoal); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-charcoal-edge), var(--shadow-float); color: var(--ui-muted); font-size: var(--font-xs); line-height: 1.3; white-space: nowrap; }
 .route-credit:focus-visible { outline: none; }
 .route-credit:focus-visible span { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Zoom controls float on the map as charcoal glass circles, with no box around them */
+.destination-map > .destination-map-controls[data-surface=glass] { gap: 2px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.destination-map-controls[data-surface=glass] > .ui-icon-button { padding: 0; border-radius: 50%; color: #f2f3f4; }
 .route-map[data-still], .route-map[data-still]:active { touch-action: auto; cursor: default; }
 .route-map[data-still] .route-marker { pointer-events: none; }
 

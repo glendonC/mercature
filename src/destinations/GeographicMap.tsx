@@ -3,6 +3,8 @@ import { metres, type Coordinate, type Destination, type Photo } from './data';
 import { HAZE, type Lens } from './lens';
 import type { Point } from './walk';
 import { useLanguage } from '../i18n';
+import { IconButton } from '../ui';
+import { FitIcon, MinusIcon, PlusIcon } from '../ui/icons';
 import './map.css';
 
 /** Photos in the order they were captured; undated photos come last. */
@@ -207,5 +209,9 @@ export default function GeographicMap({ data, selected, onSelect, hidden, zoom, 
     <g transform={`translate(${target.join(' ')})${lens ? ` scale(${Math.min(1.3, size(data.target.position))})` : ''}`} className="map-target"><path d="M0 -9 9 0 0 9 -9 0Z"/><circle r="2.2"/><title>{data.target.name}</title></g>
     {children}
     {!lens && !still && <><g transform="translate(24 456)" className="map-scale"><path d={`M0 -4V0H${scaleMetres * scale}V-4`}/><text y="17">{scaleMetres} m</text></g><text x="766" y="28" className="map-north">N</text></>}
-  </svg>{!still && <div className="destination-map-controls"><button onClick={() => setZoom(z => Math.min(4, z * 1.5))} aria-label={words.zoomIn}>+</button><button onClick={() => setZoom(z => Math.max(1, z / 1.5))} aria-label={words.zoomOut}>−</button><button onClick={() => setZoom(1)}>{words.fit}</button></div>}{credit && <span className="destination-map-credit">{words.credit}</span>}</section>;
+  </svg>{!still && <div className="destination-map-controls" data-surface="glass">
+    <IconButton surface="glass" label={words.zoomIn} onClick={() => setZoom(z => Math.min(4, z * 1.5))}><PlusIcon /></IconButton>
+    <IconButton surface="glass" label={words.zoomOut} onClick={() => setZoom(z => Math.max(1, z / 1.5))}><MinusIcon /></IconButton>
+    <IconButton surface="glass" label={words.fit} onClick={() => setZoom(1)}><FitIcon /></IconButton>
+  </div>}{credit && <span className="destination-map-credit">{words.credit}</span>}</section>;
 }

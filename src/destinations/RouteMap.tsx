@@ -25,6 +25,20 @@ export type Marker = {
 const ICONS: Record<MarkerIcon, Icon> = { steps: StepsIcon, kerb: KerbIcon, path: PathIcon, 'no-photos': NoPhotosIcon, fixed: FixedIcon, added: AddedIcon, check: LookIcon, dismissed: RemoveIcon };
 type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+/** Whether a line through screen points, or a single point, passes through a box. */
+function crosses(points: Point[], r: Rect) {
+  return points.some((a, i) => {
+    const b = points[i + 1] ?? a, dx = b[0] - a[0], dy = b[1] - a[1];
+    let from = 0, to = 1;
+    for (const [p, q] of [[-dx, a[0] - r.x], [dx, r.x + r.w - a[0]], [-dy, a[1] - r.y], [dy, r.y + r.h - a[1]]]) {
+      if (p === 0) { if (q < 0) return false; continue; }
+      const t = q / p;
+      if (p < 0) from = Math.max(from, t); else to = Math.min(to, t);
+      if (from > to) return false;
+    }
+    return true;
+  });
+}
 export type MapHandle = {
   fit: (animate?: boolean) => void;
   /** Moves the camera so a map point lands on a screen point, optionally closer in. */
@@ -281,7 +295,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   // The map credit of a map people use: the full line at first, folded to a small chip after the first move or a few seconds;
   // a tap opens it again.
   const [credit, setCredit] = useState(true);
-  useEffect(() => { const timer = window.setTimeout(() => setCredit(false), 6000); return () => clearTimeout(timer); }, []);
+  const creditText = credit ? words.credit : '© OSM';
 
   // The marker raised by a fine pointer or keyboard focus, as the map sees it, so a page that does not point at markers itself
   // still gets the raise and the motion layer's ring; a marker the page points at comes first.
@@ -424,7 +438,25 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
   const own = new Map(placed.map(p => [p.marker.id, { x: p.at[0] - 22, y: p.at[1] - 22, w: 44, h: 44 }] as const));
   const taken: Rect[] = [...own.values()];
   const controls = box.current?.querySelector('.destination-map-controls')?.getBoundingClientRect(), bounds = box.current?.getBoundingClientRect();
-  if (controls && bounds && controls.width) taken.push({ x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 });
+  const zoomBox: Rect | null = controls && bounds && controls.width ? { x: controls.left - bounds.left - 8, y: controls.top - bounds.top - 8, w: controls.width + 16, h: controls.height + 16 } : null;
+  if (zoomBox) taken.push(zoomBox);
+  // The credit chip takes the bottom corner of the free map that the whole walk leaves clear, the right one when both are, judged
+  // at the whole-route framing with the chip open, so it never hops while the map moves or the chip folds. Where the open line
+  // would cover the walk either way, it folds sooner, before the light reaches the end of the walk.
+  const creditBottom = Math.max(4, clearBottom + 4), creditMiddle = size.height - creditBottom - 22, chip = (x: number, w: number): Rect => ({ x: x - 4, y: creditMiddle - 16, w: w + 8, h: 32 });
+  const { left: creditLeft, crowded } = (() => {
+    if (still || !camera) return { left: false, crowded: false };
+    const whole = lens(fitCamera(size.width, size.height), tilt, size.width, size.height), w = Math.max(60, words.credit.length * 6.6 + 18);
+    const seen = (r: Rect) => crosses(walk.route.map(p => whole.at(p)), r) || crosses([whole.at(walk.target.at)], { x: r.x - 8, y: r.y - 8, w: r.w + 16, h: r.h + 16 });
+    const left = chip(Math.max(8, insets.left), w), right = seen(chip(size.width - Math.max(8, insets.right) - w, w));
+    return right && !seen(left) && !(zoomBox && overlaps(zoomBox, left)) ? { left: true, crowded: false } : { left: false, crowded: right };
+  })();
+  if (!still) { const w = Math.max(60, creditText.length * 6.6 + 18); taken.push(chip(creditLeft ? Math.max(8, insets.left) : size.width - Math.max(8, insets.right) - w, w)); }
+  useEffect(() => {
+    if (leaning && !landed) return;
+    const timer = window.setTimeout(() => setCredit(false), crowded ? 3000 : 6000);
+    return () => clearTimeout(timer);
+  }, [leaning, landed, crowded]);
   const captions = new Map<string, { side: 'right' | 'left'; text: string }>();
   for (const { marker, at } of [...placed].sort((a, b) => Number(b.marker.selected || b.marker.id === lifted) - Number(a.marker.selected || a.marker.id === lifted))) {
     if (!marker.tag || !camera) continue;
@@ -442,8 +474,10 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
       if (side) { captions.set(marker.id, { side, text }); break; }
     }
   }
+  // A map word wraps at 180 px, or 130 px on a phone, as map.css sets.
+  const wraps = size.width > 640 ? 180 : 130;
   const visibleLabels = camera ? labels.map(label => { const at = toScreen(label.at); return { label, at: [at[0], at[1] + (label.dy ?? 0)] as Point }; }).filter(({ label, at }) => {
-    const w = Math.min(180, label.name.length * 6.6) + 8, h = label.name.length * 6.6 > 180 ? 34 : 18, box = { x: at[0] - w / 2, y: at[1] - h / 2, w, h };
+    const long = label.name.length * 6.6, w = Math.min(wraps, long) + 8, h = Math.ceil(long / wraps) * 16 + 2, box = { x: at[0] - w / 2, y: at[1] - h / 2, w, h };
     if (at[0] < 8 || at[0] > size.width - 8 || at[1] < insets.top || at[1] > size.height - clearBottom) return false;
     if (taken.some(other => overlaps(other, box))) return false;
     taken.push(box);
@@ -491,7 +525,7 @@ const RouteMap = forwardRef<MapHandle, Props>(function RouteMap({ data, walk, ph
     {card && <div className="route-card-slot" ref={cardBox} style={cardStyle ?? { left: -9999, top: 0 }}>{card}</div>}
     {/* A backdrop keeps the plain credit line its page places; a map people use gets the folding control. */}
     {!still && <button type="button" className="route-credit" aria-expanded={credit} aria-label={words.credit} onClick={() => setCredit(open => !open)}
-      style={{ right: Math.max(8, insets.right), bottom: Math.max(4, clearBottom + 4) }}><span>{credit ? words.credit : '© OSM'}</span></button>}
+      style={creditLeft ? { left: Math.max(8, insets.left), bottom: creditBottom } : { right: Math.max(8, insets.right), bottom: creditBottom }}><span data-tone="dark">{creditText}</span></button>}
   </div>;
 });
 export default RouteMap;
