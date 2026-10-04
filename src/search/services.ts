@@ -81,10 +81,14 @@ export async function findPlaces(words: string, options: { near?: LonLat; lang?:
     const parts = display.split(',').map(part => part.trim()).filter(Boolean);
     // The name on the ground, as signs show it, rather than its translation into the interface language.
     const local = (raw.namedetails as Record<string, unknown> | null | undefined)?.name;
-    const name = typeof local === 'string' && local.trim() ? local.trim() : typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : parts[0];
+    const address = (raw.address ?? {}) as Record<string, string>;
+    // An address is named by its street address ("1077 Anderson Avenue"), never the bare number.
+    const street = address.house_number && address.road ? `${address.house_number} ${address.road}` : null;
+    const named = typeof local === 'string' && local.trim() ? local.trim() : typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : '';
+    const bare = /\d/.test(named) && /^[\d\s\-/a-z]{1,8}$/i.test(named);
+    const name = named && !bare ? named : street ?? (named || parts[0]);
     const type = raw.osm_type === 'node' || raw.osm_type === 'way' || raw.osm_type === 'relation' ? raw.osm_type : null;
     const detail = parts.filter(part => part !== name && !/^\d[\d -]*$/.test(part)).slice(0, 3).join(', ');
-    const address = (raw.address ?? {}) as Record<string, string>;
     const town = address.city ?? address.town ?? address.village ?? address.hamlet ?? address.municipality ?? address.county ?? address.state;
     const area = [town !== name ? town : undefined, address.country].filter(Boolean).join(', ');
     const box = Array.isArray(raw.boundingbox) ? (raw.boundingbox as string[]).map(Number) : [];
