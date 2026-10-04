@@ -1,10 +1,11 @@
 import type { Key } from './en';
 
 /**
- * Neutral Latin American Spanish, informal "tú" for the person running the place.
+ * Plain Spanish as spoken in Peru, informal "tú" for the person running the place.
  * Glossary: place lugar, spot punto, message mensaje, fix arreglo, plan plan, path check revisión de caminos,
  * model modelo (only the AI), Connected Conectado, Blocked Bloqueado, Unknown Desconocido,
- * Not sure Sin certeza, Example Ejemplo, flagged señalado (a mark on a photo is marca).
+ * Not sure Sin certeza, Example Ejemplo, flagged señalado (a mark on a photo is marca),
+ * start of a walk Salida (Inicio is Home), OpenStreetMap says Según OpenStreetMap, photos are analizadas (never leídas).
  */
 export const es = {
   // Language switch
@@ -146,6 +147,8 @@ export const es = {
   'record.cusco': 'Cusco, Perú',
   'record.tbilisi': 'Tiflis, Georgia',
   'record.kathmandu': 'Katmandú, Nepal',
+  'record.tbilisiCity': 'Tiflis',
+  'record.kathmanduCity': 'Katmandú',
 
   // What OpenStreetMap says along a walk, as the place records write it
   'osm.says': 'Según OpenStreetMap: {label}',

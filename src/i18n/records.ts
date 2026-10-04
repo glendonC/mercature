@@ -32,6 +32,8 @@ const RECORDS: Readonly<Record<string, PlainKey>> = {
   'Cusco, Peru': 'record.cusco',
   'Tbilisi, Georgia': 'record.tbilisi',
   'Kathmandu, Nepal': 'record.kathmandu',
+  'Tbilisi': 'record.tbilisiCity',
+  'Kathmandu': 'record.kathmanduCity',
 };
 
 /** A steps label, with or without its count: "Steps, no handrail", "23 steps with a handrail, no ramp". */

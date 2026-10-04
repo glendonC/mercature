@@ -143,6 +143,8 @@ export const en = {
   'record.cusco': 'Cusco, Peru',
   'record.tbilisi': 'Tbilisi, Georgia',
   'record.kathmandu': 'Kathmandu, Nepal',
+  'record.tbilisiCity': 'Tbilisi',
+  'record.kathmanduCity': 'Kathmandu',
 
   // What OpenStreetMap says along a walk, as the place records write it
   'osm.says': 'OpenStreetMap says: {label}',
