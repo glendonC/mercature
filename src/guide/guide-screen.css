@@ -12,6 +12,8 @@
 .gs-place { flex: 1; min-width: 0; text-shadow: var(--halo); }
 .gs-place h1 { margin: 0; font-size: var(--font-m); font-weight: 500; line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
 .gs-place p { margin: 1px 0 0; font-size: var(--font-xs); color: var(--muted); }
+/* One Edit pill at top centre on every step; on a phone it sits beside the menu, clear of the place's name. */
+.gs-bar .gs-edit { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12px); width: max-content; translate: -50% 0; }
 
 /* Above the shared dialogue at the bottom (src/ui), only when a step has them: what the line is about on the left and her choices
    stacked on the right. The space between them lets taps through to the map. */
@@ -71,6 +73,7 @@
   .gs-bar { height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) calc(4px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px)); }
   .guide-screen .destination-map-controls { top: calc(64px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); }
   .guide-screen .destination-map-controls button:not(:last-child) { display: none; }
+  .gs-bar .gs-edit { position: relative; left: auto; top: auto; translate: none; flex: none; }
   /* At least a strip of map stays above the card, with the spot framed in it; a long turn scrolls inside. */
   .gs-work { width: calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); bottom: calc(var(--dialogue, 120px) + 8px); max-height: calc(100% - var(--dialogue, 120px) - 64px - 16dvh - env(safe-area-inset-top, 0px)); }
   .gs-turn, .gs-work[data-content] .gs-turn { flex-direction: column; align-items: stretch; gap: 8px; overflow-y: auto; scrollbar-width: none; }
