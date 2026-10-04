@@ -159,7 +159,7 @@ button.ui-row:active { background: var(--ui-press); }
 
 /* Fields */
 .ui-field { display: block; width: 100%; min-height: var(--tap); margin: 0; padding: 10px 12px; border: var(--hair-width) solid var(--ui-hair-strong); border-radius: 10px; background: var(--ui-fill); color: var(--ui-ink); font: inherit; font-size: var(--font-m); line-height: var(--leading-read); transition: border-color var(--motion-hover) ease, box-shadow var(--motion-hover) ease; }
-.ui-field::placeholder { color: var(--ui-muted); }
+.ui-field::placeholder { color: var(--ui-placeholder); opacity: 1; }
 .ui-field:focus { outline: none; border-color: var(--ui-ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-ink) 10%, transparent); }
 textarea.ui-field { min-height: 104px; max-height: 240px; resize: vertical; }
 .ui-select { position: relative; display: inline-flex; align-items: center; min-width: 0; }

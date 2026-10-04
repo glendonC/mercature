@@ -132,6 +132,7 @@
   /* What sits on a surface; a charcoal surface flips these */
   --ui-ink: var(--ink);
   --ui-muted: var(--muted);
+  --ui-placeholder: var(--muted);
   --ui-hair: var(--hairline);
   --ui-hair-strong: var(--hairline-strong);
   --ui-hover: rgb(29 33 37 / 0.05);
@@ -154,6 +155,7 @@
 [data-tone="light"] {
   --ui-ink: var(--ink);
   --ui-muted: var(--muted);
+  --ui-placeholder: var(--muted);
   --ui-hair: var(--hairline);
   --ui-hair-strong: var(--hairline-strong);
   --ui-hover: rgb(29 33 37 / 0.05);
@@ -174,7 +176,8 @@
 /* A charcoal surface: the colour meanings stay, in tints that hold contrast on it */
 [data-tone="dark"] {
   --ui-ink: #f2f3f4;
-  --ui-muted: rgb(242 243 244 / 0.62);
+  --ui-muted: rgb(242 243 244 / 0.68);
+  --ui-placeholder: rgb(242 243 244 / 0.74);
   --ui-hair: rgb(255 255 255 / 0.1);
   --ui-hair-strong: rgb(255 255 255 / 0.18);
   --ui-hover: rgb(255 255 255 / 0.07);
