@@ -8,6 +8,7 @@ import RouteMap, { type Insets, type Marker } from '../destinations/RouteMap';
 import { spotMarkers } from '../destinations/markers';
 import { buildWalk, type Walk } from '../destinations/walk';
 import { loadReview, verdictOf } from '../decisions/store';
+import { isFixed, loadEdits } from '../edits/store';
 import { CloseIcon, InfoIcon } from '../icons';
 import { useLanguage } from '../i18n';
 import LanguageSwitch from '../i18n/LanguageSwitch';
@@ -45,7 +46,7 @@ function useOpenable(): (id: string) => boolean {
   return id => (isDestinationId(id) && !!PACKAGES[id]) || local.has(id);
 }
 /** The hero walk, its spots, and how many of them still wait for a person. */
-function useHero(): { data: Destination | null; walk: Walk | null; markers: Marker[]; left: number } {
+function useHero(): { data: Destination | null; walk: Walk | null; markers: Marker[]; flagged: number } {
   const [data, setData] = useState<Destination | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -54,9 +55,12 @@ function useHero(): { data: Destination | null; walk: Walk | null; markers: Mark
   }, []);
   const walk = useMemo(() => data && buildWalk(data), [data]);
   const review = useMemo(() => data && loadReview(data.id).review, [data]);
-  if (!walk || !review) return { data, walk: null, markers: [], left: 0 };
-  const flagged = walk.spots.filter(spot => spot.kind === 'flagged');
-  return { data, walk, markers: spotMarkers(walk, review), left: flagged.filter(spot => !verdictOf(review, spot.stretches)).length };
+  const edits = useMemo(() => data && loadEdits(data.id).edits, [data]);
+  if (!walk || !review || !edits) return { data, walk: null, markers: [], flagged: 0 };
+  /** What the walk still flags, by the route screen's own rule: nothing she has removed or fixed, plus the spots she added. */
+  const kept = walk.spots.filter(spot => spot.kind === 'flagged' && verdictOf(review, spot.stretches) !== 'not-barrier' && !isFixed(edits, spot.stretches));
+  const mine = edits.added.filter(spot => !isFixed(edits, [spot.stretch]));
+  return { data, walk, markers: spotMarkers(walk, review), flagged: kept.length + mine.length };
 }
 const sameInsets = (a: Insets, b: Insets) => a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.left === b.left;
 /** The part of the screen the walk may use: beside the words on a wide screen, between them on a phone. */
@@ -103,7 +107,7 @@ export default function Home({onFarm, onDestination, saved = [], onOpenSaved}: P
   const insets = useFree(words, places);
   const mapWords = { zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), fit: t('map.fit'), credit: t('map.credit') };
   const others = covers.filter(cover => cover.id !== HERO && openable(cover.id));
-  const status = !hero.data ? null : hero.left === 0 ? t('home.allChecked') : hero.left === 1 ? t('home.oneSpotToCheck') : t('home.spotsToCheck', { n: hero.left });
+  const status = !hero.data ? null : hero.flagged === 0 ? t('home.noFlaggedSpots') : hero.flagged === 1 ? t('home.oneFlaggedSpot') : t('home.flaggedSpots', { n: hero.flagged });
   return <main className="welcome-shell site-home" aria-label={t('home.label')}>
     {hero.data && hero.walk && <RouteMap still data={hero.data} walk={hero.walk} photoView="" markers={hero.markers} labels={[]} insets={insets}
       highlight={null} onMarker={() => {}} onMap={() => {}} clearBottom={0} words={mapWords} ariaLabel={DESTINATIONS[HERO].name}/>}

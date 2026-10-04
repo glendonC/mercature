@@ -62,7 +62,7 @@ export const UPDATE = {
     en: (kind: EditKind, where: Where, metres: number, date: string) =>
       `Update, ${date}: ${KIND_WORDS[kind].en} ${where.en}, about ${metres} m along the walk, ${KIND_WORDS[kind].plural ? 'have' : 'has'} been fixed.`,
     es: (kind: EditKind, where: Where, metres: number, date: string) =>
-      `Actualización, ${date}: ${KIND_WORDS[kind].es} ${where.es}, a unos ${metres} m del inicio, ya está arreglado.`,
+      `Actualización, ${date}: ${KIND_WORDS[kind].es} ${where.es}, a unos ${metres} m del inicio, ${KIND_WORDS[kind].plural ? 'ya están arreglados' : 'ya está arreglado'}.`,
     ko: (kind: EditKind, where: Where, metres: number, date: string) =>
       `업데이트 (${date}): 출발점에서 약 ${metres}m, ${where.ko} 근처 ${KIND_WORDS[kind].ko}은(는) 수리되었습니다.`,
   },

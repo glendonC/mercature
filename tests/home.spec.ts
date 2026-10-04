@@ -7,7 +7,7 @@ test('home offers the prepared walk itself, with no search box and nothing to up
   await expect(page.getByRole('button', {name:/upload/i})).toHaveCount(0);
   const walk = page.getByRole('button', {name:'Explore Qorikancha · Cusco', exact:true});
   await expect(walk).toContainText('594 m on foot');
-  await expect(walk).toContainText('5 spots to check');
+  await expect(walk).toContainText('5 flagged spots');
   await walk.click();
   await expect(page.getByRole('region', {name:'Qorikancha', exact:true})).toBeVisible();
 });
